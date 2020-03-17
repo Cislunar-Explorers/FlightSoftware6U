@@ -1,2 +1,8 @@
 requests
 ADS1115
+# OpNav start
+numpy
+opencv-python
+# OpNav end
+
+

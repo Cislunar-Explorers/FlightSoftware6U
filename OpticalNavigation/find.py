@@ -13,7 +13,7 @@ def findSun(image):
     Detect the Sun using HoughCircleTransform
     [image] - w x h x 3 input image
     Returns:
-    [circles] - list of detected circles
+    [circles] - 1 x n x 3 list of n detected circles
     """
     boundaries = [([0,0,255], [180,51,255])]
     original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -26,8 +26,8 @@ def findSun(image):
 
         mask = cv2.inRange(original_hsv, lower, upper)
         output = cv2.bitwise_and(original_hsv, original_hsv, mask = mask)
-        cv2.imshow("sun images", np.hstack([output])) #delete 'image' for post mask image
-        cv2.waitKey(0)
+        # cv2.imshow("sun images", np.hstack([output])) #delete 'image' for post mask image
+        # cv2.waitKey(0)
 
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
     scale = 1
@@ -44,7 +44,7 @@ def findEarth(image):
     Detect the Earth using HoughCircleTransform
     [image] - w x h x 3 input image
     Returns:
-    [circles] - list of detected circles
+    [circles] - 1 x n x 3 list of n detected circles
     """
     boundaries = [([80,30,0], [160,255,255])]
     original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -57,8 +57,8 @@ def findEarth(image):
 
         mask = cv2.inRange(original_hsv, lower, upper)
         output = cv2.bitwise_and(original_hsv, original_hsv, mask = mask)
-        cv2.imshow("earth images", np.hstack([output])) #delete 'image' for post mask image
-        cv2.waitKey(0)
+        # cv2.imshow("earth images", np.hstack([output])) #delete 'image' for post mask image
+        # cv2.waitKey(0)
 
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
     scale = 1
@@ -66,7 +66,6 @@ def findEarth(image):
     rows = int(np.round(r * scale))
     cols = int(np.round(c * scale))
     original_median_blurred = cv2.medianBlur(gray, round_up_to_odd(rows / 50))
-    # TODO: 4th arguement might be too large
     circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=30, minRadius=10, maxRadius=0)
     return circles
 
@@ -75,8 +74,9 @@ def findMoon(image):
     Detect the Moon using HoughCircleTransform
     [image] - w x h x 3 input image
     Returns:
-    [circles] - list of detected circles
+    [circles] - 1 x n x 3 list of n detected circles
     """
+    # TODO: Hard to distinguish between Moon and Sun
     boundaries = [([0,0,0], [179, 25, 254])]
     original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -88,8 +88,8 @@ def findMoon(image):
 
         mask = cv2.inRange(original_hsv, lower, upper)
         output = cv2.bitwise_and(original_hsv, original_hsv, mask = mask)
-        cv2.imshow("moon images", np.hstack([output])) #delete 'image' for post mask image
-        cv2.waitKey(0)
+        # cv2.imshow("moon images", np.hstack([output])) #delete 'image' for post mask image
+        # cv2.waitKey(0)
 
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
     scale = 1
@@ -97,11 +97,10 @@ def findMoon(image):
     rows = int(np.round(r * scale))
     cols = int(np.round(c * scale))
     original_median_blurred = cv2.medianBlur(gray, round_up_to_odd(rows / 50))
-    # TODO: 4th arguement might be too large
     circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 100, param1=400, param2=30, minRadius=1, maxRadius=0)
     return circles
 
-def runFind():
+def main():
     """
     Run "python3 find.py -i=<IMAGE>" to test this module
     """
@@ -152,6 +151,6 @@ def runFind():
     cv2.waitKey(0)
 
 if __name__ == "__main__":
-    runFind()    
+    main()    
 
        

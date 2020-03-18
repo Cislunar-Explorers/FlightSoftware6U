@@ -41,9 +41,9 @@ def computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt
     dtES = np.abs(earthProperties['index'][0] - sunProperties['index'][0])*dt 
     dtMS = np.abs(moonProperties['index'][0] - sunProperties['index'][0])*dt
     # Angle Between Bodies (Convert to Degrees)
-    angEM = np.mod(dtEM * omega[2], np.pi) * 180/np.pi
-    angES = np.mod(dtES * omega[2], np.pi) * 180/np.pi
-    angMS = np.mod(dtMS * omega[2], np.pi) * 180/np.pi
+    angEM = np.mod(dtEM * omega[2], 2*np.pi) * 180/np.pi
+    angES = np.mod(dtES * omega[2], 2*np.pi) * 180/np.pi
+    angMS = np.mod(dtMS * omega[2], 2*np.pi) * 180/np.pi
     one_zero = np.array([1, 0])
     zero_one = np.array([0, 1])
     # Additional Horizontal Pixels Due to Time Offset
@@ -128,7 +128,7 @@ def cameraMeasurements(omega, dt):
     return computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt)
 
 def main():
-    print(cameraMeasurements(np.array([0, 6, 0]), 60))
+    print(cameraMeasurements(np.array([0, 0, 6]), 60))
 
 if __name__ == "__main__":
     main()

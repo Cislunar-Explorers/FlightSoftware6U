@@ -29,6 +29,7 @@ def length(M):
     return max(M.shape[0], M.shape[1])
 
 def makeSigmas(initState, Sx, Sv, nx, nv, constant):
+    initState = initState.flatten()
     noise  = np.zeros((6, 2*(nx+nv)+1))
     sigmas = np.zeros((6, 2*(nx+nv)+1))
     sigmas[:,0] = initState
@@ -36,12 +37,12 @@ def makeSigmas(initState, Sx, Sv, nx, nv, constant):
     # Offset sigma point positively in state (by chol(P))
     for i in range(1,nx+1):
         sigmas[:,i] = initState + constant*Sx[:,i-1]
-        noise[:,i] = np.zeros((6,1))
+        noise[:,i] = np.zeros((6,))
     
     # Offset sigma point negatively in state (by chol(P))
     for i in range(nx+1,2*nx+1):
         sigmas[:,i] = initState - constant*Sx[:,i-nx-1]
-        noise[:,i] = np.zeros(6,1)
+        noise[:,i] = np.zeros((6,))
 
     # Offset sigma point positively in dynamic noise (by chol(Q))
     for i in range(2*nx+1,2*nx+nv+1):
@@ -56,14 +57,14 @@ def makeSigmas(initState, Sx, Sv, nx, nv, constant):
     return sigmas, noise
 
 def G(rec, rem, rcm, rcs, res):
-    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm*rcm.T)**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs*rcs.T)**(3/2)) - res/(np.linalgnorm(res)**3) )
+    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm*rcm.T)**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs*rcs.T)**(3/2)) - res/(np.linalg.norm(res)**3) )
 
 def dynamics_model(state, dt, moonEph, sunEph):
     """
     Runge Kutta 4th Order, one timestep
     [state]: Sigma point + noise (6x1)
     [dt]: time elapsed since last execution (seconds)
-    Ephemeris is in km, km/s
+    Ephemeris is in km, km/s 
     Returns:
     Output is also in km
     """
@@ -88,11 +89,13 @@ def measModel(traj, moonEph, sunEph, const):
     """
     Expected measurements based on propogated sigmas
     [traj]: propogated sigma point with gaussian randomness (6x1)
-    Ephemiris
+    Ephemiris (1,6)
     [const]: camera constant: PixelWidth/FOV (pixels/radians)
     Returns:
     [h]: Expected measurement vector [z1 z2 z3 z4 z5 z6] (6x1)
     """
+    moonEph = moonEph.flatten()
+    sunEph = sunEph.flatten()
     # Assumes traj is Nx6 where N = #timesteps
     # For testing, reverse the indicies (run = # on left, test = # on right)
     x = traj[0] * 1000
@@ -139,9 +142,8 @@ def getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight):
     xMean = centerWeight * propSigmas[:,0] # 6x1
     zMean = centerWeight * sigmaMeasurements[:,0]
 
-    xMean = otherWeight*np.sum(propSigmas[:,1:],1).reshape(xMean.shape[0],1) + xMean
-    zMean = otherWeight*sum(sigmaMeasurements[:,1:],1).reshape(zMean.shape[0],1) + zMean
-
+    xMean = otherWeight*np.sum(propSigmas[:,1:],1).reshape(xMean.shape[0],1) + xMean.reshape(xMean.shape[0],1)
+    zMean = otherWeight*np.sum(sigmaMeasurements[:,1:],1).reshape(zMean.shape[0],1) + zMean.reshape(zMean.shape[0],1)
     return xMean, zMean
 
 def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, alpha, beta, R):
@@ -184,7 +186,7 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
     # Moore-Penrose Pseudoinverse
     K = Pxz*np.linalg.pinv(Pzz);
     # K = 0; % To test dynamics Model
-    xNew = xMean + K*(measurements - zMean)
+    xNew = xMean + K.dot(measurements - zMean)
     pNew = Pxx - K*R*K
 
     return xNew, pNew, K
@@ -192,8 +194,8 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
 def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     """
     One full execution of the ukf
-    [moonEph]: Moon ephemeris vector (1x6)
-    [sunEph]: Sun ephemeris vector (1x6)
+    [moonEph]: Moon ephemeris vector (1,6)
+    [sunEph]: Sun ephemeris vector (1,6)
     [measurements]: measurement vector (6x1)
     [initEstimate]: state vector from previous execution (or start state) (6x1)
     [dt]: time elapsed since last execution (seconds)
@@ -205,7 +207,7 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     nx = length(P)
     nv = length(Q)
     k = 3-nx;
-    lmbda = alpha^2*(nx+k)-nx # tunable
+    lmbda = alpha**2*(nx+k)-nx # tunable
     constant = np.sqrt(nx+nv+lmbda)
     centerWeight = lmbda/(nx+nv+lmbda)
     otherWeight = 1/(2*(nx+nv+lmbda))
@@ -229,7 +231,7 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     # Sigma measurements are the expected measurements calculated from
     # running the propagated sigma points through measurement model
     for j in range(length(sigmas)):
-        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,1)),R).T, moonEph, sunEph, const) 
+        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),R).T, moonEph, sunEph, const) 
     
     # a priori estimates
     xMean, zMean = getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight)
@@ -238,11 +240,18 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     Pxx, Pxz, Pzz = findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, alpha, beta, R)
 
     # a posteriori estimates
-    return newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((1,6)),R).T, R, initState)
+    return newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(measurements.shape[0],1), R, initState)
 
 
 def main():
-    print(runUKF(None, None, None, None, 60, None))
+    traj = (np.array([883.9567, 1.023e+03, 909.665, 65.648, 11.315, 28.420], dtype=np.float)).reshape(6,1)
+    moonEph = (np.array([1.536e+05, -3.723e+05, 2.888e+03, 0.9089, 0.3486, -0.0880], dtype=np.float)).reshape(1,6)
+    sunEph = (np.array([-3.067e+07, -1.441e+08, 6.67e+03, 29.6329, -6.0859, -8.8015e-04], dtype=np.float)).reshape(1,6)
+    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
+    measurements = (np.array([3783.89178515,  854.57125906, 3446.64998585,  544.40002441, 1949.59997559, 40.0], dtype=np.float)).reshape(6,1)
+
+    xNew, pNew, K = runUKF(moonEph, sunEph, measurements, traj, 60, P)
+    print(xNew)
 
 if __name__ == "__main__":
     main()

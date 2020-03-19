@@ -24,3 +24,7 @@
         - There was a camera I/O or hardware failure that could either be recovered by trying again after a certain amount of time, or is permanent and nothing can be done. 
 6. [] [cam_meas.py](cam_meas.py) **A body was not found**
     * How should [ukf.py](ukf.py) handle this case?
+7. [] [ukf.py](ukf.py) **UKF computation errors?**
+    * Verify if this is a possibility
+    * If yes, throw an exception where necessary, and catch it in [controller.py](controller.py)
+8. [] [controller.py](controller.py) **Deposit position and velocity estimates into global location**

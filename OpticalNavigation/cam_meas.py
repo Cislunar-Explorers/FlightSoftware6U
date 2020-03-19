@@ -111,7 +111,7 @@ def cameraMeasurements(omega, dt):
                 if len(sunProperties['index']) == 0:
                     loadProperties(copy.copy(true_img), 'sun', cam, i, sunProperties)
             except Exception as e:
-                print("Error while trying to detecting bodies for measurements: {}".format(e))
+                print("[Opnav acquisition]: Error while trying to detecting bodies for measurements: {}".format(e))
     
     print(earthProperties, moonProperties, sunProperties)
     # TODO: A body was not found

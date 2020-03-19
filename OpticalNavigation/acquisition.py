@@ -28,7 +28,7 @@ def acquire_frames(func_captureframe):
     while timeWait < 0:
         delta = delta + 360 # satellite must rotate for a full revolution
         timeWait = delta / omega - timeImg
-    print('Acquisition will consume {} extra cycles per frame'.format(int(delta/360)))
+    print('Acquisition will consume {} extra rotations per frame'.format(int(delta/360)))
     while (currentAngle >= 0):
         # Wait for satellite to get into position
         time.sleep(timeWait)

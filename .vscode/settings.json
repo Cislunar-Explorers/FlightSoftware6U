@@ -1,0 +1,4 @@
+{
+  "python.pythonPath": "cislunar-venv/bin/python3",
+  "python.formatting.provider": "black"
+}

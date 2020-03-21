@@ -3,6 +3,7 @@ ADS1115
 # OpNav start
 numpy
 opencv-python
+pandas # testing
 # OpNav end
 
 

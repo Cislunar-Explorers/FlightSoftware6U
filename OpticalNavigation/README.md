@@ -4,6 +4,11 @@
 * Position, velocity and attitude control
 * Timed image acquisition using gyro
 
+## Unit Tests
+
+* Run `python3 -m unittest tests.<MODULE>.<CLASS>.<TEST>` to run a specific test.
+* To run all tests in a file, just use `test.<MODULE>`.
+
 ## Find Dataset
 
 [Eclipse and Crescent Images](https://cornell.app.box.com/folder/106277463841)

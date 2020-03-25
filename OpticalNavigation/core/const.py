@@ -11,4 +11,3 @@ class CameraParameters:
     dcam23 = -120
 
 ACQUIRED_IMGS_DIR = 'C:\\scrap\\OPNavTemp'
-TEST_ECLIPSEANDCRESCENTIMAGES = 'C:\\Users\\easha\\Downloads\\EclipseAndCrescentImages'

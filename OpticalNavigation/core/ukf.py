@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from const import CameraParameters
+from core.const import CameraParameters
 
 # How wrong our dynamics model is? e.g. how off in variance will we be due
 # to solar radiation pressure, galactic particles, and bad gravity model? 
@@ -175,7 +175,7 @@ def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, o
     Pzz = Pzz + R
     return Pxx, Pxz, Pzz
 
-def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
+def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamicsOnly=False):
     """
     Calculates new state given weighted sums of expected measurements and propogated sigmas (dynamics model)
     Returns:
@@ -184,14 +184,16 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
     [K]: Kalman gain
     """
     # Moore-Penrose Pseudoinverse
-    K = Pxz*np.linalg.pinv(Pzz);
-    # K = 0; % To test dynamics Model
+    if not dynamicsOnly:
+        K = Pxz*np.linalg.pinv(Pzz);
+    else:
+        K = np.zeros((6,6)); # To test dynamics Model
     xNew = xMean + K.dot(measurements - zMean)
     pNew = Pxx - K*R*K
 
     return xNew, pNew, K
 
-def runUKF(moonEph, sunEph, measurements, initState, dt, P):
+def runUKF(moonEph, sunEph, measurements, initState, dt, P, dynamicsOnly=False):
     """
     One full execution of the ukf
     [moonEph]: Moon ephemeris vector (1,6)
@@ -200,6 +202,7 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     [initEstimate]: state vector from previous execution (or start state) (6x1)
     [dt]: time elapsed since last execution (seconds)
     [P]: initial covariance matrix for state estimate
+    [dynamicsOnly]: trust the dynamics model over measurements (helpful for testing)
     Returns:
     [xNew, pNew, K]: (6x1) new state vector, (6x6) new state covariance estimate, kalman gain
     """
@@ -240,7 +243,7 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     Pxx, Pxz, Pzz = findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, alpha, beta, R)
 
     # a posteriori estimates
-    return newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(measurements.shape[0],1), R, initState)
+    return newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(measurements.shape[0],1), R, initState, dynamicsOnly=dynamicsOnly)
 
 
 def main():

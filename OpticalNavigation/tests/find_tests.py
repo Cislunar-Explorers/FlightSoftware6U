@@ -5,7 +5,7 @@ import cv2
 import copy
 import math
 import pandas as pd
-from core.const import TEST_ECLIPSEANDCRESCENTIMAGES
+from tests.const import TEST_ECLIPSEANDCRESCENTIMAGES, TEST_FIND_DATASET_IMAGE_DIR, TEST_FIND_DATASET_CIRCLES_DIR
 from core.find import findEarth, findMoon, findSun
 
 class NaNError(Exception):
@@ -75,12 +75,15 @@ class TestFindOnEclipseAndCrescentImagesDataset(TestCase):
         centerDistance = math.sqrt((xHat - x)**2 + (yHat - y)**2)
         radiusDistance = math.fabs(rHat - r)
         return centerDistance, radiusDistance
-
+    
     def test_earth(self):
         # Read CSV for detection ground truths
-        circles_df = pd.read_csv(TEST_ECLIPSEANDCRESCENTIMAGES + "\\circles\\circles.csv")
-        loc = TEST_ECLIPSEANDCRESCENTIMAGES + "\\images\\*jpg"
-        files = glob.glob(loc)
+        circles_df = pd.read_csv(TEST_ECLIPSEANDCRESCENTIMAGES + TEST_FIND_DATASET_CIRCLES_DIR)
+        loc = TEST_ECLIPSEANDCRESCENTIMAGES + TEST_FIND_DATASET_IMAGE_DIR
+        types = (loc + '\\*.jpg', loc + '\\*.png', loc + '\\*.jpeg')
+        files = []
+        for extension in types:
+            files.extend(glob.glob(extension))
         if len(files) == 0:
             if not os.path.isdir(loc):  
                 self.fail('\"{}\" is not a valid find dataset directory'.format(loc))
@@ -95,7 +98,6 @@ class TestFindOnEclipseAndCrescentImagesDataset(TestCase):
             earthCircles = findEarth(img)
             row = circles_df.loc[circles_df['Image'] == os.path.basename(file)]
             trueEarthData = (row['EarthX'].values[0], row['EarthY'].values[0], row['EarthR'].values[0])
-            print(trueEarthData)
 
             try:
                 self.checkErrors(earthCircles, trueEarthData)
@@ -110,9 +112,12 @@ class TestFindOnEclipseAndCrescentImagesDataset(TestCase):
 
     def test_sun(self):
         # Read CSV for detection ground truths
-        circles_df = pd.read_csv(TEST_ECLIPSEANDCRESCENTIMAGES + "\\circles\\circles.csv")
-        loc = TEST_ECLIPSEANDCRESCENTIMAGES + "\\images\\*jpg"
-        files = glob.glob(loc)
+        circles_df = pd.read_csv(TEST_ECLIPSEANDCRESCENTIMAGES + TEST_FIND_DATASET_CIRCLES_DIR)
+        loc = TEST_ECLIPSEANDCRESCENTIMAGES + TEST_FIND_DATASET_IMAGE_DIR
+        types = (loc + '\\*.jpg', loc + '\\*.png', loc + '\\*.jpeg')
+        files = []
+        for extension in types:
+            files.extend(glob.glob(extension))
         if len(files) == 0:
             if not os.path.isdir(loc):  
                 self.fail('\"{}\" is not a valid find dataset directory'.format(loc))
@@ -127,7 +132,6 @@ class TestFindOnEclipseAndCrescentImagesDataset(TestCase):
             sunCircles = findSun(img)
             row = circles_df.loc[circles_df['Image'] == os.path.basename(file)]
             trueSunData = (row['SunX'].values[0], row['SunY'].values[0], row['SunR'].values[0])
-            print(trueSunData)
 
             try:
                 self.checkErrors(sunCircles, trueSunData)
@@ -142,9 +146,12 @@ class TestFindOnEclipseAndCrescentImagesDataset(TestCase):
 
     def test_moon(self):
         # Read CSV for detection ground truths
-        circles_df = pd.read_csv(TEST_ECLIPSEANDCRESCENTIMAGES + "\\circles\\circles.csv")
-        loc = TEST_ECLIPSEANDCRESCENTIMAGES + "\\images\\*jpg"
-        files = glob.glob(loc)
+        circles_df = pd.read_csv(TEST_ECLIPSEANDCRESCENTIMAGES + TEST_FIND_DATASET_CIRCLES_DIR)
+        loc = TEST_ECLIPSEANDCRESCENTIMAGES + TEST_FIND_DATASET_IMAGE_DIR
+        types = (loc + '\\*.jpg', loc + '\\*.png', loc + '\\*.jpeg')
+        files = []
+        for extension in types:
+            files.extend(glob.glob(extension))
         if len(files) == 0:
             if not os.path.isdir(loc):  
                 self.fail('\"{}\" is not a valid find dataset directory'.format(loc))
@@ -159,7 +166,6 @@ class TestFindOnEclipseAndCrescentImagesDataset(TestCase):
             moonCircles = findMoon(img)
             row = circles_df.loc[circles_df['Image'] == os.path.basename(file)]
             trueMoonData = (row['MoonX'].values[0], row['MoonY'].values[0], row['MoonR'].values[0])
-            print(trueMoonData)
 
             try:
                 self.checkErrors(moonCircles, trueMoonData)
@@ -171,8 +177,7 @@ class TestFindOnEclipseAndCrescentImagesDataset(TestCase):
             print('Moon Result: center error: {}, radius error: {}'.format(moonCenterError, moonRadiusError))
             self.assertLessEqual(moonCenterError, self.MOON_CENTER_ERROR)
             self.assertLessEqual(moonRadiusError, self.MOON_RADIUS_ERROR)
-    
-    
+
 
 if __name__ == '__main__':
     unittest.main()

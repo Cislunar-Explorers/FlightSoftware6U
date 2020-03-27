@@ -3,8 +3,8 @@ import glob
 import cv2
 import copy
 import os
-from const import CameraParameters, ACQUIRED_IMGS_DIR
-from find import findEarth, findMoon, findSun
+from core.const import CameraParameters, ACQUIRED_IMGS_DIR
+from core.find import findEarth, findMoon, findSun
 
 def loadProperties(img, name, cam, i, properties):
     """
@@ -85,6 +85,7 @@ def cameraMeasurements(omega, dt):
     moonProperties = {'center': [], 'radius': [], 'index': [], 'flag': None}
 
     cameraLocations = []
+    print(ACQUIRED_IMGS_DIR)
     cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera1')
     cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera2')
     cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera3')

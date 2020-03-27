@@ -7,3 +7,6 @@ TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_iterations = '\\iterations'
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_trajectory = '\\trajectory\\trajectory.csv'
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_moonEph = '\\ephemeris\\moon_eph.csv'
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_sunEph = '\\ephemeris\\sun_eph.csv'
+
+POS_ERROR = 1000 # can be off by 1000 km
+VEL_ERROR = 1 # can be off by 1 km/s

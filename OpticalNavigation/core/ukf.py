@@ -185,6 +185,7 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamic
     """
     # Moore-Penrose Pseudoinverse
     if not dynamicsOnly:
+        print('NOT DYNAMICS ONLY')
         K = Pxz*np.linalg.pinv(Pzz);
     else:
         K = np.zeros((6,6)); # To test dynamics Model

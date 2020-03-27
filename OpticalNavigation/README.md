@@ -17,6 +17,8 @@
 
 [EM1_3DOF_Trajectory_June_27_2020_3600sec](https://cornell.app.box.com/folder/108235850425)
 
+**Copy all testing datasets into tests/data**
+
 ## Issues
 
 1. [] [find.py](find.py) **Earth bias for blue color is too strong; fails to detect under cloud coverage**

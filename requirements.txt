@@ -4,6 +4,7 @@ ADS1115
 numpy
 opencv-python
 pandas # testing
+pytest
 # OpNav end
 
 

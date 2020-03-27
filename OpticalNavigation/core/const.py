@@ -1,3 +1,5 @@
+import os
+
 class CameraParameters:
     # Camera constants
     # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
@@ -10,4 +12,4 @@ class CameraParameters:
     dcam13 = -60
     dcam23 = -120
 
-ACQUIRED_IMGS_DIR = 'C:\\scrap\\OPNavTemp'
+ACQUIRED_IMGS_DIR = os.path.join('..','..','..','OPNavTemp')

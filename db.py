@@ -1,6 +1,4 @@
-import datetime
-
-from sqlalchemy import Column, Integer, String, MetaData, create_engine
+from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import Float, DateTime

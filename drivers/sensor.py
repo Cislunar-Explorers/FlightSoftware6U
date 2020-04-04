@@ -21,13 +21,12 @@ class SynchronousSensor:
 
 
 class AsynchronousSensor(Thread):
-    
     def __init__(self, name: str, fields: list):
         self.name = name
         self.fields = {field: None for field in fields}
-    
-    def poll():
+
+    def poll(self):
         self.run()
 
-    def run():
+    def run(self):
         pass

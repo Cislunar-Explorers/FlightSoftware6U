@@ -7,4 +7,3 @@ class Gomspace:
 
     def get_health_data(self):
         return {}
-

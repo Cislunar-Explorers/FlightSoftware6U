@@ -1,14 +1,25 @@
 from threading import Thread
-from drivers.gom import Gomspace
-from flight_mode import SafeMode, NormalMode
+from drivers.communications import CommunicationsSystem
+from flight_mode import NormalMode
+from queue import Queue
 
-class SatelliteThread(Thread):
+
+class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__(self)
         self.mode = NormalMode()
+        self.command_queue = Queue()
+        self.comms = CommunicationsSystem(queue=self.command_queue, use_ax5043=False)  # noqa E501
+        self.comms.listen()
+        # TODO initialize sensors
 
     # Read inputs and potentially change flight mode
+    # TODO
     def poll_inputs(self):
+        pass
+
+    # TODO implement logic for state transition
+    def update_state(self):
         pass
 
     # Execute received commands
@@ -16,16 +27,24 @@ class SatelliteThread(Thread):
         pass
 
     # Run the current flight mode
+    # TODO ensure comms thread halts during realtime ops
     def run_mode(self):
-        self.mode.run_mode()
+        with self.mode:
+            self.mode.run_mode()
 
+    # Wrap in try finally block to ensure it stays live
     def run(self):
         while True:
             self.poll_inputs()
+            # XXX which should come first update state or execute commands
+            self.update_state()
             self.execute_commands()
             self.run_mode()
 
+    def shutdown(self):
+        self.comms.stop()
+
 
 if __name__ == "__main__":
-    main = SatelliteThread()
+    main = MainSatelliteThread()
     main.run()

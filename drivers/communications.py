@@ -1,9 +1,6 @@
-from time import sleep
 from queue import Queue
-from queue import Empty as QueueEmptyException
 from threading import Thread
 from socketserver import UDPServer, BaseRequestHandler
-from socket import gethostbyname, gethostname
 import socket
 
 
@@ -29,7 +26,6 @@ class Comms:
         if self.listening_thread.is_alive() is True:
             self.listening_thread.terminate()
 
-
     def send_packet(self, packet: bytes):
         raise NotImplementedError
 
@@ -48,10 +44,17 @@ class UDPHandler(BaseRequestHandler):
         socket.sendto(data.upper(), self.client_address)
 
 
-# TODO fix initializer of IPComms 
+# TODO fix initializer of IPComms
 class IPComms(Comms):
     def __init__(
-        self, *, queue: Queue, server_host: str = HOSTNAME, server_port: int = PORT, client_host: str = HOSTNAME, client_port: int = PORT, await_response = False
+        self,
+        *,
+        queue: Queue,
+        server_host: str = HOSTNAME,
+        server_port: int = PORT,
+        client_host: str = HOSTNAME,
+        client_port: int = PORT,
+        await_response=False,
     ):
         super().__init__(queue=queue)
         UDPHandler.queue = self.queue
@@ -121,9 +124,10 @@ class CommunicationsSystem:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
 
+
 # CommunicationsSystem can be used for both ground station and satellite
-# should have the functionality of listening on one thread and continuously reading
-# And still be able to send a packet
+# should have the functionality of listening on one thread and continuously
+# reading and still be able to send a packet
 if __name__ == "__main__":
     q = Queue()
     comms = CommunicationsSystem(queue=q, use_ax5043=False)

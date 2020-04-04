@@ -9,7 +9,9 @@ class MainSatelliteThread(Thread):
         super().__init__(self)
         self.mode = NormalMode()
         self.command_queue = Queue()
-        self.comms = CommunicationsSystem(queue=self.command_queue, use_ax5043=False)  # noqa E501
+        self.comms = CommunicationsSystem(
+            queue=self.command_queue, use_ax5043=False
+        )  # noqa E501
         self.comms.listen()
         # TODO initialize sensors
 

@@ -6,8 +6,8 @@
 
 ## Unit Tests
 
-* Run `python3 -m unittest tests.<MODULE>.<CLASS>.<TEST>` to run a specific test.
-* To run all tests in a file, just use `test.<MODULE>`.
+* Run `pytest -s <FILENAME>::<TEST FUNCTION NAME>` to run a specific test.
+* To run all tests in a file, just use `<FILENAME>`.
 
 ## Find Dataset
 

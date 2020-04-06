@@ -3,7 +3,7 @@ import glob
 import cv2
 import copy
 import os
-from core.const import CameraParameters, ACQUIRED_IMGS_DIR
+from core.const import CameraParameters
 from core.find import findEarth, findMoon, findSun
 
 def loadProperties(img, name, cam, i, properties):
@@ -67,11 +67,12 @@ def computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt
 
     return np.array([z1, z2, z3, z4, z5, z6])
 
-def cameraMeasurements(omega, dt):
+def cameraMeasurements(omega, dt, dir):
     """
     Generates measurement vector from images
     [omega]: 3 x 1 angular velocity vector (rad/s)
     [dt]: time difference between consecutive photos (s)
+    [dir]: Directory of acquired images. Should have subfolders Camera1/, Camera2/, Camera3/
     Returns:
     [h] 6 x 1 matrix of measured values [z1 ... z6]
         z1,z2,z3 = angular distance between EM, ES, and MS (pixels)
@@ -85,14 +86,16 @@ def cameraMeasurements(omega, dt):
     moonProperties = {'center': [], 'radius': [], 'index': [], 'flag': None}
 
     cameraLocations = []
-    print(ACQUIRED_IMGS_DIR)
-    cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera1')
-    cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera2')
-    cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera3')
+    cameraLocations.append(os.path.join(dir,'Camera1'))
+    cameraLocations.append(os.path.join(dir,'Camera2'))
+    cameraLocations.append(os.path.join(dir,'Camera3'))
     
     # TODO: Verify that detected radii are consistent across all images
     for cam, camLoc in enumerate(cameraLocations):
-        files = glob.glob(camLoc + "\\*.jpg")
+        types = (os.path.join(camLoc, '*.jpg'), os.path.join(camLoc,'*.png'), os.path.join(camLoc, '*.jpeg'))
+        files = []
+        for extension in types:
+            files.extend(glob.glob(extension))
         if len(files) == 0:
             if not os.path.isdir(camLoc):  
                 raise Exception('\"{}\" is not a valid camera acquisition directory'.format(camLoc))

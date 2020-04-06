@@ -11,5 +11,4 @@ class CameraParameters:
     dcam12 = 60
     dcam13 = -60
     dcam23 = -120
-
-ACQUIRED_IMGS_DIR = os.path.join('..','..','..','OPNavTemp')
+    

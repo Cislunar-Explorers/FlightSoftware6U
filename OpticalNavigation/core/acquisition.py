@@ -12,13 +12,13 @@ def readOmega():
     time.sleep(INIT_READ_OMEGA_TIME)
     return 6
 
-def captureImg():
+def captureImg(dir):
     # time starts on command execution, and finishes when 
     # OS gives back control to program
     time.sleep(INIT_IMG_CAPTURE_TIME)
     print("Image acquired: " + str(time.time()))
 
-def acquire_frames(func_captureframe):
+def acquire_frames(func_captureframe, dir):
     currentAngle = 315 # degrees
     delta = 315 # degrees
     timeImg = INIT_IMG_CAPTURE_TIME # seconds
@@ -33,7 +33,7 @@ def acquire_frames(func_captureframe):
         # Wait for satellite to get into position
         time.sleep(timeWait)
         startTime = time.time()
-        func_captureframe() # takes timeImg seconds
+        func_captureframe(dir) # takes timeImg seconds
         elapsedTime = time.time() - startTime
 
         print(elapsedTime)
@@ -41,8 +41,12 @@ def acquire_frames(func_captureframe):
         currentAngle = currentAngle - 45
         timeWait = delta / omega - timeImg
 
-def startAcquisition():
-    acquire_frames(captureImg)
+def startAcquisition(dir):
+    """
+    Beginds acquisition algorithm
+    [dir]: Directory of acquired images. Should have subfolders Camera1/, Camera2/, Camera3/
+    """
+    acquire_frames(captureImg, dir)
 
 def main():
     startAcquisition()

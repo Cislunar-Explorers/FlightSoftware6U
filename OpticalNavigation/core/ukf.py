@@ -57,7 +57,7 @@ def makeSigmas(initState, Sx, Sv, nx, nv, constant):
     return sigmas, noise
 
 def G(rec, rem, rcm, rcs, res):
-    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm*rcm.T)**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs*rcs.T)**(3/2)) - res/(np.linalg.norm(res)**3) )
+    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm.dot(rcm.T))**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs.dot(rcs.T))**(3/2)) - res/(np.linalg.norm(res)**3) )
 
 def dynamics_model(state, dt, moonEph, sunEph):
     """
@@ -157,8 +157,8 @@ def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, o
     [Pxx, Pxz, Pzz]
     """
     centerWeight = centerWeight + 1 - alpha**2 + beta
-    xx = propSigmas[:,0] - xMean
-    zz = sigmaMeasurements[:,0] - zMean
+    xx = propSigmas[:,0].T - xMean
+    zz = sigmaMeasurements[:,0].T - zMean
 
     Pxx = centerWeight * (xx*xx.T)
     Pxz = centerWeight * (xx*zz.T)
@@ -186,12 +186,11 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamic
     # Moore-Penrose Pseudoinverse
     if not dynamicsOnly:
         print('NOT DYNAMICS ONLY')
-        K = Pxz*np.linalg.pinv(Pzz);
+        K = Pxz*np.linalg.pinv(Pzz)
     else:
         K = np.zeros((6,6)); # To test dynamics Model
     xNew = xMean + K.dot(measurements - zMean)
     pNew = Pxx - K*R*K
-
     return xNew, pNew, K
 
 def runUKF(moonEph, sunEph, measurements, initState, dt, P, dynamicsOnly=False):
@@ -219,7 +218,7 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P, dynamicsOnly=False):
     const = CameraParameters.hPix/(CameraParameters.hFov*np.pi/180) # camera constant: PixelWidth/FOV  [pixels/radians]
 
     Sx = np.linalg.cholesky(P)
-    
+
     # Generate Sigma Points
     sigmas, noise = makeSigmas(initState, Sx, Sv, nx, nv, constant)
 
@@ -236,7 +235,7 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P, dynamicsOnly=False):
     # running the propagated sigma points through measurement model
     for j in range(length(sigmas)):
         sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),R).T, moonEph, sunEph, const) 
-    
+
     # a priori estimates
     xMean, zMean = getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight)
 
@@ -255,7 +254,6 @@ def main():
     measurements = (np.array([3783.89178515,  854.57125906, 3446.64998585,  544.40002441, 1949.59997559, 40.0], dtype=np.float)).reshape(6,1)
 
     xNew, pNew, K = runUKF(moonEph, sunEph, measurements, traj, 60, P)
-    print(xNew)
 
 if __name__ == "__main__":
     main()

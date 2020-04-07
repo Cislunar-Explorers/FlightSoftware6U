@@ -1,5 +1,17 @@
 import os
 
+class MatlabTestCameraParameters:
+    # Camera constants
+    # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
+    hFov = 62.2
+    vFov = 48.8
+    hPix = 3280
+    vPix = 813
+    #Angular Separation Between Cameras (degrees)
+    dcam12 = 60
+    dcam13 = -60
+    dcam23 = -120
+
 TEST_ECLIPSEANDCRESCENTIMAGES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data','EclipseAndCrescentImages')
 TEST_FIND_DATASET_IMAGE_DIR = 'images'
 TEST_FIND_DATASET_CIRCLES_DIR = os.path.join('circles','circles.csv')

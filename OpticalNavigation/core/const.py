@@ -1,6 +1,6 @@
 import os
 
-class CameraParameters:
+class CisLunarCameraParameters:
     # Camera constants
     # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
     hFov = 62.2
@@ -11,4 +11,5 @@ class CameraParameters:
     dcam12 = 60
     dcam13 = -60
     dcam23 = -120
+
     

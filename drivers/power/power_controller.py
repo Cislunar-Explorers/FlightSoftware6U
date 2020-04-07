@@ -1,5 +1,6 @@
 # power_controller.py
 #
+<<<<<<< HEAD
 # Desc: Drivers for the GomSpace NanoPower P31u
 #
 # Author: Daniel Kim (dsk252)
@@ -17,6 +18,32 @@ import power_structs as ps
 import RPi.GPIO as GPIO
 import time
 from enum import Enum
+=======
+# Desc: controls the powerboard
+#
+# Author: Daniel Kim (dsk252)
+# 
+# Date: 10/3/16
+#
+# Status: Main functionality completed
+#         Higher level functions need to 
+#         be implemented (if necessary)
+
+from pigpio import *
+from power_structs import *
+import RPi.GPIO as GPIO
+import time
+import datetime
+import power_structs
+
+# I2C libraries
+import Adafruit_ADS1x15
+import SDL_DS3231
+from L3GD20 import L3GD20
+
+# pipeline operator (>>_>>)
+_ = power_structs._
+>>>>>>> Add main power driver
 
 # power device address
 POWER_ADDRESS           = 0x02
@@ -25,7 +52,11 @@ POWER_ADDRESS           = 0x02
 PI_BUS                  = 1
 
 # allowed ranges
+<<<<<<< HEAD
 MAX_PV_VOLTAGE			= 4000  # TODO: change later
+=======
+MAX_PV_VOLTAGE			= 4000	# change later
+>>>>>>> Add main power driver
 
 # command registers
 CMD_PING                = 0x01
@@ -56,6 +87,7 @@ SIZE_EPS_HK_BASIC_T     = 24
 SIZE_EPS_CONFIG_T       = 58
 SIZE_EPS_CONFIG2_T      = 20
 
+<<<<<<< HEAD
 # power output channels
 OUT_1                   = 0  # 5V
 OUT_2                   = 1  # 5V
@@ -84,6 +116,15 @@ class Outputs(Enum):
     #heater       = OUT_HEATER  #Not included for remote testing purposes
     #switch       = OUT_SWITCH
 
+=======
+# power outputs
+OUT_AMPLIFIER           = 0
+OUT_1                   = 1
+OUT_2                   = 2
+OUT_BURNWIRE            = 3
+OUT_SOLENOID            = 4
+OUT_ELECTROLYZER        = 5     # 3.3v output
+>>>>>>> Add main power driver
 
 # Outputs on board:
 #
@@ -96,6 +137,7 @@ class Outputs(Enum):
 #
 
 # pi outputs
+<<<<<<< HEAD
 OUT_PI_COMMS            = 11    # GPIO 17
 OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
 
@@ -116,15 +158,50 @@ class PowerOutputError(PowerException):
 
 _ = ps._
 class Power():
+=======
+OUT_PI_SPARKPLUG        = 7     # GPIO 4
+OUT_PI_COMMS            = 11    # GPIO 17
+OUT_PI_SOLENOID_ENABLE  = 38    # GPIO 20
+
+class Power(object):
+>>>>>>> Add main power driver
     # initializes power object with bus [bus] and device address [addr]
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
         self._pi = pi()                                     # initialize pigpio object
         self._dev = self._pi.i2c_open(bus, addr, flags)     # initialize i2c device
 
+<<<<<<< HEAD
         # initialize pi outputs
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
         GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
+=======
+        # I2C devices
+        self._adc = Adafruit_ADS1x15.ADS1115()              # initialize adc
+        self._rtc = SDL_DS3231.SDL_DS3231(1, 0x68)          # initialize rtc
+        self._gyro = L3GD20(busId 		 = 1,            	# initialize gyro
+                            slaveAddr 	 = 0x6b, 
+                            ifLog 		 = False, 
+                            ifWriteBlock = False)
+        
+        # Preconfiguration
+        self._gyro.Set_PowerMode("Normal")
+        self._gyro.Set_FullScale_Value("250dps")
+        self._gyro.Set_AxisX_Enabled(True)
+        self._gyro.Set_AxisY_Enabled(True)
+        self._gyro.Set_AxisZ_Enabled(True)
+
+        # Print current configuration
+        self._gyro.Init()
+        self._gyro.Calibrate()
+
+        # initialize pi outputs
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(OUT_PI_SPARKPLUG, GPIO.OUT)
+        GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
+        GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
+        GPIO.output(OUT_PI_SPARKPLUG, GPIO.HIGH)
+>>>>>>> Add main power driver
         GPIO.output(OUT_PI_COMMS, GPIO.LOW)
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
 
@@ -139,11 +216,15 @@ class Power():
 
     # writes byte list [values] with command register [cmd]
     # raises: ValueError if cmd or values are not bytes
+<<<<<<< HEAD
     # TODO: Implement PowerWriteError once we switch to new I2C library
+=======
+>>>>>>> Add main power driver
     def write(self, cmd, values):
         self._pi.i2c_write_device(self._dev, bytearray([cmd]+values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
+<<<<<<< HEAD
     # TODO: This function does not currently return the error code of the i2c stream. Is this something that we want?
     def read(self, bytes):
         # first two read bytes -> [command][error code][data]
@@ -155,6 +236,15 @@ class Power():
 
 
     # Not sure what value is in the below function, need to get cleared up
+=======
+    def read(self, bytes):
+        # first two read bytes -> [command][error code][data]
+        (x, r) = self._pi.i2c_read_device(self._dev, bytes+2) 
+        if r[1] != 0:
+            print "Command %i failed with error code %i" % (r[0], r[1])
+        return r[2:]
+
+>>>>>>> Add main power driver
     # pings value
     # value [1 byte]
     # raises: ValueError if value is not a byte
@@ -215,6 +305,7 @@ class Power():
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
+<<<<<<< HEAD
         if value not in [0, 1]:
             raise PowerInputError("Invalid Input: value must be 0 or 1")
         else:
@@ -224,10 +315,17 @@ class Power():
                     channel_num = Outputs(out).value
             d = toBytes(delay, 2)
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
+=======
+    	assert 0 <= channel <= 7, "channel must be in range [0, 7]"
+    	assert value == 0 or value == 1, "value must be 0 or 1"
+        d = toBytes(delay, 2)
+        self.write(CMD_SET_SINGLE_OUTPUT, [channel, value]+list(d))
+>>>>>>> Add main power driver
 
     # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV. 
     # Takes effect when MODE = 2, See SET_PV_AUTO.
     # volt1~volt3 [2 bytes] -> value in mV
+<<<<<<< HEAD
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
@@ -239,12 +337,23 @@ class Power():
             v[2:4] = toBytes(volt2, 2)
             v[4:] = toBytes(volt3, 2)
             self.write(CMD_SET_PV_VOLT, list(v))
+=======
+    # raises: AssertionError if voltages are over the max pv voltage
+    def set_pv_volt(self, volt1, volt2, volt3):
+    	assert volt1 <= MAX_PV_VOLTAGE and volt2 <= MAX_PV_VOLTAGE and volt3 <= MAX_PV_VOLTAGE
+        v = bytearray(6)
+        v[0:2] = toBytes(volt1, 2)
+        v[2:4] = toBytes(volt2, 2)
+        v[4:] = toBytes(volt3, 2)
+        self.write(CMD_SET_PV_VOLT, list(v))
+>>>>>>> Add main power driver
 
     # Sets the solar cell power tracking mode:
     # mode [1 byte] ->
     # MODE = 0: Hardware default power point
     # MODE = 1: Maximum power point tracking
     # MODE = 2: Fixed software powerpoint, value set with SET_PV_VOLT, default 4V
+<<<<<<< HEAD
     # raises: PowerInputError if mode is not 0, 1, or 2
     # Not tested
     def set_pv_auto(self, mode):
@@ -253,12 +362,19 @@ class Power():
         else:
             self.write(CMD_SET_PV_AUTO, [mode])
 
+=======
+    # raises: AssertionError if mode is not 0, 1, or 2
+    def set_pv_auto(self, mode):
+    	assert mode in [0, 1, 2]
+        self.write(CMD_SET_PV_AUTO, [mode])
+>>>>>>> Add main power driver
 
     # returns bytearray with heater modes
     # command   [1 byte]  -> 0 = Set heater on/off (toggle?)
     # heater    [1 byte]  -> 0 = BP4, 1 = Onboard, 2 = Both
     # mode      [1 byte]  -> 0 = OFF, 1 = ON
     # return    [2 bytes] -> heater modes
+<<<<<<< HEAD
     # raises: PowerInputError if variables are not in correct range
     # Not tested
     def set_heater(self, command, heater, mode):
@@ -271,28 +387,49 @@ class Power():
 
 
     # Not tested
+=======
+    # raises: AssertionError if variables are not in correct range
+    def set_heater(self, command, heater, mode):
+    	assert command == 0 and heater in [0, 1, 2] and mode in [0, 1]
+        self.write(CMD_SET_HEATER, [command, heater, mode])
+        return self.read(2)
+
+>>>>>>> Add main power driver
     def get_heater(self):
         self.write(CMD_SET_HEATER, [])
         return self.read(2)
 
     # resets the boot counter and WDT counters.
+<<<<<<< HEAD
     # Not tested
+=======
+>>>>>>> Add main power driver
     def reset_counters(self):
         self.write(CMD_RESET_COUNTERS, [0x42])
 
     # resets (kicks) dedicated WDT.
+<<<<<<< HEAD
     # Not tested
+=======
+>>>>>>> Add main power driver
     def reset_wdt(self):
         self.write(CMD_RESET_WDT, [0x78])
 
     # Use this command to control the config system.
     # cmd [1 byte] -> cmd = 1: Restore default config
+<<<<<<< HEAD
     # raises: PowerInputError if command is not 1
     def config_cmd(self, command):
             if command != 1:
                 raise PowerInputError("Invalid Input: command must be 1")
             else:
                 self.write(CMD_CONFIG_CMD, [command])
+=======
+    # raises: AssertionError if command is not 1
+    def config_cmd(self, command):
+    	assert command == 1
+        self.write(CMD_CONFIG_CMD, [command])
+>>>>>>> Add main power driver
 
     # returns eps_config_t structure
     def config_get(self):
@@ -300,6 +437,7 @@ class Power():
         return c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
 
     # takes eps_config_t struct and sets configuration
+<<<<<<< HEAD
     # Input struct is of type eps_config_t
     def config_set(self, struct):
         array = struct >>_>> c_structToBytes >>_>> bytesToList
@@ -322,6 +460,25 @@ class Power():
         else:
             self.write(CMD_CONFIG2_CMD, [command])
 
+=======
+    # raises: AssertionError if struct is not eps_config_t
+    def config_set(self, struct):
+        assert type(struct) == eps_config_t
+        array = struct >>_>> c_structToBytes >>_>> bytesToList
+        self.write(CMD_CONFIG_SET, array)
+
+    # Send this command to perform a hard reset of the P31,
+    # including cycling permanent 5V and 3.3V and battery outputs.
+    def hard_reset(self):
+        self.write(CMD_HARD_RESET, [])
+
+    # Use this command to control the config 2 system.
+    # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
+    # raises: AssertionError if command is not a valid value
+    def config2_cmd(self, command): 
+    	assert command in [1, 2]
+        self.write(CMD_CONFIG2_CMD, [command]) 
+>>>>>>> Add main power driver
 
     # Use this command to request the P31 config 2.
     # returns esp_config2_t struct
@@ -331,12 +488,23 @@ class Power():
 
     # Use this command to send config 2 to the P31
     # and save it (remember to also confirm it)
+<<<<<<< HEAD
     # Input struct is of type eps_config2_t
     def config2_set(self, struct):
         array = struct >> _ >> c_structToBytes >> _ >> bytesToList
         self.write(CMD_CONFIG2_SET, array)
 
     # Higher level functions -------------------------------------------------
+=======
+    # raises: AssertionError if struct is not eps_config2_t
+    def config2_set(self, struct):
+        assert type(struct) == eps_config2_t
+        array = struct >>_>> c_structToBytes >>_>> bytesToList
+        self.write(CMD_CONFIG2_SET, array)
+
+
+    # Higher level functions ---------------------------------------------------------
+>>>>>>> Add main power driver
 
     # output must be off before the function is called.
     # pulses output [output] high for some amount of 
@@ -358,9 +526,15 @@ class Power():
 
     # switches on if [switch] is true, off otherwise, with a 
     # delay of [delay] seconds.
+<<<<<<< HEAD
     # Input switch is of type bool
     def electrolyzer(self, switch, delay=0):
         self.set_single_output("electrolyzer", int(switch), delay)
+=======
+    def electrolyzer(self, switch, delay=0):
+        assert type(switch) == bool
+        self.set_single_output(OUT_ELECTROLYZER, int(switch), delay)
+>>>>>>> Add main power driver
 
     # spikes the solenoid for some number of 
     # milliseconds [spike] and holds at 5v for [hold] 
@@ -368,6 +542,7 @@ class Power():
     # output must be off before the function is called
     def solenoid(self, spike, hold, delay=0):
         time.sleep(delay)
+<<<<<<< HEAD
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)  # Enable voltage boost for solenoid current spike
         self.set_single_output("solenoid", 1, 0)
         time.sleep(.001*spike)
@@ -396,6 +571,34 @@ class Power():
         time.sleep(duration/2)
         self.set_single_output("burnwire_1", 0, 0)
         self.set_single_output("burnwire_2", 0, 0)
+=======
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
+        self.set_single_output(OUT_SOLENOID, 1, 0)
+        time.sleep(.001*spike)
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)
+        time.sleep(.001*hold)
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
+        self.set_single_output(OUT_SOLENOID, 0, 0)
+
+    # pulses sparkplug for some number of 
+    # milliseconds [duration] with delay of [delay] seconds.
+    # output must be off before the function is called
+    def sparkplug(self, duration, delay=0):
+        time.sleep(delay)
+        GPIO.output(OUT_PI_SPARKPLUG, GPIO.LOW)
+        time.sleep(.001*duration)
+        GPIO.output(OUT_PI_SPARKPLUG, GPIO.HIGH)
+
+    # turns burnwire on for [duration] seconds, with a 
+    # delay of [delay] seconds.
+    def burnwire(self, duration, delay=0):
+        time.sleep(delay)
+        self.set_single_output(OUT_BURNWIRE, 1, 0)
+        time.sleep(duration/2)
+        self.displayAll()
+        time.sleep(duration/2)
+        self.set_single_output(OUT_BURNWIRE, 0, 0)
+>>>>>>> Add main power driver
 
     def comms(self, transmit):
         if transmit:
@@ -403,11 +606,48 @@ class Power():
         else:
             GPIO.output(OUT_PI_COMMS, GPIO.LOW)
 
+<<<<<<< HEAD
     # Toggles comms amp on/off
     # Input on is either True (on) or False (off)
     def comms_amplifier(self, on):
         self.set_single_output("comms", int(on), 0)
 
+=======
+    def amplifier(self, on):
+        self.set_single_output(OUT_AMPLIFIER, on==True, 0)
+
+    def adc(self, t, n, gain=2/3):
+        output = []
+        for i in range(n):
+            val = 5*self._adc.read_adc(0, gain)/26676
+            output += [val]
+            print val
+            time.sleep(t)
+        return output
+
+    def rtc(self, t, n):
+        output = []
+        for i in range(n):
+            val = self._rtc.read_datetime()
+            temp = self._rtc.getTemp()
+            output += [(val, temp)]
+            print val
+            print temp
+            time.sleep(t)
+        return output
+
+    def gyro(self, dt):
+        x = 0
+        y = 0
+        z = 0
+        while True:
+            dxyz = self._gyro.Get_CalOut_Value()
+            x += dxyz[0]*dt;
+            y += dxyz[1]*dt;
+            z += dxyz[2]*dt;
+            print("{:7.2f} {:7.2f} {:7.2f}".format(x, y, z))
+            time.sleep(dt)
+>>>>>>> Add main power driver
 
     def adjust_string(self, string, length):
         new = string
@@ -417,13 +657,54 @@ class Power():
             new += " "*(length-len(new))
         return new
 
+<<<<<<< HEAD
     # Legacy stuff, may or may not be useful
     def nasa_demo(self):
         r = input("electrolyzers: ")
+=======
+    def display_sensors(self, t=0):
+        x, y, z, dt = 0, 0, 0, 0.1
+        cycles = 0
+        condition = lambda: True if t == 0 else cycles <= t
+
+        while True:
+            # gyro info
+            header_gyro = "                GYRO                "
+            dxyz = self._gyro.Get_CalOut_Value()
+            x, y, z = x+dxyz[0]*dt, y+dxyz[1]*dt, z+dxyz[2]*dt
+            gyro_r1 = self.adjust_string("x: "+str(x), len(header_gyro))
+            gyro_r2 = self.adjust_string("y: "+str(y), len(header_gyro))
+            gyro_r3 = self.adjust_string("z: "+str(z), len(header_gyro))
+
+            # adc info
+            header_adc = "        PRESSURE        "
+            adc_r1 = self.adjust_string(str(300*self._adc.read_adc(0, 2/3)/26676)+" psi", len(header_adc))
+            adc_r2 = " "*len(header_adc)
+            adc_r3 = adc_r2
+
+            # rtc info
+            header_rtc = "                         RTC                         "
+            rtc_r1 = self.adjust_string("time: "+str(self._rtc.read_datetime()), len(header_rtc))
+            rtc_r2 = self.adjust_string("temp: "+str(self._rtc.getTemp())+" C", len(header_rtc))
+            rtc_r3 = " "*len(header_rtc)
+
+            # print everything
+            print "|%s|%s|%s|" % (header_gyro,  header_adc, header_rtc)
+            print "|%s|%s|%s|" % (gyro_r1,      adc_r1,     rtc_r1)
+            print "|%s|%s|%s|" % (gyro_r2,      adc_r2,     rtc_r2)
+            print "|%s|%s|%s|" % (gyro_r3,      adc_r3,     rtc_r3)
+            print "\033[F"*5
+
+            time.sleep(dt)
+
+    def nasa_demo(self):
+        r = raw_input("electrolyzers: ")
+>>>>>>> Add main power driver
         self.electrolyzer(True)
         time.sleep(float(r))
         self.electrolyzer(False)
 
+<<<<<<< HEAD
         r = input("sparkplug:")
         self.sparkplug(3)
 
@@ -436,6 +717,23 @@ class Power():
         r = input("sensor data:")
         self.display_sensors()
 
+=======
+        r = raw_input("sparkplug:")
+        self.sparkplug(3)
+
+        r = raw_input("solenoid:")
+        self.solenoid(10, 250)
+
+        r = raw_input("burnwire:")
+        self.burnwire(4)
+
+        r = raw_input("sensor data:")
+        self.display_sensors()
+
+    def capture(self):
+        os.system("cd ivport-master\npython ivport_capture_A.py")
+
+>>>>>>> Add main power driver
     def chamber(self, name, t):
         text_file = open(name, "w")
         header = "time:"+str(t)+"\n"
@@ -448,8 +746,15 @@ class Power():
                       "bv "+str(hk.bv)+"\n" + \
                       "sc "+str(hk.sc)+"\n" + \
                       "temp "+str(hk.temp[0])+","+str(hk.temp[1])+","+str(hk.temp[2])+","+str(hk.temp[3])+"\n@\n"
+<<<<<<< HEAD
                 print(nxt)
                 text_file.write(nxt)
             except:
                 print("recovered from error")
+=======
+                print nxt
+                text_file.write(nxt)
+            except:
+                print "recovered from error"
+>>>>>>> Add main power driver
             time.sleep(t)

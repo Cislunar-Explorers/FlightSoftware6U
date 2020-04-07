@@ -4,16 +4,24 @@
 #       functions, and print functions
 #
 # Author: Daniel Kim (dsk252)
+<<<<<<< HEAD
 # Debugged by: Tobias Fischer (tmf97) and Stephen Zakoworotny (sjz38) in Spring 2020
 #
 # Date: 5/31/2020
+=======
+# 
+# Date: 10/3/16
+>>>>>>> Create files for power sys
 #
 # Status: Completed
 #
 
 from ctypes import *
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Create files for power sys
 # ----------------------------------------------FORMATTING
 # define custom infix operators
 class Operator(object):
@@ -190,6 +198,7 @@ class eps_config2_t(BigEndianStructure):
         ("reserved2",               c_uint8*4)
     ]
 
+<<<<<<< HEAD
 
 # ----------------------------------------------HELPERS
 # returns true if s is of type struct
@@ -206,11 +215,32 @@ def isStruct(s):
         eps_config2_t
     ]
     return type(s) in allStructs
+=======
+# ----------------------------------------------HELPERS
+# returns true if s is of type struct
+def isStruct(s):
+	allStructs = [
+		TestingStruct,
+		hkparam_t,
+		eps_hk_t,
+		eps_hk_vi_t,
+		eps_hk_out_t,
+		eps_hk_wdt_t,
+		eps_hk_basic_t,
+		eps_config_t,
+		eps_config2_t
+	]
+	return type(s) in allStructs
+>>>>>>> Create files for power sys
 
 # returns true if arr is a ctypes byte array with the 
 # specified number of elements.
 def isCByteArray(arr):
+<<<<<<< HEAD
     return type(arr).__name__[:13] == "c_byte_Array_"
+=======
+	return type(arr).__name__[:13] == "c_byte_Array_"
+>>>>>>> Create files for power sys
 
 # takes a string [s] and returns the appropriate struct;
 # returns TestingStruct if string does not match any struct
@@ -235,7 +265,11 @@ def structMaker(s):
 # byte array and so on. 
 # raises: AssertionError if s is not a struct
 def c_structToByteArray(s):
+<<<<<<< HEAD
     assert isStruct(s)
+=======
+	assert isStruct(s)
+>>>>>>> Create files for power sys
     byteArray = (c_byte*(sizeof(s))) ()
     spoint = pointer(s)
     cpoint = pointer(byteArray)
@@ -248,7 +282,11 @@ def c_structToByteArray(s):
 # for negative values (although it shouldn't matter in the end)
 # raises: AssertionError if b is not a ctypes byte array
 def c_byteArrayToBytes(b):
+<<<<<<< HEAD
     #assert isCByteArray(b)
+=======
+	assert isCByteArray(b)
+>>>>>>> Create files for power sys
     acc = []
     for n in b:
         if n < 0: acc += [256+n]    # adjust for negative values
@@ -277,7 +315,11 @@ def toBytes(i, num):
     binary = bin(i)[2:]
     rem = len(binary) % 8 
     binary = '0'*(8-rem)+binary     # add zeros to make it 8 bit
+<<<<<<< HEAD
     size = int(len(binary)/8)	    # Cast to int added during testing
+=======
+    size = len(binary)/8
+>>>>>>> Create files for power sys
     bytes = '0'*8*(num-size)+binary # add zeros to make it into right num of bytes
 
     acc = []
@@ -286,6 +328,7 @@ def toBytes(i, num):
 
     return bytearray(acc)
 
+<<<<<<< HEAD
 
 # bytearray -> c_bytearray takes a ctypes bytearray [i] and converts it into a python
 # bytearray. raises: AssertionError if i is not a ctypes bytearray
@@ -293,12 +336,25 @@ def c_bytesToByteArray(i):
     assert type(i).__name__ == "bytearray"
     return (c_byte*len(i))(*i)
 
+=======
+# bytearray -> c_bytearray
+# takes a ctypes bytearray [i] and converts it into
+# a python bytearray.
+# raises: AssertionError if i is not a ctypes bytearray
+def c_bytesToByteArray(i):
+	assert isCByteArray(i)
+    return (c_byte*len(i)) (*i) 
+>>>>>>> Create files for power sys
 
 # struct -> c_bytearray -> bytearray
 # converts a struct [s] into a python bytearray of the appropriate size.
 # raises: AssertionError if s is not a struct
 def c_structToBytes(s):
+<<<<<<< HEAD
     assert isStruct(s)
+=======
+	assert isStruct(s)
+>>>>>>> Create files for power sys
     return s >>_>> c_structToByteArray >>_>> c_byteArrayToBytes
 
 # bytearray -> c_bytearray -> struct
@@ -319,7 +375,10 @@ def bytesToList(b):
         acc += [n]
     return acc
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Create files for power sys
 # ----------------------------------------------DISPLAY
 # color functions
 B = lambda x: Color.BOLD+x+Color.ENDC
@@ -327,7 +386,10 @@ G = lambda x: Color.GREEN+x+Color.ENDC
 R = lambda x: Color.RED+x+Color.ENDC
 GR = lambda x: Color.GRAY+x+Color.ENDC
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Create files for power sys
 # prints housekeeping info given hkparam_t struct
 def displayHK(hk):
     assert type(hk) == hkparam_t
@@ -338,6 +400,7 @@ def displayHK(hk):
     mult = lambda x: lambda y: x*y
     add = lambda x: lambda y: x+y
     substr = lambda x: lambda y: y[x:]
+<<<<<<< HEAD
     print("***************-HOUSEKEEPING-***************" >>_>> G)
     print(GR("Photo-voltaic inputs:        ")+"1-%s 2-%s 3-%s" %                                (hk.pv[0] >>_>> str >>_>> mv >>_>> R, 
                                                                                                  hk.pv[1] >>_>> str >>_>> mv >>_>> R, 
@@ -356,10 +419,31 @@ def displayHK(hk):
                                                                                                  hk.batt_temp[0] >>_>> str >>_>> degc >>_>> R))
 
     print(GR("Latchups:                    ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]" %     (hk.latchup[0] >>_>> str >>_>> R,             
+=======
+    print "***************-HOUSEKEEPING-***************" >>_>> G
+    print GR("Photo-voltaic inputs:        ")+"1-%s 2-%s 3-%s" %                                (hk.pv[0] >>_>> str >>_>> mv >>_>> R, 
+                                                                                                 hk.pv[1] >>_>> str >>_>> mv >>_>> R, 
+                                                                                                 hk.pv[2] >>_>> str >>_>> mv >>_>> R)
+
+    print GR("Total photo current:         ")+"%s" %                                            (hk.pc >>_>> str >>_>> ma >>_>> R)
+    print GR("Battery voltage:             ")+"%s" %                                            (hk.bv >>_>> str >>_>> mv >>_>> R)
+    print GR("Total system current:        ")+"%s" %                                            (hk.sc >>_>> str >>_>> ma >>_>> R)
+
+    print GR("Temp of boost converters:    ")+"1-%s 2-%s 3-%s batt-%s" %                        (hk.temp[0] >>_>> str >>_>> degc >>_>> R,
+                                                                                                 hk.temp[1] >>_>> str >>_>> degc >>_>> R,
+                                                                                                 hk.temp[2] >>_>> str >>_>> degc >>_>> R,
+                                                                                                 hk.temp[3] >>_>> str >>_>> degc >>_>> R)
+
+    print GR("External batt temp:          ")+"1-%s 2-%s" %                                     (hk.batt_temp[0] >>_>> str >>_>> degc >>_>> R,
+                                                                                                 hk.batt_temp[0] >>_>> str >>_>> degc >>_>> R)
+
+    print GR("Latchups:                    ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]" %     (hk.latchup[0] >>_>> str >>_>> R,             
+>>>>>>> Create files for power sys
                                                                                                  hk.latchup[1] >>_>> str >>_>> R,
                                                                                                  hk.latchup[2] >>_>> str >>_>> R,
                                                                                                  hk.latchup[3] >>_>> str >>_>> R,
                                                                                                  hk.latchup[4] >>_>> str >>_>> R,
+<<<<<<< HEAD
                                                                                                  hk.latchup[5] >>_>> str >>_>> R))
 
     print(GR("Cause of last reset:         ")+"%s" %                                            (hk.reset >>_>> RES >>_>> R))
@@ -367,6 +451,15 @@ def displayHK(hk):
     print(GR("Number of software errors:   ")+"%s" %                                            (hk.sw_errors >>_>> str >>_>> R))
     print(GR("PPT mode:                    ")+"%s" %                                            (hk.ppt_mode >>_>> str >>_>> R))
     print(GR("Channel output:              ")+"%s" %                                            ((hk.channel_status >>_>> bin >>_>> substr(2) >>_>> len >>_>> mult(-1) >>_>> add(8) >>_>> mult("0"))+(hk.channel_status >>_>> bin >>_>> str >>_>> substr(2))) >>_>> R)
+=======
+                                                                                                 hk.latchup[5] >>_>> str >>_>> R)
+
+    print GR("Cause of last reset:         ")+"%s" %                                            (hk.reset >>_>> RES >>_>> R)
+    print GR("Number of reboots:           ")+"%s" %                                            (hk.bootcount >>_>> str >>_>> R)
+    print GR("Number of software errors:   ")+"%s" %                                            (hk.sw_errors >>_>> str >>_>> R)
+    print GR("PPT mode:                    ")+"%s" %                                            (hk.ppt_mode >>_>> str >>_>> R)
+    print GR("Channel output:              ")+"%s" %                                            ((hk.channel_status >>_>> bin >>_>> substr(2) >>_>> len >>_>> mult(-1) >>_>> add(8) >>_>> mult("0"))+(hk.channel_status >>_>> bin >>_>> str >>_>> substr(2))) >>_>> R
+>>>>>>> Create files for power sys
                                                                                                  
 
 # prints config info given eps_config_t struct
@@ -378,6 +471,7 @@ def displayConfig(conf):
     ma = lambda x: x+"mA"
     degc = lambda x: x+"degC"
     sec = lambda x: x+"s"
+<<<<<<< HEAD
     print("***************-CONFIG-***************" >>_>> G)
     print(GR("PPT mode:                    ")+"%s" %                                                      (conf.ppt_mode >>_>> pptmode >>_>> R))
     print(GR("Battheater mode:             ")+"%s" %                                                      (conf.battheater_mode >>_>> battheatermode >>_>> R))
@@ -385,54 +479,97 @@ def displayConfig(conf):
     print(GR("Battheater high:             ")+"%s" %                                                      (conf.battheater_high >>_>> str >>_>> degc >>_>> R))
 
     print(GR("Nominal mode output value:   ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_normal_value[0] >>_>> str >>_>> R,
+=======
+    print "***************-CONFIG-***************" >>_>> G
+    print GR("PPT mode:                    ")+"%s" %                                                      (conf.ppt_mode >>_>> pptmode >>_>> R)
+    print GR("Battheater mode:             ")+"%s" %                                                      (conf.battheater_mode >>_>> battheatermode >>_>> R)
+    print GR("Battheater low:              ")+"%s" %                                                      (conf.battheater_low >>_>> str >>_>> degc >>_>> R)
+    print GR("Battheater high:             ")+"%s" %                                                      (conf.battheater_high >>_>> str >>_>> degc >>_>> R)
+
+    print GR("Nominal mode output value:   ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_normal_value[0] >>_>> str >>_>> R,
+>>>>>>> Create files for power sys
                                                                                                          conf.output_normal_value[1] >>_>> str >>_>> R,
                                                                                                          conf.output_normal_value[2] >>_>> str >>_>> R,
                                                                                                          conf.output_normal_value[3] >>_>> str >>_>> R, 
                                                                                                          conf.output_normal_value[4] >>_>> str >>_>> R,
                                                                                                          conf.output_normal_value[5] >>_>> str >>_>> R,
                                                                                                          conf.output_normal_value[6] >>_>> str >>_>> R,
+<<<<<<< HEAD
                                                                                                          conf.output_normal_value[7] >>_>> str >>_>> R))
 
     print(GR("Safe mode output value:      ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_safe_value[0] >>_>> str >>_>> R,
+=======
+                                                                                                         conf.output_normal_value[7] >>_>> str >>_>> R)
+
+    print GR("Safe mode output value:      ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_safe_value[0] >>_>> str >>_>> R,
+>>>>>>> Create files for power sys
                                                                                                          conf.output_safe_value[1] >>_>> str >>_>> R,
                                                                                                          conf.output_safe_value[2] >>_>> str >>_>> R,
                                                                                                          conf.output_safe_value[3] >>_>> str >>_>> R, 
                                                                                                          conf.output_safe_value[4] >>_>> str >>_>> R,
                                                                                                          conf.output_safe_value[5] >>_>> str >>_>> R,
                                                                                                          conf.output_safe_value[6] >>_>> str >>_>> R,
+<<<<<<< HEAD
                                                                                                          conf.output_safe_value[7] >>_>> str >>_>> R))
 
     print(GR("Output initial on:           ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_initial_on_delay[0] >>_>> str >>_>> sec >>_>> R,
+=======
+                                                                                                         conf.output_safe_value[7] >>_>> str >>_>> R)
+
+    print GR("Output initial on:           ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_initial_on_delay[0] >>_>> str >>_>> sec >>_>> R,
+>>>>>>> Create files for power sys
                                                                                                          conf.output_initial_on_delay[1] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_on_delay[2] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_on_delay[3] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_on_delay[4] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_on_delay[5] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_on_delay[6] >>_>> str >>_>> sec >>_>> R,
+<<<<<<< HEAD
                                                                                                          conf.output_initial_on_delay[7] >>_>> str >>_>> sec >>_>> R))
 
     print(GR("Output initial off:          ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_initial_off_delay[0] >>_>> str >>_>> sec >>_>> R,
+=======
+                                                                                                         conf.output_initial_on_delay[7] >>_>> str >>_>> sec >>_>> R)
+
+    print GR("Output initial off:          ")+"1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (conf.output_initial_off_delay[0] >>_>> str >>_>> sec >>_>> R,
+>>>>>>> Create files for power sys
                                                                                                          conf.output_initial_off_delay[1] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_off_delay[2] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_off_delay[3] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_off_delay[4] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_off_delay[5] >>_>> str >>_>> sec >>_>> R,
                                                                                                          conf.output_initial_off_delay[6] >>_>> str >>_>> sec >>_>> R,
+<<<<<<< HEAD
                                                                                                          conf.output_initial_off_delay[7] >>_>> str >>_>> sec >>_>> R))
 
     print(GR("PPT point for boost conv:    ")+"1-%s 2-%s 3-%s" %                                          (conf.vboost[0] >>_>> str >>_>> mv >>_>> R,
                                                                                                          conf.vboost[1] >>_>> str >>_>> mv >>_>> R,
                                                                                                          conf.vboost[2] >>_>> str >>_>> mv >>_>> R))
+=======
+                                                                                                         conf.output_initial_off_delay[7] >>_>> str >>_>> sec >>_>> R)
+
+    print GR("PPT point for boost conv:    ")+"1-%s 2-%s 3-%s" %                                          (conf.vboost[0] >>_>> str >>_>> mv >>_>> R,
+                                                                                                         conf.vboost[1] >>_>> str >>_>> mv >>_>> R,
+                                                                                                         conf.vboost[2] >>_>> str >>_>> mv >>_>> R)
+>>>>>>> Create files for power sys
 
 # prints config2 info given eps_config2_t struct
 def displayConfig2(conf):
     assert type(conf) == eps_config2_t
     mv = lambda x: x+"mV"
+<<<<<<< HEAD
     print("***************-CONFIG2-***************" >>_>> G)
     print(GR("Batt Max Voltage:            ")+"%s" % (conf.batt_maxvoltage >>_>> str >>_>> mv >>_>> R))
     print(GR("Batt Safe Voltage:           ")+"%s" % (conf.batt_safevoltage >>_>> str >>_>> mv >>_>> R))
     print(GR("Batt Critical Voltage:       ")+"%s" % (conf.batt_criticalvoltage >>_>> str >>_>> mv >>_>> R))
     print(GR("Batt Normal Voltage:         ")+"%s" % (conf.batt_normalvoltage >>_>> str >>_>> mv >>_>> R))
+=======
+    print "***************-CONFIG2-***************" >>_>> G
+    print GR("Batt Max Voltage:            ")+"%s" % (conf.batt_maxvoltage >>_>> str >>_>> mv >>_>> R)
+    print GR("Batt Safe Voltage:           ")+"%s" % (conf.batt_safevoltage >>_>> str >>_>> mv >>_>> R)
+    print GR("Batt Critical Voltage:       ")+"%s" % (conf.batt_criticalvoltage >>_>> str >>_>> mv >>_>> R)
+    print GR("Batt Normal Voltage:         ")+"%s" % (conf.batt_normalvoltage >>_>> str >>_>> mv >>_>> R)
+>>>>>>> Create files for power sys
 
 # ----------------------------------------------CONSTANTS
 CONFIG_DEFAULT = eps_config_t()

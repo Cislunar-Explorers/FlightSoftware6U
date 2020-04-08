@@ -184,13 +184,11 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamic
     """
     # Moore-Penrose Pseudoinverse
     if not dynamicsOnly:
-        print('NOT DYNAMICS ONLY')
-        K = Pxz * (np.linalg.pinv(Pzz))
+        K = Pxz.dot(np.linalg.pinv(Pzz))
     else:
         K = np.zeros((6,6)); # To test dynamics Model
-        print('DYNAMICS ONLY')
     xNew = xMean + K.dot(measurements - zMean) 
-    pNew = Pxx - K*R*K
+    pNew = Pxx - K.dot(R.dot(K.T))
     return xNew, pNew, K
 
 def runUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, dynamicsOnly=False):

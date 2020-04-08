@@ -5,6 +5,7 @@ numpy
 opencv-python
 pandas # testing
 pytest
+tqdm
 # OpNav end
 
 

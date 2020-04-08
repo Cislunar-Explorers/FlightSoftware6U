@@ -23,10 +23,10 @@ TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_moonEph = os.path.join('ephemeris'
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_sunEph = os.path.join('ephemeris','sun_eph.csv')
 
 TEST_C1_DISCRETIZED = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'c1_discretized')
-TEST_C1_DISCRETIZED_meas = os.path.join(TEST_C1_DISCRETIZED, 'c1_discretized_meas.csv')
-TEST_C1_DISCRETIZED_moonEph = os.path.join(TEST_C1_DISCRETIZED, 'c1_discretized_moon_eph.csv')
-TEST_C1_DISCRETIZED_sunEph = os.path.join(TEST_C1_DISCRETIZED, 'c1_discretized_sun_eph.csv')
-TEST_C1_DISCRETIZED_traj = os.path.join(TEST_C1_DISCRETIZED, 'c1_discretized_traj.csv')
+TEST_C1_DISCRETIZED_meas = os.path.join(TEST_C1_DISCRETIZED, 'measurements', 'measurements.csv')
+TEST_C1_DISCRETIZED_moonEph = os.path.join(TEST_C1_DISCRETIZED, 'ephemeris', 'moon_eph.csv')
+TEST_C1_DISCRETIZED_sunEph = os.path.join(TEST_C1_DISCRETIZED, 'ephemeris', 'sun_eph.csv')
+TEST_C1_DISCRETIZED_traj = os.path.join(TEST_C1_DISCRETIZED, 'trajectory', 'trajectory.csv')
 TEST_C1_DISCRETIZED_matlab = os.path.join(TEST_C1_DISCRETIZED, 'c1_discretized_ukf_k0.csv')
 
 TEST_6HOURS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', '6Hours')

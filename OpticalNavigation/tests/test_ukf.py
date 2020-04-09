@@ -8,9 +8,7 @@ from tqdm import tqdm
 from core.ukf import runUKF
 from tests.const import POS_ERROR, VEL_ERROR
 from tests.const import MatlabTestCameraParameters
-
-import matplotlib.pyplot as plt
-
+from tests.animations import LiveTrajectoryPlot
 
 def test_dynamics_model_EM1_3DOF_Trajectory_June_27_2020_3600sec():
     """
@@ -79,7 +77,7 @@ def test_ukf_c1_discretized():
     assert posError <= POS_ERROR, 'Position error is too large'
     assert velError <= VEL_ERROR, 'Velocity error is too large'
 
-def test_ukf_6hours():
+def test_ukf_6hours(visual_analysis):
     """
     Assumes first state vector is the initial state provided by NASA at the start of mission.
     Each run is treated as a 're-initialization' of the UKF, meaning that the delta time of 3600 secs is considered
@@ -97,12 +95,11 @@ def test_ukf_6hours():
     P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
     state = (np.array([trajTruthdf.iloc[0]['x'], trajTruthdf.iloc[0]['y'], trajTruthdf.iloc[0]['z'], trajTruthdf.iloc[0]['vx'], trajTruthdf.iloc[0]['vy'], trajTruthdf.iloc[0]['vz']], dtype=np.float)).reshape(6,1)
     
-    plt.style.use('fivethirtyeight')
-    x_vals = []
-    y_vals = []
-    plt.plot(x_vals, y_vals)
-    plt.show()
-   
+    liveTraj = None
+    print(visual_analysis)
+    if visual_analysis == "True":
+        liveTraj = LiveTrajectoryPlot()
+
     for t in tqdm(range( int(trajTruthdf.shape[0]*1 - 1) ), desc ='Trajectory Completion'):
         moonEph = (np.array([moonEphdf.iloc[t]['x'], moonEphdf.iloc[t]['y'], moonEphdf.iloc[t]['z'], moonEphdf.iloc[t]['vx'], moonEphdf.iloc[t]['vy'], moonEphdf.iloc[t]['vz']], dtype=np.float)).reshape(1,6)
         sunEph = (np.array([sunEphdf.iloc[t]['x'], sunEphdf.iloc[t]['y'], sunEphdf.iloc[t]['z'], sunEphdf.iloc[t]['vx'], sunEphdf.iloc[t]['vy'], sunEphdf.iloc[t]['vz']], dtype=np.float)).reshape(1,6)
@@ -110,9 +107,15 @@ def test_ukf_6hours():
         state, P, K = runUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, dynamicsOnly=False)
         # Per iteration error
         traj = (np.array([trajTruthdf.iloc[t]['x'], trajTruthdf.iloc[t]['y'], trajTruthdf.iloc[t]['z'], trajTruthdf.iloc[t]['vx'], trajTruthdf.iloc[t]['vy'], trajTruthdf.iloc[t]['vz']], dtype=np.float)).reshape(6,1)
-        posError = math.sqrt( np.sum((traj.flatten()[:3] - state.flatten()[:3])**2) )
-        print(t)
-        print(posError)
+        traj = traj.flatten()
+        fstate = state.flatten()
+        posError = math.sqrt( np.sum((traj[:3] - fstate[:3])**2) )
+        # plot
+        if liveTraj:
+            liveTraj.updateEstimatedTraj(fstate[0], fstate[1], fstate[2])
+            liveTraj.updateTrueTraj(traj[0], traj[1], traj[2])
+            liveTraj.render()
+
     t = trajTruthdf.shape[0] - 1
     traj = (np.array([trajTruthdf.iloc[t]['x'], trajTruthdf.iloc[t]['y'], trajTruthdf.iloc[t]['z'], trajTruthdf.iloc[t]['vx'], trajTruthdf.iloc[t]['vy'], trajTruthdf.iloc[t]['vz']], dtype=np.float)).reshape(6,1)
         

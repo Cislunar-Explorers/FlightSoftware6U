@@ -9,6 +9,12 @@
 * Run `pytest -s <FILENAME>::<TEST FUNCTION NAME>` to run a specific test.
 * To run all tests in a file, just use `<FILENAME>`.
 
+### UKF visual analysis
+
+* Each UKF test includes a live estimated + ground truth trajectory tracker that can prove beneficial in seeing how well the UKF performs.
+* To turn on the visual analysis for a specific test, run: `pytest -s test_ukf.py::<TEST FUNCTION NAME> --visual_analysis True`. 
+* Default value for `visual_analysis` is set to `False` as to prevent extra time taken up by rendering the plot during unit testing.
+
 ## Find Dataset
 
 [Eclipse and Crescent Images](https://cornell.app.box.com/folder/108235110877)

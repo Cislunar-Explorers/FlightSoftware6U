@@ -13,6 +13,7 @@
 
 from ctypes import *
 
+
 # ----------------------------------------------FORMATTING
 # define custom infix operators
 class Operator(object):
@@ -293,6 +294,7 @@ def c_bytesToByteArray(i):
     return (c_byte*len(i))(*i)
 
 
+
 # struct -> c_bytearray -> bytearray
 # converts a struct [s] into a python bytearray of the appropriate size.
 # raises: AssertionError if s is not a struct
@@ -318,12 +320,14 @@ def bytesToList(b):
         acc += [n]
     return acc
 
+
 # ----------------------------------------------DISPLAY
 # color functions
 B = lambda x: Color.BOLD+x+Color.ENDC
 G = lambda x: Color.GREEN+x+Color.ENDC
 R = lambda x: Color.RED+x+Color.ENDC
 GR = lambda x: Color.GRAY+x+Color.ENDC
+
 
 # prints housekeeping info given hkparam_t struct
 def displayHK(hk):

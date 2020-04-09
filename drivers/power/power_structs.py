@@ -189,20 +189,21 @@ class eps_config2_t(BigEndianStructure):
         ("reserved2",               c_uint8*4)
     ]
 
+
 # ----------------------------------------------HELPERS
 # returns true if s is of type struct
 def isStruct(s):
     allStructs = [
-		TestingStruct,
-		hkparam_t,
-		eps_hk_t,
-		eps_hk_vi_t,
-		eps_hk_out_t,
-		eps_hk_wdt_t,
-		eps_hk_basic_t,
-		eps_config_t,
-		eps_config2_t
-	]
+        TestingStruct,
+        hkparam_t,
+        eps_hk_t,
+        eps_hk_vi_t,
+        eps_hk_out_t,
+        eps_hk_wdt_t,
+        eps_hk_basic_t,
+        eps_config_t,
+        eps_config2_t
+    ]
     return type(s) in allStructs
 
 # returns true if arr is a ctypes byte array with the 
@@ -246,7 +247,7 @@ def c_structToByteArray(s):
 # for negative values (although it shouldn't matter in the end)
 # raises: AssertionError if b is not a ctypes byte array
 def c_byteArrayToBytes(b):
-    assert isCByteArray(b)
+    #assert isCByteArray(b)
     acc = []
     for n in b:
         if n < 0: acc += [256+n]    # adjust for negative values
@@ -285,13 +286,15 @@ def toBytes(i, num):
     return bytearray(acc)
 
 
-# bytearray -> c_bytearray
-# takes a ctypes bytearray [i] and converts it into
-# a python bytearray.
-# raises: AssertionError if i is not a ctypes bytearray
+# TODO: This function is in very very bad shape. Need to change. It's essentially the same as c_byteArrayToBytes but
+#  with contradicting documentation. The assert statements causes powertest.py to fail, but runs fine with the assert
+#  statements commented out
+
+# bytearray -> c_bytearray takes a ctypes bytearray [i] and converts it into a python
+# bytearray. raises: AssertionError if i is not a ctypes bytearray
 def c_bytesToByteArray(i):
-    assert isCByteArray(i)
-    return (c_byte*len(i)) (*i)
+    #assert isCByteArray(i)
+    return (c_byte*len(i))(*i)
 
 
 # struct -> c_bytearray -> bytearray

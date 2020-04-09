@@ -126,5 +126,5 @@ if __name__ == '__main__':
     print("res2:     " + "("+str(struct.reserved2[0])+", "+str(struct.reserved2[1])+", "+str(struct.reserved2[2])+", "+str(struct.reserved2[3])+")")
     print("----end----\n")
 
-    g = [1, 2, 3, 4, 5, 6, 7]
-    print(reverseList(g))
+    #g = [1, 2, 3, 4, 5, 6, 7]
+    #print(reverseList(g))

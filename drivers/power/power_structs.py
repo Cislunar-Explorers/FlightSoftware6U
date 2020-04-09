@@ -191,7 +191,7 @@ class eps_config2_t(BigEndianStructure):
 # ----------------------------------------------HELPERS
 # returns true if s is of type struct
 def isStruct(s):
-	allStructs = [
+    allStructs = [
 		TestingStruct,
 		hkparam_t,
 		eps_hk_t,
@@ -202,12 +202,12 @@ def isStruct(s):
 		eps_config_t,
 		eps_config2_t
 	]
-	return type(s) in allStructs
+    return type(s) in allStructs
 
 # returns true if arr is a ctypes byte array with the 
 # specified number of elements.
 def isCByteArray(arr):
-	return type(arr).__name__[:13] == "c_byte_Array_"
+    return type(arr).__name__[:13] == "c_byte_Array_"
 
 # takes a string [s] and returns the appropriate struct;
 # returns TestingStruct if string does not match any struct
@@ -232,7 +232,7 @@ def structMaker(s):
 # byte array and so on. 
 # raises: AssertionError if s is not a struct
 def c_structToByteArray(s):
-	assert isStruct(s)
+    assert isStruct(s)
     byteArray = (c_byte*(sizeof(s))) ()
     spoint = pointer(s)
     cpoint = pointer(byteArray)
@@ -245,7 +245,7 @@ def c_structToByteArray(s):
 # for negative values (although it shouldn't matter in the end)
 # raises: AssertionError if b is not a ctypes byte array
 def c_byteArrayToBytes(b):
-	assert isCByteArray(b)
+    assert isCByteArray(b)
     acc = []
     for n in b:
         if n < 0: acc += [256+n]    # adjust for negative values
@@ -288,14 +288,14 @@ def toBytes(i, num):
 # a python bytearray.
 # raises: AssertionError if i is not a ctypes bytearray
 def c_bytesToByteArray(i):
-	assert isCByteArray(i)
-    return (c_byte*len(i)) (*i) 
+    assert isCByteArray(i)
+    return (c_byte*len(i)) (*i)
 
 # struct -> c_bytearray -> bytearray
 # converts a struct [s] into a python bytearray of the appropriate size.
 # raises: AssertionError if s is not a struct
 def c_structToBytes(s):
-	assert isStruct(s)
+    assert isStruct(s)
     return s >>_>> c_structToByteArray >>_>> c_byteArrayToBytes
 
 # bytearray -> c_bytearray -> struct
@@ -423,7 +423,7 @@ def displayConfig(conf):
 def displayConfig2(conf):
     assert type(conf) == eps_config2_t
     mv = lambda x: x+"mV"
-    print("***************-CONFIG2-***************" >>_>> G
+    print("***************-CONFIG2-***************" >>_>> G)
     print(GR("Batt Max Voltage:            ")+"%s" % (conf.batt_maxvoltage >>_>> str >>_>> mv >>_>> R))
     print(GR("Batt Safe Voltage:           ")+"%s" % (conf.batt_safevoltage >>_>> str >>_>> mv >>_>> R))
     print(GR("Batt Critical Voltage:       ")+"%s" % (conf.batt_criticalvoltage >>_>> str >>_>> mv >>_>> R))

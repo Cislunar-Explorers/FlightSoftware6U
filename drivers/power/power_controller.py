@@ -11,16 +11,16 @@
 #         be implemented (if necessary)
 
 from pigpio import *
-from power_structs import *
+from .power_structs import *
 import RPi.GPIO as GPIO
 import time
-import datetime
-import power_structs
+#import datetime
+#from .power_structs import power_structs
 
 # I2C libraries
 import Adafruit_ADS1x15
-import SDL_DS3231
-from L3GD20 import L3GD20
+from .SDL_DS3231 import SDL_DS3231
+from .L3GD20 import L3GD20
 
 # pipeline operator (>>_>>)
 _ = power_structs._
@@ -86,6 +86,7 @@ OUT_PI_SPARKPLUG        = 7     # GPIO 4
 OUT_PI_COMMS            = 11    # GPIO 17
 OUT_PI_SOLENOID_ENABLE  = 38    # GPIO 20
 
+
 class Power(object):
     # initializes power object with bus [bus] and device address [addr]
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
@@ -139,7 +140,7 @@ class Power(object):
         # first two read bytes -> [command][error code][data]
         (x, r) = self._pi.i2c_read_device(self._dev, bytes+2) 
         if r[1] != 0:
-            print "Command %i failed with error code %i" % (r[0], r[1])
+            print("Command %i failed with error code %i" % (r[0], r[1]))
         return r[2:]
 
     # pings value
@@ -202,8 +203,8 @@ class Power(object):
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
-    	assert 0 <= channel <= 7, "channel must be in range [0, 7]"
-    	assert value == 0 or value == 1, "value must be 0 or 1"
+        assert 0 <= channel <= 7, "channel must be in range [0, 7]"
+        assert value == 0 or value == 1, "value must be 0 or 1"
         d = toBytes(delay, 2)
         self.write(CMD_SET_SINGLE_OUTPUT, [channel, value]+list(d))
 
@@ -212,7 +213,7 @@ class Power(object):
     # volt1~volt3 [2 bytes] -> value in mV
     # raises: AssertionError if voltages are over the max pv voltage
     def set_pv_volt(self, volt1, volt2, volt3):
-    	assert volt1 <= MAX_PV_VOLTAGE and volt2 <= MAX_PV_VOLTAGE and volt3 <= MAX_PV_VOLTAGE
+        assert volt1 <= MAX_PV_VOLTAGE and volt2 <= MAX_PV_VOLTAGE and volt3 <= MAX_PV_VOLTAGE
         v = bytearray(6)
         v[0:2] = toBytes(volt1, 2)
         v[2:4] = toBytes(volt2, 2)
@@ -226,7 +227,7 @@ class Power(object):
     # MODE = 2: Fixed software powerpoint, value set with SET_PV_VOLT, default 4V
     # raises: AssertionError if mode is not 0, 1, or 2
     def set_pv_auto(self, mode):
-    	assert mode in [0, 1, 2]
+        assert mode in [0, 1, 2]
         self.write(CMD_SET_PV_AUTO, [mode])
 
     # returns bytearray with heater modes
@@ -236,7 +237,7 @@ class Power(object):
     # return    [2 bytes] -> heater modes
     # raises: AssertionError if variables are not in correct range
     def set_heater(self, command, heater, mode):
-    	assert command == 0 and heater in [0, 1, 2] and mode in [0, 1]
+        assert command == 0 and heater in [0, 1, 2] and mode in [0, 1]
         self.write(CMD_SET_HEATER, [command, heater, mode])
         return self.read(2)
 
@@ -256,7 +257,7 @@ class Power(object):
     # cmd [1 byte] -> cmd = 1: Restore default config
     # raises: AssertionError if command is not 1
     def config_cmd(self, command):
-    	assert command == 1
+        assert command == 1
         self.write(CMD_CONFIG_CMD, [command])
 
     # returns eps_config_t structure
@@ -280,7 +281,7 @@ class Power(object):
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
     # raises: AssertionError if command is not a valid value
     def config2_cmd(self, command): 
-    	assert command in [1, 2]
+        assert command in [1, 2]
         self.write(CMD_CONFIG2_CMD, [command]) 
 
     # Use this command to request the P31 config 2.
@@ -297,8 +298,7 @@ class Power(object):
         array = struct >>_>> c_structToBytes >>_>> bytesToList
         self.write(CMD_CONFIG2_SET, array)
 
-
-    # Higher level functions ---------------------------------------------------------
+    # Higher level functions -------------------------------------------------
 
     # output must be off before the function is called.
     # pulses output [output] high for some amount of 
@@ -371,7 +371,7 @@ class Power(object):
         for i in range(n):
             val = 5*self._adc.read_adc(0, gain)/26676
             output += [val]
-            print val
+            print(val)
             time.sleep(t)
         return output
 
@@ -381,8 +381,8 @@ class Power(object):
             val = self._rtc.read_datetime()
             temp = self._rtc.getTemp()
             output += [(val, temp)]
-            print val
-            print temp
+            print(val)
+            print(temp)
             time.sleep(t)
         return output
 
@@ -392,9 +392,9 @@ class Power(object):
         z = 0
         while True:
             dxyz = self._gyro.Get_CalOut_Value()
-            x += dxyz[0]*dt;
-            y += dxyz[1]*dt;
-            z += dxyz[2]*dt;
+            x += dxyz[0]*dt
+            y += dxyz[1]*dt
+            z += dxyz[2]*dt
             print("{:7.2f} {:7.2f} {:7.2f}".format(x, y, z))
             time.sleep(dt)
 
@@ -433,11 +433,11 @@ class Power(object):
             rtc_r3 = " "*len(header_rtc)
 
             # print everything
-            print "|%s|%s|%s|" % (header_gyro,  header_adc, header_rtc)
-            print "|%s|%s|%s|" % (gyro_r1,      adc_r1,     rtc_r1)
-            print "|%s|%s|%s|" % (gyro_r2,      adc_r2,     rtc_r2)
-            print "|%s|%s|%s|" % (gyro_r3,      adc_r3,     rtc_r3)
-            print "\033[F"*5
+            print("|%s|%s|%s|" % (header_gyro,  header_adc, header_rtc))
+            print("|%s|%s|%s|" % (gyro_r1,      adc_r1,     rtc_r1))
+            print("|%s|%s|%s|" % (gyro_r2,      adc_r2,     rtc_r2))
+            print("|%s|%s|%s|" % (gyro_r3,      adc_r3,     rtc_r3))
+            print("\033[F"*5)
 
             time.sleep(dt)
 
@@ -474,8 +474,8 @@ class Power(object):
                       "bv "+str(hk.bv)+"\n" + \
                       "sc "+str(hk.sc)+"\n" + \
                       "temp "+str(hk.temp[0])+","+str(hk.temp[1])+","+str(hk.temp[2])+","+str(hk.temp[3])+"\n@\n"
-                print nxt
+                print(nxt)
                 text_file.write(nxt)
             except:
-                print "recovered from error"
+                print("recovered from error")
             time.sleep(t)

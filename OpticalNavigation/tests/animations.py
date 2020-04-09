@@ -7,8 +7,8 @@ class LiveTrajectoryPlot:
         self.estimated_traj = {'x':[],'y':[],'z':[]}
         self.true_traj = {'x':[],'y':[],'z':[]}
         plt.ion()
-        fig = plt.figure()
-        self.ax = fig.add_subplot(111, projection='3d')
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111, projection='3d')
 
     def updateEstimatedTraj(self, x, y, z):
         self.estimated_traj['x'].append(x)
@@ -20,13 +20,17 @@ class LiveTrajectoryPlot:
         self.true_traj['y'].append(y)
         self.true_traj['z'].append(z)
 
-    def render(self, delay=0.001):
+    def render(self, delay=0.001, text=''):
         self.ax.cla()
+        self.fig.suptitle(text)
         self.ax.plot(self.estimated_traj['x'], self.estimated_traj['y'], self.estimated_traj['z'], color='blue', label='estimated trajectory',alpha=0.5)
         self.ax.plot(self.true_traj['x'], self.true_traj['y'], self.true_traj['z'], color='red', label='ground truth trajectory',alpha=0.5)
         self.ax.legend()
         plt.draw()
         plt.pause(delay)
+    
+    def close(self):
+        plt.close(self.fig)
 
 
     # import random

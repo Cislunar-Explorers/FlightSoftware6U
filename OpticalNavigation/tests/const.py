@@ -44,3 +44,8 @@ SUN_CENTER_ERROR = 5
 SUN_RADIUS_ERROR = 5 # Sun doesn't change much, which should mean better detections
 MOON_CENTER_ERROR = 20
 MOON_RADIUS_ERROR = 30 # Out of all bodies, Moon changes in appearance the most
+
+# Noise in state vector provided by NASA at the start of the mission
+ZERO_STARTING_NOISE = [0,0,0,0,0,0] 
+SMALL_STARTING_NOISE = [1,1,1,1,1,1]
+LARGE_STARTING_NOISE = [10,10,10,5,5,5]

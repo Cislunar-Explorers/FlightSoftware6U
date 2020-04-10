@@ -12,24 +12,26 @@ class MatlabTestCameraParameters:
     dcam13 = -60
     dcam23 = -120
 
-TEST_ECLIPSEANDCRESCENTIMAGES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data','EclipseAndCrescentImages')
+TEST_DATA_DIR = os.path.join('D:', 'OpNav')
+
+TEST_ECLIPSEANDCRESCENTIMAGES = os.path.join(TEST_DATA_DIR, 'data','EclipseAndCrescentImages')
 TEST_FIND_DATASET_IMAGE_DIR = 'images'
 TEST_FIND_DATASET_CIRCLES_DIR = os.path.join('circles','circles.csv')
 
-TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data','EM1_3DOF_Trajectory_June_27_2020_3600sec')
+TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec = os.path.join(TEST_DATA_DIR, 'data','EM1_3DOF_Trajectory_June_27_2020_3600sec')
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_iterations = 'iterations'
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_trajectory = os.path.join('trajectory','trajectory.csv')
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_moonEph = os.path.join('ephemeris','moon_eph.csv')
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_sunEph = os.path.join('ephemeris','sun_eph.csv')
 
-TEST_C1_DISCRETIZED = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'c1_discretized')
+TEST_C1_DISCRETIZED = os.path.join(TEST_DATA_DIR, 'data', 'c1_discretized')
 TEST_C1_DISCRETIZED_meas = os.path.join(TEST_C1_DISCRETIZED, 'measurements', 'measurements.csv')
 TEST_C1_DISCRETIZED_moonEph = os.path.join(TEST_C1_DISCRETIZED, 'ephemeris', 'moon_eph.csv')
 TEST_C1_DISCRETIZED_sunEph = os.path.join(TEST_C1_DISCRETIZED, 'ephemeris', 'sun_eph.csv')
 TEST_C1_DISCRETIZED_traj = os.path.join(TEST_C1_DISCRETIZED, 'trajectory', 'trajectory.csv')
 TEST_C1_DISCRETIZED_matlab = os.path.join(TEST_C1_DISCRETIZED, 'c1_discretized_ukf_k0.csv')
 
-TEST_6HOURS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', '6Hours')
+TEST_6HOURS = os.path.join(TEST_DATA_DIR, 'data', '6Hours')
 TEST_6HOURS_meas = os.path.join(TEST_6HOURS, 'measurements', 'measurements.csv')
 TEST_6HOURS_moonEph = os.path.join(TEST_6HOURS, 'ephemeris', 'moon_eph.csv')
 TEST_6HOURS_sunEph = os.path.join(TEST_6HOURS, 'ephemeris', 'sun_eph.csv')

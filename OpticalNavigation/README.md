@@ -12,6 +12,7 @@
 ### UKF visual analysis
 
 * Each UKF test includes a live estimated + ground truth trajectory tracker that can prove beneficial in seeing how well the UKF performs.
+* Download the appropriate datasets and put them in a folder called `/data`. Set `TEST_DATA_DIR` to point to that location.
 * To turn on the visual analysis for a specific test, run: `pytest -s test_ukf.py::<TEST FUNCTION NAME> --visual_analysis True`. 
 * Default value for `visual_analysis` is set to `False` as to prevent extra time taken up by rendering the plot during unit testing.
 

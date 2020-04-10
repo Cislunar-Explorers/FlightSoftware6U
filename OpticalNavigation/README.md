@@ -16,13 +16,9 @@
 * To turn on the visual analysis for a specific test, run: `pytest -s test_ukf.py::<TEST FUNCTION NAME> --visual_analysis True`. 
 * Default value for `visual_analysis` is set to `False` as to prevent extra time taken up by rendering the plot during unit testing.
 
-## Find Dataset
+## Datasets
 
-[Eclipse and Crescent Images](https://cornell.app.box.com/folder/108235110877)
-
-## UKF Dataset
-
-[EM1_3DOF_Trajectory_June_27_2020_3600sec](https://cornell.app.box.com/folder/108235850425)
+Find all OpNav related datasets [here](https://cornell.app.box.com/folder/96363700749)
 
 **Copy all testing datasets into tests/data**
 

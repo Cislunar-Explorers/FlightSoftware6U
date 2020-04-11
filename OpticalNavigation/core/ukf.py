@@ -146,7 +146,7 @@ def getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight):
     zMean = otherWeight*np.sum(sigmaMeasurements[:,1:],1).reshape(zMean.shape[0],1) + zMean.reshape(zMean.shape[0],1)
     return xMean, zMean
 
-def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, cW, otherWeight, alpha, beta, R):
+def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, alpha, beta, R):
     """
     Calculating weighted sums of Covariances 
     [xMean,zMean,propSigmas,sigmaMeasurements, weights] See getMeans for description
@@ -156,13 +156,13 @@ def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, cW, otherWeight
     Returns:
     [Pxx, Pxz, Pzz]
     """
-    centerWeight = cW + 1 - alpha**2 + beta
+    centerrWeight = centerWeight + 1 - alpha**2 + beta
     xx = propSigmas[:,0].reshape(6,1) - xMean
     zz = sigmaMeasurements[:,0].reshape(6,1) - zMean
 
-    Pxx = centerWeight * (xx.dot(xx.T))
-    Pxz = centerWeight * (xx.dot(zz.T))
-    Pzz = centerWeight * (zz.dot(zz.T))
+    Pxx = centerrWeight * (xx.dot(xx.T))
+    Pxz = centerrWeight * (xx.dot(zz.T))
+    Pzz = centerrWeight * (zz.dot(zz.T))
 
     xx2 = propSigmas[:,1:] - xMean
     zz2 = sigmaMeasurements[:,1:] - zMean
@@ -247,15 +247,4 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, dynami
     xNew, pNew, K =  newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(6,1), R, initState, dynamicsOnly=dynamicsOnly)
     return xNew, pNew, K
 
-# def main():
-#     traj = (np.array([883.9567, 1.023e+03, 909.665, 65.648, 11.315, 28.420], dtype=np.float)).reshape(6,1)
-#     moonEph = (np.array([1.536e+05, -3.723e+05, 2.888e+03, 0.9089, 0.3486, -0.0880], dtype=np.float)).reshape(1,6)
-#     sunEph = (np.array([-3.067e+07, -1.441e+08, 6.67e+03, 29.6329, -6.0859, -8.8015e-04], dtype=np.float)).reshape(1,6)
-#     P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
-#     measurements = (np.array([3783.89178515,  854.57125906, 3446.64998585,  544.40002441, 1949.59997559, 40.0], dtype=np.float)).reshape(6,1)
-
-#     xNew, pNew, K = runUKF(moonEph, sunEph, measurements, traj, 60, P, cameraParams=CisLunarCameraParameters)
-
-# if __name__ == "__main__":
-#     main()
 

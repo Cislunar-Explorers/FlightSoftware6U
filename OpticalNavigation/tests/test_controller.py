@@ -7,6 +7,7 @@ from tests.const import TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec, TEST_EM1_
 from tests.const import TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_moonEph, TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_sunEph
 from tests.const import TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_iterations
 from tests.const import POS_ERROR, VEL_ERROR
+from tests.const import MatlabTestCameraParameters
 from core.controller import run
 
 def test_controller_EM1_3DOF_Trajectory_June_27_2020_3600sec():
@@ -28,7 +29,7 @@ def test_controller_EM1_3DOF_Trajectory_June_27_2020_3600sec():
         testImgDir = os.path.join(TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec, TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_iterations, str(iteration))
         t = iteration - 1
         try:
-            state, P, K = run(t, moonEph, sunEph, state, P, dir=testImgDir)
+            state, P, K = run(t, moonEph, sunEph, state, P, MatlabTestCameraParameters, dir=testImgDir)
             trueTraj = (np.array([trajTruthdf.iloc[t]['x'], trajTruthdf.iloc[t]['y'], trajTruthdf.iloc[t]['z'], trajTruthdf.iloc[t]['vx'], trajTruthdf.iloc[t]['vy'], trajTruthdf.iloc[t]['vz']], dtype=np.float)).reshape(6,1)
             print('---------------\nTrue traj: {}\nEstimated traj: {}\nK: {}\nP: {}'.format(trueTraj, state, K, P))
         except Exception as e:

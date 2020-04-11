@@ -1,6 +1,8 @@
 import numpy as np
 import time
 
+from core.const import ACQUISITION_ANGLE_INCREMENT, ACQUISITION_COMPENSATION_ROTATION, ACQUISITION_START_ANGLE, ACQUISITION_ANGLE_DISPLACEMENT
+
 INIT_IMG_CAPTURE_TIME = 1.2 # seconds
 INIT_READ_OMEGA_TIME = 1.5 # seconds
 
@@ -19,14 +21,14 @@ def captureImg(dir):
     print("Image acquired: " + str(time.time()))
 
 def acquire_frames(func_captureframe, dir):
-    currentAngle = 315 # degrees
-    delta = 315 # degrees
+    currentAngle = ACQUISITION_START_ANGLE # degrees
+    delta = ACQUISITION_ANGLE_DISPLACEMENT # degrees
     timeImg = INIT_IMG_CAPTURE_TIME # seconds
     omega = readOmega() * 180 / np.pi
     # adjust the amount of spin consumed due to delay
     timeWait = delta / omega - timeImg
     while timeWait < 0:
-        delta = delta + 360 # satellite must rotate for a full revolution
+        delta = delta + ACQUISITION_COMPENSATION_ROTATION # satellite must rotate for a full revolution
         timeWait = delta / omega - timeImg
     print('Acquisition will consume {} extra rotations per frame'.format(int(delta/360)))
     while (currentAngle >= 0):
@@ -38,7 +40,7 @@ def acquire_frames(func_captureframe, dir):
 
         print(elapsedTime)
 
-        currentAngle = currentAngle - 45
+        currentAngle = currentAngle - ACQUISITION_ANGLE_INCREMENT
         timeWait = delta / omega - timeImg
 
 def startAcquisition(dir):
@@ -47,9 +49,3 @@ def startAcquisition(dir):
     [dir]: Directory of acquired images. Should have subfolders Camera1/, Camera2/, Camera3/
     """
     acquire_frames(captureImg, dir)
-
-def main():
-    startAcquisition()
-
-if __name__ == "__main__":
-    main()  

@@ -294,6 +294,7 @@ def toBytes(i, num):
 # bytearray. raises: AssertionError if i is not a ctypes bytearray
 def c_bytesToByteArray(i):
     #assert isCByteArray(i)
+    assert type(i).__name__ == "bytearray"
     return (c_byte*len(i))(*i)
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from const import CameraParameters
+from core.const import CisLunarCameraParameters
 
 # How wrong our dynamics model is? e.g. how off in variance will we be due
 # to solar radiation pressure, galactic particles, and bad gravity model? 
@@ -57,7 +57,7 @@ def makeSigmas(initState, Sx, Sv, nx, nv, constant):
     return sigmas, noise
 
 def G(rec, rem, rcm, rcs, res):
-    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm*rcm.T)**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs*rcs.T)**(3/2)) - res/(np.linalg.norm(res)**3) )
+    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm.dot(rcm.T))**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs.dot(rcs.T))**(3/2)) - res/(np.linalg.norm(res)**3) )
 
 def dynamics_model(state, dt, moonEph, sunEph):
     """
@@ -156,26 +156,25 @@ def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, o
     Returns:
     [Pxx, Pxz, Pzz]
     """
-    centerWeight = centerWeight + 1 - alpha**2 + beta
-    xx = propSigmas[:,0] - xMean
-    zz = sigmaMeasurements[:,0] - zMean
+    centerrWeight = centerWeight + 1 - alpha**2 + beta
+    xx = propSigmas[:,0].reshape(6,1) - xMean
+    zz = sigmaMeasurements[:,0].reshape(6,1) - zMean
 
-    Pxx = centerWeight * (xx*xx.T)
-    Pxz = centerWeight * (xx*zz.T)
-    Pzz = centerWeight * (zz*zz.T)
+    Pxx = centerrWeight * (xx.dot(xx.T))
+    Pxz = centerrWeight * (xx.dot(zz.T))
+    Pzz = centerrWeight * (zz.dot(zz.T))
 
     xx2 = propSigmas[:,1:] - xMean
     zz2 = sigmaMeasurements[:,1:] - zMean
 
     for i in range(length(xx2)):
-        Pxx = otherWeight * xx2[:,i]*xx2[:,i].T + Pxx
-        Pxz = otherWeight * xx2[:,i]*zz2[:,i].T + Pxz
-        Pzz = otherWeight * zz2[:,i]*zz2[:,i].T + Pzz
-    
+        Pxx = otherWeight * xx2[:,i].reshape(6,1).dot(xx2[:,i].reshape(1,6)) + Pxx
+        Pxz = otherWeight * xx2[:,i].reshape(6,1).dot(zz2[:,i].reshape(1,6)) + Pxz
+        Pzz = otherWeight * zz2[:,i].reshape(6,1).dot(zz2[:,i].reshape(1,6)) + Pzz
     Pzz = Pzz + R
     return Pxx, Pxz, Pzz
 
-def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
+def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamicsOnly=False):
     """
     Calculates new state given weighted sums of expected measurements and propogated sigmas (dynamics model)
     Returns:
@@ -184,14 +183,15 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
     [K]: Kalman gain
     """
     # Moore-Penrose Pseudoinverse
-    K = Pxz*np.linalg.pinv(Pzz);
-    # K = 0; % To test dynamics Model
-    xNew = xMean + K.dot(measurements - zMean)
-    pNew = Pxx - K*R*K
-
+    if not dynamicsOnly:
+        K = Pxz.dot(np.linalg.pinv(Pzz))
+    else:
+        K = np.zeros((6,6)); # To test dynamics Model
+    xNew = xMean + K.dot(measurements - zMean) 
+    pNew = Pxx - K.dot(R.dot(K.T))
     return xNew, pNew, K
 
-def runUKF(moonEph, sunEph, measurements, initState, dt, P):
+def runUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, dynamicsOnly=False):
     """
     One full execution of the ukf
     [moonEph]: Moon ephemeris vector (1,6)
@@ -200,6 +200,7 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     [initEstimate]: state vector from previous execution (or start state) (6x1)
     [dt]: time elapsed since last execution (seconds)
     [P]: initial covariance matrix for state estimate
+    [dynamicsOnly]: trust the dynamics model over measurements (helpful for testing)
     Returns:
     [xNew, pNew, K]: (6x1) new state vector, (6x6) new state covariance estimate, kalman gain
     """
@@ -212,10 +213,10 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     centerWeight = lmbda/(nx+nv+lmbda)
     otherWeight = 1/(2*(nx+nv+lmbda))
 
-    const = CameraParameters.hPix/(CameraParameters.hFov*np.pi/180) # camera constant: PixelWidth/FOV  [pixels/radians]
+    const = cameraParams.hPix/(cameraParams.hFov*np.pi/180) # camera constant: PixelWidth/FOV  [pixels/radians]
 
     Sx = np.linalg.cholesky(P)
-    
+
     # Generate Sigma Points
     sigmas, noise = makeSigmas(initState, Sx, Sv, nx, nv, constant)
 
@@ -224,35 +225,26 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
 
     # Proprogate Sigma Points by running through dynamics model/function
     for j in range(length(sigmas)):
-        propSigmas[:,j] = dynamics_model(sigmas[:,j]+noise[:,j], dt, moonEph, sunEph);
+        propSigmas[:,j] = dynamics_model(sigmas[:,j]+noise[:,j], dt, moonEph, sunEph)
     
     sigmaMeasurements = np.zeros((6,length(propSigmas)))
     
     # Sigma measurements are the expected measurements calculated from
     # running the propagated sigma points through measurement model
     for j in range(length(sigmas)):
-        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),R).T, moonEph, sunEph, const) 
-    
+        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),R).T, moonEph, sunEph, const)
+
     # a priori estimates
     xMean, zMean = getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight)
 
     # Calculates the covariances as weighted sums
     Pxx, Pxz, Pzz = findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, alpha, beta, R)
+    # print(Pxx)
+    # print(Pxz)
+    # print(Pzz)
 
     # a posteriori estimates
-    return newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(measurements.shape[0],1), R, initState)
+    xNew, pNew, K =  newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(6,1), R, initState, dynamicsOnly=dynamicsOnly)
+    return xNew, pNew, K
 
-
-def main():
-    traj = (np.array([883.9567, 1.023e+03, 909.665, 65.648, 11.315, 28.420], dtype=np.float)).reshape(6,1)
-    moonEph = (np.array([1.536e+05, -3.723e+05, 2.888e+03, 0.9089, 0.3486, -0.0880], dtype=np.float)).reshape(1,6)
-    sunEph = (np.array([-3.067e+07, -1.441e+08, 6.67e+03, 29.6329, -6.0859, -8.8015e-04], dtype=np.float)).reshape(1,6)
-    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
-    measurements = (np.array([3783.89178515,  854.57125906, 3446.64998585,  544.40002441, 1949.59997559, 40.0], dtype=np.float)).reshape(6,1)
-
-    xNew, pNew, K = runUKF(moonEph, sunEph, measurements, traj, 60, P)
-    print(xNew)
-
-if __name__ == "__main__":
-    main()
 

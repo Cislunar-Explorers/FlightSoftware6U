@@ -6,12 +6,21 @@
 
 ## Unit Tests
 
-* Run `python3 -m unittest tests.<MODULE>.<CLASS>.<TEST>` to run a specific test.
-* To run all tests in a file, just use `test.<MODULE>`.
+* Run `pytest -s <FILENAME>::<TEST FUNCTION NAME>` to run a specific test.
+* To run all tests in a file, just use `<FILENAME>`.
 
-## Find Dataset
+### UKF visual analysis
 
-[Eclipse and Crescent Images](https://cornell.app.box.com/folder/106277463841)
+* Each UKF test includes a live estimated + ground truth trajectory tracker that can prove beneficial in seeing how well the UKF performs.
+* Download the appropriate datasets and put them in a folder called `/data`. Set `TEST_DATA_DIR` to point to that location.
+* To turn on the visual analysis for a specific test, run: `pytest -s test_ukf.py::<TEST FUNCTION NAME> --visual_analysis True`. 
+* Default value for `visual_analysis` is set to `False` as to prevent extra time taken up by rendering the plot during unit testing.
+
+## Datasets
+
+Find all OpNav related datasets [here](https://cornell.app.box.com/folder/96363700749)
+
+**Copy all testing datasets into tests/data**
 
 ## Issues
 
@@ -33,3 +42,5 @@
     * Verify if this is a possibility
     * If yes, throw an exception where necessary, and catch it in [controller.py](controller.py)
 8. [] [controller.py](controller.py) **Deposit position and velocity estimates into global location**
+9. [] [test_ukf.py](test_ukf.py) **# TODO: Volatile test: depends on random starting noise**
+    * It varies widly whether the UKF converges within the allotted iteration count of 300. Both small and large starting noises seem to show slow convergence when trajectory starts at iteration 1500.

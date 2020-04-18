@@ -1,21 +1,28 @@
 from threading import Thread
+from queue import Queue
+
+from constants import LOG_DIR
 from drivers.communications import CommunicationsSystem
 from flight_mode import NormalMode
-from queue import Queue
 
 
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__(self)
-        self.mode = NormalMode()
         self.command_queue = Queue()
         self.comms = CommunicationsSystem(
             queue=self.command_queue, use_ax5043=False
         )  # noqa E501
         self.comms.listen()
+        self.log_dir = LOG_DIR
+        # TODO add additional conditions for handling the restart
+        if os.isdir(self.log_dir):
+            self.mode = RestartMode(self)
+        else:
+            self.mode = BootUpMode(self)
         # TODO initialize sensors
 
-    # Read inputs and potentially change flight mode
+    # Read inputs
     # TODO
     def poll_inputs(self):
         pass
@@ -38,9 +45,8 @@ class MainSatelliteThread(Thread):
     def run(self):
         while True:
             self.poll_inputs()
-            # XXX which should come first update state or execute commands
+            self.execute_commands()  # Set goal or execute command immediately
             self.update_state()
-            self.execute_commands()
             self.run_mode()
 
     def shutdown(self):

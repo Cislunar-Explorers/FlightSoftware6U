@@ -1,10 +1,11 @@
-from constants import LOW_CRACKING_PRESSURE, HIGH_CRACKING_PRESSURE, IDEAL_CRACKING_PRESSURE
-from drivers.sensor import SynchronousSensor, AsynchronousSensor
+from utils.constants import HIGH_CRACKING_PRESSURE
+from drivers.sensor import SynchronousSensor
 
 
 class DummySynchronousSensor(SynchronousSensor):
     def set_poll_return_value(self, val):
         self.return_val = val
+
 
 class PressureSensor(SynchronousSensor):
     def __init__(self):
@@ -15,7 +16,7 @@ class PressureSensor(SynchronousSensor):
     def poll(self):
         self.ticker += 1
         if self.ticker <= 10:
-            self.return_val += (HIGH_CRACKING_PRESSURE / 10.0)
+            self.return_val += HIGH_CRACKING_PRESSURE / 10.0
         if self.ticker >= 15:
             self.ticker = 0
             self.return_val = 0.0

@@ -2,14 +2,13 @@ import gc
 from time import sleep
 import os
 
-from constants import (
+from utils.constants import (  # noqa F401
     LOW_CRACKING_PRESSURE,
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
     BOOTUP_SEPARATION_DELAY,
+    FlightModeEnum,
 )
-from drivers.dummy_sensors import PressureSensor
-from drivers.gom import Gomspace
 
 # Necessary modes to implement
 # BootUp, Restart, Normal, Eclipse, Safety, Electrolysis, Propulsion,
@@ -42,9 +41,11 @@ class FlightMode:
 # BootUp mode tasks:
 # Sleep for 30 seconds to reach safe distance from Artemis I
 class BootUpMode(FlightMode):
+
+    flight_mode_id = FlightModeEnum.Boot.value
+
     def __init__(self, parent):
         super().__init__(parent)
-        self.delay_completed = False
         self.set_started_bootup()
         print("Booting up...")
 
@@ -58,10 +59,13 @@ class BootUpMode(FlightMode):
     def run_mode(self):
         if not self.delay_completed:
             sleep(BOOTUP_SEPARATION_DELAY)
-            self.delay_completed = True
+            self.task_completed()
 
 
 class RestartMode(FlightMode):
+
+    flight_mode_id = FlightModeEnum.Restart.value
+
     def __init__(self, parent):
         super().__init__(parent)
         self.clear_unnecessary_storage_and_memory()
@@ -93,6 +97,9 @@ class RestartMode(FlightMode):
 # NOTE: if we go with LOW_CRACKING_PRESSURE ensure that pressure doesn't dip below in interval between exiting
 # electrolysis and hitting ignition
 class ElectrolysisMode(FlightMode):
+
+    flight_mode_id = FlightModeEnum.Electrolysis.value
+
     def __init__(self, parent):
         super().__init__(parent)
         self.pressure_sensor = parent.pressure_sensor
@@ -112,6 +119,9 @@ class ElectrolysisMode(FlightMode):
 
 
 class LowBatterySafetyMode(FlightMode):
+
+    flight_mode_id = FlightModeEnum.LowBatterySafety.value
+
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -134,6 +144,23 @@ class PauseBackgroundMode(FlightMode):
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
+
+
+class ManeuverMode(PauseBackgroundMode):
+    def __init__(self, parent, goal: int):
+        super().__init__(parent)
+        self.goal = goal
+        self.moves_towards_goal = 0
+
+    def execute_maneuver_towards_goal(self):
+        self.moves_towards_goal += 1
+
+    # TODO implement actual maneuver execution
+    # check if exit condition has completed
+    def run_mode(self):
+        self.moves_towards_goal()
+        if self.moves_towards_goal >= self.goal:
+            self.task_completed()
 
 
 class SafeMode(FlightMode):

@@ -13,3 +13,6 @@ class Gomspace:
 
     def set_electrolysis(self, status: bool):
         self.electrolysis = status
+
+    def read_battery_percentage(self):
+        return 0.7

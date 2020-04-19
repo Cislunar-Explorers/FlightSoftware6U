@@ -53,3 +53,38 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         print("Execute normal mode")
+
+class ManeuverMode(FlightMode):
+
+    #in km and km/s
+    x = 0.0
+    y = 0.0
+    z = 0.0
+    v_x = 0.0
+    v_y = 0.0
+    v_z = 0.0
+
+    #Need a type for 
+
+    def __init__(self, parent):
+        super().__init__(self, parent)
+
+    def run_mode(self):
+        print("Executing Maneuver")
+    
+    def update_pos_and_vel(self):
+        #TODO
+        #Access database and obtain OpNav data.
+        pass
+
+    def pulse(self): #Maybe have some arguments if we can control the pulse force
+        #TODO
+        pass
+
+    def adjust_attitude(self): #Pass in rotation arguments. Either a quarternion or euler angles
+        #TODO
+        pass
+    
+    def fire_cold_gas(self, ms): #Fire the cold gas thruster for [ms] milliseconds
+        #TODO
+        pass

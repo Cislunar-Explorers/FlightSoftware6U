@@ -63,13 +63,23 @@ SIZE_EPS_HK_BASIC_T     = 24
 SIZE_EPS_CONFIG_T       = 58
 SIZE_EPS_CONFIG2_T      = 20
 
-# power outputs
-OUT_AMPLIFIER           = 0
-OUT_1                   = 1
-OUT_2                   = 2
-OUT_BURNWIRE            = 3
-OUT_SOLENOID            = 4
-OUT_ELECTROLYZER        = 5     # 3.3v output
+# power output channels
+OUT_1                   = 0  # 5V
+OUT_2                   = 1  # 5V
+OUT_3                   = 2  # 5V
+OUT_4                   = 3  # 5V
+OUT_5                   = 4  # 5V
+OUT_6                   = 5  # 3.3V
+OUT_HEATER              = 6
+OUT_SWITCH              = 7
+
+# powered components
+OUT_COMMS_AMP       = OUT_1
+OUT_BURNWIRE_1      = OUT_2
+OUT_BURNWIRE_2      = OUT_3
+OUT_GLOWPLUG        = OUT_4
+OUT_SOLENOID        = OUT_5
+OUT_ELECTROLYZER    = OUT_6
 
 # Outputs on board:
 #
@@ -136,6 +146,7 @@ class Power(object):
         self._pi.i2c_write_device(self._dev, bytearray([cmd]+values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
+    # This function does not currently return the error code of the i2c stream. Is this something that we want?
     def read(self, bytes):
         # first two read bytes -> [command][error code][data]
         (x, r) = self._pi.i2c_read_device(self._dev, bytes+2) 
@@ -143,6 +154,7 @@ class Power(object):
             print("Command %i failed with error code %i" % (r[0], r[1]))
         return r[2:]
 
+    # Not sure what value is in the below function, need to get cleared up
     # pings value
     # value [1 byte]
     # raises: ValueError if value is not a byte
@@ -272,7 +284,14 @@ class Power(object):
         array = struct >>_>> c_structToBytes >>_>> bytesToList
         self.write(CMD_CONFIG_SET, array)
 
-    # Send this command to perform a hard reset of the P31,
+    # I almost want to add something to make sure that the hard_reset function isn't accidentally triggered
+    # I feel like requiring a "passcode" to run the function as an argument should be used in order to make sure
+    # that the person who is firing this function knows the consequences. Something like:
+    # def hard_reset(self, passcode):
+    #   assert passcode == "yes", "Are you sure you want to execute this command and understand its consequences?"
+    #   self.write(CMD_HARD_RESET, [])
+
+    # Send this command to perform a hard reset of the P31u,
     # including cycling permanent 5V and 3.3V and battery outputs.
     def hard_reset(self):
         self.write(CMD_HARD_RESET, [])
@@ -295,7 +314,7 @@ class Power(object):
     # raises: AssertionError if struct is not eps_config2_t
     def config2_set(self, struct):
         assert type(struct) == eps_config2_t
-        array = struct >>_>> c_structToBytes >>_>> bytesToList
+        array = struct >> _ >> c_structToBytes >> _ >> bytesToList
         self.write(CMD_CONFIG2_SET, array)
 
     # Higher level functions -------------------------------------------------
@@ -341,11 +360,11 @@ class Power(object):
     # pulses sparkplug for some number of 
     # milliseconds [duration] with delay of [delay] seconds.
     # output must be off before the function is called
-    def sparkplug(self, duration, delay=0):
+    def glowplug(self, duration, delay=0):
         time.sleep(delay)
-        GPIO.output(OUT_PI_SPARKPLUG, GPIO.LOW)
+        self.set_single_output(OUT_GLOWPLUG, 1, 0)
         time.sleep(.001*duration)
-        GPIO.output(OUT_PI_SPARKPLUG, GPIO.HIGH)
+        self.set_single_output(OUT_GLOWPLUG, 0, 0)
 
     # turns burnwire on for [duration] seconds, with a 
     # delay of [delay] seconds.
@@ -363,8 +382,9 @@ class Power(object):
         else:
             GPIO.output(OUT_PI_COMMS, GPIO.LOW)
 
-    def amplifier(self, on):
-        self.set_single_output(OUT_AMPLIFIER, on==True, 0)
+    def comms_amplifier(self, on):
+        assert on in [0, 1], "Input 'on' must be either 0 or 1"
+        self.set_single_output(OUT_COMMS_AMP, on, 0)
 
     def adc(self, t, n, gain=2/3):
         output = []

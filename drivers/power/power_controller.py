@@ -73,6 +73,7 @@ OUT_BURNWIRE_2      = OUT_3
 OUT_GLOWPLUG        = OUT_4
 OUT_SOLENOID        = OUT_5
 OUT_ELECTROLYZER    = OUT_6
+<<<<<<< HEAD
 
 class Outputs(Enum):
     comms        = OUT_1
@@ -84,6 +85,8 @@ class Outputs(Enum):
     #heater       = OUT_HEATER  #Not included for remote testing purposes
     #switch       = OUT_SWITCH
 
+=======
+>>>>>>> Updating high-level power functions
 
 # Outputs on board:
 #
@@ -144,7 +147,11 @@ class Power():
         self._pi.i2c_write_device(self._dev, bytearray([cmd]+values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
+<<<<<<< HEAD
     # TODO: This function does not currently return the error code of the i2c stream. Is this something that we want?
+=======
+    # This function does not currently return the error code of the i2c stream. Is this something that we want?
+>>>>>>> Updating high-level power functions
     def read(self, bytes):
         # first two read bytes -> [command][error code][data]
         (x, r) = self._pi.i2c_read_device(self._dev, bytes+2)
@@ -153,7 +160,10 @@ class Power():
         else:
             return r[2:]
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Updating high-level power functions
     # Not sure what value is in the below function, need to get cleared up
     # pings value
     # value [1 byte]
@@ -305,6 +315,16 @@ class Power():
         array = struct >>_>> c_structToBytes >>_>> bytesToList
         self.write(CMD_CONFIG_SET, array)
 
+<<<<<<< HEAD
+=======
+    # I almost want to add something to make sure that the hard_reset function isn't accidentally triggered
+    # I feel like requiring a "passcode" to run the function as an argument should be used in order to make sure
+    # that the person who is firing this function knows the consequences. Something like:
+    # def hard_reset(self, passcode):
+    #   assert passcode == "yes", "Are you sure you want to execute this command and understand its consequences?"
+    #   self.write(CMD_HARD_RESET, [])
+
+>>>>>>> Updating high-level power functions
     # Send this command to perform a hard reset of the P31u,
     # including cycling permanent 5V and 3.3V and battery outputs.
     # Not tested- issue running through HITL server
@@ -333,6 +353,10 @@ class Power():
     # and save it (remember to also confirm it)
     # Input struct is of type eps_config2_t
     def config2_set(self, struct):
+<<<<<<< HEAD
+=======
+        assert type(struct) == eps_config2_t
+>>>>>>> Updating high-level power functions
         array = struct >> _ >> c_structToBytes >> _ >> bytesToList
         self.write(CMD_CONFIG2_SET, array)
 
@@ -381,9 +405,15 @@ class Power():
     # output must be off before the function is called
     def glowplug(self, duration, delay=0):
         time.sleep(delay)
+<<<<<<< HEAD
         self.set_single_output("glowplug", 1, 0)
         time.sleep(.001*duration)
         self.set_single_output("glowplug", 0, 0)
+=======
+        self.set_single_output(OUT_GLOWPLUG, 1, 0)
+        time.sleep(.001*duration)
+        self.set_single_output(OUT_GLOWPLUG, 0, 0)
+>>>>>>> Updating high-level power functions
 
     # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.
@@ -403,10 +433,16 @@ class Power():
         else:
             GPIO.output(OUT_PI_COMMS, GPIO.LOW)
 
+<<<<<<< HEAD
     # Toggles comms amp on/off
     # Input on is either True (on) or False (off)
     def comms_amplifier(self, on):
         self.set_single_output("comms", int(on), 0)
+=======
+    def comms_amplifier(self, on):
+        assert on in [0, 1], "Input 'on' must be either 0 or 1"
+        self.set_single_output(OUT_COMMS_AMP, on, 0)
+>>>>>>> Updating high-level power functions
 
 
     def adjust_string(self, string, length):

@@ -1,4 +1,4 @@
-from drivers.power.power_structs import *
+from power_structs import *
 
 if __name__ == '__main__':
     print("----TESTING SEND/RECV----\n")

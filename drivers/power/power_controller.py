@@ -1,9 +1,10 @@
 # power_controller.py
 #
-# Desc: controls the powerboard
+# Desc: Drivers for the GomSpace NanoPower P31u
 #
 # Author: Daniel Kim (dsk252)
-# 
+# Revisited by: Tobias Fischer (tmf97) and Stephen Zakoworotny (sjz38) in Spring 2020
+#
 # Date: 10/3/16
 #
 # Status: Main functionality completed
@@ -11,16 +12,14 @@
 #         be implemented (if necessary)
 
 from pigpio import *
-from .power_structs import *
+from power_structs import *
 import RPi.GPIO as GPIO
 import time
-#import datetime
-#from .power_structs import power_structs
 
 # I2C libraries
 import Adafruit_ADS1x15
-from .SDL_DS3231 import SDL_DS3231
-from .L3GD20 import L3GD20
+from SDL_DS3231 import SDL_DS3231
+from L3GD20 import L3GD20
 
 # pipeline operator (>>_>>)
 _ = power_structs._
@@ -32,7 +31,7 @@ POWER_ADDRESS           = 0x02
 PI_BUS                  = 1
 
 # allowed ranges
-MAX_PV_VOLTAGE			= 4000	# change later
+MAX_PV_VOLTAGE			= 4000  # change later
 
 # command registers
 CMD_PING                = 0x01
@@ -92,9 +91,8 @@ OUT_ELECTROLYZER    = OUT_6
 #
 
 # pi outputs
-OUT_PI_SPARKPLUG        = 7     # GPIO 4
 OUT_PI_COMMS            = 11    # GPIO 17
-OUT_PI_SOLENOID_ENABLE  = 38    # GPIO 20
+OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
 
 
 class Power(object):

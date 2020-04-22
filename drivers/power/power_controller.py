@@ -354,7 +354,7 @@ class Power(object):
         time.sleep(.001*spike)
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)
         time.sleep(.001*hold)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
+        # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
         self.set_single_output(OUT_SOLENOID, 0, 0)
 
     # pulses sparkplug for some number of 
@@ -370,11 +370,13 @@ class Power(object):
     # delay of [delay] seconds.
     def burnwire(self, duration, delay=0):
         time.sleep(delay)
-        self.set_single_output(OUT_BURNWIRE, 1, 0)
+        self.set_single_output(OUT_BURNWIRE_1, 1, 0)
+        self.set_single_output(OUT_BURNWIRE_2, 1, 0)
         time.sleep(duration/2)
         self.displayAll()
         time.sleep(duration/2)
-        self.set_single_output(OUT_BURNWIRE, 0, 0)
+        self.set_single_output(OUT_BURNWIRE_1, 0, 0)
+        self.set_single_output(OUT_BURNWIRE_2, 0, 0)
 
     def comms(self, transmit):
         if transmit:
@@ -383,8 +385,8 @@ class Power(object):
             GPIO.output(OUT_PI_COMMS, GPIO.LOW)
 
     def comms_amplifier(self, on):
-        assert on in [0, 1], "Input 'on' must be either 0 or 1"
-        self.set_single_output(OUT_COMMS_AMP, on, 0)
+        assert type(on) == bool, "Input 'on' must be either True (on) or False (off)"
+        self.set_single_output(OUT_COMMS_AMP, int(on), 0)
 
     def adc(self, t, n, gain=2/3):
         output = []

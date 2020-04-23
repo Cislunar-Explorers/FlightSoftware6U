@@ -347,10 +347,10 @@ class Power(object):
     # output must be off before the function is called
     def solenoid(self, spike, hold, delay=0):
         time.sleep(delay)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) # Enable voltage boost for solenoid current spike
         self.set_single_output(OUT_SOLENOID, 1, 0)
         time.sleep(.001*spike)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW) # Disable voltage boost
         time.sleep(.001*hold)
         # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
         self.set_single_output(OUT_SOLENOID, 0, 0)

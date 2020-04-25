@@ -26,6 +26,9 @@ INSTALL_REQUIRES = [
 PI_INSTALL_REQUIRES = [
     "ADS1115",
     "picamera",
+    "board",
+    "busio",
+    "adafruit-circuitpython-bno055",
 ]
 
 DEV_REQUIRES = [

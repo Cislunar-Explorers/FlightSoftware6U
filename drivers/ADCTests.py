@@ -3,7 +3,17 @@ import time
 
 assert sum([1, 2, 3]) == 6, "Should be 6"
 
-testADC = ADC.init()
 
-while True:
-    print(testADC.readPressure())
+def test_ADC_initialize():
+    return ADC
+
+
+def test_ADC_read_pressure(testADC):
+    while True:
+        print(testADC.readPressure())
+        time.sleep(1)
+
+
+if True:
+    testADC = test_ADC_initialize()
+    test_ADC_read_pressure(testADC)

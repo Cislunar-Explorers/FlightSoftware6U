@@ -1,18 +1,20 @@
-from time import sleep
 from datetime import datetime
+from time import sleep
+import sqlite3
+from sqlalchemy.exc import SQLAlchemyError
 
-from utils.constants import FlightModeEnum
+from utils.constants import FMEnum
 from utils.db import OpNavCoordinatesModel
-from flight_mode import PauseBackgroundMode
+from .flight_mode import PauseBackgroundMode
 
 
 class OpNavMode(PauseBackgroundMode):
-    
-    flight_mode_id = FlightModeEnum.OpNav.value
+
+    flight_mode_id = FMEnum.OpNav.value
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.dummy_opnav_result = ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+        self.dummy_opnav_result = ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))  # noqa E501
 
     def set_return_val(self, returnval):
         self.dummy_opnav_result = returnval
@@ -28,7 +30,7 @@ class OpNavMode(PauseBackgroundMode):
         position_acquired_at = self.acquire_images()
         self.most_recent_result = self.get_position_velocity_attitude()
         opnav_model = OpNavCoordinatesModel.from_tuples(
-            opnav_result, position_acquired_at
+            self.most_recent_result, position_acquired_at
         )
         try:
             session = self.parent.create_session()
@@ -51,7 +53,7 @@ class OpNavMode(PauseBackgroundMode):
                 if last_measurement is None:
                     raise Exception("No record of previous OpNav runs")
                 return self.dummy_opnav_result
-            except:
+            except (sqlite3.Error, SQLAlchemyError):
                 session.close()
                 raise Exception("Error while reading most recent OpNav result")
 

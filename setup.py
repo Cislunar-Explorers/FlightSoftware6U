@@ -14,6 +14,7 @@ INSTALL_REQUIRES = [
     "numpy",
     "opencv-python",
     "SQLAlchemy",
+    "python-dotenv",
 ]
 
 PI_INSTALL_REQUIRES = [

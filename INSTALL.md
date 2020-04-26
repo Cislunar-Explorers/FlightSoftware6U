@@ -32,4 +32,4 @@ pip install -e [rpi-dev]
 
 # Set up Environment
 
-Copy the file .env.example and create a file .env. Set the variable FOR_FLIGHT=False if this is being used in development and True if it is being used for flight.
+Copy the file .env.example and create a file .env. Set the variable FOR_FLIGHT=FLIGHT should be configured for flight. Otherwise, this value will be set to false. If it's set to flight, then it will automatically restart itself on failure and clean up its use of storage space if it's running on the raspian operating system.

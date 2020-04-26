@@ -5,6 +5,8 @@ from time import sleep
 from queue import Queue
 import signal
 
+from dotenv import load_dotenv
+
 from utils.constants import (
     LOG_DIR,
     CISLUNAR_BASE_DIR,
@@ -19,6 +21,9 @@ from flight_modes.flight_mode import (
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
+
+
+FOR_FLIGHT = None
 
 
 class MainSatelliteThread(Thread):
@@ -98,8 +103,7 @@ class MainSatelliteThread(Thread):
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:
-            # TODO
-            if False:
+            if FOR_FLIGHT is True:
                 self.run()
 
     def shutdown(self):
@@ -108,5 +112,7 @@ class MainSatelliteThread(Thread):
 
 
 if __name__ == "__main__":
+    load_dotenv()
+    FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
     main.run()

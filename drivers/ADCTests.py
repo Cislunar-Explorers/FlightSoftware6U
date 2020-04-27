@@ -10,7 +10,7 @@ def test_ADC_initialize():
 
 def test_ADC_read_pressure(testADC):
     while True:
-        print(testADC.readPressure())
+        print(testADC.readPressure(testADC))
         time.sleep(1)
 
 

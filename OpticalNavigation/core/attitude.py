@@ -104,49 +104,10 @@ def plotSpacecraft(omega_init, tstop, delta_t, kickTime):
     omega[0] = numpy.array(omega[0])
     omega[1] = numpy.array(omega[1])
     omega[2] = numpy.array(omega[2])
-    # plt.plot(time, omega[0], label='$h_{x}^{B/N}$')
-    # plt.plot(time, omega[1], label='$h_{y}^{B/N}$')
-    # plt.plot(time, omega[2], label='$h_{z}^{B/N}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Spacecraft Angular Momentum')
-    # plt.xlabel('Seconds')
-    # plt.ylabel('Angular Momentum (SI Units)')
-    # plt.show()
-    # plt.plot(time, omega[3], label='$\omega_{x}^{B/N}$')
-    # plt.plot(time, omega[4], label='$\omega_{y}^{B/N}$')
-    # plt.plot(time, omega[5], label='$\omega_{z}^{B/N}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Spacecraft Angular Velocity')
-    # plt.xlabel('Seconds')
-    # plt.ylabel('Rad/sec')
-    # plt.show()
-    # plt.plot(time, omega[6], label='$\omega_{x}^{D/B}$')
-    # plt.plot(time, omega[7], label='$\omega_{y}^{D/B}$')
-    # plt.plot(time, omega[8], label='$\omega_{z}^{D/B}$')
-    # plt.title('Damper Angular Velocity (Relative to Spacecraft)')
-    # plt.xlabel('Seconds')
-    # plt.ylabel('Rad/Sec')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.show()
-    # plt.plot(time, omega[9], label='$h^{tot}_{x}$')
-    # plt.plot(time, omega[10], label='$h^{tot}_{y}$')
-    # plt.plot(time, omega[11], label='$h^{tot}_{z}$')
-    # plt.title('Total Angular Momentum')
-    # plt.xlabel('Seconds')
-    # plt.ylabel('Angular Momentum')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.show()
-    # plt.plot(time, omega[12], label='$||h^{tot}||$')
-    # plt.title('Total Angular Momentum Norm')
-    # plt.xlabel('Seconds')
-    # plt.ylabel('Angular Momentum')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.show()
-    
     return omega;
     
 ## Obtain quaternions from angular velocity
-def obtainQuaternionFromAngularVel(X, t, wx, wy, wz):
+def quatsFromAngularVelIntegrator(X, t, wx, wy, wz):
     q1, q2, q3, q4 = X[0], X[1], X[2], X[3]
     q = numpy.array([[q1, q2, q3, q4]]).T    
     ox, oy, oz = wx(t), wy(t), wz(t)
@@ -160,7 +121,7 @@ def obtainQuaternionFromAngularVel(X, t, wx, wy, wz):
 
 def obtainAllQuatsfromAngVel(q0, tstop, delta_t, ws):
     a_t = numpy.arange(0, tstop, delta_t)
-    asol = integrate.odeint(obtainQuaternionFromAngularVel, q0, a_t, args=ws)
+    asol = integrate.odeint(quatsFromAngularVelIntegrator, q0, a_t, args=ws)
     q1, q2, q3, q4 = [], [], [], []
     for i in asol:
         q1.extend([i[0]])
@@ -624,12 +585,7 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz):
     plt.plot(numpy.array(b1) - numpy.array(tbias1), 'r-', label='$b_{1}^{error}$')
     plt.plot(numpy.array(b2) - numpy.array(tbias2), 'g-', label='$b_{2}^{error}$')
     plt.plot(numpy.array(b3) - numpy.array(tbias3), 'b-', label='$b_{3}^{error}$')
-#     plt.plot(3*numpy.sqrt(numpy.array(p4)), 'r:', label='$\pm 3\sigma_{4}$')
-#     plt.plot(3*numpy.sqrt(numpy.array(p5)), 'g:', label='$\pm 3\sigma_{5}$')
-#     plt.plot(3*numpy.sqrt(numpy.array(p6)), 'b:', label='$\pm 3\sigma_{6}$')
-#     plt.plot(-3*numpy.sqrt(numpy.array(p4)), 'r:')
-#     plt.plot(-3*numpy.sqrt(numpy.array(p5)), 'g:')
-#     plt.plot(-3*numpy.sqrt(numpy.array(p6)), 'b:')
+
     plt.title('Bias Error')
     plt.xlabel('Seconds')
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -638,12 +594,7 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz):
     plt.plot(numpy.array(x1) - numpy.array(truerod1), 'r-', label='$err_{1}$')
     plt.plot(numpy.array(x2) - numpy.array(truerod2), 'g-', label='$err_{2}$')
     plt.plot(numpy.array(x3) - numpy.array(truerod3), 'b-', label='$err_{3}$')
-#     plt.plot(3*numpy.sqrt(numpy.array(p1)), 'r:', label='$\pm 1\sigma_{1}$')
-#     plt.plot(3*numpy.sqrt(numpy.array(p2)), 'g:', label='$\pm 1\sigma_{2}$')
-#     plt.plot(3*numpy.sqrt(numpy.array(p3)), 'b:', label='$\pm 1\sigma_{3}$')
-#     plt.plot(-3*numpy.sqrt(numpy.array(p1)), 'r:')
-#     plt.plot(-3*numpy.sqrt(numpy.array(p2)), 'g:')
-#     plt.plot(-3*numpy.sqrt(numpy.array(p3)), 'b:')
+
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.title('True Rodrigues Errors')
     plt.xlabel('Seconds')

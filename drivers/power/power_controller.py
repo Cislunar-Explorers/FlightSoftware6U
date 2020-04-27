@@ -19,7 +19,6 @@ import time
 # I2C libraries
 import Adafruit_ADS1x15
 from SDL_DS3231 import SDL_DS3231
-from L3GD20 import L3GD20
 
 # pipeline operator (>>_>>)
 _ = power_structs._
@@ -104,28 +103,11 @@ class Power(object):
         # I2C devices
         self._adc = Adafruit_ADS1x15.ADS1115()              # initialize adc
         self._rtc = SDL_DS3231.SDL_DS3231(1, 0x68)          # initialize rtc
-        self._gyro = L3GD20(busId 		 = 1,            	# initialize gyro
-                            slaveAddr 	 = 0x6b, 
-                            ifLog 		 = False, 
-                            ifWriteBlock = False)
-        
-        # Preconfiguration
-        self._gyro.Set_PowerMode("Normal")
-        self._gyro.Set_FullScale_Value("250dps")
-        self._gyro.Set_AxisX_Enabled(True)
-        self._gyro.Set_AxisY_Enabled(True)
-        self._gyro.Set_AxisZ_Enabled(True)
-
-        # Print current configuration
-        self._gyro.Init()
-        self._gyro.Calibrate()
 
         # initialize pi outputs
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(OUT_PI_SPARKPLUG, GPIO.OUT)
         GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
         GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
-        GPIO.output(OUT_PI_SPARKPLUG, GPIO.HIGH)
         GPIO.output(OUT_PI_COMMS, GPIO.LOW)
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
 
@@ -144,7 +126,7 @@ class Power(object):
         self._pi.i2c_write_device(self._dev, bytearray([cmd]+values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
-    # This function does not currently return the error code of the i2c stream. Is this something that we want?
+    # TODO: This function does not currently return the error code of the i2c stream. Is this something that we want?
     def read(self, bytes):
         # first two read bytes -> [command][error code][data]
         (x, r) = self._pi.i2c_read_device(self._dev, bytes+2) 
@@ -355,7 +337,7 @@ class Power(object):
         # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
         self.set_single_output(OUT_SOLENOID, 0, 0)
 
-    # pulses sparkplug for some number of 
+    # pulses glowplug for some number of
     # milliseconds [duration] with delay of [delay] seconds.
     # output must be off before the function is called
     def glowplug(self, duration, delay=0):

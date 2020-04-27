@@ -20,6 +20,7 @@ INSTALL_REQUIRES = [
     "requests",
     "numpy",
     "opencv-python",
+    "SQLAlchemy",
     "scipy",
 ]
 
@@ -40,9 +41,15 @@ TESTS_REQUIRES = [
 
 
 EXTRAS = {
-    "rpi": INSTALL_REQUIRES + PI_INSTALL_REQUIRES, # Install everything needed for running on RPi
-    "rpi-dev": INSTALL_REQUIRES + PI_INSTALL_REQUIRES + DEV_REQUIRES + TESTS_REQUIRES, # Install for active development on RPi
-    "dev": INSTALL_REQUIRES + DEV_REQUIRES + TESTS_REQUIRES, # Install for development, not on RPi
+    "rpi": INSTALL_REQUIRES
+    + PI_INSTALL_REQUIRES,  # Install everything needed for running on RPi
+    "rpi-dev": INSTALL_REQUIRES
+    + PI_INSTALL_REQUIRES
+    + DEV_REQUIRES
+    + TESTS_REQUIRES,  # Install for active development on RPi
+    "dev": INSTALL_REQUIRES
+    + DEV_REQUIRES
+    + TESTS_REQUIRES,  # Install for development, not on RPi
 }
 
 setup(

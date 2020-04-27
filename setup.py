@@ -20,6 +20,7 @@ INSTALL_REQUIRES = [
     "requests",
     "numpy",
     "opencv-python",
+    "scipy",
 ]
 
 PI_INSTALL_REQUIRES = [

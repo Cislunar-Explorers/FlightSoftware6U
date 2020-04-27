@@ -54,6 +54,51 @@ class RTCModel(SQLAlchemyTableBase):
         f"taken_at={str(self.time_retrieved)})>"
 
 
+class OpNavCoordinatesModel(SQLAlchemyTableBase):
+    __tablename__ = "opnav_coordinates"
+
+    id = Column(Integer, primary_key=True)
+    time_retrieved = Column(DateTime)
+    velocity_x = Column(Float)
+    velocity_y = Column(Float)
+    velocity_z = Column(Float)
+    position_x = Column(Float)
+    position_y = Column(Float)
+    position_z = Column(Float)
+    attitude_x = Column(Float)
+    attitude_y = Column(Float)
+    attitude_z = Column(Float)
+
+    @staticmethod
+    def from_tuples(opnav_tuple, time):
+        position, velocity, attitude = opnav_tuple
+        velocity_x, velocity_y, velocity_z = velocity
+        position_x, position_y, position_z = position
+        attitude_x, attitude_y, attitude_z = attitude
+        return OpNavCoordinatesModel(
+            time_retrieved=time,
+            velocity_x=velocity_x,
+            velocity_y=velocity_y,
+            velocity_z=velocity_z,
+            position_x=position_x,
+            position_y=position_y,
+            position_z=position_z,
+            attitude_x=attitude_x,
+            attitude_y=attitude_y,
+            attitude_z=attitude_z,
+        )
+
+    def __repr__(self):
+        return (
+            f"<OpNavCoorindatesModel(TimeRetrieved=({str(self.time_retrieved)}"
+            f", velocity=({self.velocity_x}, {self.velocity_y}, "
+            f"{self.velocity_z}) position=({self.position_x}, "
+            f"{self.position_y}, {self.position_z}), "
+            f"attitude=({self.attitude_x}, {self.attitude_y}, "
+            f"{self.attitude_z}))>"
+        )
+
+
 def create_sensor_tables(engine):
     SQLAlchemyTableBase.metadata.create_all(engine)
     create_session.configure(bind=engine)

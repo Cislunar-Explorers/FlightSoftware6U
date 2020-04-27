@@ -23,6 +23,7 @@ class Comms:
 
     # Override this method to assure safety for specific implementation
     def stop(self):
+        print("Halting comms thread...")
         if self.listening_thread.is_alive() is True:
             self.listening_thread.terminate()
 
@@ -106,7 +107,11 @@ class CommunicationsSystem:
         else:
             host = host if host is not None else HOSTNAME
             port = port if port is not None else PORT
-            self.comms = IPComms(queue=queue, server_host=host, server_port=port)
+            self.comms = IPComms(
+                queue=queue,
+                server_host=host,
+                server_port=port
+            )
 
     def listen(self):
         self.comms.listen()

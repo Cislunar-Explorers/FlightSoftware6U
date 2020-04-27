@@ -9,33 +9,32 @@ from numpy import random
 from copy import deepcopy
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-m = 10   #spacecraft mass, kg
-h = .3   #spacecraft height, meters
-w = .3   #spacecraft width, meters
-d = .1   #spacecraft depth, meters
-Ib = numpy.array([[(1./12.)*m*(h**2. + d**2.), 0., 0.],
-                  [0., (1./12.)*m*(w**2. + d**2.), 0.],
-                  [0., 0., (1./12.)*m*(w**2. + h**2.)]]) #spacecraft inertia tensor
+_m = 10   #spacecraft mass, kg
+_h = .3   #spacecraft height, meters
+_w = .3   #spacecraft width, meters
+_d = .1   #spacecraft depth, meters
+_Ib = numpy.array([[(1./12.)*_m*(_h**2. + _d**2.), 0., 0.],
+                  [0., (1./12.)*_m*(_w**2. + _d**2.), 0.],
+                  [0., 0., (1./12.)*_m*(_w**2. + _h**2.)]]) #spacecraft inertia tensor
 
-mdamp = 8 #damper mass in kg
-mrad = 0.1 #damper radius in meters
-c = 0.9    #damping coefficient
-Id = numpy.array([[(2./5.)*mdamp*mrad**2., 0., 0.],
-                  [0., (2./5.)*mdamp*mrad**2., 0.],
-                  [0., 0., (2./5.)*mdamp*mrad**2.]])
+_mdamp = 8 #damper mass in kg
+_mrad = 0.1 #damper radius in meters
+_c = 0.9    #damping coefficient
+_Id = numpy.array([[(2./5.)*_mdamp*_mrad**2., 0., 0.],
+                  [0., (2./5.)*_mdamp*_mrad**2., 0.],
+                  [0., 0., (2./5.)*_mdamp*_mrad**2.]])
 
-
-q0 = [0., 0., 0., 1.]                   # initial quaternion
-omega_init = [0., 0.001, 2., 0., 0., 0.]# initial angular velocity
-tstop = 700                             # total integration time
-delta_t = 0.001                          # integration timestep
-gyro_t = 0.04
-gyrotime = numpy.arange(0, tstop, gyro_t)
-sigma_acc = 0.                          # stochastic accelerations
-gyro_sigma = 1.e-10
-gyro_noise_sigma = 1.e-7
-bias_init=[0., 0., 0.]
-meas_sigma = 8.7e-4
+# _q0 = [0., 0., 0., 1.]                   # initial quaternion
+_omega_init = [0., 0.001, 2., 0., 0., 0.]# initial angular velocity
+_tstop = 700                             # total integration time
+_delta_t = 0.001                          # integration timestep
+_gyro_t = 1
+_gyrotime = numpy.arange(0, _tstop, _gyro_t)
+_sigma_acc = 0.                          # stochastic accelerations
+_gyro_sigma = 1.e-10
+_gyro_noise_sigma = 1.e-7
+_bias_init=[0., 0., 0.]
+_meas_sigma = 8.7e-4
 
 def crs(vector):
     first = vector[0][0]
@@ -45,29 +44,29 @@ def crs(vector):
                         [third, 0., -first],
                         [-second, first, 0.]])
 
-def propagateSpacecraft(X, t):
+def propagateSpacecraft(X, t, kickTime):
     omegasc1, omegasc2, omegasc3 = X[0], X[1], X[2]
     omegad1, omegad2, omegad3 = X[3], X[4], X[5]
     omega_sc = numpy.array([[omegasc1, omegasc2, omegasc3]]).T
     omega_d  = numpy.array([[omegad1, omegad2, omegad3]]).T
     
-    inner_sc = (numpy.dot(crs(omega_sc), numpy.dot(Ib, omega_sc)) - c*omega_d +
-                    int(0.5*(numpy.sign(t - 100)+1))*numpy.array([[.1, 0., 0.]]).T -
-                    int(0.5*(numpy.sign(t - 102)+1))*numpy.array([[.1, 0., 0.]]).T)
-    omega_sc_dot = (numpy.dot(-1.*pinv(Ib), inner_sc))
+    inner_sc = (numpy.dot(crs(omega_sc), numpy.dot(_Ib, omega_sc)) - _c*omega_d +
+                    int(0.5*(numpy.sign(t - kickTime)+1))*numpy.array([[.1, 0., 0.]]).T -
+                    int(0.5*(numpy.sign(t - (kickTime + 2))+1))*numpy.array([[.1, 0., 0.]]).T)
+    omega_sc_dot = (numpy.dot(-1.*pinv(_Ib), inner_sc))
     
-    right_d = numpy.dot(crs(omega_sc), numpy.dot(Id, omega_d + omega_sc)) + c*omega_d
-    inner_d = numpy.dot(Id, omega_sc_dot) + right_d
-    omega_d_dot = numpy.dot(-1.*pinv(Id), inner_d)
+    right_d = numpy.dot(crs(omega_sc), numpy.dot(_Id, omega_d + omega_sc)) + _c*omega_d
+    inner_d = numpy.dot(_Id, omega_sc_dot) + right_d
+    omega_d_dot = numpy.dot(-1.*pinv(_Id), inner_d)
     
     derivs = [omega_sc_dot[0][0], omega_sc_dot[1][0], omega_sc_dot[2][0],
               omega_d_dot[0][0], omega_d_dot[1][0], omega_d_dot[2][0]]
     
     return derivs
 
-def goSpacecraft(X, tstop, delta_t):
+def goSpacecraft(X, tstop, delta_t, kickTime):
     a_t = numpy.arange(0, tstop, delta_t)
-    asol = integrate.odeint(propagateSpacecraft, X, a_t)
+    asol = integrate.odeint(propagateSpacecraft, X, a_t, args=(kickTime,))
     hx, hy, hz = [], [], []
     htotx, htoty, htotz = [], [], []
     omegasx, omegasy, omegasz = [], [], []
@@ -77,9 +76,9 @@ def goSpacecraft(X, tstop, delta_t):
     for i in asol:
         omega_spacecraft = numpy.array([[i[0], i[1], i[2]]]).T
         omega_damper = numpy.array([[i[3], i[4], i[5]]]).T
-        h = numpy.dot(Ib, omega_spacecraft)
+        h = numpy.dot(_Ib, omega_spacecraft)
         h_norm_spacecraft.extend([numpy.linalg.norm(h)])
-        hdamp = numpy.dot(Id, omega_damper + omega_spacecraft)
+        hdamp = numpy.dot(_Id, omega_damper + omega_spacecraft)
         htot = h + hdamp
         hnorm.extend([numpy.linalg.norm(htot)])
         htotx.extend([htot[0][0]])
@@ -98,68 +97,59 @@ def goSpacecraft(X, tstop, delta_t):
             omegadx, omegady, omegadz, htotx, htoty, htotz, hnorm,
             h_norm_spacecraft]
 
-def plotSpacecraft(omega_init, tstop, delta_t):
+def plotSpacecraft(omega_init, tstop, delta_t, kickTime):
     time = numpy.arange(0, tstop, delta_t)
     X = omega_init
-    omega = goSpacecraft(X, tstop, delta_t)
+    omega = goSpacecraft(X, tstop, delta_t, kickTime)
     omega[0] = numpy.array(omega[0])
     omega[1] = numpy.array(omega[1])
     omega[2] = numpy.array(omega[2])
-    plt.plot(time, omega[0], label='$h_{x}^{B/N}$')
-    plt.plot(time, omega[1], label='$h_{y}^{B/N}$')
-    plt.plot(time, omega[2], label='$h_{z}^{B/N}$')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.title('Spacecraft Angular Momentum')
-    plt.xlabel('Seconds')
-    plt.ylabel('Angular Momentum (SI Units)')
-    plt.show()
-    plt.plot(time, omega[3], label='$\omega_{x}^{B/N}$')
-    plt.plot(time, omega[4], label='$\omega_{y}^{B/N}$')
-    plt.plot(time, omega[5], label='$\omega_{z}^{B/N}$')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.title('Spacecraft Angular Velocity')
-    plt.xlabel('Seconds')
-    plt.ylabel('Rad/sec')
-    plt.show()
-    plt.plot(time, omega[6], label='$\omega_{x}^{D/B}$')
-    plt.plot(time, omega[7], label='$\omega_{y}^{D/B}$')
-    plt.plot(time, omega[8], label='$\omega_{z}^{D/B}$')
-    plt.title('Damper Angular Velocity (Relative to Spacecraft)')
-    plt.xlabel('Seconds')
-    plt.ylabel('Rad/Sec')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.show()
-    plt.plot(time, omega[9], label='$h^{tot}_{x}$')
-    plt.plot(time, omega[10], label='$h^{tot}_{y}$')
-    plt.plot(time, omega[11], label='$h^{tot}_{z}$')
-    plt.title('Total Angular Momentum')
-    plt.xlabel('Seconds')
-    plt.ylabel('Angular Momentum')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.show()
-    plt.plot(time, omega[12], label='$||h^{tot}||$')
-    plt.title('Total Angular Momentum Norm')
-    plt.xlabel('Seconds')
-    plt.ylabel('Angular Momentum')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-#     plt.ylim([0.16,0.19])
-    plt.show()
+    # plt.plot(time, omega[0], label='$h_{x}^{B/N}$')
+    # plt.plot(time, omega[1], label='$h_{y}^{B/N}$')
+    # plt.plot(time, omega[2], label='$h_{z}^{B/N}$')
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    # plt.title('Spacecraft Angular Momentum')
+    # plt.xlabel('Seconds')
+    # plt.ylabel('Angular Momentum (SI Units)')
+    # plt.show()
+    # plt.plot(time, omega[3], label='$\omega_{x}^{B/N}$')
+    # plt.plot(time, omega[4], label='$\omega_{y}^{B/N}$')
+    # plt.plot(time, omega[5], label='$\omega_{z}^{B/N}$')
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    # plt.title('Spacecraft Angular Velocity')
+    # plt.xlabel('Seconds')
+    # plt.ylabel('Rad/sec')
+    # plt.show()
+    # plt.plot(time, omega[6], label='$\omega_{x}^{D/B}$')
+    # plt.plot(time, omega[7], label='$\omega_{y}^{D/B}$')
+    # plt.plot(time, omega[8], label='$\omega_{z}^{D/B}$')
+    # plt.title('Damper Angular Velocity (Relative to Spacecraft)')
+    # plt.xlabel('Seconds')
+    # plt.ylabel('Rad/Sec')
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    # plt.show()
+    # plt.plot(time, omega[9], label='$h^{tot}_{x}$')
+    # plt.plot(time, omega[10], label='$h^{tot}_{y}$')
+    # plt.plot(time, omega[11], label='$h^{tot}_{z}$')
+    # plt.title('Total Angular Momentum')
+    # plt.xlabel('Seconds')
+    # plt.ylabel('Angular Momentum')
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    # plt.show()
+    # plt.plot(time, omega[12], label='$||h^{tot}||$')
+    # plt.title('Total Angular Momentum Norm')
+    # plt.xlabel('Seconds')
+    # plt.ylabel('Angular Momentum')
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    # plt.show()
     
     return omega;
-
-angular_momentum_history = plotSpacecraft(omega_init, tstop, delta_t);
-totaltime = numpy.arange(0, tstop, delta_t)
-hx = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[9])
-hy = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[10])
-hz = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[11])
-omegax = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[3])
-omegay = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[4])
-omegaz = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[5])
-
-def propagateQuaternion(X, t):
+    
+## Obtain quaternions from angular velocity
+def obtainQuaternionFromAngularVel(X, t, wx, wy, wz):
     q1, q2, q3, q4 = X[0], X[1], X[2], X[3]
     q = numpy.array([[q1, q2, q3, q4]]).T    
-    ox, oy, oz = omegax(t), omegay(t), omegaz(t)
+    ox, oy, oz = wx(t), wy(t), wz(t)
     omegacrs = numpy.array([[0., oz, -oy, ox],
                             [-oz, 0., ox, oy],
                             [oy, -ox, 0., oz],
@@ -168,9 +158,9 @@ def propagateQuaternion(X, t):
     
     return [qdot[0][0], qdot[1][0], qdot[2][0], qdot[3][0]]
 
-def goQuaternion(X, tstop, delta_t):
+def obtainAllQuatsfromAngVel(q0, tstop, delta_t, ws):
     a_t = numpy.arange(0, tstop, delta_t)
-    asol = integrate.odeint(propagateQuaternion, X, a_t)
+    asol = integrate.odeint(obtainQuaternionFromAngularVel, q0, a_t, args=ws)
     q1, q2, q3, q4 = [], [], [], []
     for i in asol:
         q1.extend([i[0]])
@@ -179,108 +169,49 @@ def goQuaternion(X, tstop, delta_t):
         q4.extend([i[3]])
     return [q1, q2, q3, q4]
 
-def plotQuaternion(omega_init, tstop, delta_t, q0):
-    time = numpy.arange(0, tstop, delta_t)
-    X = q0
-    quat = goQuaternion(X, tstop, delta_t)
-    norm = numpy.sqrt(numpy.array(quat[0])**2. +
-                      numpy.array(quat[1])**2. +
-                      numpy.array(quat[2])**2. +
-                      numpy.array(quat[3])**2.)
-    plt.plot(time, norm, label='$|q|$')
-    plt.plot(time, quat[0], label='$q_{1}$')
-    plt.plot(time, quat[1], label='$q_{2}$')
-    plt.plot(time, quat[2], label='$q_{3}$')
-    plt.plot(time, quat[3], label='$q_{4}$', alpha=0.1)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.title('Spacecraft Quaternion')
-    plt.xlabel('Seconds')
-    plt.ylim([-1.5,1.5])
-    plt.show()
-    return quat;
-
-quaternion_history = plotQuaternion(omega_init, tstop, delta_t, q0);
-q1 = InterpolatedUnivariateSpline(totaltime, quaternion_history[0])
-q2 = InterpolatedUnivariateSpline(totaltime, quaternion_history[1])
-q3 = InterpolatedUnivariateSpline(totaltime, quaternion_history[2])
-q4 = InterpolatedUnivariateSpline(totaltime, quaternion_history[3])
-
 a=1
 f=2.*(a+1)
 
-def propagateBias(X, t):
-    bx, by, bz = X[0], X[1], X[2]
-    return [numpy.random.normal(0, gyro_sigma),
-            numpy.random.normal(0, gyro_sigma),
-            numpy.random.normal(0, gyro_sigma)]
-
-def goBias(X, tstop, gyro_t):
-    a_t = numpy.arange(0, tstop, delta_t)
-    asol = integrate.odeint(propagateBias, X, a_t)
-    biasx, biasy, biasz = [], [], []
-    for i in asol:
-        biasx.extend([i[0]])
-        biasy.extend([i[1]])
-        biasz.extend([i[2]])
-    return [biasx, biasy, biasz]
-
-def plotBias(tstop, gyro_t, bias_init):
+def goBias(tstop, gyro_t, bias_init):
     time = numpy.arange(0, tstop, gyro_t)
     biasx, biasy, biasz = [bias_init[0]], [bias_init[1]], [bias_init[2]]
     for i in range(len(time)-1):
-        xrand = sum(numpy.random.normal(0, gyro_sigma, 100))
-        yrand = sum(numpy.random.normal(0, gyro_sigma, 100))
-        zrand = sum(numpy.random.normal(0, gyro_sigma, 100))
-        biasx.extend([biasx[-1] + xrand + numpy.random.normal(0, gyro_noise_sigma)])
-        biasy.extend([biasy[-1] + yrand + numpy.random.normal(0, gyro_noise_sigma)])
-        biasz.extend([biasz[-1] + zrand + numpy.random.normal(0, gyro_noise_sigma)])
+        xrand = sum(numpy.random.normal(0, _gyro_sigma, 100))
+        yrand = sum(numpy.random.normal(0, _gyro_sigma, 100))
+        zrand = sum(numpy.random.normal(0, _gyro_sigma, 100))
+        biasx.extend([biasx[-1] + xrand + numpy.random.normal(0, _gyro_noise_sigma)])
+        biasy.extend([biasy[-1] + yrand + numpy.random.normal(0, _gyro_noise_sigma)])
+        biasz.extend([biasz[-1] + zrand + numpy.random.normal(0, _gyro_noise_sigma)])
     bias = [biasx, biasy, biasz]
-    plt.plot(time, bias[0], label='$bias_{x}$')
-    plt.plot(time, bias[1], label='$bias_{y}$')
-    plt.plot(time, bias[2], label='$bias_{z}$')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.title('Gyro Bias')
-    plt.xlabel('Seconds')
-    plt.show()
     return bias
 
-bias_history = plotBias(tstop, gyro_t, bias_init);
-biasx = InterpolatedUnivariateSpline(gyrotime, bias_history[0])
-biasy = InterpolatedUnivariateSpline(gyrotime, bias_history[1])
-biasz = InterpolatedUnivariateSpline(gyrotime, bias_history[2])
-
-def getGyroMeasurement(t, gyro_noise_sigma):
+## Dynamic Propagation Equations
+def getGyroMeasurement(t, gyro_noise_sigma, ws, bs):
+    omegax, omegay, omegaz = ws[0], ws[1], ws[2]
+    biasx, biasy, biasz = bs[0], bs[1], bs[2]
     return (numpy.array([[float(omegax(t)), float(omegay(t)),
                           float(omegaz(t))]]).T + numpy.array([[biasx(t)],
                                                                [biasy(t)],
                                                                [biasz(t)]]) +
             numpy.random.randn(3,1)*gyro_noise_sigma)
 
-def updateOmega(t, biasEst):
-    return getGyroMeasurement(t, gyro_sigma) - biasEst
+def updateOmega(t, biasEst, ws, bs):
+    return getGyroMeasurement(t, _gyro_sigma, ws, bs) - biasEst
 
 def updateBeta(betakp):
     return betakp
 
-def computePsi(t, biasEst, sample_rate):
-    omegaplus = updateOmega(t, biasEst)
+def computePsi(t, biasEst, sample_rate, ws, bs):
+    omegaplus = updateOmega(t, biasEst, ws, bs)
     return (numpy.sin(0.5*sample_rate*numpy.linalg.norm(omegaplus))/
             numpy.linalg.norm(omegaplus)) * omegaplus
 
-def crs(vector):
-    first = vector[0][0]
-    second = vector[1][0]
-    third = vector[2][0]
-    return numpy.array([[0., -third, second],
-                        [third, 0., -first],
-                        [-second, first, 0.]])
-
-def computeBigOmega(t, biasEst, sample_rate):
-    psi = computePsi(t, biasEst, sample_rate)
-    oneone = numpy.cos(0.5*sample_rate*numpy.linalg.norm(updateOmega(t, biasEst)))
+def computeBigOmega(t, biasEst, sample_rate, ws, bs):
+    psi = computePsi(t, biasEst, sample_rate, ws, bs)
+    oneone = numpy.cos(0.5*sample_rate*numpy.linalg.norm(updateOmega(t, biasEst, ws, bs)))
     psicrs = crs(psi)
     lowerright = numpy.array([[numpy.cos(0.5*sample_rate*
-                                         numpy.linalg.norm(updateOmega(t, biasEst)))]])
+                                         numpy.linalg.norm(updateOmega(t, biasEst, ws, bs)))]])
     upperleft = oneone*numpy.eye(3) - psicrs
     upperright = psi
     lowerleft = -1*psi.T
@@ -288,60 +219,9 @@ def computeBigOmega(t, biasEst, sample_rate):
     bottom = numpy.concatenate((lowerleft, lowerright), axis=1)
     return numpy.concatenate((top, bottom), axis=0)
 
-def updateQuaternion(t, biasEst, sample_rate, qkp):
-    bigO = computeBigOmega(t, biasEst, sample_rate)
+def updateQuaternion(t, biasEst, sample_rate, qkp, ws, bs):
+    bigO = computeBigOmega(t, biasEst, sample_rate, ws, bs)
     return numpy.dot(bigO, qkp)
-
-def test():
-    qu1, qu2 = numpy.zeros(len(gyrotime)), numpy.zeros(len(gyrotime))
-    qu3, qu4 = numpy.zeros(len(gyrotime)), numpy.zeros(len(gyrotime))
-    gyrox, gyroy, gyroz = numpy.zeros(len(gyrotime)), numpy.zeros(len(gyrotime)), numpy.zeros(len(gyrotime))
-    quat = numpy.array([[q1(0), q2(0), q3(0), q4(0)]]).T
-    qu1[0] = q1(0)
-    qu2[0] = q2(0)
-    qu3[0] = q3(0)
-    qu4[0] = q4(0)
-    counter = 1
-    for i in gyrotime[0:-1]:
-        if i%10 == 0:
-            print(i)
-        newq = updateQuaternion(i, numpy.array([[biasx(i), biasy(i), biasz(i)]]).T, gyro_t, quat)
-        qu1[counter] = newq[0][0]
-        qu2[counter] = newq[1][0]
-        qu3[counter] = newq[2][0]
-        qu4[counter] = newq[3][0]
-        omega = getGyroMeasurement(i, gyro_noise_sigma)
-        gyrox[counter] = omega[0][0]
-        gyroy[counter] = omega[1][0]
-        gyroz[counter] = omega[2][0]
-        counter += 1
-        quat = newq
-    norm = numpy.sqrt(numpy.array(qu1)**2. +
-                      numpy.array(qu2)**2. +
-                      numpy.array(qu3)**2. +
-                      numpy.array(qu4)**2.)
-#     plt.plot(gyrotime, norm, label='$|q|$')
-    plt.plot(gyrotime, numpy.array(qu1) - q1(gyrotime), label='$q_{1}$')
-    plt.plot(gyrotime, numpy.array(qu2) - q2(gyrotime), label='$q_{2}$')
-    plt.plot(gyrotime, numpy.array(qu3) - q3(gyrotime), label='$q_{3}$')
-    plt.plot(gyrotime, numpy.array(qu4) - q4(gyrotime), label='$q_{4}$')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.title('Propagated and True Quaternion Errors')
-    plt.xlabel('Seconds')
-#     plt.ylim([-1.5,1.5])
-    plt.show()
-    return qu1, qu2, qu3, qu4, gyrox, gyroy, gyroz
-
-qu1, qu2, qu3, qu4, gyrox, gyroy, gyroz = test()
-# print 'Uncomment to run.'
-
-satPos = numpy.array([[-15015.40312811, -23568.9768009, 2241.5049235]]).T
-moonPos = numpy.array([[-22184.418543, -314381.535181, -97722.516592]]).T
-sunPos = numpy.array([[-16452998.593032002, 134248022.50461, -58196377.831276014]]).T
-
-earthVec = (-1*satPos)/numpy.linalg.norm(satPos)
-moonVec = (moonPos - satPos)/numpy.linalg.norm((moonPos - satPos))
-sunVec = (sunPos - satPos)/numpy.linalg.norm(sunPos - satPos)
 
 def formA(q):
     q1, q2, q3, q4 = q[0][0], q[1][0], q[2][0], q[3][0]
@@ -349,7 +229,7 @@ def formA(q):
                         [2.*q1*q2 + 2.*q3*q4, 1.-2.*q1**2. - 2.*q3**2., 2.*q2*q3 - 2.*q1*q4],
                         [2.*q1*q3 - 2.*q2*q4, 2.*q1*q4 + 2.*q2*q3, 1.-2.*q1**2. - 2.*q2**2.]])
 
-def h(state):
+def meas_model(state, earthVec, moonVec, sunVec):
     A = formA(state)
     zearth = numpy.dot(A, earthVec)
     zmoon = numpy.dot(A, moonVec)
@@ -358,11 +238,12 @@ def h(state):
     zearth = numpy.concatenate((zearth, zsun), axis=0)
     return zearth
 
+### Test measurement generation, do not use
 def randomRotation(axis, angle, vector):
     A = numpy.eye(3)*numpy.cos(angle) + (1.-numpy.cos(angle))*numpy.dot(axis, axis.T) + crs(axis)*numpy.sin(angle)
     return numpy.dot(A, vector)
 
-def getMeasurement(t, meas_sigma):
+def getMeasurement(t, meas_sigma, q1, q2, q3, q4, earthVec, moonVec, sunVec):
     quaternion = numpy.array([[float(q1(t))],
                               [float(q2(t))],
                               [float(q3(t))],
@@ -370,7 +251,7 @@ def getMeasurement(t, meas_sigma):
     axis = numpy.random.rand(3,1)
     axis = axis/numpy.linalg.norm(axis)
     angle = meas_sigma*numpy.random.rand()
-    vec = h(quaternion)
+    vec = meas_model(quaternion, earthVec, moonVec, sunVec)
     vec[0:3][:] = randomRotation(axis, angle, vec[0:3][:])
     vec[3:6][:] = randomRotation(axis, angle, vec[3:6][:])
     vec[6:9][:] = randomRotation(axis, angle, vec[6:9][:])
@@ -389,87 +270,12 @@ def getMeasurement(t, meas_sigma):
     vec[8][0] = vec[8][0]/thirdden
     return vec
 
-def generateMeasurementArray(tstop, dt):
+def generateMeasurementArray(tstop, dt, q1, q2, q3, q4, earthVec, moonVec, sunVec):
     measlist = []
     for i in numpy.arange(0, tstop, dt):
-        measlist.append(getMeasurement(i, meas_sigma))
+        measlist.append(getMeasurement(i, _meas_sigma, q1, q2, q3, q4, earthVec, moonVec, sunVec))
     return measlist
-
-cameradt = 1.
-measurements = generateMeasurementArray(tstop,cameradt)
-
-def showMeas():
-    ex, ey, ez, em = [], [], [], []
-    my, mx, mz, mm = [], [], [], []
-    sx, sy, sz, sm = [], [], [], []
-    etx, ety, etz = [], [], []
-    mtx, mty, mtz = [], [], []
-    stx, sty, stz = [], [], []
-    start = 98
-    stop = 120
-    counter = deepcopy(start)
-    for i in measurements[start:stop]:
-        em.extend([numpy.linalg.norm(i[0:3])])
-        mm.extend([numpy.linalg.norm(i[3:6])])
-        sm.extend([numpy.linalg.norm(i[6:9])])
-        ex.extend([i[0][0]])
-        ey.extend([i[1][0]])
-        ez.extend([i[2][0]])
-        mx.extend([i[3][0]])
-        my.extend([i[4][0]])
-        mz.extend([i[5][0]])
-        sx.extend([i[6][0]])
-        sy.extend([i[7][0]])
-        sz.extend([i[8][0]])
-        true = h(numpy.array([[q1(counter), q2(counter), q3(counter), q4(counter)]]).T)
-        etx.extend([true[0][0]])
-        ety.extend([true[1][0]])
-        etz.extend([true[2][0]])
-        mtx.extend([true[3][0]])
-        mty.extend([true[4][0]])
-        mtz.extend([true[5][0]])
-        stx.extend([true[6][0]])
-        sty.extend([true[7][0]])
-        stz.extend([true[8][0]])
-        counter +=1
-    plt.plot(em, label='$|\hat{e}|$')
-    plt.plot(ex, label='$\hat{x}$')
-    plt.plot(ey, label='$\hat{y}$')
-    plt.plot(ez, label='$\hat{z}$')
-    plt.plot(etx, label='$\hat{x}_{true}$')
-    plt.plot(ety, label='$\hat{y}_{true}$')
-    plt.plot(etz, label='$\hat{z}_{true}$')
-    plt.title('Earth Unit Vector Measurements')
-    plt.xlabel('Seconds')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.ylim([-1.5,1.5])
-    plt.show()
-    plt.plot(mm, label='$|\hat{m}|$')
-    plt.plot(mx, label='$\hat{x}$')
-    plt.plot(my, label='$\hat{y}$')
-    plt.plot(mz, label='$\hat{z}$')
-    plt.plot(mtx, label='$\hat{x}_{true}$')
-    plt.plot(mty, label='$\hat{y}_{true}$')
-    plt.plot(mtz, label='$\hat{z}_{true}$')
-    plt.title('Moon Unit Vector Measurements')
-    plt.xlabel('Seconds')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.ylim([-1.5,1.5])
-    plt.show()
-    plt.plot(sm, label='$|\hat{s}|$')
-    plt.plot(sx, label='$\hat{x}$')
-    plt.plot(sy, label='$\hat{y}$')
-    plt.plot(sz, label='$\hat{z}$')
-    plt.plot(stx, label='$\hat{x}_{true}$')
-    plt.plot(sty, label='$\hat{y}_{true}$')
-    plt.plot(stz, label='$\hat{z}_{true}$')
-    plt.title('Sun Unit Vector Measurements')
-    plt.xlabel('Seconds')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.ylim([-1.5,1.5])
-    plt.show()
-showMeas()
-
+    
 # Tuning Parameters for Sigma Points
 Nx = 6.                                 # number of states
 alpha = 0                           # determines spread of sigma points
@@ -477,28 +283,18 @@ beta = 2.                               # optimal for Gaussian distribution
 kappa = -3.                             # chosen such that kappa+Nx=3
 lam = 0#alpha**2. * (kappa + Nx) - Nx     # depends on other variables
 
-P0 = numpy.array([[1.e-1, 0., 0., 0., 0., 0.],
-                  [0., 1.e-1, 0., 0., 0., 0.],
-                  [0., 0., 1.e-1, 0., 0., 0.],
-                  [0., 0., 0., 9.7e-10, 0., 0.],
-                  [0., 0., 0., 0., 9.7e-10, 0.],
-                  [0., 0., 0., 0., 0., 9.7e-10]]) * 10.
+Q = numpy.array([[_gyro_noise_sigma**2. - (1./6.)*_gyro_sigma**2.*_gyro_t**2., 0., 0., 0., 0., 0.],
+                 [0., _gyro_noise_sigma**2. - (1./6.)*_gyro_sigma**2.*_gyro_t**2., 0., 0., 0., 0.],
+                 [0., 0., _gyro_noise_sigma**2. - (1./6.)*_gyro_sigma**2.*_gyro_t**2., 0., 0., 0.],
+                 [0., 0., 0., _gyro_sigma**2., 0., 0.],
+                 [0., 0., 0., 0., _gyro_sigma**2., 0.],
+                 [0., 0., 0., 0., 0., _gyro_sigma**2.]]) * .5*_gyro_t
 
-Q = numpy.array([[gyro_noise_sigma**2. - (1./6.)*gyro_sigma**2.*gyro_t**2., 0., 0., 0., 0., 0.],
-                 [0., gyro_noise_sigma**2. - (1./6.)*gyro_sigma**2.*gyro_t**2., 0., 0., 0., 0.],
-                 [0., 0., gyro_noise_sigma**2. - (1./6.)*gyro_sigma**2.*gyro_t**2., 0., 0., 0.],
-                 [0., 0., 0., gyro_sigma**2., 0., 0.],
-                 [0., 0., 0., 0., gyro_sigma**2., 0.],
-                 [0., 0., 0., 0., 0., gyro_sigma**2.]]) * .5*gyro_t
+R = numpy.eye(9) * _meas_sigma**2.
 
-R = numpy.eye(9) * meas_sigma**2.
-
-x0 = numpy.array([[0., 0., 0., 0., 0., 0.]]).T
 
 # q0 = numpy.array([[ 0.01030764,  0.01030764,  0.01030764,  0.99984062]]).T
 # q0 = numpy.array([[0., 0., 0., 1.]]).T
-quat = numpy.array([[numpy.random.randn(), numpy.random.randn(), numpy.random.randn(), numpy.random.randn()]]).T
-q0 = quat/numpy.linalg.norm(quat)
 
 def getCholesky(Pmat, Qmat):
     return numpy.linalg.cholesky(Pmat + Q)
@@ -554,14 +350,14 @@ def perturbQuaternionEstimate(errorquat, qhatk):
         counter += 1
     return newquats
 
-def propagateQuaternion(perturbed_quat_list, sigmas, t):
-    time = numpy.arange(t, t+cameradt, gyro_t)
+def propagateQuaternion(perturbed_quat_list, sigmas, t, ws, bs, cameradt):
+    time = numpy.arange(t, t+cameradt, _gyro_t)
     updated_quats = numpy.zeros((len(perturbed_quat_list), 4, 1))
     for i in range(len(perturbed_quat_list)):
         bias = numpy.array([[sigmas[i][3][0], sigmas[i][4][0], sigmas[i][5][0]]]).T
         quat = perturbed_quat_list[i]
         for j in time:
-            newq = updateQuaternion(j, bias, gyro_t, quat)
+            newq = updateQuaternion(j, bias, _gyro_t, quat, ws, bs)
             newq = newq/numpy.linalg.norm(newq)
             quat = newq
         updated_quats[i] = (quat)
@@ -611,11 +407,11 @@ def predictedCov(newsigs, pred_mean):
         P += (1./(2*(Nx+lam)))*numpy.dot((i - pred_mean), (i - pred_mean).T)
     return P + Q
 
-def hFromSigs(prop_quaternions):
+def hFromSigs(prop_quaternions, e, m, s):
     hlist = numpy.zeros((len(prop_quaternions), 9, 1))
     counter = 0
     for i in prop_quaternions:
-        hlist[counter] = (h(i))
+        hlist[counter] = (meas_model(i, e, m, s))
         counter +=1
     return hlist
 
@@ -642,7 +438,6 @@ def Pzz(hlist, zmean):
     for i in hlist[1:]:
         Pzz += (1./(2*(Nx+lam)))*numpy.dot(i-zmean, (i-zmean).T)
     return Pzz + R
-
 
 def Pxz(siglist, xmean, hlist, zmean):
     Pxzmat = ((lam/(Nx+lam)))*numpy.dot(siglist[0] - xmean, (hlist[0]-zmean).T)
@@ -675,10 +470,10 @@ def updateQuaternionEstimate(xhatkp, qhatkm):
 def resetSigmaSeed(xhatkp):
     return numpy.array([[0., 0., 0., xhatkp[3][0], xhatkp[4][0], xhatkp[5][0]]]).T
 
-def UKF():
-    Phist = numpy.zeros((int(tstop/cameradt), 6, 6))
-    qhist = numpy.zeros((int(tstop/cameradt), 4, 1))
-    xhist = numpy.zeros((int(tstop/cameradt), 6, 1))
+def UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements):
+    Phist = numpy.zeros((int(_tstop/cameradt), 6, 6))
+    qhist = numpy.zeros((int(_tstop/cameradt), 4, 1))
+    xhist = numpy.zeros((int(_tstop/cameradt), 6, 1))
     Phatkp, Phist[0] = P0, P0
     xhatkp, xhist[0] = x0, x0
     qhatkp, qhist[0] = q0, q0
@@ -690,13 +485,13 @@ def UKF():
         sigma_points = generateSigmas(xhatkp, Phatkp)
         err_quats = makeErrorQuaternion(sigma_points)
         pert_quats = perturbQuaternionEstimate(err_quats, qhatkp)
-        prop_quats = propagateQuaternion(pert_quats, sigma_points, time)
+        prop_quats = propagateQuaternion(pert_quats, sigma_points, time, (omegax, omegay, omegaz), (biasx, biasy, biasz), cameradt)
         qhatkp1m = prop_quats[0]
         prop_err = propagatedQuaternionError(prop_quats)
         prop_sigmas = recoverPropSigma(prop_err, sigma_points)
         x_mean = predictedMean(prop_sigmas)
         p_mean = predictedCov(prop_sigmas, x_mean)
-        h_list = hFromSigs(prop_quats)
+        h_list = hFromSigs(prop_quats, earthVec, moonVec, sunVec)
         z_mean = meanMeasurement(h_list)
         Pzz_kp1 = Pzz(h_list, z_mean)
         Pxz_kp1 = Pxz(prop_sigmas, x_mean, h_list, z_mean)
@@ -717,10 +512,8 @@ def UKF():
         counter += 1
         
     return Phist, qhist, xhist
-
-results = UKF()
-
-def plotResults(results):
+        
+def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz):
     trace = []
     quat1, quat2, quat3, quat4 = [], [], [], []
     true1, true2, true3, true4 = [], [], [], []
@@ -865,4 +658,74 @@ def plotResults(results):
     plt.yscale('log')
     plt.show()
 
-plotResults(results)
+satPos = numpy.array([[-15015.40312811, -23568.9768009, 2241.5049235]]).T
+moonPos = numpy.array([[-22184.418543, -314381.535181, -97722.516592]]).T
+sunPos = numpy.array([[-16452998.593032002, 134248022.50461, -58196377.831276014]]).T
+cameradt = 1
+# TODO: Is this a constant, or a parameter
+x0 = numpy.array([[0., 0., 0., 0., 0., 0.]]).T
+quat = numpy.array([[numpy.random.randn(), numpy.random.randn(), numpy.random.randn(), numpy.random.randn()]]).T
+P0 = numpy.array([[1.e-1, 0., 0., 0., 0., 0.],
+                  [0., 1.e-1, 0., 0., 0., 0.],
+                  [0., 0., 1.e-1, 0., 0., 0.],
+                  [0., 0., 0., 9.7e-10, 0., 0.],
+                  [0., 0., 0., 0., 9.7e-10, 0.],
+                  [0., 0., 0., 0., 0., 9.7e-10]]) * 10.
+
+def testSpacecraftKick(satPos, moonPos, sunPos, cameradt, measurements, x0, quat, P0, kickTime):
+    angular_momentum_history = plotSpacecraft(_omega_init, _tstop, _delta_t, kickTime);
+    totaltime = numpy.arange(0, _tstop, _delta_t)
+    hx = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[9])
+    hy = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[10])
+    hz = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[11])
+    omegax = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[3])
+    omegay = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[4])
+    omegaz = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[5])
+    # Obtain quats
+    # TODO: Is this fixed to [0,0,0,1] or is it the last q0?
+    q0 = quat/numpy.linalg.norm(quat)
+#     quaternion_history = obtainAllQuatsfromAngVel([0., 0., 0., 1.], _tstop, _delta_t, (omegax, omegay, omegaz));
+    quaternion_history = obtainAllQuatsfromAngVel(q0.flatten(), _tstop, _delta_t, (omegax, omegay, omegaz));
+    q1 = InterpolatedUnivariateSpline(totaltime, quaternion_history[0])
+    q2 = InterpolatedUnivariateSpline(totaltime, quaternion_history[1])
+    q3 = InterpolatedUnivariateSpline(totaltime, quaternion_history[2])
+    q4 = InterpolatedUnivariateSpline(totaltime, quaternion_history[3])
+    # Propagate bias
+    bias_history = goBias(_tstop, _gyro_t, _bias_init);
+    biasx = InterpolatedUnivariateSpline(_gyrotime, bias_history[0])
+    biasy = InterpolatedUnivariateSpline(_gyrotime, bias_history[1])
+    biasz = InterpolatedUnivariateSpline(_gyrotime, bias_history[2])
+    
+    earthVec = (-1*satPos)/numpy.linalg.norm(satPos)
+    moonVec = (moonPos - satPos)/numpy.linalg.norm((moonPos - satPos))
+    sunVec = (sunPos - satPos)/numpy.linalg.norm(sunPos - satPos)
+    
+    # TODO: dummy measurements, remove this line in actual code
+    measurements = generateMeasurementArray(_tstop,cameradt, q1, q2, q3, q4, earthVec, moonVec, sunVec)
+    print('Total time: {}, Measurements: {}'.format(len(totaltime), len(measurements)))
+    # Run UKF
+    sigmas = generateSigmas(x0, P0)
+    err_quats = makeErrorQuaternion(sigmas)
+    quat_pert = perturbQuaternionEstimate(err_quats,q0)
+    prop_quat = propagateQuaternion(quat_pert, sigmas, 0, (omegax, omegay, omegaz), (biasx, biasy, biasz), cameradt)
+    quat_errors = propagatedQuaternionError(prop_quat)
+    new_sigs = recoverPropSigma(quat_errors, sigmas)
+    pred_mean = predictedMean(new_sigs)
+    pred_cov = predictedCov(new_sigs, pred_mean)
+    hlist = hFromSigs(prop_quat, earthVec, moonVec, sunVec)
+    zmean = meanMeasurement(hlist)
+    Pzzmat = Pzz(hlist, zmean)
+    Pxzmat = Pxz(new_sigs, pred_mean, hlist, zmean)
+    K = getGain(Pxzmat, Pzzmat)
+    x_new = updateXhat(pred_mean, K, measurements[0], zmean)
+    P_new = updatePhat(pred_cov, K, Pzzmat)
+    new_quat = updateQuaternionEstimate(x_new, prop_quat[0])
+
+    x0 = resetSigmaSeed(x_new)
+    P0 = P_new
+    q0 = new_quat
+
+    results = UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements)
+    plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz)
+    
+testSpacecraftKick(satPos, moonPos, sunPos, cameradt, None, x0, quat, P0, 200)

@@ -1,3 +1,5 @@
+from const import SPACECRAFT_I_B, DAMPER_C, DAMPER_I_D, TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP, GYRO_SAMPLE_RATE, GYRO_SIGMA, GYRO_NOISE_SIGMA, BIAS_INIT, MEAS_SIGMA, NX, LAM, P0, Q, R, _a, _f
+
 import matplotlib.pyplot as plt
 import numpy
 from mpl_toolkits.mplot3d import Axes3D
@@ -8,33 +10,6 @@ from scipy import integrate
 from numpy import random
 from copy import deepcopy
 from scipy.interpolate import InterpolatedUnivariateSpline
-
-_m = 10   #spacecraft mass, kg
-_h = .3   #spacecraft height, meters
-_w = .3   #spacecraft width, meters
-_d = .1   #spacecraft depth, meters
-_Ib = numpy.array([[(1./12.)*_m*(_h**2. + _d**2.), 0., 0.],
-                  [0., (1./12.)*_m*(_w**2. + _d**2.), 0.],
-                  [0., 0., (1./12.)*_m*(_w**2. + _h**2.)]]) #spacecraft inertia tensor
-
-_mdamp = 8 #damper mass in kg
-_mrad = 0.1 #damper radius in meters
-_c = 0.9    #damping coefficient
-_Id = numpy.array([[(2./5.)*_mdamp*_mrad**2., 0., 0.],
-                  [0., (2./5.)*_mdamp*_mrad**2., 0.],
-                  [0., 0., (2./5.)*_mdamp*_mrad**2.]])
-
-# _q0 = [0., 0., 0., 1.]                   # initial quaternion
-_omega_init = [0., 0.001, 2., 0., 0., 0.]# initial angular velocity
-_tstop = 700                             # total integration time
-_delta_t = 0.001                          # integration timestep
-_gyro_t = 1
-_gyrotime = numpy.arange(0, _tstop, _gyro_t)
-_sigma_acc = 0.                          # stochastic accelerations
-_gyro_sigma = 1.e-10
-_gyro_noise_sigma = 1.e-7
-_bias_init=[0., 0., 0.]
-_meas_sigma = 8.7e-4
 
 def crs(vector):
     first = vector[0][0]
@@ -50,14 +25,14 @@ def propagateSpacecraft(X, t, kickTime):
     omega_sc = numpy.array([[omegasc1, omegasc2, omegasc3]]).T
     omega_d  = numpy.array([[omegad1, omegad2, omegad3]]).T
     
-    inner_sc = (numpy.dot(crs(omega_sc), numpy.dot(_Ib, omega_sc)) - _c*omega_d +
+    inner_sc = (numpy.dot(crs(omega_sc), numpy.dot(SPACECRAFT_I_B, omega_sc)) - DAMPER_C*omega_d +
                     int(0.5*(numpy.sign(t - kickTime)+1))*numpy.array([[.1, 0., 0.]]).T -
                     int(0.5*(numpy.sign(t - (kickTime + 2))+1))*numpy.array([[.1, 0., 0.]]).T)
-    omega_sc_dot = (numpy.dot(-1.*pinv(_Ib), inner_sc))
+    omega_sc_dot = (numpy.dot(-1.*pinv(SPACECRAFT_I_B), inner_sc))
     
-    right_d = numpy.dot(crs(omega_sc), numpy.dot(_Id, omega_d + omega_sc)) + _c*omega_d
-    inner_d = numpy.dot(_Id, omega_sc_dot) + right_d
-    omega_d_dot = numpy.dot(-1.*pinv(_Id), inner_d)
+    right_d = numpy.dot(crs(omega_sc), numpy.dot(DAMPER_I_D, omega_d + omega_sc)) + DAMPER_C*omega_d
+    inner_d = numpy.dot(DAMPER_I_D, omega_sc_dot) + right_d
+    omega_d_dot = numpy.dot(-1.*pinv(DAMPER_I_D), inner_d)
     
     derivs = [omega_sc_dot[0][0], omega_sc_dot[1][0], omega_sc_dot[2][0],
               omega_d_dot[0][0], omega_d_dot[1][0], omega_d_dot[2][0]]
@@ -76,9 +51,9 @@ def goSpacecraft(X, tstop, delta_t, kickTime):
     for i in asol:
         omega_spacecraft = numpy.array([[i[0], i[1], i[2]]]).T
         omega_damper = numpy.array([[i[3], i[4], i[5]]]).T
-        h = numpy.dot(_Ib, omega_spacecraft)
+        h = numpy.dot(SPACECRAFT_I_B, omega_spacecraft)
         h_norm_spacecraft.extend([numpy.linalg.norm(h)])
-        hdamp = numpy.dot(_Id, omega_damper + omega_spacecraft)
+        hdamp = numpy.dot(DAMPER_I_D, omega_damper + omega_spacecraft)
         htot = h + hdamp
         hnorm.extend([numpy.linalg.norm(htot)])
         htotx.extend([htot[0][0]])
@@ -130,19 +105,16 @@ def obtainAllQuatsfromAngVel(q0, tstop, delta_t, ws):
         q4.extend([i[3]])
     return [q1, q2, q3, q4]
 
-a=1
-f=2.*(a+1)
-
 def goBias(tstop, gyro_t, bias_init):
     time = numpy.arange(0, tstop, gyro_t)
     biasx, biasy, biasz = [bias_init[0]], [bias_init[1]], [bias_init[2]]
     for i in range(len(time)-1):
-        xrand = sum(numpy.random.normal(0, _gyro_sigma, 100))
-        yrand = sum(numpy.random.normal(0, _gyro_sigma, 100))
-        zrand = sum(numpy.random.normal(0, _gyro_sigma, 100))
-        biasx.extend([biasx[-1] + xrand + numpy.random.normal(0, _gyro_noise_sigma)])
-        biasy.extend([biasy[-1] + yrand + numpy.random.normal(0, _gyro_noise_sigma)])
-        biasz.extend([biasz[-1] + zrand + numpy.random.normal(0, _gyro_noise_sigma)])
+        xrand = sum(numpy.random.normal(0, GYRO_SIGMA, 100))
+        yrand = sum(numpy.random.normal(0, GYRO_SIGMA, 100))
+        zrand = sum(numpy.random.normal(0, GYRO_SIGMA, 100))
+        biasx.extend([biasx[-1] + xrand + numpy.random.normal(0, GYRO_NOISE_SIGMA)])
+        biasy.extend([biasy[-1] + yrand + numpy.random.normal(0, GYRO_NOISE_SIGMA)])
+        biasz.extend([biasz[-1] + zrand + numpy.random.normal(0, GYRO_NOISE_SIGMA)])
     bias = [biasx, biasy, biasz]
     return bias
 
@@ -157,7 +129,7 @@ def getGyroMeasurement(t, gyro_noise_sigma, ws, bs):
             numpy.random.randn(3,1)*gyro_noise_sigma)
 
 def updateOmega(t, biasEst, ws, bs):
-    return getGyroMeasurement(t, _gyro_sigma, ws, bs) - biasEst
+    return getGyroMeasurement(t, GYRO_SIGMA, ws, bs) - biasEst
 
 def updateBeta(betakp):
     return betakp
@@ -234,47 +206,27 @@ def getMeasurement(t, meas_sigma, q1, q2, q3, q4, earthVec, moonVec, sunVec):
 def generateMeasurementArray(tstop, dt, q1, q2, q3, q4, earthVec, moonVec, sunVec):
     measlist = []
     for i in numpy.arange(0, tstop, dt):
-        measlist.append(getMeasurement(i, _meas_sigma, q1, q2, q3, q4, earthVec, moonVec, sunVec))
+        measlist.append(getMeasurement(i, MEAS_SIGMA, q1, q2, q3, q4, earthVec, moonVec, sunVec))
     return measlist
     
-# Tuning Parameters for Sigma Points
-Nx = 6.                                 # number of states
-alpha = 0                           # determines spread of sigma points
-beta = 2.                               # optimal for Gaussian distribution
-kappa = -3.                             # chosen such that kappa+Nx=3
-lam = 0#alpha**2. * (kappa + Nx) - Nx     # depends on other variables
-
-Q = numpy.array([[_gyro_noise_sigma**2. - (1./6.)*_gyro_sigma**2.*_gyro_t**2., 0., 0., 0., 0., 0.],
-                 [0., _gyro_noise_sigma**2. - (1./6.)*_gyro_sigma**2.*_gyro_t**2., 0., 0., 0., 0.],
-                 [0., 0., _gyro_noise_sigma**2. - (1./6.)*_gyro_sigma**2.*_gyro_t**2., 0., 0., 0.],
-                 [0., 0., 0., _gyro_sigma**2., 0., 0.],
-                 [0., 0., 0., 0., _gyro_sigma**2., 0.],
-                 [0., 0., 0., 0., 0., _gyro_sigma**2.]]) * .5*_gyro_t
-
-R = numpy.eye(9) * _meas_sigma**2.
-
-
-# q0 = numpy.array([[ 0.01030764,  0.01030764,  0.01030764,  0.99984062]]).T
-# q0 = numpy.array([[0., 0., 0., 1.]]).T
-
 def getCholesky(Pmat, Qmat):
     return numpy.linalg.cholesky(Pmat + Q)
 
 def extractColumns(mat):
-    cols = numpy.zeros((len(mat), int(Nx), 1))
+    cols = numpy.zeros((len(mat), int(NX), 1))
     for i in range(len(mat)):
         cols[i] = (numpy.array([mat[:,i]]).T)
     return cols
 
 def generateSigmas(xhatkp, Phatkp):
-    sigpoints = numpy.zeros((int(2*Nx + 1), int(Nx), 1))
+    sigpoints = numpy.zeros((int(2*NX + 1), int(NX), 1))
     sigpoints[0] = numpy.array([[0., 0., 0., xhatkp[3][0], xhatkp[4][0], xhatkp[5][0]]]).T
     S = getCholesky(Phatkp, Q)
     si = extractColumns(S)
     counter = 1
     for i in si:
-        sigpoints[counter] = (sigpoints[0] + numpy.sqrt(Nx+lam)*i)
-        sigpoints[counter+1] = (sigpoints[0] - numpy.sqrt(Nx+lam)*i)
+        sigpoints[counter] = (sigpoints[0] + numpy.sqrt(NX+LAM)*i)
+        sigpoints[counter+1] = (sigpoints[0] - numpy.sqrt(NX+LAM)*i)
         counter+=2
     return sigpoints
 
@@ -283,10 +235,10 @@ def makeErrorQuaternion(sigmas):
     counter = 0
     for i in sigmas:
         deltap = numpy.array([[i[0][0], i[1][0], i[2][0]]]).T
-        deltaq4p = ((-a*numpy.linalg.norm(deltap)**2. + 
-                     f*numpy.sqrt(f**2. + (1-a**2.)*numpy.linalg.norm(deltap)**2.))/
-                    (f**2. + numpy.linalg.norm(deltap)**2.))
-        deltaqhatkp = (1./f)*(a + deltaq4p)*deltap
+        deltaq4p = ((-_a*numpy.linalg.norm(deltap)**2. + 
+                     _f*numpy.sqrt(_f**2. + (1-_a**2.)*numpy.linalg.norm(deltap)**2.))/
+                    (_f**2. + numpy.linalg.norm(deltap)**2.))
+        deltaqhatkp = (1./_f)*(_a + deltaq4p)*deltap
         deltaq = numpy.concatenate((deltaqhatkp, numpy.array([[deltaq4p]])), axis=0)
         deltaq = deltaq/numpy.linalg.norm(deltaq)
         errorquat[counter] = deltaq
@@ -312,13 +264,13 @@ def perturbQuaternionEstimate(errorquat, qhatk):
     return newquats
 
 def propagateQuaternion(perturbed_quat_list, sigmas, t, ws, bs, cameradt):
-    time = numpy.arange(t, t+cameradt, _gyro_t)
+    time = numpy.arange(t, t+cameradt, GYRO_SAMPLE_RATE)
     updated_quats = numpy.zeros((len(perturbed_quat_list), 4, 1))
     for i in range(len(perturbed_quat_list)):
         bias = numpy.array([[sigmas[i][3][0], sigmas[i][4][0], sigmas[i][5][0]]]).T
         quat = perturbed_quat_list[i]
         for j in time:
-            newq = updateQuaternion(j, bias, _gyro_t, quat, ws, bs)
+            newq = updateQuaternion(j, bias, GYRO_SAMPLE_RATE, quat, ws, bs)
             newq = newq/numpy.linalg.norm(newq)
             quat = newq
         updated_quats[i] = (quat)
@@ -342,13 +294,13 @@ def propagatedQuaternionError(newquats):
     return errorprop
 
 def recoverPropSigma(quat_errors, old_sigmas):
-    newsigs = numpy.zeros((len(quat_errors), int(Nx), 1))
+    newsigs = numpy.zeros((len(quat_errors), int(NX), 1))
     for i in range(len(quat_errors)):
         deltaqhat = numpy.array([[quat_errors[i][0][0]],
                                  [quat_errors[i][1][0]],
                                  [quat_errors[i][2][0]]])
         deltaq4 = quat_errors[i][3][0]
-        top = (f*deltaqhat)/(a + deltaq4)
+        top = (_f*deltaqhat)/(_a + deltaq4)
         bottom = numpy.array([[old_sigmas[i][3][0]],
                               [old_sigmas[i][4][0]],
                               [old_sigmas[i][5][0]]])
@@ -357,15 +309,15 @@ def recoverPropSigma(quat_errors, old_sigmas):
     return newsigs
 
 def predictedMean(newsigs):
-    xmean = (1./(Nx + lam))*(lam*newsigs[0])
+    xmean = (1./(NX + LAM))*(LAM*newsigs[0])
     for i in newsigs[1:]:
-        xmean += (1./(2.*(Nx+lam)))*i
+        xmean += (1./(2.*(NX+LAM)))*i
     return xmean
 
 def predictedCov(newsigs, pred_mean):
-    P = ((lam/(Nx + lam)))*numpy.dot((newsigs[0] - pred_mean),(newsigs[0] - pred_mean).T)
+    P = ((LAM/(NX + LAM)))*numpy.dot((newsigs[0] - pred_mean),(newsigs[0] - pred_mean).T)
     for i in newsigs[1:]:
-        P += (1./(2*(Nx+lam)))*numpy.dot((i - pred_mean), (i - pred_mean).T)
+        P += (1./(2*(NX+LAM)))*numpy.dot((i - pred_mean), (i - pred_mean).T)
     return P + Q
 
 def hFromSigs(prop_quaternions, e, m, s):
@@ -377,9 +329,9 @@ def hFromSigs(prop_quaternions, e, m, s):
     return hlist
 
 def meanMeasurement(hlist):
-    zmean = (1./(Nx + lam))*(lam * hlist[0])
+    zmean = (1./(NX + LAM))*(LAM * hlist[0])
     for i in hlist[1:]:
-        zmean += (1./(2*(Nx+lam)))*i
+        zmean += (1./(2*(NX+LAM)))*i
     firstden = numpy.sqrt(zmean[0][0]**2. + zmean[1][0]**2. + zmean[2][0]**2.)
     secondden = numpy.sqrt(zmean[3][0]**2. + zmean[4][0]**2. + zmean[5][0]**2.)
     thirdden = numpy.sqrt(zmean[6][0]**2. + zmean[7][0]**2. + zmean[8][0]**2.)
@@ -395,15 +347,15 @@ def meanMeasurement(hlist):
     return zmean
 
 def Pzz(hlist, zmean):
-    Pzz = ((lam/(Nx+lam)))*numpy.dot(hlist[0] - zmean, (hlist[0] - zmean).T)
+    Pzz = ((LAM/(NX+LAM)))*numpy.dot(hlist[0] - zmean, (hlist[0] - zmean).T)
     for i in hlist[1:]:
-        Pzz += (1./(2*(Nx+lam)))*numpy.dot(i-zmean, (i-zmean).T)
+        Pzz += (1./(2*(NX+LAM)))*numpy.dot(i-zmean, (i-zmean).T)
     return Pzz + R
 
 def Pxz(siglist, xmean, hlist, zmean):
-    Pxzmat = ((lam/(Nx+lam)))*numpy.dot(siglist[0] - xmean, (hlist[0]-zmean).T)
+    Pxzmat = ((LAM/(NX+LAM)))*numpy.dot(siglist[0] - xmean, (hlist[0]-zmean).T)
     for i in range(1,len(siglist)):
-        Pxzmat += (1./(2*(Nx+lam)))*numpy.dot(siglist[i]-xmean,(hlist[i]-zmean).T)
+        Pxzmat += (1./(2*(NX+LAM)))*numpy.dot(siglist[i]-xmean,(hlist[i]-zmean).T)
     return Pxzmat
 
 def getGain(Pxzmat,Pzzmat):
@@ -420,10 +372,10 @@ def updatePhat(Pmean, K, Pzzmat):
 def updateQuaternionEstimate(xhatkp, qhatkm):
     i = xhatkp
     deltap = numpy.array([[i[0][0], i[1][0], i[2][0]]]).T
-    deltaq4p = ((-a*numpy.linalg.norm(deltap)**2. + 
-                 f*numpy.sqrt(f**2. + (1-a**2.)*numpy.linalg.norm(deltap)**2.))/
-                (f**2. + numpy.linalg.norm(deltap)**2.))
-    deltaqhatkp = (1./f)*(a + deltaq4p)*deltap
+    deltaq4p = ((-_a*numpy.linalg.norm(deltap)**2. + 
+                 _f*numpy.sqrt(_f**2. + (1-_a**2.)*numpy.linalg.norm(deltap)**2.))/
+                (_f**2. + numpy.linalg.norm(deltap)**2.))
+    deltaqhatkp = (1./_f)*(_a + deltaq4p)*deltap
     deltaq = numpy.concatenate((deltaqhatkp, numpy.array([[deltaq4p]])), axis=0)
     new = quaternionComposition(deltaq, qhatkm)
     return new/numpy.linalg.norm(new)
@@ -432,9 +384,9 @@ def resetSigmaSeed(xhatkp):
     return numpy.array([[0., 0., 0., xhatkp[3][0], xhatkp[4][0], xhatkp[5][0]]]).T
 
 def UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements):
-    Phist = numpy.zeros((int(_tstop/cameradt), 6, 6))
-    qhist = numpy.zeros((int(_tstop/cameradt), 4, 1))
-    xhist = numpy.zeros((int(_tstop/cameradt), 6, 1))
+    Phist = numpy.zeros((int(TOTAL_INTEGRATION_TIME/cameradt), 6, 6))
+    qhist = numpy.zeros((int(TOTAL_INTEGRATION_TIME/cameradt), 4, 1))
+    xhist = numpy.zeros((int(TOTAL_INTEGRATION_TIME/cameradt), 6, 1))
     Phatkp, Phist[0] = P0, P0
     xhatkp, xhist[0] = x0, x0
     qhatkp, qhist[0] = q0, q0
@@ -491,7 +443,7 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz):
         deltaqhat = numpy.array([[errquat[0][0], errquat[1][0], errquat[2][0]]]).T
         deltaq4 = errquat[3][0]
         attitude_error.extend([2.*numpy.arccos(deltaq4) * (180./numpy.pi)])
-        rod = 1*(f*deltaqhat)/(a + deltaq4)
+        rod = 1*(_f*deltaqhat)/(_a + deltaq4)
         truerod1.extend([rod[0][0]])
         truerod2.extend([rod[1][0]])
         truerod3.extend([rod[2][0]])
@@ -609,23 +561,10 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz):
     plt.yscale('log')
     plt.show()
 
-satPos = numpy.array([[-15015.40312811, -23568.9768009, 2241.5049235]]).T
-moonPos = numpy.array([[-22184.418543, -314381.535181, -97722.516592]]).T
-sunPos = numpy.array([[-16452998.593032002, 134248022.50461, -58196377.831276014]]).T
-cameradt = 1
-# TODO: Is this a constant, or a parameter
-x0 = numpy.array([[0., 0., 0., 0., 0., 0.]]).T
-quat = numpy.array([[numpy.random.randn(), numpy.random.randn(), numpy.random.randn(), numpy.random.randn()]]).T
-P0 = numpy.array([[1.e-1, 0., 0., 0., 0., 0.],
-                  [0., 1.e-1, 0., 0., 0., 0.],
-                  [0., 0., 1.e-1, 0., 0., 0.],
-                  [0., 0., 0., 9.7e-10, 0., 0.],
-                  [0., 0., 0., 0., 9.7e-10, 0.],
-                  [0., 0., 0., 0., 0., 9.7e-10]]) * 10.
+def runAttitudeUKFWithKick(satPos, moonPos, sunPos, cameradt, measurements, x0, quat, P0, omega_init, kickTime):
 
-def testSpacecraftKick(satPos, moonPos, sunPos, cameradt, measurements, x0, quat, P0, kickTime):
-    angular_momentum_history = plotSpacecraft(_omega_init, _tstop, _delta_t, kickTime);
-    totaltime = numpy.arange(0, _tstop, _delta_t)
+    angular_momentum_history = plotSpacecraft(omega_init, TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP, kickTime);
+    totaltime = numpy.arange(0, TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP)
     hx = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[9])
     hy = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[10])
     hz = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[11])
@@ -635,24 +574,25 @@ def testSpacecraftKick(satPos, moonPos, sunPos, cameradt, measurements, x0, quat
     # Obtain quats
     # TODO: Is this fixed to [0,0,0,1] or is it the last q0?
     q0 = quat/numpy.linalg.norm(quat)
-#     quaternion_history = obtainAllQuatsfromAngVel([0., 0., 0., 1.], _tstop, _delta_t, (omegax, omegay, omegaz));
-    quaternion_history = obtainAllQuatsfromAngVel(q0.flatten(), _tstop, _delta_t, (omegax, omegay, omegaz));
+    #     quaternion_history = obtainAllQuatsfromAngVel([0., 0., 0., 1.], TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP, (omegax, omegay, omegaz));
+    quaternion_history = obtainAllQuatsfromAngVel(q0.flatten(), TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP, (omegax, omegay, omegaz));
     q1 = InterpolatedUnivariateSpline(totaltime, quaternion_history[0])
     q2 = InterpolatedUnivariateSpline(totaltime, quaternion_history[1])
     q3 = InterpolatedUnivariateSpline(totaltime, quaternion_history[2])
     q4 = InterpolatedUnivariateSpline(totaltime, quaternion_history[3])
     # Propagate bias
-    bias_history = goBias(_tstop, _gyro_t, _bias_init);
-    biasx = InterpolatedUnivariateSpline(_gyrotime, bias_history[0])
-    biasy = InterpolatedUnivariateSpline(_gyrotime, bias_history[1])
-    biasz = InterpolatedUnivariateSpline(_gyrotime, bias_history[2])
+    bias_history = goBias(TOTAL_INTEGRATION_TIME, GYRO_SAMPLE_RATE, BIAS_INIT);
+    gyrotime = numpy.arange(0, TOTAL_INTEGRATION_TIME, GYRO_SAMPLE_RATE)
+    biasx = InterpolatedUnivariateSpline(gyrotime, bias_history[0])
+    biasy = InterpolatedUnivariateSpline(gyrotime, bias_history[1])
+    biasz = InterpolatedUnivariateSpline(gyrotime, bias_history[2])
     
     earthVec = (-1*satPos)/numpy.linalg.norm(satPos)
     moonVec = (moonPos - satPos)/numpy.linalg.norm((moonPos - satPos))
     sunVec = (sunPos - satPos)/numpy.linalg.norm(sunPos - satPos)
     
     # TODO: dummy measurements, remove this line in actual code
-    measurements = generateMeasurementArray(_tstop,cameradt, q1, q2, q3, q4, earthVec, moonVec, sunVec)
+    measurements = generateMeasurementArray(TOTAL_INTEGRATION_TIME,cameradt, q1, q2, q3, q4, earthVec, moonVec, sunVec)
     print('Total time: {}, Measurements: {}'.format(len(totaltime), len(measurements)))
     # Run UKF
     sigmas = generateSigmas(x0, P0)
@@ -679,4 +619,12 @@ def testSpacecraftKick(satPos, moonPos, sunPos, cameradt, measurements, x0, quat
     results = UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements)
     plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz)
     
-testSpacecraftKick(satPos, moonPos, sunPos, cameradt, None, x0, quat, P0, 200)
+if __name__=='__main__':
+    satPos = numpy.array([[-15015.40312811, -23568.9768009, 2241.5049235]]).T
+    moonPos = numpy.array([[-22184.418543, -314381.535181, -97722.516592]]).T
+    sunPos = numpy.array([[-16452998.593032002, 134248022.50461, -58196377.831276014]]).T
+    cameradt = 1
+    # TODO: Is this a constant, or a parameter
+    x0 = numpy.array([[0., 0., 0., 0., 0., 0.]]).T
+    quat = numpy.array([[numpy.random.randn(), numpy.random.randn(), numpy.random.randn(), numpy.random.randn()]]).T
+    runAttitudeUKFWithKick(satPos, moonPos, sunPos, cameradt, None, x0, quat, P0, [0., 0.001, 2., 0., 0., 0.], 200)

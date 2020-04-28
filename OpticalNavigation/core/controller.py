@@ -1,6 +1,7 @@
 from core.acquisition import startAcquisition, readOmega
 from core.cam_meas import cameraMeasurements
-from core.ukf import runUKF
+from core.ukf import runPosVelUKF
+from core.attitude import runAttitudeUKFWithKick
 import numpy as np
 import traceback
 
@@ -25,7 +26,7 @@ def run(currentTime, moonEph, sunEph, initState, P, cameraParameters, dir=None):
             print("[Opnav controller]: did not find all three bodies. Skipping...")
             return None, None, None
         else:
-            xNew, pNew, K = runUKF(moonEph[currentTime].reshape(1,6), sunEph[currentTime].reshape(1,6), meas.reshape(6,1), initState, 60, P) # TODO: UKF computation errors?
+            xNew, pNew, K = runPosVelUKF(moonEph[currentTime].reshape(1,6), sunEph[currentTime].reshape(1,6), meas.reshape(6,1), initState, 60, P) # TODO: UKF computation errors?
             # TODO: Deposit position and velocity estimates into global location
             print("[Opnav controller]: Finished successfully {}, Gain {}".format(xNew, K))
             return xNew, pNew, K

@@ -16,10 +16,6 @@ from power_structs import *
 import RPi.GPIO as GPIO
 import time
 
-# I2C libraries
-import Adafruit_ADS1x15
-from SDL_DS3231 import SDL_DS3231
-
 # pipeline operator (>>_>>)
 _ = power_structs._
 
@@ -99,10 +95,6 @@ class Power(object):
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
         self._pi = pi()                                     # initialize pigpio object
         self._dev = self._pi.i2c_open(bus, addr, flags)     # initialize i2c device
-
-        # I2C devices
-        self._adc = Adafruit_ADS1x15.ADS1115()              # initialize adc
-        self._rtc = SDL_DS3231.SDL_DS3231(1, 0x68)          # initialize rtc
 
         # initialize pi outputs
         GPIO.setmode(GPIO.BOARD)
@@ -368,37 +360,6 @@ class Power(object):
         assert type(on) == bool, "Input 'on' must be either True (on) or False (off)"
         self.set_single_output(OUT_COMMS_AMP, int(on), 0)
 
-    def adc(self, t, n, gain=2/3):
-        output = []
-        for i in range(n):
-            val = 5*self._adc.read_adc(0, gain)/26676
-            output += [val]
-            print(val)
-            time.sleep(t)
-        return output
-
-    def rtc(self, t, n):
-        output = []
-        for i in range(n):
-            val = self._rtc.read_datetime()
-            temp = self._rtc.getTemp()
-            output += [(val, temp)]
-            print(val)
-            print(temp)
-            time.sleep(t)
-        return output
-
-    def gyro(self, dt):
-        x = 0
-        y = 0
-        z = 0
-        while True:
-            dxyz = self._gyro.Get_CalOut_Value()
-            x += dxyz[0]*dt
-            y += dxyz[1]*dt
-            z += dxyz[2]*dt
-            print("{:7.2f} {:7.2f} {:7.2f}".format(x, y, z))
-            time.sleep(dt)
 
     def adjust_string(self, string, length):
         new = string
@@ -408,40 +369,6 @@ class Power(object):
             new += " "*(length-len(new))
         return new
 
-    def display_sensors(self, t=0):
-        x, y, z, dt = 0, 0, 0, 0.1
-        cycles = 0
-        condition = lambda: True if t == 0 else cycles <= t
-
-        while True:
-            # gyro info
-            header_gyro = "                GYRO                "
-            dxyz = self._gyro.Get_CalOut_Value()
-            x, y, z = x+dxyz[0]*dt, y+dxyz[1]*dt, z+dxyz[2]*dt
-            gyro_r1 = self.adjust_string("x: "+str(x), len(header_gyro))
-            gyro_r2 = self.adjust_string("y: "+str(y), len(header_gyro))
-            gyro_r3 = self.adjust_string("z: "+str(z), len(header_gyro))
-
-            # adc info
-            header_adc = "        PRESSURE        "
-            adc_r1 = self.adjust_string(str(300*self._adc.read_adc(0, 2/3)/26676)+" psi", len(header_adc))
-            adc_r2 = " "*len(header_adc)
-            adc_r3 = adc_r2
-
-            # rtc info
-            header_rtc = "                         RTC                         "
-            rtc_r1 = self.adjust_string("time: "+str(self._rtc.read_datetime()), len(header_rtc))
-            rtc_r2 = self.adjust_string("temp: "+str(self._rtc.getTemp())+" C", len(header_rtc))
-            rtc_r3 = " "*len(header_rtc)
-
-            # print everything
-            print("|%s|%s|%s|" % (header_gyro,  header_adc, header_rtc))
-            print("|%s|%s|%s|" % (gyro_r1,      adc_r1,     rtc_r1))
-            print("|%s|%s|%s|" % (gyro_r2,      adc_r2,     rtc_r2))
-            print("|%s|%s|%s|" % (gyro_r3,      adc_r3,     rtc_r3))
-            print("\033[F"*5)
-
-            time.sleep(dt)
 
     def nasa_demo(self):
         r = raw_input("electrolyzers: ")

@@ -1,7 +1,6 @@
 # Commands we want to test on the HITL table in SP2020
 
 from power_controller import *
-from power_structs import *
 import time
 
 HITL_test = Power()
@@ -26,7 +25,8 @@ for i in range(1, 6):
     time.sleep(1)  # wait one second
     HK_data = HITL_test.get_hk_1()  # get the housekeeping data
     HITL_test.set_single_output(current_output, 0, 0)  # Turn off channel
-    displayHK(HK_data)
+    print("OUT_" + str(i) + " System Current: " + str(HK_data.cursys))
+    print("OUT_" + str(i) + " Battery Voltage: " + str(HK_data.vbatt))
     print("\n")
     time.sleep(5)
 

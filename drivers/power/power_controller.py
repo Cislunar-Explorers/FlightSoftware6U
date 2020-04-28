@@ -368,25 +368,22 @@ class Power(object):
 
 
     def nasa_demo(self):
-        r = raw_input("electrolyzers: ")
+        r = input("electrolyzers: ")
         self.electrolyzer(True)
         time.sleep(float(r))
         self.electrolyzer(False)
 
-        r = raw_input("sparkplug:")
+        r = input("sparkplug:")
         self.sparkplug(3)
 
-        r = raw_input("solenoid:")
+        r = input("solenoid:")
         self.solenoid(10, 250)
 
-        r = raw_input("burnwire:")
+        r = input("burnwire:")
         self.burnwire(4)
 
-        r = raw_input("sensor data:")
+        r = input("sensor data:")
         self.display_sensors()
-
-    def capture(self):
-        os.system("cd ivport-master\npython ivport_capture_A.py")
 
     def chamber(self, name, t):
         text_file = open(name, "w")

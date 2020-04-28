@@ -16,9 +16,6 @@ from power_structs import *
 import RPi.GPIO as GPIO
 import time
 
-# pipeline operator (>>_>>)
-_ = power_structs._
-
 # power device address
 POWER_ADDRESS           = 0x02
 

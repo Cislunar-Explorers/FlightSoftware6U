@@ -562,7 +562,6 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz):
     plt.show()
 
 def runAttitudeUKFWithKick(satPos, moonPos, sunPos, cameradt, measurements, x0, quat, P0, omega_init, kickTime):
-
     angular_momentum_history = plotSpacecraft(omega_init, TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP, kickTime);
     totaltime = numpy.arange(0, TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP)
     hx = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[9])
@@ -618,6 +617,7 @@ def runAttitudeUKFWithKick(satPos, moonPos, sunPos, cameradt, measurements, x0, 
 
     results = UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements)
     plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz)
+    return results
     
 if __name__=='__main__':
     satPos = numpy.array([[-15015.40312811, -23568.9768009, 2241.5049235]]).T
@@ -627,4 +627,5 @@ if __name__=='__main__':
     # TODO: Is this a constant, or a parameter
     x0 = numpy.array([[0., 0., 0., 0., 0., 0.]]).T
     quat = numpy.array([[numpy.random.randn(), numpy.random.randn(), numpy.random.randn(), numpy.random.randn()]]).T
-    runAttitudeUKFWithKick(satPos, moonPos, sunPos, cameradt, None, x0, quat, P0, [0., 0.001, 2., 0., 0., 0.], 200)
+    Phist, qhist, xhist = runAttitudeUKFWithKick(satPos, moonPos, sunPos, cameradt, None, x0, quat, P0, [0., 0.001, 2., 0., 0., 0.], 200)
+    print(Phist[-1], qhist[-1], xhist[-1], xhist.shape)

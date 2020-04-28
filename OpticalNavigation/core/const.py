@@ -77,6 +77,7 @@ GYRO_SAMPLE_RATE = 1
 
 # TODO: Stochastic accelerations not used in attitude UKF
 # _sigma_acc = 0.                          # stochastic accelerations
+# The following values will need to be calculated for our gyro. Values will differ significantly which will affect the output.
 GYRO_SIGMA = 1.e-10
 GYRO_NOISE_SIGMA = 1.e-7
 BIAS_INIT=[0., 0., 0.]

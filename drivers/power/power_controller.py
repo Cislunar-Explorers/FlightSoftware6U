@@ -16,7 +16,10 @@ from power_structs import *
 import power_structs as ps
 import RPi.GPIO as GPIO
 import time
+<<<<<<< HEAD
 from enum import Enum
+=======
+>>>>>>> Preparation for HITL testing
 
 # power device address
 POWER_ADDRESS           = 0x02

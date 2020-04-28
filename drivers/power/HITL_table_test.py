@@ -58,3 +58,30 @@ time.sleep(10)
 HITL_test.electrolyzer(False)
 
 print("\nComponent function testing done")
+
+print("\n--- Testing WDTs ---\n")
+
+#get wdt data
+WDT_data = HITL_test.get_hk_wdt()
+print("Initial WDT data:")
+print("I2C Time left: " + str(WDT_data.wdt_i2c_time_left))
+print("GND Time left: " + str(WDT_data.wdt_gnd_time_left))
+print("CSP Pings left: " + str(WDT_data.wdt_csp_pings_left))
+
+#test i2c wdt
+HITL_test.ping(1)
+WDT_data_i2c_test = HITL_test.get_hk_wdt()
+print("\nWDT data after I2C ping")
+print("I2C Time left: " + str(WDT_data.wdt_i2c_time_left))
+print("GND Time left: " + str(WDT_data.wdt_gnd_time_left))
+print("CSP Pings left: " + str(WDT_data.wdt_csp_pings_left))
+
+#reset ground wdt
+HITL_test.reset_wdt()
+
+#see if it worked
+WDT_data_ground_test = HITL_test.get_hk_wdt()
+print("\nWDT data after Ground timer reset")
+print("I2C Time left: " + str(WDT_data.wdt_i2c_time_left))
+print("GND Time left: " + str(WDT_data.wdt_gnd_time_left))
+print("CSP Pings left: " + str(WDT_data.wdt_csp_pings_left))

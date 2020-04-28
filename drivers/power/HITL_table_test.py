@@ -67,6 +67,9 @@ print("Initial WDT data:")
 print("I2C Time left: " + str(WDT_data.wdt_i2c_time_left))
 print("GND Time left: " + str(WDT_data.wdt_gnd_time_left))
 print("CSP Pings left: " + str(WDT_data.wdt_csp_pings_left))
+print("I2C Reboots: " + str(WDT_data.counter_wdt_i2c))
+print("GND Reboots: " + str(WDT_data.counter_wdt_gnd))
+print("CPS Reboots: " + str(WDT_data.counter_wdt_csp))
 
 #test i2c wdt
 HITL_test.ping(1)
@@ -75,6 +78,10 @@ print("\nWDT data after I2C ping")
 print("I2C Time left: " + str(WDT_data_i2c_test.wdt_i2c_time_left))
 print("GND Time left: " + str(WDT_data_i2c_test.wdt_gnd_time_left))
 print("CSP Pings left: " + str(WDT_data_i2c_test.wdt_csp_pings_left))
+print("I2C Reboots: " + str(WDT_data_i2c_test.counter_wdt_i2c))
+print("GND Reboots: " + str(WDT_data_i2c_test.counter_wdt_gnd))
+print("CPS Reboots: " + str(WDT_data_i2c_test.counter_wdt_csp))
+
 
 #reset ground wdt
 HITL_test.reset_wdt()
@@ -85,3 +92,6 @@ print("\nWDT data after Ground timer reset")
 print("I2C Time left: " + str(WDT_data_ground_test.wdt_i2c_time_left))
 print("GND Time left: " + str(WDT_data_ground_test.wdt_gnd_time_left))
 print("CSP Pings left: " + str(WDT_data_ground_test.wdt_csp_pings_left))
+print("I2C Reboots: " + str(WDT_data_ground_test.counter_wdt_i2c))
+print("GND Reboots: " + str(WDT_data_ground_test.counter_wdt_gnd))
+print("CPS Reboots: " + str(WDT_data_ground_test.counter_wdt_csp))

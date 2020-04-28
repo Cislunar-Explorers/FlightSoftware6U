@@ -191,7 +191,7 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamic
     pNew = Pxx - K.dot(R.dot(K.T))
     return xNew, pNew, K
 
-def runUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, dynamicsOnly=False):
+def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, dynamicsOnly=False):
     """
     One full execution of the ukf
     [moonEph]: Moon ephemeris vector (1,6)

@@ -7,7 +7,7 @@ HITL_test = Power()
 
 print("Turning off all outputs")
 OUTPUTS = [OUT_1, OUT_2, OUT_3, OUT_4, OUT_5, OUT_6]
-for i in range(1,6):
+for i in range(0, 6):
     HITL_test.set_single_output(OUTPUTS[i], 0,0)
 
 print(" --- TESTING  displayAll --- \n")
@@ -18,7 +18,7 @@ time.sleep(5)
 
 # Turn every channel on then off sequentially using set_single_output
 print("\n --- TESTING OUPUTS --- \n")
-for i in range(1, 6):
+for i in range(0, 6):
     current_output = OUTPUTS[i]
     print(" ### TESTING OUT_" + str(i) + " ###\n")
     HITL_test.set_single_output(current_output, 1, 0)  # Turns on channel
@@ -58,10 +58,11 @@ time.sleep(10)
 HITL_test.electrolyzer(False)
 
 print("\nComponent function testing done")
-
+time.sleep(2)
 print("\n--- Testing WDTs ---\n")
+time.sleep(1)
 
-#get wdt data
+# get wdt data
 WDT_data = HITL_test.get_hk_wdt()
 print("Initial WDT data:")
 print("I2C Time left: " + str(WDT_data.wdt_i2c_time_left))
@@ -71,7 +72,8 @@ print("I2C Reboots: " + str(WDT_data.counter_wdt_i2c))
 print("GND Reboots: " + str(WDT_data.counter_wdt_gnd))
 print("CPS Reboots: " + str(WDT_data.counter_wdt_csp))
 
-#test i2c wdt
+time.sleep(5)
+# test i2c wdt
 HITL_test.ping(1)
 WDT_data_i2c_test = HITL_test.get_hk_wdt()
 print("\nWDT data after I2C ping")
@@ -82,11 +84,11 @@ print("I2C Reboots: " + str(WDT_data_i2c_test.counter_wdt_i2c))
 print("GND Reboots: " + str(WDT_data_i2c_test.counter_wdt_gnd))
 print("CPS Reboots: " + str(WDT_data_i2c_test.counter_wdt_csp))
 
-
-#reset ground wdt
+time.sleep(5)
+# reset ground wdt
 HITL_test.reset_wdt()
 
-#see if it worked
+# see if it worked
 WDT_data_ground_test = HITL_test.get_hk_wdt()
 print("\nWDT data after Ground timer reset")
 print("I2C Time left: " + str(WDT_data_ground_test.wdt_i2c_time_left))
@@ -95,3 +97,5 @@ print("CSP Pings left: " + str(WDT_data_ground_test.wdt_csp_pings_left))
 print("I2C Reboots: " + str(WDT_data_ground_test.counter_wdt_i2c))
 print("GND Reboots: " + str(WDT_data_ground_test.counter_wdt_gnd))
 print("CPS Reboots: " + str(WDT_data_ground_test.counter_wdt_csp))
+
+print("WDT Testing Done.")

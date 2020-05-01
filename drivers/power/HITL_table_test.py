@@ -23,7 +23,7 @@ for i in range(0, 6):
     print(" ### TESTING OUT_" + str(i) + " ###\n")
     HITL_test.set_single_output(current_output, 1, 0)  # Turns on channel
     time.sleep(1)  # wait one second
-    HK_data = HITL_test.get_hk_1()  # get the housekeeping data
+    HK_data = HITL_test.get_hk_2()  # get the housekeeping data
     HITL_test.set_single_output(current_output, 0, 0)  # Turn off channel
     print("OUT_" + str(i) + " System Current: " + str(HK_data.cursys))
     print("OUT_" + str(i) + " Battery Voltage: " + str(HK_data.vbatt))

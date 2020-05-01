@@ -276,7 +276,7 @@ def toBytes(i, num):
     binary = bin(i)[2:]
     rem = len(binary) % 8 
     binary = '0'*(8-rem)+binary     # add zeros to make it 8 bit
-    size = len(binary)/8
+    size = int(len(binary)/8)	    # Cast to int added during testing
     bytes = '0'*8*(num-size)+binary # add zeros to make it into right num of bytes
 
     acc = []

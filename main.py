@@ -44,7 +44,9 @@ class MainSatelliteThread(Thread):
         self.create_session = create_sensor_tables_from_path(DB_FILE)
 
     def init_comms(self):
-        self.comms = CommunicationsSystem(queue=self.command_queue, use_ax5043=False)  # noqa E501
+        self.comms = CommunicationsSystem(
+            queue=self.command_queue, use_ax5043=False
+        )  # noqa E501
         self.comms.listen()
 
     # TODO
@@ -82,7 +84,9 @@ class MainSatelliteThread(Thread):
 
     # Execute received commands
     def execute_commands(self):
-        assert len(self.commands_to_execute) == 0, "Didn't finish executing previous commands"
+        assert (
+            len(self.commands_to_execute) == 0
+        ), "Didn't finish executing previous commands"
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
         self.flight_mode.execute_current_commands()
@@ -103,6 +107,7 @@ class MainSatelliteThread(Thread):
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:
+            # TODO handle failure gracefully
             if FOR_FLIGHT is True:
                 self.run()
 

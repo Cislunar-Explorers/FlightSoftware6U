@@ -22,7 +22,7 @@ IDEAL_CRACKING_PRESSURE = 15.0
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
     os.path.expanduser("~"), ".cislunar-flight-software"
-)  # noqa E501
+)
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 

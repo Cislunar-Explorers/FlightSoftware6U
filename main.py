@@ -46,7 +46,7 @@ class MainSatelliteThread(Thread):
     def init_comms(self):
         self.comms = CommunicationsSystem(
             queue=self.command_queue, use_ax5043=False
-        )  # noqa E501
+        )
         self.comms.listen()
 
     # TODO

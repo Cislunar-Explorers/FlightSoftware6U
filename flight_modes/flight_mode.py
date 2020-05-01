@@ -56,7 +56,7 @@ class FlightMode:
         if flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
                 self.gom.read_battery_percentage()
-                >= EXIT_LOW_BATTERY_MODE_THRESHOLD  # noqa E501
+                >= EXIT_LOW_BATTERY_MODE_THRESHOLD
             ):
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 

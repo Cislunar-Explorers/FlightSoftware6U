@@ -37,8 +37,9 @@ def process(startTime, duration, moonTable, sunTable, initPosVel, initOmega, ini
     """
     # Step 1: Convert video clips into list of measurements
     # TODO: Finalize video format and conversion to frames
-    measlist = [np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])]
-    gyro_list = []
+    measList = [np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])] # earth, moon, sun
+    gyroList = [[0], [0], [0], [0], [0], [0]] # omegaX, omegaY, omegaZ, biasX, biasY, biasZ
+
 
 # def run(currentTime, moonEph, sunEph, initState, P, cameraParameters, dir=None):
 #     """

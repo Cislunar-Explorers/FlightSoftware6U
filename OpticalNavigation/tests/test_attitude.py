@@ -15,6 +15,7 @@ from copy import deepcopy
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 def propagateSpacecraft(X, t, kickTime):
+    # print(X)
     omegasc1, omegasc2, omegasc3 = X[0], X[1], X[2]
     omegad1, omegad2, omegad3 = X[3], X[4], X[5]
     omega_sc = numpy.array([[omegasc1, omegasc2, omegasc3]]).T
@@ -37,6 +38,7 @@ def propagateSpacecraft(X, t, kickTime):
 def goSpacecraft(X, tstop, delta_t, kickTime):
     a_t = numpy.arange(0, tstop, delta_t)
     asol = integrate.odeint(propagateSpacecraft, X, a_t, args=(kickTime,))
+    print("integration time steps {}, asol {}".format(len(a_t), len(asol)))
     hx, hy, hz = [], [], []
     htotx, htoty, htotz = [], [], []
     omegasx, omegasy, omegasz = [], [], []
@@ -181,7 +183,7 @@ def generateSyntheticData(quat, satPos, moonPos, sunPos, cameradt, kickTime):
     
     # TODO: dummy measurements, remove this line in actual code
     measurements = generateMeasurementArray(TOTAL_INTEGRATION_TIME,cameradt, q1, q2, q3, q4, earthVec, moonVec, sunVec)
-    print('Total time: {}, Measurements: {}'.format(len(totaltime), len(measurements)))
+    print('Total time: {}, Gyro time: {}, Measurements: {}, angular_momentum_history: {}, bias_history: {}'.format(len(totaltime), len(gyrotime), len(measurements), len(angular_momentum_history[3]), len(bias_history[1])))
 
     return measurements, q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec
 

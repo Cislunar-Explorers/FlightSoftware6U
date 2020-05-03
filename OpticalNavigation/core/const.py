@@ -76,13 +76,13 @@ DAMPER_I_D = numpy.array([[(2./5.)*DAMPER_MASS*DAMPER_RADIUS**2., 0., 0.],
 # omega_init = [0., 0.001, 2., 0., 0., 0.]# initial angular velocity
 TOTAL_INTEGRATION_TIME = 700                             # total integration time
 INTEGRATION_TIMESTEP = 0.001                          # integration timestep
-GYRO_SAMPLE_RATE = 1
+GYRO_SAMPLE_RATE = 0.5
 
 # TODO: Stochastic accelerations not used in attitude UKF
 # _sigma_acc = 0.                          # stochastic accelerations
 # The following values will need to be calculated for our gyro. Values will differ significantly which will affect the output.
 GYRO_SIGMA = 1.e-10
-GYRO_NOISE_SIGMA = 1.e-7
+GYRO_NOISE_SIGMA = 1.e-4
 BIAS_INIT=[0., 0., 0.]
 MEAS_SIGMA = 8.7e-4
 

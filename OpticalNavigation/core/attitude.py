@@ -31,6 +31,10 @@ def meas_model(state, earthVec, moonVec, sunVec):
     return zearth
 
 def getGyroMeasurement(t, gyro_noise_sigma, ws, bs):
+    """
+    [gyro_noise_sigma] noise added to true gyro values
+    """
+    # print(t)
     omegax, omegay, omegaz = ws[0], ws[1], ws[2]
     biasx, biasy, biasz = bs[0], bs[1], bs[2]
     return (numpy.array([[float(omegax(t)), float(omegay(t)),
@@ -123,6 +127,7 @@ def perturbQuaternionEstimate(errorquat, qhatk):
 
 def propagateQuaternion(perturbed_quat_list, sigmas, t, ws, bs, cameradt):
     time = numpy.arange(t, t+cameradt, GYRO_SAMPLE_RATE)
+    # print(time)
     updated_quats = numpy.zeros((len(perturbed_quat_list), 4, 1))
     for i in range(len(perturbed_quat_list)):
         bias = numpy.array([[sigmas[i][3][0], sigmas[i][4][0], sigmas[i][5][0]]]).T
@@ -251,8 +256,8 @@ def UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earth
     time = 0.
     counter = 0
     for i in measurements[0:]:
-        if counter % 10==0:
-            print(counter)
+        # if counter % 10==0:
+        #     print(counter)
         sigma_points = generateSigmas(xhatkp, Phatkp)
         err_quats = makeErrorQuaternion(sigma_points)
         pert_quats = perturbQuaternionEstimate(err_quats, qhatkp)

@@ -53,6 +53,9 @@ class InvalidBodyNameForLoadProperties(Exception):
     def __str__(self):
         return '\"{}\" should be one of (\"{}\",\"{}\",\"{}\"). Was: \"{}\"'.format("name", "earth", "moon", "sun", self.name)
 
+# Position Dynamics
+MAIN_THRUST_ACCELERATION = 9.81 # m/s^2
+
 # ATTITUDE
 SPACECRAFT_MASS = 10   #spacecraft mass, kg
 SPACECRAFT_HEIGHT = .3   #spacecraft height, meters

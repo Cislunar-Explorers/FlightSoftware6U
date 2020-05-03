@@ -114,7 +114,6 @@ class CommandHandler:
             offset += off
         return mode, command_id, kwargs
 
-    # Granular function that should probably only be used for testing purposes
     def register_mode_commands(self, mode: int, application_ids_to_arg_tuples: dict):
         if mode in self.command_dict:
             raise CommandException(

@@ -3,6 +3,16 @@ import struct
 # All packing is done in Big Endian as specified by > argument to struct module
 
 
+def pack_bool(buf, off, val):
+    struct.pack_into(">?", buf, off, val)
+    return 1
+
+
+def unpack_bool(buf, off):
+    val = struct.unpack_from(">?", buf, off)[0]
+    return 1, val
+
+
 def pack_unsigned_short(buf, off, val):
     struct.pack_into(">H", buf, off, val)
     return 2
@@ -31,6 +41,16 @@ def pack_unsigned_long(buf, off, val):
 def unpack_unsigned_long(buf, off):
     val = struct.unpack_from(">Q", buf, off)[0]
     return 8, val
+
+
+def pack_float(buf, off, val):
+    struct.pack_into(">f", buf, off, val)
+    return 4
+
+
+def unpack_float(buf, off):
+    val = struct.unpack_from(">f", buf, off)[0]
+    return 4, val
 
 
 def pack_double(buf, off, val):

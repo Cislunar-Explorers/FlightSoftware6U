@@ -1,6 +1,6 @@
 import datetime
 
-from db import create_sensor_tables_from_path, PressureModel
+from utils.db import create_sensor_tables_from_path, PressureModel
 
 MEMORY_DB_PATH = "sqlite://"
 

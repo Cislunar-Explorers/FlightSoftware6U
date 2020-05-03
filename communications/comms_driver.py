@@ -107,11 +107,7 @@ class CommunicationsSystem:
         else:
             host = host if host is not None else HOSTNAME
             port = port if port is not None else PORT
-            self.comms = IPComms(
-                queue=queue,
-                server_host=host,
-                server_port=port
-            )
+            self.comms = IPComms(queue=queue, server_host=host, server_port=port)
 
     def listen(self):
         self.comms.listen()

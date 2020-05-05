@@ -185,7 +185,7 @@ class Power(object):
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
         assert 0 <= channel <= 7, "channel must be in range [0, 7]"
-        assert value == 0 or value == 1, "value must be 0 or 1"
+        assert value in [0,1] and type(value) == int, "value must be 0 or 1"
         d = toBytes(delay, 2)
         self.write(CMD_SET_SINGLE_OUTPUT, [channel, value]+list(d))
 
@@ -366,7 +366,7 @@ class Power(object):
             new += " "*(length-len(new))
         return new
 
-
+    # Legacy stuff, may or may not be useful
     def nasa_demo(self):
         r = input("electrolyzers: ")
         self.electrolyzer(True)

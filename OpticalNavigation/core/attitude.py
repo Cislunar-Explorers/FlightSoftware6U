@@ -1,5 +1,4 @@
-from core.const import SPACECRAFT_I_B, DAMPER_C, DAMPER_I_D, TOTAL_INTEGRATION_TIME, INTEGRATION_TIMESTEP, GYRO_SAMPLE_RATE, GYRO_SIGMA, GYRO_NOISE_SIGMA, BIAS_INIT, MEAS_SIGMA, NX, LAM, P0, Q, R, _a, _f
-
+from core.const import TOTAL_INTEGRATION_TIME, GYRO_SIGMA, GYRO_NOISE_SIGMA, NX, LAM, R, _a, _f
 import numpy
 from numpy.linalg import inv
 from numpy.linalg import pinv
@@ -289,7 +288,7 @@ def UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earth
         
     return Phist, qhist, xhist
 
-def runAttitudeUKFWithKick(satPos, moonPos, sunPos, cameradt, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements, x0, quat, P0, kickTime):
+def runAttitudeUKFWithKick(cameradt, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements, x0, quat, P0, kickTime):
     # Obtain quats
     q0 = quat/numpy.linalg.norm(quat)
     # Run UKF

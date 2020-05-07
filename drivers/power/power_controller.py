@@ -253,16 +253,10 @@ class Power(object):
         array = struct >>_>> c_structToBytes >>_>> bytesToList
         self.write(CMD_CONFIG_SET, array)
 
-    # I almost want to add something to make sure that the hard_reset function isn't accidentally triggered
-    # I feel like requiring a "passcode" to run the function as an argument should be used in order to make sure
-    # that the person who is firing this function knows the consequences. Something like:
-    # def hard_reset(self, passcode):
-    #   assert passcode == "yes", "Are you sure you want to execute this command and understand its consequences?"
-    #   self.write(CMD_HARD_RESET, [])
-
     # Send this command to perform a hard reset of the P31u,
     # including cycling permanent 5V and 3.3V and battery outputs.
-    def hard_reset(self):
+    def hard_reset(self, are_you_sure):
+        assert are_you_sure == True
         self.write(CMD_HARD_RESET, [])
 
     # Use this command to control the config 2 system.

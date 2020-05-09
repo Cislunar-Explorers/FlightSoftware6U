@@ -68,8 +68,10 @@ class ADC:
     def get_thermocouple_volt(self):
         pos = self.ads.readADCSingleEnded(channel=3, pga=256)
         neg = self.ads.readADCSingleEnded(channel=2, pga=256)
-        print("Positive channel: " + pos)
-        print("Negative channel: " + neg)
+        print("Positive channel: ")
+        print(pos)
+        print("Negative channel: ")
+        print(neg)
         return pos - neg
 
     def get_gyro_temp(self):

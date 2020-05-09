@@ -21,5 +21,5 @@ def test_ADC_read_tempVolt(testADC):
 
 if True:
     testADC = test_ADC_initialize()
-    # test_ADC_read_pressure(testADC)
-    test_ADC_read_tempVolt(testADC)
+    test_ADC_read_pressure(testADC)
+    # test_ADC_read_tempVolt(testADC)

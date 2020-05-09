@@ -18,20 +18,24 @@ class ADC:
 
     # Read the pressure from the pressure transducer at channel 0 on the ads1115
     def readPressure(self):
-        self.config = ADS1115.ADS1115().__ADS1015_REG_CONFIG_MUX_SINGLE_0
-        milVolts = ADS1115.ADS1115().readADCSingleEnded(channel=0)
+        milVolts = self.ads.readADCSingleEnded(channel=0)
         pressure = round(milVolts / 5000 * 300, 3)
         return pressure
 
-    def readTemperature(self, ads):
-        hotJuncVolts = tempVoltage(self, ads)
-        # coldJuncVolts = coldVoltage(self, ads)
+        # Read the voltage difference between pins
 
-    # Read the voltage difference between pins
-    def tempVoltage(self, ads):
-        pos = ads.readADCSingleEnded(channel=3)
-        neg = ads.readADCSingleEnded(channel=2)
+    def tempVoltage(self):
+        pos = self.ads.readADCSingleEnded(channel=3)
+        neg = self.ads.readADCSingleEnded(channel=2)
         return pos - neg
+
+    def readTemperature(self):
+        pos = self.ads.readADCSingleEnded(channel=3)
+        neg = self.ads.readADCSingleEnded(channel=2)
+        hotJuncVolts = pos - neg
+
+        # coldJuncVolts = coldVoltage(self, ads)
+        return hotJuncVolts
 
     # def coldVoltage(self, ads):
     # TODO

@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from core.const import CisLunarCameraParameters
+from core.const import MAIN_THRUST_ACCELERATION
 
 # How wrong our dynamics model is? e.g. how off in variance will we be due
 # to solar radiation pressure, galactic particles, and bad gravity model? 
@@ -56,14 +57,31 @@ def makeSigmas(initState, Sx, Sv, nx, nv, constant):
 
     return sigmas, noise
 
-def G(rec, rem, rcm, rcs, res):
-    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm.dot(rcm.T))**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs.dot(rcs.T))**(3/2)) - res/(np.linalg.norm(res)**3) )
+def quaternion_multiply(quaternion1, quaternion0):
+    """
+    Hamiltonian Product
+    Source: https://stackoverflow.com/questions/39000758/how-to-multiply-two-quaternions-by-python-or-numpy
+    """
+    w0, x0, y0, z0 = quaternion0
+    w1, x1, y1, z1 = quaternion1
+    return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
 
-def dynamics_model(state, dt, moonEph, sunEph):
+def G(rec, rem, rcm, rcs, res, thrust):
+    """
+    [thrust] is 3D acceleration vector.
+    """
+    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm.dot(rcm.T))**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs.dot(rcs.T))**(3/2)) - res/(np.linalg.norm(res)**3) ) + thrust
+
+def dynamics_model(state, dt, moonEph, sunEph, kick_orientation=None):
     """
     Runge Kutta 4th Order, one timestep
     [state]: Sigma point + noise (6x1)
     [dt]: time elapsed since last execution (seconds)
+    [kick_orientation]: (4x1) quaterion representing kick acceleration 
+                        (None) if no kick occured
     Ephemeris is in km, km/s 
     Returns:
     Output is also in km
@@ -77,10 +95,19 @@ def dynamics_model(state, dt, moonEph, sunEph):
     rcm = rec-rem
     rcs = rec-res
     position = rec + rec_dot * dt
-    n1 = G(position, rem, rcm, rcs, res)
-    n2 = G(position+dt*n1/2, rem, rcm, rcs, res)
-    n3 = G(position+dt*n2/2, rem, rcm, rcs, res)
-    n4 = G(position+n3*dt, rem, rcm, rcs, res)
+    # Convert thrust vector into ECI frame
+    net_acceleration_thrust = np.zeros((1,3))
+    if kick_orientation:
+        # Source: https://math.stackexchange.com/questions/40164/how-do-you-rotate-a-vector-by-a-unit-quaternion
+        local_acceleration_vector = [0, 0, 0, 1] # first 0 is padding
+        kick_orientation = [kick_orientation[0], kick_orientation[1], kick_orientation[2], kick_orientation[3]]
+        kick_orientation_1 = [kick_orientation[0], -kick_orientation[1], -kick_orientation[2], -kick_orientation[3]]
+        net_acceleration_thrust = quaternion_multiply(quaternion_multiply(kick_orientation, local_acceleration_vector), kick_orientation_1)[1:] # drop the w component
+    n1 = G(position, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
+    # net_acceleration_thrust = np.zeros((1,3))
+    n2 = G(position+dt*n1/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
+    n3 = G(position+dt*n2/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
+    n4 = G(position+n3*dt, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     velocity = rec_dot + (1.0/6.0)*(n1 + 2*n2 + 2*n3 + n4)*dt
 
     return np.concatenate((position, velocity), axis=None) / 1000
@@ -191,20 +218,22 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamic
     pNew = Pxx - K.dot(R.dot(K.T))
     return xNew, pNew, K
 
-def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, dynamicsOnly=False):
+def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, orientation=None, dynamicsOnly=False):
     """
-    One full execution of the ukf
+    Propogates dynamics model with instantaneous impulse from the main thruster.
+    Due to the processing delays of the system and the short impulse duration, 
+    the thrust is modeled as an instantenous acceleration on the spacecraft. 
     [moonEph]: Moon ephemeris vector (1,6)
     [sunEph]: Sun ephemeris vector (1,6)
     [measurements]: measurement vector (6x1)
     [initEstimate]: state vector from previous execution (or start state) (6x1)
     [dt]: time elapsed since last execution (seconds)
     [P]: initial covariance matrix for state estimate
+    [orientation]: 4D quaternion vector representing orientation in ECI frame (provide as list: [q1, q2, q3, q4])
     [dynamicsOnly]: trust the dynamics model over measurements (helpful for testing)
     Returns:
     [xNew, pNew, K]: (6x1) new state vector, (6x6) new state covariance estimate, kalman gain
     """
-
     nx = length(P)
     nv = length(Q)
     k = 3-nx;
@@ -225,7 +254,7 @@ def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, 
 
     # Proprogate Sigma Points by running through dynamics model/function
     for j in range(length(sigmas)):
-        propSigmas[:,j] = dynamics_model(sigmas[:,j]+noise[:,j], dt, moonEph, sunEph)
+        propSigmas[:,j] = dynamics_model(sigmas[:,j]+noise[:,j], dt, moonEph, sunEph, kick_orientation=orientation)
     
     sigmaMeasurements = np.zeros((6,length(propSigmas)))
     
@@ -246,5 +275,4 @@ def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, 
     # a posteriori estimates
     xNew, pNew, K =  newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(6,1), R, initState, dynamicsOnly=dynamicsOnly)
     return xNew, pNew, K
-
 

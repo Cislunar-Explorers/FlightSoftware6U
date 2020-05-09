@@ -75,9 +75,9 @@ class ADC:
         return 0  # TODO
 
     def convert_temp_to_volt(self, temp):
-        dif = temp - ADC.T0T
+        dif = temp - self.T0T
 
-        num = dif * (ADC.P1T + dif * (ADC.P2T + dif * (ADC.P3T + self.P4T * dif)))
+        num = dif * (self.P1T + dif * (self.P2T + dif * (self.P3T + self.P4T * dif)))
         denom = 1 + dif * (self.Q1T + self.Q2T * dif)
 
         voltage = self.V0T + num / denom

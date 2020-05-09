@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 class MatlabTestCameraParameters:
     # Camera constants
@@ -51,3 +52,24 @@ MOON_RADIUS_ERROR = 30 # Out of all bodies, Moon changes in appearance the most
 ZERO_STARTING_NOISE = [0,0,0,0,0,0] 
 SMALL_STARTING_NOISE = [1,1,1,1,1,1]
 LARGE_STARTING_NOISE = [10,10,10,5,5,5]
+
+# Attitude
+# ATTITUDE
+SPACECRAFT_MASS = 10   #spacecraft mass, kg
+SPACECRAFT_HEIGHT = .3   #spacecraft height, meters
+SPACECRAFT_WIDTH = .3   #spacecraft width, meters
+SPACECRAFT_DEPTH = .1   #spacecraft depth, meters
+SPACECRAFT_I_B = np.array([[(1./12.)*SPACECRAFT_MASS*(SPACECRAFT_HEIGHT**2. + SPACECRAFT_DEPTH**2.), 0., 0.],
+                  [0., (1./12.)*SPACECRAFT_MASS*(SPACECRAFT_WIDTH**2. + SPACECRAFT_DEPTH**2.), 0.],
+                  [0., 0., (1./12.)*SPACECRAFT_MASS*(SPACECRAFT_WIDTH**2. + SPACECRAFT_HEIGHT**2.)]]) #spacecraft inertia tensor
+
+DAMPER_MASS = 8 #damper mass in kg
+DAMPER_RADIUS = 0.1 #damper radius in meters
+DAMPER_C = 0.9    #damping coefficient
+DAMPER_I_D = np.array([[(2./5.)*DAMPER_MASS*DAMPER_RADIUS**2., 0., 0.],
+                  [0., (2./5.)*DAMPER_MASS*DAMPER_RADIUS**2., 0.],
+                  [0., 0., (2./5.)*DAMPER_MASS*DAMPER_RADIUS**2.]])
+
+# _q0 = [0., 0., 0., 1.]                   # initial quaternion
+# omega_init = [0., 0.001, 2., 0., 0., 0.]# initial angular velocity
+INTEGRATION_TIMESTEP = 0.001                          # integration timestep

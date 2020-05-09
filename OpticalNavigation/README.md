@@ -40,11 +40,12 @@ Find all OpNav related datasets [here](https://cornell.app.box.com/folder/963637
     * How should [ukf.py](ukf.py) handle this case?
 7. [] [ukf.py](ukf.py) **UKF computation errors?**
     * Verify if this is a possibility
-    * If yes, throw an exception where necessary, and catch it in [controller.py](controller.py)
-8. [] [controller.py](controller.py) **Deposit position and velocity estimates into global location**
+    * If yes, throw an exception where necessary, and catch it in [opnav.py](opnav.py)
+8. [] [opnav.py](opnav.py) **Deposit position and velocity estimates into global location**
 9. [] [test_ukf.py](test_ukf.py) **Volatile test: depends on random starting noise**
     * It varies widly whether the UKF converges within the allotted iteration count of 300. Both small and large starting noises seem to show slow convergence when trajectory starts at iteration 1500.
 10. [] [attitude.py](attitude.py) **Total angular momentum increases after damping**
     * In the test run, total angular momentum norm increases on thruster fire. Does this mean that angular velocity increased?
     * Since spacecraft will lose mass over time due to propellant expulsion, shouldn't we see the angular momentum go down every time the thrusters are fired?
 11. [] [attitude.py](attitude.py) **Stochastic accelerations not used in attitude UKF**
+12. [] [opnav.py](opnav.py) **Finalize video format and conversion to frames**

@@ -19,6 +19,7 @@ def findSun(image):
     original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     output = None
+    sunRemoved = None
     # Note: Calculates mask for one boundary only
     for lower,upper in boundaries:
         lower = np.array(lower, dtype = "uint8")
@@ -26,8 +27,13 @@ def findSun(image):
 
         mask = cv2.inRange(original_hsv, lower, upper)
         output = cv2.bitwise_and(original_hsv, original_hsv, mask = mask)
-        # cv2.imshow("sun images", np.hstack([output])) #delete 'image' for post mask image
+
+        # Delete the sun pixels to reduce confusion for other bodies
+        masknot = cv2.bitwise_not(mask)
+        sunRemoved = cv2.bitwise_and(image, image, mask = masknot)
+        # cv2.imshow("sun removed", sunRemoved) #delete 'image' for post mask image
         # cv2.waitKey(0)
+
 
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
     scale = 1
@@ -37,7 +43,7 @@ def findSun(image):
     original_median_blurred = cv2.medianBlur(gray, round_up_to_odd(rows / 50))
     # TODO: 4th arguement might be too large
     circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, round_up_to_odd(rows / 50), param1=80, param2=15, minRadius=1, maxRadius=0)
-    return circles
+    return circles, sunRemoved
 
 def findEarth(image):
     """
@@ -50,6 +56,7 @@ def findEarth(image):
     original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     output = None
+    earthRemoved = None
     # Note: Calculates mask for one boundary only
     for lower,upper in boundaries:
         lower = np.array(lower, dtype = "uint8")
@@ -57,17 +64,31 @@ def findEarth(image):
 
         mask = cv2.inRange(original_hsv, lower, upper)
         output = cv2.bitwise_and(original_hsv, original_hsv, mask = mask)
-        # cv2.imshow("earth images", np.hstack([output])) #delete 'image' for post mask image
+
+        masknot = cv2.bitwise_not(mask)
+        earthRemoved = cv2.bitwise_and(image, image, mask = masknot)
+        # cv2.imshow("earth removed", earthRemoved) #delete 'image' for post mask image
         # cv2.waitKey(0)
 
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
+    # cv2.imshow("Grayscale - Earth", gray)
+    # cv2.waitKey(0)
+    # Make all non-black pixels white
+    lower_black = np.array([2], dtype = "uint16")
+    upper_black = np.array([255], dtype = "uint16")
+    black_mask = cv2.inRange(gray, lower_black, upper_black)
+    # cv2.imshow('Whiten-Earth',black_mask)
+    # cv2.waitKey(0)
+    #
     scale = 1
-    (c, r) = np.shape(gray)
+    (c, r) = np.shape(black_mask)
     rows = int(np.round(r * scale))
     cols = int(np.round(c * scale))
-    original_median_blurred = cv2.medianBlur(gray, round_up_to_odd(rows / 50))
+    original_median_blurred = cv2.medianBlur(black_mask, round_up_to_odd(rows / 1000))
+    # cv2.imshow("Median Blur - Earth", original_median_blurred)
+    # cv2.waitKey(0)
     circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=30, minRadius=10, maxRadius=0)
-    return circles
+    return circles, earthRemoved
 
 def findMoon(image):
     """
@@ -77,7 +98,7 @@ def findMoon(image):
     [circles] - 1 x n x 3 list of n detected circles
     """
     # TODO: Hard to distinguish between Moon and Sun
-    boundaries = [([0,0,0], [179, 25, 254])]
+    boundaries = [([0,0,1], [179, 25, 254])]
     original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     output = None
@@ -92,12 +113,27 @@ def findMoon(image):
         # cv2.waitKey(0)
 
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
+    cv2.imshow("Grayscale - Earth", gray)
+    cv2.waitKey(0)
+    # scale this up first
+    # scale_percent = 100 # percent of original size
+    # width = int(gray.shape[1] * scale_percent / 100)
+    # height = int(gray.shape[0] * scale_percent / 100)
+    # dim = (width, height)
+    # resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
+    # cv2.imshow("Resized image", resized)
+    # cv2.waitKey(0)
+    #
+    # Boost whiteness
+    lower_black = np.array([1], dtype = "uint16")
+    upper_black = np.array([255], dtype = "uint16")
+    black_mask = cv2.inRange(gray, lower_black, upper_black)
     scale = 1
-    (c, r) = np.shape(gray)
+    (c, r) = np.shape(black_mask)
     rows = int(np.round(r * scale))
     cols = int(np.round(c * scale))
-    original_median_blurred = cv2.medianBlur(gray, round_up_to_odd(rows / 50))
-    circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 100, param1=400, param2=30, minRadius=1, maxRadius=0)
+    original_median_blurred = cv2.medianBlur(black_mask, round_up_to_odd(rows / 500))
+    circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=15, minRadius=1, maxRadius=0)
     return circles
 
 def main():
@@ -112,7 +148,9 @@ def main():
     true_image = cv2.imread(args["image"])
     image = copy.copy(true_image)
     original_with_circles = copy.copy(true_image)
-    circles = findSun(image)
+
+    # We detect sun first because it is the most consistent body visually
+    circles, sunRemoved = findSun(image)
     print("------\nSUN\n")
     print(circles)
     if circles is None: 
@@ -123,8 +161,9 @@ def main():
             cv2.circle(original_with_circles, (circles[i][0], circles[i][1]), circles[i][2], (0, 255, 255), 5)
             cv2.circle(original_with_circles, (circles[i][0], circles[i][1]), 2, (0, 0, 255), 1)
 
-    image = copy.copy(true_image)
-    circles = findEarth(image)
+    # We detect Earth next simply because The Moon is the most challenging, and we want eliminate as many possibilites
+    # image = copy.copy(true_image)
+    circles, earthRemoved = findEarth(sunRemoved)
     print("------\nEarth\n")
     print(circles)
     if circles is None: 
@@ -135,8 +174,9 @@ def main():
             cv2.circle(original_with_circles, (circles[i][0], circles[i][1]), circles[i][2], (255, 0, 0), 5)
             cv2.circle(original_with_circles, (circles[i][0], circles[i][1]), 2, (0, 0, 255), 1)
 
-    image = copy.copy(true_image)
-    circles = findMoon(image)
+    # No need to return moonRemoved as this is the last body
+    # image = copy.copy(true_image)
+    circles = findMoon(earthRemoved)
     print("------\nMoon\n")
     print(circles)
     if circles is None: 

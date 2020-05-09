@@ -20,7 +20,7 @@ class ADC:
     def readPressure(self):
         # ads.config = ads.__ADS1015_REG_CONFIG_MUX_SINGLE_0
         milVolts = ADS1115.ADS1115().readADCSingleEnded(channel=0)
-        pressure = milVolts / 5 * 300
+        pressure = round( milVolts / 5000 * 300, 3)
         return pressure
 
     # def readTemperature(self, ads):

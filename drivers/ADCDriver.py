@@ -33,9 +33,9 @@ class ADC:
         pos = self.ads.readADCSingleEnded(channel=3)
         neg = self.ads.readADCSingleEnded(channel=2)
         hotJuncVolts = pos - neg
+        return hotJuncVolts
 
         # coldJuncVolts = coldVoltage(self, ads)
-        return hotJuncVolts
 
     # def coldVoltage(self, ads):
     # TODO

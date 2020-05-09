@@ -66,8 +66,8 @@ class ADC:
 
     # Read the voltage difference between pins
     def get_thermocouple_volt(self):
-        pos = self.ads.readADCSingleEnded(channel=3) * 5000
-        neg = self.ads.readADCSingleEnded(channel=2) * 5000
+        pos = self.ads.readADCSingleEnded(channel=3) * 1000
+        neg = self.ads.readADCSingleEnded(channel=2) * 1000
         return pos - neg
 
     def get_gyro_temp(self):

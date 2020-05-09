@@ -60,7 +60,7 @@ class ADC:
         # Need cold junction voltage converted from temperature
         cold_junc_volt = ADC.convert_temp_to_volt(self, cold_junc_temp)
         # Add the hot and cold junction voltages and convert to temperature
-        temperature = self.convert_volt_to_temp(hot_junc_volt + cold_junc_volt)
+        temperature = ADC.convert_volt_to_temp(self, hot_junc_volt + cold_junc_volt)
 
         return temperature
 

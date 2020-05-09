@@ -10,13 +10,13 @@ def test_ADC_initialize():
 
 def test_ADC_read_pressure(testADC):
     while True:
-        print(testADC.readPressure(testADC))
+        print(testADC.read_pressure(testADC))
         time.sleep(1)
 
 
 def test_ADC_read_tempVolt(testADC):
     while True:
-        print(testADC.readTemperature(testADC))
+        print(testADC.read_temperature(testADC))
         time.sleep(1)
 
 

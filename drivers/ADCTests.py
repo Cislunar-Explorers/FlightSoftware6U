@@ -14,7 +14,7 @@ def test_ADC_read_pressure(testADC):
         time.sleep(1)
 
 
-def test_ADC_read_tempVolt(testADC):
+def test_ADC_read_temperature(testADC):
     while True:
         print(testADC.read_temperature(testADC))
         time.sleep(1)
@@ -23,4 +23,4 @@ def test_ADC_read_tempVolt(testADC):
 if True:
     testADC = test_ADC_initialize()
     # test_ADC_read_pressure(testADC)
-    test_ADC_read_tempVolt(testADC)
+    test_ADC_read_temperature(testADC)

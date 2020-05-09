@@ -2,7 +2,7 @@
 #
 # CislunarExplorers/FlightSoftware/drivers/ADCDriver.py
 #
-# Created by Stefan Brechter (scb262@cornell.edu) on 03/11/2019
+# Created by Stefan Brechter (scb262@cornell.edu) on 03/11/2020
 #
 # Cislunar Explorers
 # Space Systems Design Studio
@@ -68,6 +68,8 @@ class ADC:
     def get_thermocouple_volt(self):
         pos = self.ads.readADCSingleEnded(channel=3, pga=256)
         neg = self.ads.readADCSingleEnded(channel=2, pga=256)
+        print("Positive channel: " + pos)
+        print("Negative channel: " + neg)
         return pos - neg
 
     def get_gyro_temp(self):

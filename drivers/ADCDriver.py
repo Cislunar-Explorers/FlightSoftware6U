@@ -57,7 +57,7 @@ class ADC:
         hot_junc_volt = self.get_thermocouple_volt
         cold_junc_temp = self.get_gyro_temp  # TODO
         # Need cold junction voltage converted from temperature
-        cold_junc_volt = self.convert_temp_to_volt(cold_junc_temp)
+        cold_junc_volt = ADC.convert_temp_to_volt(self, cold_junc_temp)
         # Add the hot and cold junction voltages and convert to temperature
         temperature = self.convert_volt_to_temp(hot_junc_volt + cold_junc_volt)
 

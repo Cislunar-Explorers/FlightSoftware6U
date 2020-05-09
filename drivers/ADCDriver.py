@@ -13,6 +13,8 @@ import time
 
 
 class ADC:
+    ads = ADS1115.ADS1115()
+
     def __init__(self):
         self.ads = ADS1115.ADS1115()
 

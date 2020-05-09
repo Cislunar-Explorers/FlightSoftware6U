@@ -21,23 +21,23 @@ def test_ukf_c1_discretized_zero_starting_noise(visual_analysis):
     c1_discretized(visual_analysis=visual_analysis, state_error=ZERO_STARTING_NOISE)
 
 # DOES NOT CONVERGE
-# def test_ukf_c1_discretized_small_starting_noise(visual_analysis):
-#     """
-#     Assumes starting state provided by NASA is a bit noisy.
-#     Each run is treated as a continuation of the previous state.
-#     Tests:
-#     - should diverge due to small size of trajectory
-#     """
-#     c1_discretized(visual_analysis=visual_analysis, state_error=SMALL_STARTING_NOISE)
+def test_ukf_c1_discretized_small_starting_noise(visual_analysis):
+    """
+    Assumes starting state provided by NASA is a bit noisy.
+    Each run is treated as a continuation of the previous state.
+    Tests:
+    - should diverge due to small size of trajectory
+    """
+    c1_discretized(visual_analysis=visual_analysis, state_error=SMALL_STARTING_NOISE)
 
-# def test_ukf_c1_discretized_large_starting_noise(visual_analysis):
-#     """
-#     Assumes starting state provided by NASA is very noisy.
-#     Each run is treated as a continuation of the previous state.
-#     Tests:
-#     - should diverge due to small size of trajectory
-#     """
-#     c1_discretized(visual_analysis=visual_analysis, state_error=LARGE_STARTING_NOISE)
+def test_ukf_c1_discretized_large_starting_noise(visual_analysis):
+    """
+    Assumes starting state provided by NASA is very noisy.
+    Each run is treated as a continuation of the previous state.
+    Tests:
+    - should diverge due to small size of trajectory
+    """
+    c1_discretized(visual_analysis=visual_analysis, state_error=LARGE_STARTING_NOISE)
 
 def c1_discretized(visual_analysis, state_error):
     from tests.const import TEST_C1_DISCRETIZED_meas, TEST_C1_DISCRETIZED_moonEph, TEST_C1_DISCRETIZED_sunEph, TEST_C1_DISCRETIZED_traj, TEST_C1_DISCRETIZED_matlab

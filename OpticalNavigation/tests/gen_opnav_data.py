@@ -29,6 +29,9 @@ from core.const import _a, _f
 Generate Synthetic Data for Attitude Estimation
 """
 def propagateSpacecraft(X, t, kickTime):
+    """
+    Integration step at time [t] with cold-gas thruster fired at [kickTime].
+    """
     # print(X)
     omegasc1, omegasc2, omegasc3 = X[0], X[1], X[2]
     omegad1, omegad2, omegad3 = X[3], X[4], X[5]
@@ -50,6 +53,9 @@ def propagateSpacecraft(X, t, kickTime):
     return derivs
 
 def goSpacecraft(X, tstop, delta_t, kickTime):
+    """
+    Integration for angular momentum and angular velocity
+    """
     a_t = np.arange(0, tstop, delta_t)
     asol = integrate.odeint(propagateSpacecraft, X, a_t, args=(kickTime,))
     print("integration time steps {}, asol {}".format(len(a_t), len(asol)))
@@ -85,8 +91,10 @@ def goSpacecraft(X, tstop, delta_t, kickTime):
 
 # UKF Measurement model
 
-## Obtain quaternions from angular velocity
 def quatsFromAngularVelIntegrator(X, t, wx, wy, wz):
+    """
+    Obtain quaternions from angular velocity
+    """
     q1, q2, q3, q4 = X[0], X[1], X[2], X[3]
     q = np.array([[q1, q2, q3, q4]]).T    
     ox, oy, oz = wx(t), wy(t), wz(t)
@@ -99,6 +107,9 @@ def quatsFromAngularVelIntegrator(X, t, wx, wy, wz):
     return [qdot[0][0], qdot[1][0], qdot[2][0], qdot[3][0]]
 
 def obtainAllQuatsfromAngVel(q0, tstop, delta_t, ws):
+    """
+    Convert omega velocity from 0 to [tstop] into quaternions through integration
+    """
     a_t = np.arange(0, tstop, delta_t)
     asol = integrate.odeint(quatsFromAngularVelIntegrator, q0, a_t, args=ws)
     q1, q2, q3, q4 = [], [], [], []
@@ -110,6 +121,10 @@ def obtainAllQuatsfromAngVel(q0, tstop, delta_t, ws):
     return [q1, q2, q3, q4]
 
 def plotSpacecraft(omega_init, tstop, delta_t, kickTime):
+    """
+    Obtain angular velocities from time 0 to [tstop] with initial
+    velocity [omega_init] and cold-gas thruster fire time [kickTime].
+    """
     time = np.arange(0, tstop, delta_t)
     X = omega_init
     omega = goSpacecraft(X, tstop, delta_t, kickTime)
@@ -119,6 +134,9 @@ def plotSpacecraft(omega_init, tstop, delta_t, kickTime):
     return omega;
     
 def goBias(tstop, gyro_t, bias_init, gyroSigma, gyroNoiseSigma):
+    """
+    Generate biases using random noise.
+    """
     time = np.arange(0, tstop, gyro_t)
     biasx, biasy, biasz = [bias_init[0]], [bias_init[1]], [bias_init[2]]
     for i in range(len(time)-1):
@@ -132,6 +150,17 @@ def goBias(tstop, gyro_t, bias_init, gyroSigma, gyroNoiseSigma):
     return bias
 
 def generateSyntheticData(quat, cameradt, kickTime, omega_init, bias_init, gyro_sample_rate, totalIntegrationTime, gyroSigma, gyroNoiseSigma):
+    """
+    Generates fake attitude data for sampling.
+    [quat]: starting quaternion; should just be a guess
+    [cameradt]: time separation between each camera measurement
+    [kickTime]: kick time for cold-gas thruster
+    [bias_init]: starting gyro bias; should be a guess
+    [gyro_sample_rate]: time separation between each gyro measurement
+    [totalIntegrationTime]: how long the sequence lasts
+    [gyroSigma]: gyro error standard deviation
+    [gyroNoiseSigma]: gyro noise error standard deviation
+    """
     angular_momentum_history = plotSpacecraft(omega_init, totalIntegrationTime, INTEGRATION_TIMESTEP, kickTime);
     totaltime = np.arange(0, totalIntegrationTime, INTEGRATION_TIMESTEP)
     hx = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[9])
@@ -157,6 +186,11 @@ def generateSyntheticData(quat, cameradt, kickTime, omega_init, bias_init, gyro_
     return q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz
 
 def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz):
+    """
+    Plot results from attitude.UKF()
+    [results]: Output from attitude.UKF()
+    [q1, q2, q3, q4, biasx, biasy, biasz]: Ground truth
+    """
     trace = []
     quat1, quat2, quat3, quat4 = [], [], [], []
     true1, true2, true3, true4 = [], [], [], []

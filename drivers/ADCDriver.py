@@ -72,8 +72,8 @@ class ADC:
         neg = round(neg, 4)
         print("Positive channel: ")
         print(pos)
-        print("Negative channel: ")
-        print(neg)
+        # print("Negative channel: ")
+        # print(neg)
         return pos - neg
 
     def get_gyro_temp(self):

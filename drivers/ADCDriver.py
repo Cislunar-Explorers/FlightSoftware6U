@@ -66,8 +66,8 @@ class ADC:
 
     # Read the voltage difference between pins
     def get_thermocouple_volt(self):
-        pos = self.ads.readADCSingleEnded(channel=3, pga=4096) * 4096
-        neg = self.ads.readADCSingleEnded(channel=2, pga=4096) * 4096  # * 1000
+        pos = self.ads.readADCSingleEnded(channel=3, pga=4096)
+        neg = self.ads.readADCSingleEnded(channel=2, pga=4096)  # * 1000
         pos = round(pos, 4)
         neg = round(neg, 4)
         print("Positive channel: ")

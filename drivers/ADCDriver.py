@@ -48,7 +48,7 @@ class ADC:
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):
-        milVolts = self.ads.readADCSingleEnded(channel=0)
+        milVolts = self.ads.readADCSingleEnded(channel=0, pga=6144)
         pressure = round(milVolts / 5000 * 300, 3)
         return pressure
 
@@ -66,7 +66,7 @@ class ADC:
 
     # Read the voltage difference between pins
     def get_thermocouple_volt(self):
-        pos = self.ads.readADCSingleEnded(channel=3, pga=256)  # / 1000
+        pos = self.ads.readADCSingleEnded(channel=4, pga=256)  # / 1000
         neg = self.ads.readADCSingleEnded(channel=2, pga=256)  # / 1000  # * 1000
         pos = round(pos, 4)
         neg = round(neg, 4)

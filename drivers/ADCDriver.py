@@ -68,6 +68,8 @@ class ADC:
     def get_thermocouple_volt(self):
         pos = self.ads.readADCSingleEnded(channel=3, pga=256) / 256
         neg = self.ads.readADCSingleEnded(channel=2, pga=256) / 256
+        pos = round(pos, 4)
+        neg = round(neg, 4)
         print("Positive channel: ")
         print(pos)
         print("Negative channel: ")

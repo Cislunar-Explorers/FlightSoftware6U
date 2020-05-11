@@ -102,9 +102,12 @@ def dynamics_model(state, dt, moonEph, sunEph, kick_orientation=None):
         local_acceleration_vector = [0, 0, 0, 1] # first 0 is padding
         kick_orientation = [kick_orientation[0], kick_orientation[1], kick_orientation[2], kick_orientation[3]]
         kick_orientation_1 = [kick_orientation[0], -kick_orientation[1], -kick_orientation[2], -kick_orientation[3]]
+        kick_norm = math.sqrt(kick_orientation_1[0]**2 + kick_orientation_1[1]**2 + kick_orientation_1[2]**2 + kick_orientation_1[3]**2)
+        kick_orientation_1 = [kick_orientation_1[0]/kick_norm, kick_orientation_1[1]/kick_norm, kick_orientation_1[2]/kick_norm, kick_orientation_1[3]/kick_norm]
         net_acceleration_thrust = quaternion_multiply(quaternion_multiply(kick_orientation, local_acceleration_vector), kick_orientation_1)[1:] # drop the w component
+        net_acceleration_thrust *= 10 # m/s^2
     n1 = G(position, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
-    # net_acceleration_thrust = np.zeros((1,3))
+    net_acceleration_thrust = np.zeros((1,3))
     n2 = G(position+dt*n1/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     n3 = G(position+dt*n2/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     n4 = G(position+n3*dt, rem, rcm, rcs, res, thrust=net_acceleration_thrust)

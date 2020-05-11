@@ -54,7 +54,7 @@ class ADC:
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):
-        milVolts = self.ads.read(pin=0) / 32767 * self.ads.gain() / 5 * 300
+        milVolts = self.ads.read(pin=0) / 32767 * 6.144 / 5 * 300
         pressure = round(milVolts, 3)
         return pressure
 

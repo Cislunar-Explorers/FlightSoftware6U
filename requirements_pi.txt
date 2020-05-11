@@ -1,3 +1,5 @@
 picamera
 ADS1115
+board
+busio
 adafruit-circuitpython-ads1x15

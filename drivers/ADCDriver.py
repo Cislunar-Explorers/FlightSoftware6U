@@ -11,11 +11,14 @@
 # import Adafruit_ADS1x15
 import ADS1115
 import adafruit_ads1x15.ads1115 as ADS
+import board
+import busio
 import time
 
 
 # Analog to digital converter
 class ADC:
+    i2c = busio.I2C(board.SCL, board.SDA)
     ads = ADS.ADS1115(0x48)
 
     # For the thermo couple conversion from voltage to temperature.
@@ -46,7 +49,8 @@ class ADC:
     Q2T = -6.7976627e-5
 
     def __init__(self):
-        self.ads = ADS.ADS1115(0x48)
+        i2c = busio.I2C(board.SCL, board.SDA)
+        self.ads = ADS.ADS1115(i2c)
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):

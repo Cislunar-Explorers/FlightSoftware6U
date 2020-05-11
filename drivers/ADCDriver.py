@@ -8,13 +8,15 @@
 # Space Systems Design Studio
 # Cornell University
 
+# import Adafruit_ADS1x15
 import ADS1115
+import adafruit_ads1x15.ads1115 as ADS
 import time
 
 
 # Analog to digital converter
 class ADC:
-    ads = ADS1115.ADS1115()
+    ads = ADS.ADS1115()
 
     # For the thermo couple conversion from voltage to temperature.
     T0 = -8.7935962e0
@@ -44,11 +46,11 @@ class ADC:
     Q2T = -6.7976627e-5
 
     def __init__(self):
-        self.ads = ADS1115.ADS1115()
+        self.ads = ADS.ADS1115()
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):
-        milVolts = self.ads.readADCSingleEnded(channel=0, pga=6144)
+        milVolts = self.ads.read(pin=0)
         pressure = round(milVolts / 5000 * 300, 3)
         return pressure
 
@@ -66,8 +68,8 @@ class ADC:
 
     # Read the voltage difference between pins
     def get_thermocouple_volt(self):
-        pos = self.ads.readADCSingleEnded(channel=3, pga=6144, sps=64) / 1000
-        neg = self.ads.readADCSingleEnded(channel=2, pga=6144, sps=64) / 1000
+        pos = 0  # self.ads.readADCSingleEnded(channel=3, pga=6144, sps=64) / 1000
+        neg = 0  # self.ads.readADCSingleEnded(channel=2, pga=6144, sps=64) / 1000
         print("Positive channel: ")
         print(round(pos, 4))
         print("Negative channel: ")

@@ -16,7 +16,7 @@ import time
 
 # Analog to digital converter
 class ADC:
-    ads = ADS.ADS1115()
+    ads = ADS.ADS1115(0x48)
 
     # For the thermo couple conversion from voltage to temperature.
     T0 = -8.7935962e0
@@ -46,7 +46,7 @@ class ADC:
     Q2T = -6.7976627e-5
 
     def __init__(self):
-        self.ads = ADS.ADS1115()
+        self.ads = ADS.ADS1115(0x48)
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):

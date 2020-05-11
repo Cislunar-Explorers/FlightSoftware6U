@@ -19,7 +19,7 @@ import time
 # Analog to digital converter
 class ADC:
     i2c = busio.I2C(board.SCL, board.SDA)
-    ads = ADS.ADS1115(0x48)
+    ads = ADS.ADS1115(i2c)
 
     # For the thermo couple conversion from voltage to temperature.
     T0 = -8.7935962e0

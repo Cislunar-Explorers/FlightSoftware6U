@@ -55,7 +55,7 @@ class ADC:
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):
         milVolts = self.ads.read(pin=0)
-        pressure = round(milVolts / 5000 * 300, 3)
+        pressure = milVolts  # round(milVolts / 5000 * 300, 3)
         return pressure
 
     # Read the fuel tank temperature from thermocouple at channels 2 and 3 on the ADS1115

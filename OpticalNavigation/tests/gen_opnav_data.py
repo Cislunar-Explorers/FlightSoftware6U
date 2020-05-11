@@ -21,7 +21,7 @@ from core.attitude import crs, meas_model, quaternionComposition, quaternionInv
 from tests.const import TEST_6HOURS_meas, TEST_6HOURS_moonEph, TEST_6HOURS_sunEph, TEST_6HOURS_traj
 from tests.const import TEST_C1_DISCRETIZED_meas, TEST_C1_DISCRETIZED_moonEph, TEST_C1_DISCRETIZED_sunEph, TEST_C1_DISCRETIZED_traj, TEST_C1_DISCRETIZED_matlab
 
-from tests.const import SPACECRAFT_I_B, DAMPER_C, DAMPER_I_D, INTEGRATION_TIMESTEP
+from tests.const import SPACECRAFT_I_B, DAMPER_C, DAMPER_I_D, INTEGRATION_TIMESTEP, TORQUE_THRUSTER
 
 from core.const import _a, _f
 
@@ -39,8 +39,8 @@ def propagateSpacecraft(X, t, kickTime):
     omega_d  = np.array([[omegad1, omegad2, omegad3]]).T
     
     inner_sc = (np.dot(crs(omega_sc), np.dot(SPACECRAFT_I_B, omega_sc)) - DAMPER_C*omega_d +
-                    int(0.5*(np.sign(t - kickTime)+1))*np.array([[.1, 0., 0.]]).T -
-                    int(0.5*(np.sign(t - (kickTime + 2))+1))*np.array([[.1, 0., 0.]]).T)
+                    int(0.5*(np.sign(t - kickTime)+1))*TORQUE_THRUSTER -
+                    int(0.5*(np.sign(t - (kickTime + 2))+1))*TORQUE_THRUSTER)
     omega_sc_dot = (np.dot(-1.*pinv(SPACECRAFT_I_B), inner_sc))
     
     right_d = np.dot(crs(omega_sc), np.dot(DAMPER_I_D, omega_d + omega_sc)) + DAMPER_C*omega_d

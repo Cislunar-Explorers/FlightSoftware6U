@@ -101,10 +101,10 @@ def test_ukf_6hours_zero_starting_noise(visual_analysis):
     - 
     """
     sixhours(visual_analysis, ZERO_STARTING_NOISE, 0, 360, 100)
-    sixhours(visual_analysis, ZERO_STARTING_NOISE, 361, 710, 400)
-    sixhours(visual_analysis, ZERO_STARTING_NOISE, 760, 1000, 800)
-    sixhours(visual_analysis, ZERO_STARTING_NOISE, 1100, 1400, 1200)
-    sixhours(visual_analysis, ZERO_STARTING_NOISE, 1500, 1700, 1600)
+    sixhours(visual_analysis, ZERO_STARTING_NOISE, 361, 710)
+    sixhours(visual_analysis, ZERO_STARTING_NOISE, 760, 1000)
+    sixhours(visual_analysis, ZERO_STARTING_NOISE, 1100, 1400)
+    sixhours(visual_analysis, ZERO_STARTING_NOISE, 1500, 1700)
 
 def test_ukf_6hours_small_starting_noise(visual_analysis):
     """
@@ -134,7 +134,7 @@ def test_ukf_6hours_large_starting_noise(visual_analysis):
     sixhours(visual_analysis, LARGE_STARTING_NOISE, 1100, 1400)
     sixhours(visual_analysis, LARGE_STARTING_NOISE, 1500, 1800) # TODO: Volatile test: depends on random starting noise
 
-def sixhours(visual_analysis, state_error, part_start, part_end, kickTime):
+def sixhours(visual_analysis, state_error, part_start, part_end, kickTime=None):
     """
     [part_start, part_end): start (inclusive) and end (exclusive) indices of trajectory
     """
@@ -159,9 +159,8 @@ def sixhours(visual_analysis, state_error, part_start, part_end, kickTime):
         sunEph = (np.array([sunEphdf.iloc[t]['x'], sunEphdf.iloc[t]['y'], sunEphdf.iloc[t]['z'], sunEphdf.iloc[t]['vx'], sunEphdf.iloc[t]['vy'], sunEphdf.iloc[t]['vz']], dtype=np.float)).reshape(1,6)
         meas = (np.array([measEphdf.iloc[t]['z1'], measEphdf.iloc[t]['z2'], measEphdf.iloc[t]['z3'], measEphdf.iloc[t]['z4'], measEphdf.iloc[t]['z5'], measEphdf.iloc[t]['z6']], dtype=np.float)).reshape(6,1)
         orientation = None
-        if t > kickTime:
-            print("kick")
-            orientation = [1, 0, 0, 1]
+        if kickTime is not None and t > kickTime:
+            orientation = [0, 0, 0, 1]
         state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, orientation=orientation, dynamicsOnly=False)
         # Per iteration error
         traj = (np.array([trajTruthdf.iloc[t]['x'], trajTruthdf.iloc[t]['y'], trajTruthdf.iloc[t]['z'], trajTruthdf.iloc[t]['vx'], trajTruthdf.iloc[t]['vy'], trajTruthdf.iloc[t]['vz']], dtype=np.float)).reshape(6,1)

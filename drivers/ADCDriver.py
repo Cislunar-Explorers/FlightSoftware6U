@@ -71,7 +71,7 @@ class ADC:
         # pos = round(pos, 4)
         # neg = round(neg, 4)
         print("Positive channel: ")
-        print(round(pos, 4))
+        print(pos)
         # print("Negative channel: ")
         # print(round(pos, 4))
         return pos

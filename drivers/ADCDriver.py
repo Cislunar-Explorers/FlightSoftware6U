@@ -55,7 +55,7 @@ class ADC:
     # Read the fuel tank temperature from thermocouple at channels 2 and 3 on the ADS1115
     # Requires a cold junction temperature taken from the Adafruit BNO055 gyroscopic sensor
     def read_temperature(self):
-        hot_junc_volt = ADC.get_thermocouple_volt(self)
+        hot_junc_volt = self.ads.readADCSingleEnded(channel=1, pga=256, sps=64)
         cold_junc_temp = ADC.get_gyro_temp(self)  # TODO
         # Need cold junction voltage converted from temperature
         cold_junc_volt = ADC.convert_temp_to_volt(self, cold_junc_temp)
@@ -63,18 +63,6 @@ class ADC:
         temperature = ADC.convert_volt_to_temp(self, hot_junc_volt + cold_junc_volt)
 
         return temperature
-
-    # Read the voltage difference between pins
-    def get_thermocouple_volt(self):
-        pos = self.ads.readADCSingleEnded(channel=1, pga=256, sps=64)  # / 1000
-        # neg = self.ads.readADCSingleEnded(channel=2, pga=6144, sps=64) / 1000
-        # pos = round(pos, 4)
-        # neg = round(neg, 4)
-        print("Positive channel: ")
-        print(pos)
-        # print("Negative channel: ")
-        # print(round(pos, 4))
-        return pos
 
     def get_gyro_temp(self):
         return 22.8  # TODO

@@ -58,10 +58,10 @@ class ADC:
         pressure = round(milVolts, 3)
         return pressure
 
-    # Read the fuel tank temperature from thermocouple at channels 2 and 3 on the ADS1115
+    # Read the fuel tank temperature from thermocouple at channel 1 the ADS1115
     # Requires a cold junction temperature taken from the Adafruit BNO055 gyroscopic sensor
     def read_temperature(self):
-        hot_junc_volt = ADC.get_thermocouple_volt(self)
+        hot_junc_volt = self.ads.read(pin=1) / 32767 * 6144
         cold_junc_temp = ADC.get_gyro_temp(self)  # TODO
         # Need cold junction voltage converted from temperature
         cold_junc_volt = ADC.convert_temp_to_volt(self, cold_junc_temp)

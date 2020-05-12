@@ -9,13 +9,14 @@
 # Cornell University
 
 import ADS1115
+import adafruit_bno055
+from busio import I2C
+from board import SDA, SCL
 import time
 
 
 # Analog to digital converter
 class ADC:
-    ads = ADS1115.ADS1115()
-
     # For the thermo couple conversion from voltage to temperature.
     T0 = -8.7935962e0
 
@@ -45,6 +46,8 @@ class ADC:
 
     def __init__(self):
         self.ads = ADS1115.ADS1115()
+        i2c = I2C(SCL, SDA)
+        self.gyro = adafruit_bno055.BNO055(i2c)
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):
@@ -56,7 +59,7 @@ class ADC:
     # Requires a cold junction temperature taken from the Adafruit BNO055 gyroscopic sensor
     def read_temperature(self):
         hot_junc_volt = self.ads.readADCSingleEnded(channel=1, pga=256, sps=64)
-        cold_junc_temp = ADC.get_gyro_temp(self)  # TODO
+        cold_junc_temp = ADC.get_gyro_temp(self)
         # Need cold junction voltage converted from temperature
         cold_junc_volt = ADC.convert_temp_to_volt(self, cold_junc_temp)
         # Add the hot and cold junction voltages and convert to temperature
@@ -65,7 +68,7 @@ class ADC:
         return temperature
 
     def get_gyro_temp(self):
-        return 22.8  # TODO
+        return self.gyro.temperature
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

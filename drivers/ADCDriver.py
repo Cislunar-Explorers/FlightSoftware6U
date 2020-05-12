@@ -77,7 +77,7 @@ class ADC:
         return pos
 
     def get_gyro_temp(self):
-        return 0  # TODO
+        return 22.8  # TODO
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

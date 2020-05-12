@@ -8,18 +8,13 @@
 # Space Systems Design Studio
 # Cornell University
 
-# import Adafruit_ADS1x15
 import ADS1115
-import adafruit_ads1x15.ads1115 as ADS
-import board
-import busio
 import time
 
 
 # Analog to digital converter
 class ADC:
-    i2c = busio.I2C(board.SCL, board.SDA)
-    ads = ADS.ADS1115(i2c)
+    ads = ADS1115.ADS1115()
 
     # For the thermo couple conversion from voltage to temperature.
     T0 = -8.7935962e0
@@ -49,19 +44,18 @@ class ADC:
     Q2T = -6.7976627e-5
 
     def __init__(self):
-        i2c = busio.I2C(board.SCL, board.SDA)
-        self.ads = ADS.ADS1115(i2c)
+        self.ads = ADS1115.ADS1115()
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):
-        milVolts = self.ads.read(pin=0) / 32767 * 300  # 6.144 / 5 * 300
-        pressure = round(milVolts, 3)
+        milVolts = self.ads.readADCSingleEnded(channel=0, pga=6144)
+        pressure = round(milVolts / 5000 * 300, 3)
         return pressure
 
-    # Read the fuel tank temperature from thermocouple at channel 1 the ADS1115
+    # Read the fuel tank temperature from thermocouple at channels 2 and 3 on the ADS1115
     # Requires a cold junction temperature taken from the Adafruit BNO055 gyroscopic sensor
     def read_temperature(self):
-        hot_junc_volt = self.ads.read(pin=1) / 32767 * 6144
+        hot_junc_volt = ADC.get_thermocouple_volt(self)
         cold_junc_temp = ADC.get_gyro_temp(self)  # TODO
         # Need cold junction voltage converted from temperature
         cold_junc_volt = ADC.convert_temp_to_volt(self, cold_junc_temp)
@@ -72,16 +66,18 @@ class ADC:
 
     # Read the voltage difference between pins
     def get_thermocouple_volt(self):
-        pos = 0  # self.ads.readADCSingleEnded(channel=3, pga=6144, sps=64) / 1000
-        neg = 0  # self.ads.readADCSingleEnded(channel=2, pga=6144, sps=64) / 1000
+        pos = self.ads.readADCSingleEnded(channel=1, pga=6144, sps=64) / 1000
+        # neg = self.ads.readADCSingleEnded(channel=2, pga=6144, sps=64) / 1000
+        pos = round(pos, 4)
+        # neg = round(neg, 4)
         print("Positive channel: ")
         print(round(pos, 4))
-        print("Negative channel: ")
-        print(round(neg, 4))
-        return pos - neg
+        # print("Negative channel: ")
+        # print(round(pos, 4))
+        return pos
 
     def get_gyro_temp(self):
-        return 23.9  # TODO
+        return 0  # TODO
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

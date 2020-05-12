@@ -10,17 +10,17 @@ def test_ADC_initialize():
 
 def test_ADC_read_pressure(testADC):
     while True:
-        print("---------------------------")
-        cels = testADC.read_pressure(testADC)
-        print(cels)
-        print("Fahrenheit:")
-        print(cels * 1.8 + 32)
+        print(testADC.read_pressure(testADC))
         time.sleep(1)
 
 
 def test_ADC_read_temperature(testADC):
     while True:
-        print(testADC.read_temperature(testADC))
+        print("--------------------------")
+        cel = testADC.read_temperature(testADC)
+        print(cel)
+        print("Fahrenheit:")
+        print(cel * 1.8 + 32)
         time.sleep(1)
 
 

@@ -52,4 +52,4 @@ def test_ADC_read_temperature_20(testADC):
 if True:
     testADC = test_ADC_initialize()
     test_ADC_read_pressure_20(testADC)
-    test_ADC_read_temperature(testADC)
+    # test_ADC_read_temperature(testADC)

@@ -52,4 +52,8 @@ def test_ADC_read_temperature_20(testADC):
 if True:
     testADC = test_ADC_initialize()
     # test_ADC_read_pressure_20(testADC)
+    print("Conversion sanity check: 25.6 degrees")
+    print(ADC.convert_volt_to_temp(testADC, ADC.convert_temp_to_volt(testADC, 25.6)))
+    print("Conversion sanity check: 2.023 mV")
+    print(ADC.convert_temp_to_volt(testADC, ADC.convert_volt_to_temp(testADC, 2.023)))
     test_ADC_read_temperature_continuous(testADC)

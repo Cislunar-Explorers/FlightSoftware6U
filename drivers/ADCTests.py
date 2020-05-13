@@ -28,6 +28,7 @@ def test_ADC_read_pressure_20(testADC):
 
 def test_ADC_read_temperature(testADC):
     print("--------------------------")
+    print("Celsius:")
     cel = testADC.read_temperature(testADC)
     print(cel)
     print("Fahrenheit:")

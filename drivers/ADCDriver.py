@@ -72,7 +72,7 @@ class ADC:
         return temperature
 
     def get_gyro_temp(self):
-        return 0  # self.gyro.temperature
+        return 22.3  # self.gyro.temperature
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

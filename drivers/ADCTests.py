@@ -49,8 +49,14 @@ def test_ADC_read_temperature_20(testADC):
         time.sleep(1)
 
 
+def test_ADC_get_gyro_temp(testADC):
+    print("Cold junction temperature fro gyro sensor in Celsius:")
+    print(testADC.get_gyro_temp(testADC))
+
+
 if True:
     testADC = test_ADC_initialize()
+    test_ADC_get_gyro_temp(testADC)
     # test_ADC_read_pressure_20(testADC)
     print("Conversion sanity check: 25.6 degrees")
     print(ADC.convert_volt_to_temp(testADC, ADC.convert_temp_to_volt(testADC, 25.6)))

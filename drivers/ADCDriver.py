@@ -9,7 +9,7 @@
 # Cornell University
 
 import ADS1115
-import adafruit_bno055
+import adafruit_fxas21002c
 import busio
 import board
 
@@ -18,7 +18,7 @@ import board
 class ADC:
     ads = ADS1115.ADS1115()
     i2c = busio.I2C(board.SCL, board.SDA)
-    gyro = adafruit_bno055.BNO055_I2C(i2c)
+    gyro = adafruit_fxas21002c.FXAS21002C(i2c)
 
     # For the thermo couple conversion from voltage to temperature.
     T0 = -8.7935962e0
@@ -50,7 +50,7 @@ class ADC:
     def __init__(self):
         self.ads = ADS1115.ADS1115()
         i2c = busio.I2C(board.SCL, board.SDA)
-        self.gyro = adafruit_bno055.BNO055_I2C(i2c)
+        self.gyro = adafruit_fxas21002c.FXAS21002C(i2c)
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):
@@ -71,7 +71,7 @@ class ADC:
         return temperature
 
     def get_gyro_temp(self):
-        return self.gyro.temperature
+        return self.gyro._read_u8(0x12)  # Temperature register address on gyro
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

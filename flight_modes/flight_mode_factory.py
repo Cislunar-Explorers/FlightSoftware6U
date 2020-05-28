@@ -14,7 +14,7 @@ from .opnav_flightmode import OpNavMode
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException
 
-flight_mode_dict = {
+FLIGHT_MODE_DICT = {
     FMEnum.Boot.value: BootUpMode,
     FMEnum.Restart.value: RestartMode,
     FMEnum.Normal.value: NormalMode,
@@ -31,7 +31,7 @@ flight_mode_dict = {
 
 def build_flight_mode(main, fm_id, **kwargs):
     try:
-        cls = flight_mode_dict[fm_id]
+        cls = FLIGHT_MODE_DICT[fm_id]
         return cls(main)
     except KeyError:
         raise UnknownFlightModeException(fm_id)

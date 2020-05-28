@@ -22,7 +22,7 @@ IDEAL_CRACKING_PRESSURE = 15.0
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
     os.path.expanduser("~"), ".cislunar-flight-software"
-)  # noqa E501
+)
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 
@@ -36,6 +36,18 @@ MODE_OFFSET = 0
 ID_OFFSET = 1
 DATA_LEN_OFFSET = 2
 DATA_OFFSET = 4
+
+
+# Keyword Argument Definitions for Commands
+POSITION_X = "position_x"
+POSITION_Y = "position_y"
+POSITION_Z = "position_z"
+
+ACCELERATE = "accelerate"
+
+ATTITUDE_X = "attitude_x"
+ATTITUDE_Y = "attitude_y"
+ATTITUDE_Z = "attitude_z"
 
 
 @unique
@@ -68,7 +80,7 @@ class NormalCommandEnum(IntEnum):
     RunOpNav = 0  # no args
     SetDesiredAttitude = 1  # arg=attitude
     SetAccelerate = 2  # arg=true/false
-    SetBreakpoint = 3  # arg=?
+    SetBreakpoint = 3  # arg=position x, y, z
 
 
 @unique

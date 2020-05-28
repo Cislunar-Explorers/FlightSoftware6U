@@ -14,7 +14,11 @@ class OpNavMode(PauseBackgroundMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.dummy_opnav_result = ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))  # noqa E501
+        self.dummy_opnav_result = (
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+        )
 
     def set_return_val(self, returnval):
         self.dummy_opnav_result = returnval

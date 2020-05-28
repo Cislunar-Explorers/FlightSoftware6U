@@ -9,8 +9,22 @@ from utils.constants import (  # noqa F401
     IDEAL_CRACKING_PRESSURE,
     BOOTUP_SEPARATION_DELAY,
     FMEnum,
+    NormalCommandEnum,
+    POSITION_X,
+    POSITION_Y,
+    POSITION_Z,
+    ATTITUDE_X,
+    ATTITUDE_Y,
+    ATTITUDE_Z,
+    ACCELERATE,
 )
 from utils.exceptions import UnknownFlightModeException
+from utils.struct import (
+    pack_bool,
+    pack_double,
+    unpack_bool,
+    unpack_double,
+)
 
 # Necessary modes to implement
 # BootUp, Restart, Normal, Eclipse, Safety, Electrolysis, Propulsion,
@@ -25,6 +39,14 @@ no_transition_modes = [
 
 
 class FlightMode:
+
+    # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
+    command_codecs = {}
+
+    # Map argument names to (packer,unpacker) tuples
+    # This tells CommandHandler how to serialize the arguments for commands to this flight mode
+    command_arg_unpackers = {}
+
     def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
@@ -33,7 +55,8 @@ class FlightMode:
         flight_mode_id = self.flight_mode_id
         if flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
-                self.gom.read_battery_percentage() >= EXIT_LOW_BATTERY_MODE_THRESHOLD  # noqa E501
+                self.gom.read_battery_percentage()
+                >= EXIT_LOW_BATTERY_MODE_THRESHOLD
             ):
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
@@ -71,8 +94,12 @@ class FlightMode:
         else:
             raise UnknownFlightModeException(flight_mode_id)
 
+    @classmethod
+    def register_commands(cls):
+        raise NotImplementedError("Only implemented in specific flight mode subclasses")
+
     def run_mode(self):
-        pass
+        raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def execute_commands(self):
         if len(self.parent.commands_to_execute) == 0:
@@ -274,6 +301,23 @@ class SafeMode(FlightMode):
 class NormalMode(FlightMode):
 
     flight_mode_id = FMEnum.Normal.value
+
+    command_codecs = {
+        NormalCommandEnum.RunOpNav.value: ([], 0),
+        NormalCommandEnum.SetDesiredAttitude.value: (
+            [ATTITUDE_X, ATTITUDE_Y, ATTITUDE_Z],
+            24,
+        ),
+        NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
+        # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
+    }
+
+    command_arg_unpackers = {
+        ATTITUDE_X: (pack_double, unpack_double),
+        ATTITUDE_Y: (pack_double, unpack_double),
+        ATTITUDE_Z: (pack_double, unpack_double),
+        ACCELERATE: (pack_bool, unpack_bool),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)

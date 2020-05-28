@@ -1,9 +1,10 @@
-from core.const import TOTAL_INTEGRATION_TIME, GYRO_SIGMA, GYRO_NOISE_SIGMA, NX, LAM, R, _a, _f
+from core.const import NX, LAM, _a, _f
 import numpy
 from numpy.linalg import inv
 from numpy.linalg import pinv
 from scipy.stats import norm
 from numpy import random
+from tqdm import tqdm
 
 def crs(vector):
     first = vector[0][0]
@@ -29,36 +30,32 @@ def meas_model(state, earthVec, moonVec, sunVec):
     zearth = numpy.concatenate((zearth, zsun), axis=0)
     return zearth
 
-def getGyroMeasurement(t, gyro_noise_sigma, ws, bs):
+def getGyroMeasurement(j, gyro_noise_sigma, ws, bs):
     """
     [gyro_noise_sigma] noise added to true gyro values
+    [j]: index of current gyro measurement (0...gyroSampleCount)
     """
-    # print(t)
-    omegax, omegay, omegaz = ws[0], ws[1], ws[2]
-    biasx, biasy, biasz = bs[0], bs[1], bs[2]
-    return (numpy.array([[float(omegax(t)), float(omegay(t)),
-                          float(omegaz(t))]]).T + numpy.array([[biasx(t)],
-                                                               [biasy(t)],
-                                                               [biasz(t)]]) +
-            numpy.random.randn(3,1)*gyro_noise_sigma)
+    # omegax, omegay, omegaz = ws[0], ws[1], ws[2]
+    # biasx, biasy, biasz = bs[0], bs[1], bs[2]
+    return ws[j].reshape(3,1) + bs[j].reshape(3,1) + numpy.random.randn(3,1)*gyro_noise_sigma
 
-def updateOmega(t, biasEst, ws, bs):
-    return getGyroMeasurement(t, GYRO_SIGMA, ws, bs) - biasEst
+def updateOmega(j, biasEst, gyro_sigma, ws, bs):
+    return getGyroMeasurement(j, gyro_sigma, ws, bs) - biasEst
 
 def updateBeta(betakp):
     return betakp
 
-def computePsi(t, biasEst, sample_rate, ws, bs):
-    omegaplus = updateOmega(t, biasEst, ws, bs)
+def computePsi(j, biasEst, gyro_sigma, sample_rate, ws, bs):
+    omegaplus = updateOmega(j, biasEst, gyro_sigma, ws, bs)
     return (numpy.sin(0.5*sample_rate*numpy.linalg.norm(omegaplus))/
             numpy.linalg.norm(omegaplus)) * omegaplus
 
-def computeBigOmega(t, biasEst, sample_rate, ws, bs):
-    psi = computePsi(t, biasEst, sample_rate, ws, bs)
-    oneone = numpy.cos(0.5*sample_rate*numpy.linalg.norm(updateOmega(t, biasEst, ws, bs)))
+def computeBigOmega(j, biasEst, gyro_sigma, sample_rate, ws, bs):
+    psi = computePsi(j, biasEst, gyro_sigma, sample_rate, ws, bs)
+    oneone = numpy.cos(0.5*sample_rate*numpy.linalg.norm(updateOmega(j, biasEst, gyro_sigma, ws, bs)))
     psicrs = crs(psi)
     lowerright = numpy.array([[numpy.cos(0.5*sample_rate*
-                                         numpy.linalg.norm(updateOmega(t, biasEst, ws, bs)))]])
+                                         numpy.linalg.norm(updateOmega(j, biasEst, gyro_sigma, ws, bs)))]])
     upperleft = oneone*numpy.eye(3) - psicrs
     upperright = psi
     lowerleft = -1*psi.T
@@ -66,12 +63,15 @@ def computeBigOmega(t, biasEst, sample_rate, ws, bs):
     bottom = numpy.concatenate((lowerleft, lowerright), axis=1)
     return numpy.concatenate((top, bottom), axis=0)
 
-def updateQuaternion(t, biasEst, sample_rate, qkp, ws, bs):
-    bigO = computeBigOmega(t, biasEst, sample_rate, ws, bs)
+def updateQuaternion(j, biasEst, gyro_sigma, sample_rate, qkp, ws, bs):
+    """
+    [j]: time index in current time segment
+    """
+    bigO = computeBigOmega(j, biasEst, gyro_sigma, sample_rate, ws, bs)
     return numpy.dot(bigO, qkp)
   
 def getCholesky(Pmat, Qmat):
-    return numpy.linalg.cholesky(Pmat + Q)
+    return numpy.linalg.cholesky(Pmat + Qmat)
 
 def extractColumns(mat):
     cols = numpy.zeros((len(mat), int(NX), 1))
@@ -79,7 +79,7 @@ def extractColumns(mat):
         cols[i] = (numpy.array([mat[:,i]]).T)
     return cols
 
-def generateSigmas(xhatkp, Phatkp):
+def generateSigmas(xhatkp, Phatkp, Q):
     sigpoints = numpy.zeros((int(2*NX + 1), int(NX), 1))
     sigpoints[0] = numpy.array([[0., 0., 0., xhatkp[3][0], xhatkp[4][0], xhatkp[5][0]]]).T
     S = getCholesky(Phatkp, Q)
@@ -124,15 +124,19 @@ def perturbQuaternionEstimate(errorquat, qhatk):
         counter += 1
     return newquats
 
-def propagateQuaternion(perturbed_quat_list, sigmas, t, ws, bs, cameradt):
-    time = numpy.arange(t, t+cameradt, GYRO_SAMPLE_RATE)
-    # print(time)
+def propagateQuaternion(perturbed_quat_list, sigmas, time_segment, gyro_sigma, gyro_sample_rate, ws, bs, cameradt):
+    """
+    [time_segment]: timeline segment for gyro measurements. If the first element in ws was recorded at time t,
+            then [time_segment] is consist of: [t+0, t+gyro_sample_rate,..., t+gyro_sample_rate*gyroSampleCount]
+    [ws,bs]: omegas and biases obtained from [time_segment]
+    """
+    #time = numpy.arange(t, t+cameradt, gyro_sample_rate)
     updated_quats = numpy.zeros((len(perturbed_quat_list), 4, 1))
     for i in range(len(perturbed_quat_list)):
         bias = numpy.array([[sigmas[i][3][0], sigmas[i][4][0], sigmas[i][5][0]]]).T
         quat = perturbed_quat_list[i]
-        for j in time:
-            newq = updateQuaternion(j, bias, GYRO_SAMPLE_RATE, quat, ws, bs)
+        for j, t in enumerate(time_segment):
+            newq = updateQuaternion(j, bias, gyro_sigma, gyro_sample_rate, quat, ws, bs)
             newq = newq/numpy.linalg.norm(newq)
             quat = newq
         updated_quats[i] = (quat)
@@ -176,7 +180,7 @@ def predictedMean(newsigs):
         xmean += (1./(2.*(NX+LAM)))*i
     return xmean
 
-def predictedCov(newsigs, pred_mean):
+def predictedCov(newsigs, pred_mean, Q):
     P = ((LAM/(NX + LAM)))*numpy.dot((newsigs[0] - pred_mean),(newsigs[0] - pred_mean).T)
     for i in newsigs[1:]:
         P += (1./(2*(NX+LAM)))*numpy.dot((i - pred_mean), (i - pred_mean).T)
@@ -186,7 +190,7 @@ def hFromSigs(prop_quaternions, e, m, s):
     hlist = numpy.zeros((len(prop_quaternions), 9, 1))
     counter = 0
     for i in prop_quaternions:
-        hlist[counter] = (meas_model(i, e, m, s))
+        hlist[counter] = meas_model(i, e, m, s).reshape(9, 1)
         counter +=1
     return hlist
 
@@ -208,7 +212,7 @@ def meanMeasurement(hlist):
     zmean[8][0] = zmean[8][0]/thirdden
     return zmean
 
-def Pzz(hlist, zmean):
+def Pzz(hlist, zmean, R):
     Pzz = ((LAM/(NX+LAM)))*numpy.dot(hlist[0] - zmean, (hlist[0] - zmean).T)
     for i in hlist[1:]:
         Pzz += (1./(2*(NX+LAM)))*numpy.dot(i-zmean, (i-zmean).T)
@@ -245,33 +249,62 @@ def updateQuaternionEstimate(xhatkp, qhatkm):
 def resetSigmaSeed(xhatkp):
     return numpy.array([[0., 0., 0., xhatkp[3][0], xhatkp[4][0], xhatkp[5][0]]]).T
 
-def UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements):
-    Phist = numpy.zeros((int(TOTAL_INTEGRATION_TIME/cameradt), 6, 6))
-    qhist = numpy.zeros((int(TOTAL_INTEGRATION_TIME/cameradt), 4, 1))
-    xhist = numpy.zeros((int(TOTAL_INTEGRATION_TIME/cameradt), 6, 1))
+def UKF(cameradt, totalIntegrationTime, gyroVars, P0, x0, q0, omegas, biases, estimatedSatState, moonEph, sunEph, timeline):
+    """
+    let n = # of camera measurements in batch
+    let gyroSampleCount = 1/gyro_sample_rate
+    [gyroVars]: (gyro_sigma, gyro_sample_rate, Q, R)
+    [omegas]: (x, y, z) components of measured angular velocity (n x gyroSampleCount, 3) 
+    [biases]: (bx, by, bz) (Not sure how these are obtained) (n x gyroSampleCount, 3)
+    [estimatedSatState]: trajectory UKF outputs from t = 0 to t = totalIntegrationTime (n x gyroSampleCount, 3)
+    [moonEph]: moon position/vel from ephemeris table (n x gyroSampleCount, 3)
+    [sunEph]: sun position/vel from ephemeris table (n x gyroSampleCount, 3)
+    """
+    # assert(omegas[0].shape[0] == biases.shape[0] == estimatedSatState.shape[0] == moonEph.shape[0] == sunEph.shape[0])
+    n = moonEph.shape[0]
+    (gyro_sigma, gyro_sample_rate, Q, R) = gyroVars
+    gyroSampleCount = int(1/gyro_sample_rate)
+
+    assert (n == int(totalIntegrationTime/cameradt * gyroSampleCount))
+
+    Phist = numpy.zeros((int(n/gyroSampleCount), 6, 6))
+    qhist = numpy.zeros((int(n/gyroSampleCount), 4, 1))
+    xhist = numpy.zeros((int(n/gyroSampleCount), 6, 1))
     Phatkp = P0
     xhatkp = x0
     qhatkp = q0
     time = 0.
     counter = 0
-    for i in measurements[0:]:
-        # if counter % 10==0:
-        #     print(counter)
-        sigma_points = generateSigmas(xhatkp, Phatkp)
+    for i in tqdm(range(0, n, gyroSampleCount), desc="Batch Progress"):
+        # Calculate position vectors
+        # satPos, moonPos, sunPos = estimatedSatState[i:i+gyroSampleCount,:], moonEph[i:i+gyroSampleCount,:], sunEph[i:i+gyroSampleCount,:]
+        # earthVec, moonVec, sunVec = numpy.zeros((gyroSampleCount, 3)), numpy.zeros((gyroSampleCount, 3)), numpy.zeros((gyroSampleCount, 3))
+        # for g_sample in range(gyroSampleCount):
+            # earthVec[i+g_sample] = (-1*satPos[i+g_sample])/numpy.linalg.norm(satPos[i+g_sample])
+            # moonVec[i+g_sample] = (moonPos[i+g_sample] - satPos[i+g_sample])/numpy.linalg.norm(moonPos[i+g_sample] - satPos[i+g_sample])
+            # sunVec[i+g_sample] = (sunPos[i+g_sample] - satPos[i+g_sample])/numpy.linalg.norm(sunPos[i+g_sample] - satPos[i+g_sample])
+        satPos, moonPos, sunPos = estimatedSatState[i,:], moonEph[i,:], sunEph[i,:]
+        earthVec = (-1*satPos)/numpy.linalg.norm(satPos)
+        moonVec = (moonPos - satPos)/numpy.linalg.norm(moonPos - satPos)
+        sunVec = (sunPos - satPos)/numpy.linalg.norm(sunPos - satPos)
+        time_segment = timeline[i:i+gyroSampleCount]
+        sigma_points = generateSigmas(xhatkp, Phatkp, Q)
         err_quats = makeErrorQuaternion(sigma_points)
         pert_quats = perturbQuaternionEstimate(err_quats, qhatkp)
-        prop_quats = propagateQuaternion(pert_quats, sigma_points, time, (omegax, omegay, omegaz), (biasx, biasy, biasz), cameradt)
+        prop_quats = propagateQuaternion(pert_quats, sigma_points, time_segment, gyro_sigma, gyro_sample_rate, omegas[i:i+gyroSampleCount], biases[i:i+gyroSampleCount], cameradt)
         qhatkp1m = prop_quats[0]
         prop_err = propagatedQuaternionError(prop_quats)
         prop_sigmas = recoverPropSigma(prop_err, sigma_points)
         x_mean = predictedMean(prop_sigmas)
-        p_mean = predictedCov(prop_sigmas, x_mean)
+        p_mean = predictedCov(prop_sigmas, x_mean, Q)
         h_list = hFromSigs(prop_quats, earthVec, moonVec, sunVec)
         z_mean = meanMeasurement(h_list)
-        Pzz_kp1 = Pzz(h_list, z_mean)
+        Pzz_kp1 = Pzz(h_list, z_mean, R)
         Pxz_kp1 = Pxz(prop_sigmas, x_mean, h_list, z_mean)
         K = getGain(Pxz_kp1, Pzz_kp1)
-        xhat_kp1 = updateXhat(x_mean, K, i, z_mean)
+        meas = numpy.concatenate((earthVec, moonVec, sunVec), axis=0).reshape(9, 1)
+        assert(z_mean.shape == meas.shape)
+        xhat_kp1 = updateXhat(x_mean, K, meas, z_mean)
         Phat_kp1 = updatePhat(p_mean, K, Pzz_kp1)
         qhat_kp1 = updateQuaternionEstimate(xhat_kp1, qhatkp1m)
         
@@ -288,8 +321,8 @@ def UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earth
         
     return Phist, qhist, xhist
 
-def runAttitudeUKFWithKick(cameradt, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements, x0, quat, P0, kickTime):
+def runAttitudeUKFWithKick(cameradt, totalIntegrationTime, gyroVars, P0, x0, quat, omegas, biases, satState, moonEph, sunEph, timeline):
     # Obtain quats
     q0 = quat/numpy.linalg.norm(quat)
     # Run UKF
-    return UKF(cameradt, P0, x0, q0, omegax, omegay, omegaz, biasx, biasy, biasz, earthVec, moonVec, sunVec, measurements)
+    return UKF(cameradt, totalIntegrationTime, gyroVars, P0, x0, q0, omegas, biases, satState, moonEph, sunEph, timeline)

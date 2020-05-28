@@ -12,6 +12,17 @@ the three cameras onboard and store them on the SD card as video format. It will
 record gyroscope measurements and store them in a table on the SD card.
 """
 def observe():
+    # obtain latest angular velocity (account for bias)
+    # configure camera parameters accordingly
+    # decide on video time
+    # record video from camera 1
+    # record video from camera 2
+    # record video from camera 3
+    # record angular velocity from gyro (N times)
+    # Extract measurements from video frames
+    # Store measurement vector and angular velocity vector in database
+    # Repeat until desired number of camera measurements have been obtained
+    #   Low small angular velocities and cold-gas kick, Att-UKF converges with a few hundered.
     pass
 
 """
@@ -36,7 +47,15 @@ def process(startTime, duration, moonTable, sunTable, initPosVel, initOmega, ini
     Returns:
     [newPos, newVel, newOmega, newQuat]
     """
-    # Step 1: Convert video clips into list of measurements
-    # TODO: Finalize video format and conversion to frames
-    measList = [np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])] # earth, moon, sun
-    gyroList = [[0], [0], [0], [0], [0], [0]] # omegaX, omegaY, omegaZ, biasX, biasY, biasZ
+    # Pull entries from database and re-format in desired tables
+    # Pull ephemeris tables and identify start and end times
+    # Pull main thrust fire times
+    # Organize measurements into groups, and batch them by thrust fires.
+    # Filtering Step:
+    #   Feed a batch into Traj-UKF and obtain position estimates history
+    #   Propagate position to each of the N gyro times using estimated velocity, for each pos-vel estimate in history
+    #   Calculate Sun, Moon and Earth positions in body frame
+    #   Feed new measurement vectors and gyro vectors into Att-UKF.
+    #   (Next iteration of Traj-UKF will use quaternion history for thrust fire dynamics propagation)
+    pass
+

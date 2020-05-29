@@ -5,9 +5,9 @@ import cv2
 import copy
 import math
 import pandas as pd
-from tests.const import TEST_ECLIPSEANDCRESCENTIMAGES, TEST_FIND_DATASET_IMAGE_DIR, TEST_FIND_DATASET_CIRCLES_DIR
-from tests.const import EARTH_CENTER_ERROR, EARTH_RADIUS_ERROR, SUN_CENTER_ERROR, SUN_RADIUS_ERROR, MOON_CENTER_ERROR, MOON_RADIUS_ERROR
-from core.find import findEarth, findMoon, findSun
+from OpticalNavigation.tests.const import TEST_ECLIPSEANDCRESCENTIMAGES, TEST_FIND_DATASET_IMAGE_DIR, TEST_FIND_DATASET_CIRCLES_DIR
+from OpticalNavigation.tests.const import EARTH_CENTER_ERROR, EARTH_RADIUS_ERROR, SUN_CENTER_ERROR, SUN_RADIUS_ERROR, MOON_CENTER_ERROR, MOON_RADIUS_ERROR
+from OpticalNavigation.core.find import findEarth, findMoon, findSun
 
 class NaNError(Exception):
     def __str__(self):

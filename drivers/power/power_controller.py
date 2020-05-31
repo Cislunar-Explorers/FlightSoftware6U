@@ -13,6 +13,7 @@
 
 from pigpio import *
 from power_structs import *
+import power_structs as ps
 import RPi.GPIO as GPIO
 import time
 
@@ -23,7 +24,7 @@ POWER_ADDRESS           = 0x02
 PI_BUS                  = 1
 
 # allowed ranges
-MAX_PV_VOLTAGE			= 4000  # change later
+MAX_PV_VOLTAGE			= 4000  # TODO: change later
 
 # command registers
 CMD_PING                = 0x01
@@ -86,7 +87,7 @@ OUT_ELECTROLYZER    = OUT_6
 OUT_PI_COMMS            = 11    # GPIO 17
 OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
 
-
+_ = ps._
 class Power(object):
     # initializes power object with bus [bus] and device address [addr]
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
@@ -185,7 +186,7 @@ class Power(object):
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
         assert 0 <= channel <= 7, "channel must be in range [0, 7]"
-        assert value in [0,1] and type(value) == int, "value must be 0 or 1"
+        assert value in [0, 1] and type(value) == int, "value must be 0 or 1"
         d = toBytes(delay, 2)
         self.write(CMD_SET_SINGLE_OUTPUT, [channel, value]+list(d))
 
@@ -255,8 +256,8 @@ class Power(object):
 
     # Send this command to perform a hard reset of the P31u,
     # including cycling permanent 5V and 3.3V and battery outputs.
-    def hard_reset(self, are_you_sure):
-        assert are_you_sure == True
+    def hard_reset(self, are_you_sure=False):
+        assert are_you_sure is True
         self.write(CMD_HARD_RESET, [])
 
     # Use this command to control the config 2 system.

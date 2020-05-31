@@ -286,14 +286,9 @@ def toBytes(i, num):
     return bytearray(acc)
 
 
-# TODO: This function is in very very bad shape. Need to change. It's essentially the same as c_byteArrayToBytes but
-#  with contradicting documentation. The assert statements causes powertest.py to fail, but runs fine with the assert
-#  statements commented out
-
 # bytearray -> c_bytearray takes a ctypes bytearray [i] and converts it into a python
 # bytearray. raises: AssertionError if i is not a ctypes bytearray
 def c_bytesToByteArray(i):
-    #assert isCByteArray(i)
     assert type(i).__name__ == "bytearray"
     return (c_byte*len(i))(*i)
 

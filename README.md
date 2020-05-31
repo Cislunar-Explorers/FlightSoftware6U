@@ -2,7 +2,7 @@
 Python flight software for Cislunar Explorers
 
 # Set up Virtual Environment
-```python
+```bash
 python3 -m venv ./cislunar-venv
 ```
 

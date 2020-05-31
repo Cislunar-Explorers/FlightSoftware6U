@@ -5,7 +5,7 @@ class Gomspace:
     def __init__(self):
         self.gom = pc.Power()
 
-    def tick_watchdog(self):
+    def tick_wdt(self):
         """Resets dedicated WDT"""
         return self.gom.reset_wdt()
 
@@ -26,15 +26,15 @@ class Gomspace:
         option_index = 0
 
         if type(level) == str:
-            options = ["default", "eps", "vi", "out", "wdt", "basic", "config", "config2"]
+            options = ["default", "eps", "vi", "out", "wdt", "basic"]
             assert level.lower() in options
-            option_index = options.index(level)
+            option_index = options.index(level.lower())
 
         if type(level) == int:
-            assert level in range(0, 8)
+            assert level in range(0, 6)
             option_index = level
 
-        assert option_index in range(0, 8), "Something went wrong!"
+        assert option_index in range(0, 6), "Something went wrong!"
 
         # there's probably a better way to do this:
         if option_index == 0: return self.gom.get_hk_1()
@@ -43,12 +43,10 @@ class Gomspace:
         if option_index == 3: return self.gom.get_hk_out()
         if option_index == 4: return self.gom.get_hk_wdt()
         if option_index == 5: return self.gom.get_hk_2_basic()
-        if option_index == 6: return self.gom.config_get()
-        if option_index == 7: return self.gom.config2_get()
 
     def set_output(self, channel, value, delay=0):
         """Sets a single controllable output either on or off.
-            channel must be between 1 and six
+            channel must be between 1 and 6
             value must be either 1 (on) or 0 (off)"""
         self.gom.set_single_output(channel, value, delay)
 
@@ -56,9 +54,9 @@ class Gomspace:
         """Turns off all controllable outputs on the Gomspace"""
         self.gom.set_output(0)
 
-    def hard_reset(self):
+    def hard_reset(self, passcode):
         """Performs a hard reset of the P31u, including cycling permanent 5V and 3.3V and battery outputs"""
-        self.gom.hard_reset()
+        self.gom.hard_reset(passcode)
 
     def display_all(self):
         """Prints Housekeeping, config, and config2 data"""

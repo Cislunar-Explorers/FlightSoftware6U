@@ -1,6 +1,7 @@
 import numpy as np
 import math
-from const import CameraParameters
+from core.const import CisLunarCameraParameters
+from core.const import MAIN_THRUST_ACCELERATION
 
 # How wrong our dynamics model is? e.g. how off in variance will we be due
 # to solar radiation pressure, galactic particles, and bad gravity model? 
@@ -56,14 +57,31 @@ def makeSigmas(initState, Sx, Sv, nx, nv, constant):
 
     return sigmas, noise
 
-def G(rec, rem, rcm, rcs, res):
-    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm*rcm.T)**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs*rcs.T)**(3/2)) - res/(np.linalg.norm(res)**3) )
+def quaternion_multiply(quaternion1, quaternion0):
+    """
+    Hamiltonian Product
+    Source: https://stackoverflow.com/questions/39000758/how-to-multiply-two-quaternions-by-python-or-numpy
+    """
+    w0, x0, y0, z0 = quaternion0
+    w1, x1, y1, z1 = quaternion1
+    return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
 
-def dynamics_model(state, dt, moonEph, sunEph):
+def G(rec, rem, rcm, rcs, res, thrust):
+    """
+    [thrust] is 3D acceleration vector.
+    """
+    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm.dot(rcm.T))**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs.dot(rcs.T))**(3/2)) - res/(np.linalg.norm(res)**3) ) + thrust
+
+def dynamics_model(state, dt, moonEph, sunEph, kick_orientation=None):
     """
     Runge Kutta 4th Order, one timestep
     [state]: Sigma point + noise (6x1)
     [dt]: time elapsed since last execution (seconds)
+    [kick_orientation]: (4x1) quaterion representing kick acceleration 
+                        (None) if no kick occured
     Ephemeris is in km, km/s 
     Returns:
     Output is also in km
@@ -77,10 +95,19 @@ def dynamics_model(state, dt, moonEph, sunEph):
     rcm = rec-rem
     rcs = rec-res
     position = rec + rec_dot * dt
-    n1 = G(position, rem, rcm, rcs, res)
-    n2 = G(position+dt*n1/2, rem, rcm, rcs, res)
-    n3 = G(position+dt*n2/2, rem, rcm, rcs, res)
-    n4 = G(position+n3*dt, rem, rcm, rcs, res)
+    # Convert thrust vector into ECI frame
+    net_acceleration_thrust = np.zeros((1,3))
+    if kick_orientation:
+        # Source: https://math.stackexchange.com/questions/40164/how-do-you-rotate-a-vector-by-a-unit-quaternion
+        local_acceleration_vector = [0, 0, 0, 1] # first 0 is padding
+        kick_orientation = [kick_orientation[0], kick_orientation[1], kick_orientation[2], kick_orientation[3]]
+        kick_orientation_1 = [kick_orientation[0], -kick_orientation[1], -kick_orientation[2], -kick_orientation[3]]
+        net_acceleration_thrust = quaternion_multiply(quaternion_multiply(kick_orientation, local_acceleration_vector), kick_orientation_1)[1:] # drop the w component
+    n1 = G(position, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
+    # net_acceleration_thrust = np.zeros((1,3))
+    n2 = G(position+dt*n1/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
+    n3 = G(position+dt*n2/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
+    n4 = G(position+n3*dt, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     velocity = rec_dot + (1.0/6.0)*(n1 + 2*n2 + 2*n3 + n4)*dt
 
     return np.concatenate((position, velocity), axis=None) / 1000
@@ -156,26 +183,25 @@ def findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, o
     Returns:
     [Pxx, Pxz, Pzz]
     """
-    centerWeight = centerWeight + 1 - alpha**2 + beta
-    xx = propSigmas[:,0] - xMean
-    zz = sigmaMeasurements[:,0] - zMean
+    centerrWeight = centerWeight + 1 - alpha**2 + beta
+    xx = propSigmas[:,0].reshape(6,1) - xMean
+    zz = sigmaMeasurements[:,0].reshape(6,1) - zMean
 
-    Pxx = centerWeight * (xx*xx.T)
-    Pxz = centerWeight * (xx*zz.T)
-    Pzz = centerWeight * (zz*zz.T)
+    Pxx = centerrWeight * (xx.dot(xx.T))
+    Pxz = centerrWeight * (xx.dot(zz.T))
+    Pzz = centerrWeight * (zz.dot(zz.T))
 
     xx2 = propSigmas[:,1:] - xMean
     zz2 = sigmaMeasurements[:,1:] - zMean
 
     for i in range(length(xx2)):
-        Pxx = otherWeight * xx2[:,i]*xx2[:,i].T + Pxx
-        Pxz = otherWeight * xx2[:,i]*zz2[:,i].T + Pxz
-        Pzz = otherWeight * zz2[:,i]*zz2[:,i].T + Pzz
-    
+        Pxx = otherWeight * xx2[:,i].reshape(6,1).dot(xx2[:,i].reshape(1,6)) + Pxx
+        Pxz = otherWeight * xx2[:,i].reshape(6,1).dot(zz2[:,i].reshape(1,6)) + Pxz
+        Pzz = otherWeight * zz2[:,i].reshape(6,1).dot(zz2[:,i].reshape(1,6)) + Pzz
     Pzz = Pzz + R
     return Pxx, Pxz, Pzz
 
-def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
+def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamicsOnly=False):
     """
     Calculates new state given weighted sums of expected measurements and propogated sigmas (dynamics model)
     Returns:
@@ -184,26 +210,30 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState):
     [K]: Kalman gain
     """
     # Moore-Penrose Pseudoinverse
-    K = Pxz*np.linalg.pinv(Pzz);
-    # K = 0; % To test dynamics Model
-    xNew = xMean + K.dot(measurements - zMean)
-    pNew = Pxx - K*R*K
-
+    if not dynamicsOnly:
+        K = Pxz.dot(np.linalg.pinv(Pzz))
+    else:
+        K = np.zeros((6,6)); # To test dynamics Model
+    xNew = xMean + K.dot(measurements - zMean) 
+    pNew = Pxx - K.dot(R.dot(K.T))
     return xNew, pNew, K
 
-def runUKF(moonEph, sunEph, measurements, initState, dt, P):
+def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, orientation=None, dynamicsOnly=False):
     """
-    One full execution of the ukf
+    Propogates dynamics model with instantaneous impulse from the main thruster.
+    Due to the processing delays of the system and the short impulse duration, 
+    the thrust is modeled as an instantenous acceleration on the spacecraft. 
     [moonEph]: Moon ephemeris vector (1,6)
     [sunEph]: Sun ephemeris vector (1,6)
     [measurements]: measurement vector (6x1)
     [initEstimate]: state vector from previous execution (or start state) (6x1)
     [dt]: time elapsed since last execution (seconds)
     [P]: initial covariance matrix for state estimate
+    [orientation]: 4D quaternion vector representing orientation in ECI frame (provide as list: [q1, q2, q3, q4])
+    [dynamicsOnly]: trust the dynamics model over measurements (helpful for testing)
     Returns:
     [xNew, pNew, K]: (6x1) new state vector, (6x6) new state covariance estimate, kalman gain
     """
-
     nx = length(P)
     nv = length(Q)
     k = 3-nx;
@@ -212,10 +242,10 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
     centerWeight = lmbda/(nx+nv+lmbda)
     otherWeight = 1/(2*(nx+nv+lmbda))
 
-    const = CameraParameters.hPix/(CameraParameters.hFov*np.pi/180) # camera constant: PixelWidth/FOV  [pixels/radians]
+    const = cameraParams.hPix/(cameraParams.hFov*np.pi/180) # camera constant: PixelWidth/FOV  [pixels/radians]
 
     Sx = np.linalg.cholesky(P)
-    
+
     # Generate Sigma Points
     sigmas, noise = makeSigmas(initState, Sx, Sv, nx, nv, constant)
 
@@ -224,35 +254,25 @@ def runUKF(moonEph, sunEph, measurements, initState, dt, P):
 
     # Proprogate Sigma Points by running through dynamics model/function
     for j in range(length(sigmas)):
-        propSigmas[:,j] = dynamics_model(sigmas[:,j]+noise[:,j], dt, moonEph, sunEph);
+        propSigmas[:,j] = dynamics_model(sigmas[:,j]+noise[:,j], dt, moonEph, sunEph, kick_orientation=orientation)
     
     sigmaMeasurements = np.zeros((6,length(propSigmas)))
     
     # Sigma measurements are the expected measurements calculated from
     # running the propagated sigma points through measurement model
     for j in range(length(sigmas)):
-        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),R).T, moonEph, sunEph, const) 
-    
+        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),R).T, moonEph, sunEph, const)
+
     # a priori estimates
     xMean, zMean = getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight)
 
     # Calculates the covariances as weighted sums
     Pxx, Pxz, Pzz = findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, alpha, beta, R)
+    # print(Pxx)
+    # print(Pxz)
+    # print(Pzz)
 
     # a posteriori estimates
-    return newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(measurements.shape[0],1), R, initState)
-
-
-def main():
-    traj = (np.array([883.9567, 1.023e+03, 909.665, 65.648, 11.315, 28.420], dtype=np.float)).reshape(6,1)
-    moonEph = (np.array([1.536e+05, -3.723e+05, 2.888e+03, 0.9089, 0.3486, -0.0880], dtype=np.float)).reshape(1,6)
-    sunEph = (np.array([-3.067e+07, -1.441e+08, 6.67e+03, 29.6329, -6.0859, -8.8015e-04], dtype=np.float)).reshape(1,6)
-    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
-    measurements = (np.array([3783.89178515,  854.57125906, 3446.64998585,  544.40002441, 1949.59997559, 40.0], dtype=np.float)).reshape(6,1)
-
-    xNew, pNew, K = runUKF(moonEph, sunEph, measurements, traj, 60, P)
-    print(xNew)
-
-if __name__ == "__main__":
-    main()
+    xNew, pNew, K =  newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(6,1), R, initState, dynamicsOnly=dynamicsOnly)
+    return xNew, pNew, K
 

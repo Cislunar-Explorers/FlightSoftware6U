@@ -23,6 +23,7 @@ class Comms:
 
     # Override this method to assure safety for specific implementation
     def stop(self):
+        print("Halting comms thread...")
         if self.listening_thread.is_alive() is True:
             self.listening_thread.terminate()
 

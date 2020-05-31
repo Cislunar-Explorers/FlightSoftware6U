@@ -3,8 +3,8 @@ import glob
 import cv2
 import copy
 import os
-from const import CameraParameters, ACQUIRED_IMGS_DIR
-from find import findEarth, findMoon, findSun
+from core.find import findEarth, findMoon, findSun
+from core.const import CameraAcquisionDirectoryNotFound, NoImagesInCameraAcquisitionDirectory, InvalidBodyNameForLoadProperties
 
 def loadProperties(img, name, cam, i, properties):
     """
@@ -26,7 +26,7 @@ def loadProperties(img, name, cam, i, properties):
     elif name == 'sun':
         circles = findSun(img)
     else:
-        raise Exception('\"{}\" should be one of (\"{}\",\"{}\",\"{}\"). Was: \"{}\"'.format("name", "earth", "moon", "sun", name))
+        raise InvalidBodyNameForLoadProperties(name)
     if circles is not None and len(circles) != 0:
         print('{}: Sucess in Camera {} Image {}'.format(name, cam + 1, i + 1))
         bestCircle = circles[0][0]
@@ -35,7 +35,7 @@ def loadProperties(img, name, cam, i, properties):
         properties['index'].append(i)
         properties['flag'] = cam
 
-def computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt):
+def computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt, cameraParameters):
     # Time Difference between snaps of bodies
     dtEM = np.abs(earthProperties['index'][0] - moonProperties['index'][0])*dt 
     dtES = np.abs(earthProperties['index'][0] - sunProperties['index'][0])*dt 
@@ -47,13 +47,13 @@ def computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt
     one_zero = np.array([1, 0])
     zero_one = np.array([0, 1])
     # Additional Horizontal Pixels Due to Time Offset
-    horiz_pixelsEM = angEM/CameraParameters.hFov * CameraParameters.hPix * one_zero
-    horiz_pixelsES = angES/CameraParameters.hFov * CameraParameters.hPix * one_zero
-    horiz_pixelsMS = angMS/CameraParameters.hFov * CameraParameters.hPix * one_zero
+    horiz_pixelsEM = angEM/cameraParameters.hFov * cameraParameters.hPix * one_zero
+    horiz_pixelsES = angES/cameraParameters.hFov * cameraParameters.hPix * one_zero
+    horiz_pixelsMS = angMS/cameraParameters.hFov * cameraParameters.hPix * one_zero
     # Additional Vertical Pixels Due to Camera Position offset
-    vert_pixels12 = CameraParameters.dcam12/CameraParameters.vFov * CameraParameters.vPix
-    vert_pixels13 = CameraParameters.dcam13/CameraParameters.vFov * CameraParameters.vPix
-    vert_pixels23 = CameraParameters.dcam23/CameraParameters.vFov * CameraParameters.vPix
+    vert_pixels12 = cameraParameters.dcam12/cameraParameters.vFov * cameraParameters.vPix
+    vert_pixels13 = cameraParameters.dcam13/cameraParameters.vFov * cameraParameters.vPix
+    vert_pixels23 = cameraParameters.dcam23/cameraParameters.vFov * cameraParameters.vPix
     vertPix = np.array([[0,            vert_pixels12,    vert_pixels13],
                         [vert_pixels12,        0,            vert_pixels23],
                         [vert_pixels13,    vert_pixels23,          0]])
@@ -67,11 +67,13 @@ def computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt
 
     return np.array([z1, z2, z3, z4, z5, z6])
 
-def cameraMeasurements(omega, dt):
+def cameraMeasurements(omega, dt, dir, cameraParameters):
     """
     Generates measurement vector from images
     [omega]: 3 x 1 angular velocity vector (rad/s)
     [dt]: time difference between consecutive photos (s)
+    [dir]: Directory of acquired images. Should have subfolders Camera1/, Camera2/, Camera3/
+    [cameraParameters]: camera settings used to take the photos
     Returns:
     [h] 6 x 1 matrix of measured values [z1 ... z6]
         z1,z2,z3 = angular distance between EM, ES, and MS (pixels)
@@ -85,19 +87,22 @@ def cameraMeasurements(omega, dt):
     moonProperties = {'center': [], 'radius': [], 'index': [], 'flag': None}
 
     cameraLocations = []
-    cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera1')
-    cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera2')
-    cameraLocations.append(ACQUIRED_IMGS_DIR + '\\Camera3')
+    cameraLocations.append(os.path.join(dir,'Camera1'))
+    cameraLocations.append(os.path.join(dir,'Camera2'))
+    cameraLocations.append(os.path.join(dir,'Camera3'))
     
     # TODO: Verify that detected radii are consistent across all images
     for cam, camLoc in enumerate(cameraLocations):
-        files = glob.glob(camLoc + "\\*.jpg")
+        types = (os.path.join(camLoc, '*.jpg'), os.path.join(camLoc,'*.png'), os.path.join(camLoc, '*.jpeg'))
+        files = []
+        for extension in types:
+            files.extend(glob.glob(extension))
         if len(files) == 0:
             if not os.path.isdir(camLoc):  
-                raise Exception('\"{}\" is not a valid camera acquisition directory'.format(camLoc))
+                raise InvalidBodyNameForLoadProperties(camLoc)
             else:
                 # TODO: When one camera doesn't output images
-                raise Exception('No images found in camera acquisition directory \"{}\"'.format(camLoc))
+                raise NoImagesInCameraAcquisitionDirectory(camLoc)
         for i, file in enumerate(files):
             true_img = cv2.imread(file)
             try:
@@ -110,8 +115,8 @@ def cameraMeasurements(omega, dt):
                 # Find Sun
                 if len(sunProperties['index']) == 0:
                     loadProperties(copy.copy(true_img), 'sun', cam, i, sunProperties)
-            except Exception as e:
-                print("[Opnav acquisition]: Error while trying to detecting bodies for measurements: {}".format(e))
+            except InvalidBodyNameForLoadProperties as e:
+                raise e
     
     print(earthProperties, moonProperties, sunProperties)
     # TODO: A body was not found
@@ -125,10 +130,5 @@ def cameraMeasurements(omega, dt):
     if atleastOneBodyNotFound:
         return None
 
-    return computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt)
+    return computeMeasurement(earthProperties, moonProperties, sunProperties, omega, dt, cameraParameters)
 
-def main():
-    print(cameraMeasurements(np.array([0, 0, 6]), 60))
-
-if __name__ == "__main__":
-    main()

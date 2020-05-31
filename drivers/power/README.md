@@ -10,7 +10,7 @@ The Python libraries required for these drivers to run on the pi are:
 Additionally, a pigpio daemon (`pigpiod`) must be running and active on the pi before running any functions (Talk to Dr. Muhlberger about setting this up).
 The status of `pigpiod` can be found by running `systemctl status pigpiod` 
 
-##Functions
+## Functions
 
 The drivers defined in `power_controller.py` and `power_structs.py`  and their statuses are shown here:
 
@@ -44,7 +44,7 @@ The drivers defined in `power_controller.py` and `power_structs.py`  and their s
 | `config2_get`       | x      | Working                                              | SP20      | Returns the current config2                                           |
 | `config2_set`       |        | Unknown                                              |           | Sends a config2 to the P31u, need to send `config2_cmd(2)` to save it |
 
- ###High-level functions
+ ### High-level functions
  Since the functions above aren't the most user-friendly, they have been packaged into easy-to-use commands which are listed below:
  
  | Function          | Tested | Status                                                          | Test Date | Short Description                                                                          |
@@ -63,7 +63,7 @@ The drivers defined in `power_controller.py` and `power_structs.py`  and their s
  
  
  
- ##Example
+ ## Example
  Here are the software steps to running commands on the P31u:
  
  - Import `power_controller` 

@@ -268,7 +268,10 @@ class Power():
                 self.write(CMD_SET_HEATER, [command, heater, mode])
                 return self.read(2)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Updated comments
     # Not tested
     def get_heater(self):
         self.write(CMD_SET_HEATER, [])

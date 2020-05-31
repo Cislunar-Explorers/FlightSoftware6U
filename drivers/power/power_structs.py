@@ -4,8 +4,9 @@
 #       functions, and print functions
 #
 # Author: Daniel Kim (dsk252)
-# 
-# Date: 10/3/16
+# Debugged by: Tobias Fischer (tmf97) and Stephen Zakoworotny (sjz38) in Spring 2020
+#
+# Date: 5/31/2020
 #
 # Status: Completed
 #

@@ -5,11 +5,11 @@
 # Author: Daniel Kim (dsk252)
 # Revisited by: Tobias Fischer (tmf97) and Stephen Zakoworotny (sjz38) in Spring 2020
 #
-# Date: 10/3/16
+# Date: 5/31/2020
 #
 # Status: Main functionality completed
-#         Higher level functions need to 
-#         be implemented (if necessary)
+#         Higher level functions completed 
+#         Some testing necessary
 
 from pigpio import *
 from power_structs import *
@@ -193,6 +193,7 @@ class Power(object):
     # Takes effect when MODE = 2, See SET_PV_AUTO.
     # volt1~volt3 [2 bytes] -> value in mV
     # raises: AssertionError if voltages are over the max pv voltage
+    # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
         assert volt1 <= MAX_PV_VOLTAGE and volt2 <= MAX_PV_VOLTAGE and volt3 <= MAX_PV_VOLTAGE
         v = bytearray(6)
@@ -207,6 +208,7 @@ class Power(object):
     # MODE = 1: Maximum power point tracking
     # MODE = 2: Fixed software powerpoint, value set with SET_PV_VOLT, default 4V
     # raises: AssertionError if mode is not 0, 1, or 2
+    # Not tested
     def set_pv_auto(self, mode):
         assert mode in [0, 1, 2]
         self.write(CMD_SET_PV_AUTO, [mode])
@@ -217,20 +219,24 @@ class Power(object):
     # mode      [1 byte]  -> 0 = OFF, 1 = ON
     # return    [2 bytes] -> heater modes
     # raises: AssertionError if variables are not in correct range
+    # Not tested
     def set_heater(self, command, heater, mode):
         assert command == 0 and heater in [0, 1, 2] and mode in [0, 1]
         self.write(CMD_SET_HEATER, [command, heater, mode])
         return self.read(2)
 
+    # Not tested
     def get_heater(self):
         self.write(CMD_SET_HEATER, [])
         return self.read(2)
 
     # resets the boot counter and WDT counters.
+    # Not tested
     def reset_counters(self):
         self.write(CMD_RESET_COUNTERS, [0x42])
 
     # resets (kicks) dedicated WDT.
+    # Not tested
     def reset_wdt(self):
         self.write(CMD_RESET_WDT, [0x78])
 
@@ -255,6 +261,7 @@ class Power(object):
 
     # Send this command to perform a hard reset of the P31u,
     # including cycling permanent 5V and 3.3V and battery outputs.
+    # Not tested- issue running through HITL server
     def hard_reset(self, are_you_sure):
         assert are_you_sure == True
         self.write(CMD_HARD_RESET, [])

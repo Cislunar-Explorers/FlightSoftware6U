@@ -1,3 +1,4 @@
+# Unsuccessful attempt at changing boot config
 from power_controller import *
 
 HITL_test = Power()

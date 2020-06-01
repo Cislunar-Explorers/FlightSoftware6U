@@ -37,12 +37,18 @@ class Gomspace:
         assert option_index in range(0, 6), "Something went wrong!"
 
         # there's probably a better way to do this:
-        if option_index == 0: return self.gom.get_hk_1()
-        if option_index == 1: return self.gom.get_hk_2()
-        if option_index == 2: return self.gom.get_hk_2_vi()
-        if option_index == 3: return self.gom.get_hk_out()
-        if option_index == 4: return self.gom.get_hk_wdt()
-        if option_index == 5: return self.gom.get_hk_2_basic()
+        if option_index == 0:
+            return self.gom.get_hk_1()
+        elif option_index == 1:
+            return self.gom.get_hk_2()
+        elif option_index == 2: 
+            return self.gom.get_hk_2_vi()
+        elif option_index == 3:
+            return self.gom.get_hk_out()
+        elif option_index == 4:
+            return self.gom.get_hk_wdt()
+        elif option_index == 5:
+            return self.gom.get_hk_2_basic()
 
     def set_output(self, channel, value, delay=0):
         """Sets a single controllable output either on or off.

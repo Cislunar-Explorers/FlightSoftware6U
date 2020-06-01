@@ -75,7 +75,7 @@ class Gomspace:
             return self.gom.get_hk_1()
         elif option_index == 1:
             return self.gom.get_hk_2()
-        elif option_index == 2: 
+        elif option_index == 2:
             return self.gom.get_hk_2_vi()
         elif option_index == 3:
             return self.gom.get_hk_out()

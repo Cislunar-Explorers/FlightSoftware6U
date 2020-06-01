@@ -13,11 +13,13 @@ if __name__ == '__main__':
     struct.reserved2 = (1, 2, 3, 4); 	print("res2:     "+"("+str(struct.reserved2[0])+", "+str(struct.reserved2[1])+", "+str(struct.reserved2[2])+", "+str(struct.reserved2[3])+")")
     byte = c_structToByteArray(struct); print("struct in bytes:    ")
     acc = []
-    for n in byte: acc += [n]
+    for n in byte:
+        acc += [n]
     print(acc)
     array = c_byteArrayToBytes(byte);	print("byte array:")
     acc = []
-    for n in array: acc += [n]
+    for n in array:
+        acc += [n]
     print(acc)
 
     print("\n--> receiving struct")
@@ -71,7 +73,8 @@ if __name__ == '__main__':
     print("bytes:     "+str(acc2))
     array = c_bytesToByteArray(bytes)
     acc = []
-    for n in range(len(array)): acc += [array[n]]
+    for n in range(len(array)):
+        acc += [array[n]]
     print("bytearray: "+str(acc))
     print("----end----\n")
 
@@ -94,7 +97,8 @@ if __name__ == '__main__':
     struct.reserved2 = (255, 2, 3, 4); 	print("res2:     "+"("+str(struct.reserved2[0])+", "+str(struct.reserved2[1])+", "+str(struct.reserved2[2])+", "+str(struct.reserved2[3])+")")
     array = c_structToByteArray(struct)
     acc = []
-    for n in range(len(array)): acc += [array[n]]
+    for n in range(len(array)):
+        acc += [array[n]]
     print("bytearray: "+str(acc))
     print("----end----\n")
 
@@ -102,7 +106,8 @@ if __name__ == '__main__':
     print("bytearray: "+str(acc))
     bytes = c_byteArrayToBytes(acc)
     acc2 = []
-    for n in bytes: acc2 += [n]
+    for n in bytes:
+        acc2 += [n]
     print("bytes:     "+str(acc2))
     print("----end----\n")
 
@@ -110,7 +115,8 @@ if __name__ == '__main__':
     print("bytes:     "+str(acc2))
     array = c_bytesToByteArray(bytes)
     acc = []
-    for n in range(len(array)): acc += [array[n]]
+    for n in range(len(array)):
+        acc += [array[n]]
     print("bytearray: "+str(acc))
     print("----end----\n")
 

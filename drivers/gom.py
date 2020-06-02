@@ -81,7 +81,7 @@ class Gomspace:
         """Turns on both burnwires for [duration] seconds after [delay] seconds. Does a display_all half way through"""
         self.gom.burnwire(duration, delay)
 
-    #TODO
+    # TODO
     def get_health_data(self):
         return {}
 

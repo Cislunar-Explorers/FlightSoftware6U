@@ -9,6 +9,7 @@ import pandas as pd
 import itertools 
 from tqdm import tqdm
 from random import randint, random, uniform
+import time
 
 """
 This file contains code for testing the detector module by
@@ -251,7 +252,10 @@ class ImageConfiguration:
     def applyTransformations(self, circle, body, ab, rotation, blur):
         dim = (circle[2]*2, circle[2]*2)
         resized = cv2.resize(body, dim, interpolation = cv2.INTER_AREA)
-        resized = np.clip(resized*ab[0] + ab[1], a_min = 0, a_max = 255)
+        # Described in Section 3.1.2 of the book Computer Vision: Algorithms and Applications by Richard Szeliski
+        ratios = resized / 255
+        ratios *= ab[1]
+        resized = np.clip(resized*ab[0] + ratios, a_min = 0, a_max = 255)
         rotated = rotate(resized, rotation)
         if blur is not None:
             gausBlur = cv2.GaussianBlur(rotated, (blur,blur),0)   
@@ -337,9 +341,9 @@ class ImageConfiguration:
 
 def singular(objects, df, bodyType, radiuses):
     for name in objects:
-        config = ImageConfiguration()
+        print(name)
 
-        h,w = 700,700
+        h,w = 1640,1232
 
         row = df.loc[df['Name'] == name]
 
@@ -348,17 +352,20 @@ def singular(objects, df, bodyType, radiuses):
         for radius in tqdm(radiuses):
             xs = np.arange(radius,min(h,w)-radius*2, 400)
             ys = np.arange(radius,min(h,w)-radius*2, 400)
-            noiseIntensities = np.arange(0, 1, 0.34)
+            #noiseIntensities = np.arange(0, 1, 0.34)
+            noiseIntensities = np.arange(0.5, 1, 0.24)
             countIntensities = np.arange(0, 0.5, 0.4)
+            # noiseIntensities = np.array([0])
+            countIntensities = np.array([0])
             rotations = np.array([0])
             contrasts = np.array([1])
             brightnesses = np.array([0])
-            blurs = np.array([3])
+            blurs = np.array([1])
             if bodyType is not 'Sun':
-                rotations = np.arange(0, 91, 90)
+                # rotations = np.arange(0, 91, 90)
                 contrasts = np.arange(0.7, 1, 0.1)
-                brightnesses = np.arange(-30, 10, 20)
-                blurs = np.arange(1, round_up_to_odd(int(radius/5)), 4)
+                brightnesses = np.arange(-30, 31, 20)
+                # blurs = np.arange(1, round_up_to_odd(int(radius/5)), 4)
             configurations.extend([[radius, i, j, k, l, m, n, o, p] 
                             for i in tqdm(list(xs))  
                             for j in list(ys) 
@@ -370,9 +377,11 @@ def singular(objects, df, bodyType, radiuses):
                             for p in list(brightnesses)])
         
         print(len(configurations))
-
+        # configurations = [[5,5, 5,0,1, 0.7, 0.68, 0, 10]]
         for conf in configurations:
+            config = ImageConfiguration()
             radius, x, y, rotation, blur, contrast, noiseIntensity, countIntensity, brightness = conf[0], conf[1], conf[2], conf[3], conf[4], conf[5], conf[6], conf[7], conf[8]
+            print(f'Radius: {radius}/x,y: {x,y}/rot: {rotation}/blur: {blur}/contrast: {contrast}/noise: {noiseIntensity}/star count: {countIntensity}/brightness: {brightness}')
             # x = np.clip(x + randint(-100,100), a_min = 0, a_max = h-radius)
             # y = np.clip(y + randint(-100,100), a_min = 0, a_max = w-radius)
             pos = [x,y]
@@ -386,29 +395,46 @@ def singular(objects, df, bodyType, radiuses):
             canvas = np.zeros((h, w, 3), np.uint8)
 
             img, xCoord, yCoord, radPixels = config.draw(canvas, _left = 0, _right = h, _top = 0, _bottom = w, noiseIntensity=noiseIntensity, countIntensity=countIntensity, applyBlurs=False, drawCircles=False)
-            sunCircle, earthCircle, moonCircle = find(img, visualize=True)
-            print(sunCircle, earthCircle, moonCircle)
-            
-            
+            startTime = time.time()
+            sunCircle, earthCircle, moonCircle, imgCircles = find(img, visualize=True)      
+            print(f'{sunCircle}, {earthCircle}, {moonCircle}')      
+            print(f'Elapsed time: {time.time()-startTime} seconds.')
+            # cv2.imshow('Result', imgCircles)
+            # cv2.waitKey(0)
             cv2.destroyAllWindows()
             
+            incorrect = False
             if bodyType == 'Earth' and earthCircle is None:
-                print("Incorrect")
-                continue
+                incorrect = True
             if bodyType == 'Moon' and moonCircle is None:
-                print("Incorrect")
-                continue
+                incorrect = True
             if bodyType == 'Sun' and sunCircle is None:
-                print("Incorrect")
-                continue
+                incorrect = True
+            # if incorrect:
+            #     cv2.imshow('Incorrect detection', imgCircles)
+            #     cv2.waitKey(0)
 
-            if bodyType == 'Earth':
-                print(earthCircle, [xCoord, yCoord, radPixels])
-                calculateErrors(earthCircle, [xCoord, yCoord, radPixels])
-            if bodyType == 'Moon':
-                calculateErrors(moonCircle, [xCoord, yCoord, radPixels])
-            if bodyType == 'Sun':
-                calculateErrors(sunCircle, [xCoord, yCoord, radPixels])
+            if bodyType == 'Earth' and not incorrect:
+                print(earthCircle, [yCoord, xCoord, radPixels])
+                centerDistance, radiusDistance = calculateErrors(earthCircle, [yCoord, xCoord, radPixels])
+            if bodyType == 'Moon' and not incorrect:
+                print(moonCircle, [yCoord, xCoord, radPixels])
+                centerDistance, radiusDistance = calculateErrors(moonCircle, [yCoord, xCoord, radPixels])
+            if bodyType == 'Sun' and not incorrect:
+                print(sunCircle, [yCoord, xCoord, radPixels])
+                centerDistance, radiusDistance = calculateErrors(sunCircle, [yCoord, xCoord, radPixels])
+            
+            if not incorrect:
+                print(f'center error: {centerDistance}, radius error: {radiusDistance}')
+            if incorrect or centerDistance > 20:
+                if incorrect:
+                    print("Incorrect")
+                    filename = f'Incorrect_{radius}_{x}_{y}_{rotation}_{blur}_{contrast}_{noiseIntensity}_{countIntensity}_{brightness}_{os.path.basename(name)}'
+                elif centerDistance > 20:
+                    print(f'Too off center: {centerDistance}')
+                    filename = f'{round(centerDistance),2}_{round(radiusDistance,2)}_{radius}_{x}_{y}_{rotation}_{blur}_{contrast}_{noiseIntensity}_{countIntensity}_{brightness}_{os.path.basename(name)}'
+                cv2.imwrite(os.path.join('C:\\github\\FlightSoftware\\OpticalNavigation\\experiments', filename),img)
+                print("Saved image")
 
 def generateImages():
     """
@@ -437,6 +463,7 @@ def generateImages():
 
     for index, row in df.iterrows():
         name = str(row['Name'])
+        print(name)
         x = int(row['X'])
         y = int(row['Y'])
         s = int(row['S'])
@@ -463,9 +490,9 @@ def generateImages():
     earths = templates['Earth-Crescent'] + templates['Earth-Half'] + templates['Earth-Ellipse'] + templates['Earth-Full']
     moons = templates['Moon-Crescent'] + templates['Moon-Half'] + templates['Moon-Ellipse'] + templates['Moon-Full']
     suns = templates['Sun']
-    singular(earths, df, bodyType='Earth', radiuses=[20,40,60,80])
+    #singular(suns[::-1], df, bodyType='Sun', radiuses=[50, 100])
     singular(moons, df, bodyType='Moon', radiuses=[5, 25, 100, 200])
-    singular(suns[::-1], df, bodyType='Sun', radiuses=[50, 100][::-1])
+    # singular(earths, df, bodyType='Earth', radiuses=[10,20,40,60,80])
     
 
 if __name__ == "__main__":

@@ -115,10 +115,16 @@ class Gomspace:
         """Turns on both burnwires for [duration] seconds after [delay] seconds. Does a display_all half way through"""
         self.gom.burnwire(duration, delay)
 
+<<<<<<< HEAD
     def set_electrolysis(self, status: bool, delay=0):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
         self.electrolysis = status
         self.gom.electrolyzer(status, delay)
+=======
+    #TODO
+    def get_health_data(self):
+        return {}
+>>>>>>> Add TODO for get_health_data
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""

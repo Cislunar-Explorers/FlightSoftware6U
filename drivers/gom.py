@@ -32,7 +32,6 @@ class Gomspace:
 
         if level == Hk.DEFAULT.value:
             return self.gom.get_hk_1()
-<<<<<<< HEAD
         elif level == Hk.EPS.value:
             return self.gom.get_hk_2()
         elif level == Hk.VI.value:
@@ -54,40 +53,6 @@ class Gomspace:
         """Sets a single controllable output either on or off.
             channel must be a string that corresponds to one of
             the outputs (see power_controller.py)
-=======
-
-        assert type(level) is str or type(level) is int
-        option_index = 0
-
-        if type(level) == str:
-            options = ["default", "eps", "vi", "out", "wdt", "basic"]
-            assert level.lower() in options
-            option_index = options.index(level.lower())
-
-        if type(level) == int:
-            assert level in range(0, 6)
-            option_index = level
-
-        assert option_index in range(0, 6), "Something went wrong!"
-
-        # there's probably a better way to do this:
-        if option_index == 0:
-            return self.gom.get_hk_1()
-        elif option_index == 1:
-            return self.gom.get_hk_2()
-        elif option_index == 2:
-            return self.gom.get_hk_2_vi()
-        elif option_index == 3:
-            return self.gom.get_hk_out()
-        elif option_index == 4:
-            return self.gom.get_hk_wdt()
-        elif option_index == 5:
-            return self.gom.get_hk_2_basic()
-
-    def set_output(self, channel, value, delay=0):
-        """Sets a single controllable output either on or off.
-            channel must be between 1 and 6
->>>>>>> Final edits and documentation
             value must be either 1 (on) or 0 (off)"""
         self.gom.set_single_output(channel, value, delay)
 
@@ -115,16 +80,10 @@ class Gomspace:
         """Turns on both burnwires for [duration] seconds after [delay] seconds. Does a display_all half way through"""
         self.gom.burnwire(duration, delay)
 
-<<<<<<< HEAD
     def set_electrolysis(self, status: bool, delay=0):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
         self.electrolysis = status
         self.gom.electrolyzer(status, delay)
-=======
-    #TODO
-    def get_health_data(self):
-        return {}
->>>>>>> Add TODO for get_health_data
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""

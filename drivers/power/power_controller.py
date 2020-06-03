@@ -88,7 +88,7 @@ OUT_PI_COMMS            = 11    # GPIO 17
 OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
 
 _ = ps._
-class Power(object):
+class Power():
     # initializes power object with bus [bus] and device address [addr]
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
         self._pi = pi()                                     # initialize pigpio object

@@ -1,5 +1,15 @@
 import power_controller as pc
+from enum import Enum
 
+class Hk(Enum):
+    DEFAULT = "defualt"
+    EPS = "eps"
+    VI = "vi"
+    OUT = "out"
+    WDT = "wdt"
+    BASIC = "basic"
+    CONFIG = "config"
+    CONFIG2 = "config2"
 
 class Gomspace:
     def __init__(self):
@@ -9,7 +19,7 @@ class Gomspace:
         """Resets dedicated WDT"""
         return self.gom.reset_wdt()
 
-    def get_health_data(self, level=None):
+    def get_health_data(self, level=Hk.DEFAULT):
         """Returns a struct containing housekeeping data.
             The level parameter specifies which command gets sent to the P31u and what data you get back.
             level must be either one of the following: \n
@@ -19,36 +29,24 @@ class Gomspace:
             Every option returns a different struct, the documentation for which can be found in power_structs.py or in
             the GomSpace P31u manual"""
 
-        if level is None:
+        if level == Hk.DEFAULT:
             return self.gom.get_hk_1()
-
-        assert type(level) is str or type(level) is int
-        option_index = 0
-
-        if type(level) == str:
-            options = ["default", "eps", "vi", "out", "wdt", "basic"]
-            assert level.lower() in options
-            option_index = options.index(level.lower())
-
-        if type(level) == int:
-            assert level in range(0, 6)
-            option_index = level
-
-        assert option_index in range(0, 6), "Something went wrong!"
-
-        # there's probably a better way to do this:
-        if option_index == 0:
-            return self.gom.get_hk_1()
-        elif option_index == 1:
+        elif level == Hk.EPS:
             return self.gom.get_hk_2()
-        elif option_index == 2:
+        elif level == Hk.VI:
             return self.gom.get_hk_2_vi()
-        elif option_index == 3:
+        elif level == Hk.OUT:
             return self.gom.get_hk_out()
-        elif option_index == 4:
+        elif level == Hk.WDT:
             return self.gom.get_hk_wdt()
-        elif option_index == 5:
+        elif level == Hk.BASIC:
             return self.gom.get_hk_2_basic()
+        elif level == Hk.CONFIG:
+            return self.gom.config_get()
+        elif level == Hk.CONFIG2:
+            return self.gom.config2_get()
+        else:
+            raise ValueError("Invalid Input!")
 
     def set_output(self, channel, value, delay=0):
         """Sets a single controllable output either on or off.

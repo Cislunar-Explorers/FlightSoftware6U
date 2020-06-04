@@ -118,11 +118,14 @@ class Power():
     # reads [bytes] number of bytes from the device and returns a bytearray
     # TODO: This function does not currently return the error code of the i2c stream. Is this something that we want?
     def read(self, bytes):
-        # first two read bytes -> [command][error code][data]
-        (x, r) = self._pi.i2c_read_device(self._dev, bytes+2) 
-        if r[1] != 0:
-            print("Command %i failed with error code %i" % (r[0], r[1]))
-        return r[2:]
+        try:
+            # first two read bytes -> [command][error code][data]
+            (x, r) = self._pi.i2c_read_device(self._dev, bytes+2)
+            assert r[1] == 0
+        except AssertionError:
+                print("Command %i failed with error code %i" % (r[0], r[1]))
+        else:
+            return r[2:]
 
     # Not sure what value is in the below function, need to get cleared up
     # pings value

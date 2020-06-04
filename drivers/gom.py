@@ -1,8 +1,4 @@
-<<<<<<< 18bcb92e06a991002d0606ce7c136baa43b002e7
 from power_controller import *
-=======
-import power_controller as pc
->>>>>>> Created enum for different hk types
 from enum import Enum
 
 class Hk(Enum):
@@ -24,11 +20,7 @@ class Gomspace:
         """Resets dedicated WDT"""
         return self.gom.reset_wdt()
 
-<<<<<<< 18bcb92e06a991002d0606ce7c136baa43b002e7
     def get_health_data(self, level=Hk.DEFAULT.value):
-=======
-    def get_health_data(self, level=Hk.DEFAULT):
->>>>>>> Created enum for different hk types
         """Returns a struct containing housekeeping data.
             The level parameter specifies which command gets sent to the P31u and what data you get back.
             level must be either one of the following: \n
@@ -38,7 +30,6 @@ class Gomspace:
             Every option returns a different struct, the documentation for which can be found in power_structs.py or in
             the GomSpace P31u manual"""
 
-<<<<<<< 18bcb92e06a991002d0606ce7c136baa43b002e7
         if level == Hk.DEFAULT.value:
             return self.gom.get_hk_1()
         elif level == Hk.EPS.value:
@@ -54,23 +45,6 @@ class Gomspace:
         elif level == Hk.CONFIG.value:
             return self.gom.config_get()
         elif level == Hk.CONFIG2.value:
-=======
-        if level == Hk.DEFAULT:
-            return self.gom.get_hk_1()
-        elif level == Hk.EPS:
-            return self.gom.get_hk_2()
-        elif level == Hk.VI:
-            return self.gom.get_hk_2_vi()
-        elif level == Hk.OUT:
-            return self.gom.get_hk_out()
-        elif level == Hk.WDT:
-            return self.gom.get_hk_wdt()
-        elif level == Hk.BASIC:
-            return self.gom.get_hk_2_basic()
-        elif level == Hk.CONFIG:
-            return self.gom.config_get()
-        elif level == Hk.CONFIG2:
->>>>>>> Created enum for different hk types
             return self.gom.config2_get()
         else:
             raise ValueError("Invalid Input!")

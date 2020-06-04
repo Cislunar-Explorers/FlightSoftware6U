@@ -8,10 +8,19 @@ HITL_test = Power()
 print("Turning off all outputs")
 OUTPUTS = ["comms", "burnwire_1", "burnwire_2", "glowplug", "solenoid", "electrolyzer"]
 for i in range(0, 6):
-    HITL_test.set_single_output(OUTPUTS[i], 0,0)
+    HITL_test.set_single_output(OUTPUTS[i], 0, 0)
 
 print(" --- TESTING  displayAll --- \n")
 HITL_test.displayAll()
+
+WDT_pre_data = HITL_test.get_hk_wdt()
+print("\nPre-Test WDT data:")
+print("I2C Time left: " + str(WDT_pre_data.wdt_i2c_time_left))
+print("GND Time left: " + str(WDT_pre_data.wdt_gnd_time_left))
+print("CSP Pings left: " + str(WDT_pre_data.wdt_csp_pings_left))
+print("I2C Reboots: " + str(WDT_pre_data.counter_wdt_i2c))
+print("GND Reboots: " + str(WDT_pre_data.counter_wdt_gnd))
+print("CPS Reboots: " + str(WDT_pre_data.counter_wdt_csp))
 
 print("\nBeginning output testing in 5 seconds\n")
 time.sleep(5)
@@ -20,7 +29,7 @@ time.sleep(5)
 print("\n --- TESTING OUPUTS --- \n")
 out_num = 0
 for i in Outputs:
-    current_output = Outputs.name
+    current_output = Outputs(i).name
     print(" ### TESTING OUT_" + str(out_num) + " ###\n")
     HITL_test.set_single_output(current_output, 1, 0)  # Turns on channel
     time.sleep(1)  # wait one second
@@ -50,7 +59,7 @@ time.sleep(1)
 
 print("Testing Solenoid")
 print("You should see HITL output 12 light up")
-HITL_test.solenoid(10,990)
+HITL_test.solenoid(10, 990)
 time.sleep(1)
 
 print("Testing Electrolyzer")
@@ -66,7 +75,7 @@ time.sleep(1)
 
 # get wdt data
 WDT_data = HITL_test.get_hk_wdt()
-print("Initial WDT data:")
+print("Initial post-Test WDT data:")
 print("I2C Time left: " + str(WDT_data.wdt_i2c_time_left))
 print("GND Time left: " + str(WDT_data.wdt_gnd_time_left))
 print("CSP Pings left: " + str(WDT_data.wdt_csp_pings_left))

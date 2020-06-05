@@ -21,6 +21,8 @@ INSTALL_REQUIRES = [
 PI_INSTALL_REQUIRES = [
     "ADS1115",
     "picamera",
+    "pigpio",
+    "RPi.GPIO",
 ]
 
 DEV_REQUIRES = [

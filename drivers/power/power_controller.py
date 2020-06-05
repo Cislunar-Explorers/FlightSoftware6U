@@ -16,6 +16,7 @@ from power_structs import *
 import power_structs as ps
 import RPi.GPIO as GPIO
 import time
+from enum import Enum
 
 # power device address
 POWER_ADDRESS           = 0x02
@@ -72,6 +73,17 @@ OUT_BURNWIRE_2      = OUT_3
 OUT_GLOWPLUG        = OUT_4
 OUT_SOLENOID        = OUT_5
 OUT_ELECTROLYZER    = OUT_6
+
+class Outputs(Enum):
+    comms        = OUT_1
+    burnwire_1   = OUT_2
+    burnwire_2   = OUT_3
+    glowplug     = OUT_4
+    solenoid     = OUT_5
+    electrolyzer = OUT_6
+    heater       = OUT_HEATER
+    switch       = OUT_SWITCH
+
 
 # Outputs on board:
 #
@@ -188,10 +200,13 @@ class Power():
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
-        assert 0 <= channel <= 7, "channel must be in range [0, 7]"
         assert value in [0, 1] and type(value) == int, "value must be 0 or 1"
+        channel_num = None
+        for i in Outputs:
+            if i.name == channel:
+                channel_num = i.value
         d = toBytes(delay, 2)
-        self.write(CMD_SET_SINGLE_OUTPUT, [channel, value]+list(d))
+        self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
 
     # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV. 
     # Takes effect when MODE = 2, See SET_PV_AUTO.
@@ -315,7 +330,7 @@ class Power():
     # delay of [delay] seconds.
     def electrolyzer(self, switch, delay=0):
         assert type(switch) == bool
-        self.set_single_output(OUT_ELECTROLYZER, int(switch), delay)
+        self.set_single_output("electrolyzer", int(switch), delay)
 
     # spikes the solenoid for some number of 
     # milliseconds [spike] and holds at 5v for [hold] 
@@ -324,33 +339,33 @@ class Power():
     def solenoid(self, spike, hold, delay=0):
         time.sleep(delay)
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) # Enable voltage boost for solenoid current spike
-        self.set_single_output(OUT_SOLENOID, 1, 0)
+        self.set_single_output("solenoid", 1, 0)
         time.sleep(.001*spike)
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW) # Disable voltage boost
         time.sleep(.001*hold)
         # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
-        self.set_single_output(OUT_SOLENOID, 0, 0)
+        self.set_single_output("solenoid", 0, 0)
 
     # pulses glowplug for some number of
     # milliseconds [duration] with delay of [delay] seconds.
     # output must be off before the function is called
     def glowplug(self, duration, delay=0):
         time.sleep(delay)
-        self.set_single_output(OUT_GLOWPLUG, 1, 0)
+        self.set_single_output("glowplug", 1, 0)
         time.sleep(.001*duration)
-        self.set_single_output(OUT_GLOWPLUG, 0, 0)
+        self.set_single_output("glowplug", 0, 0)
 
     # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.
     def burnwire(self, duration, delay=0):
         time.sleep(delay)
-        self.set_single_output(OUT_BURNWIRE_1, 1, 0)
-        self.set_single_output(OUT_BURNWIRE_2, 1, 0)
+        self.set_single_output("burnwire_1", 1, 0)
+        self.set_single_output("burnwire_2", 1, 0)
         time.sleep(duration/2)
         self.displayAll()
         time.sleep(duration/2)
-        self.set_single_output(OUT_BURNWIRE_1, 0, 0)
-        self.set_single_output(OUT_BURNWIRE_2, 0, 0)
+        self.set_single_output("burnwire_1", 0, 0)
+        self.set_single_output("burnwire_2", 0, 0)
 
     def comms(self, transmit):
         if transmit:
@@ -360,7 +375,7 @@ class Power():
 
     def comms_amplifier(self, on):
         assert type(on) == bool, "Input 'on' must be either True (on) or False (off)"
-        self.set_single_output(OUT_COMMS_AMP, int(on), 0)
+        self.set_single_output("comms", int(on), 0)
 
 
     def adjust_string(self, string, length):

@@ -19,7 +19,7 @@ class Gomspace:
         """Resets dedicated WDT"""
         return self.gom.reset_wdt()
 
-    def get_health_data(self, level=Hk.DEFAULT):
+    def get_health_data(self, level=Hk.DEFAULT.value):
         """Returns a struct containing housekeeping data.
             The level parameter specifies which command gets sent to the P31u and what data you get back.
             level must be either one of the following: \n
@@ -29,28 +29,29 @@ class Gomspace:
             Every option returns a different struct, the documentation for which can be found in power_structs.py or in
             the GomSpace P31u manual"""
 
-        if level == Hk.DEFAULT:
+        if level == Hk.DEFAULT.value:
             return self.gom.get_hk_1()
-        elif level == Hk.EPS:
+        elif level == Hk.EPS.value:
             return self.gom.get_hk_2()
-        elif level == Hk.VI:
+        elif level == Hk.VI.value:
             return self.gom.get_hk_2_vi()
-        elif level == Hk.OUT:
+        elif level == Hk.OUT.value:
             return self.gom.get_hk_out()
-        elif level == Hk.WDT:
+        elif level == Hk.WDT.value:
             return self.gom.get_hk_wdt()
-        elif level == Hk.BASIC:
+        elif level == Hk.BASIC.value:
             return self.gom.get_hk_2_basic()
-        elif level == Hk.CONFIG:
+        elif level == Hk.CONFIG.value:
             return self.gom.config_get()
-        elif level == Hk.CONFIG2:
+        elif level == Hk.CONFIG2.value:
             return self.gom.config2_get()
         else:
             raise ValueError("Invalid Input!")
 
     def set_output(self, channel, value, delay=0):
         """Sets a single controllable output either on or off.
-            channel must be between 1 and 6
+            channel must be a string that corresponds to one of
+            the outputs (see power_controller.py)
             value must be either 1 (on) or 0 (off)"""
         self.gom.set_single_output(channel, value, delay)
 

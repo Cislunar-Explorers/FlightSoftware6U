@@ -6,7 +6,7 @@ import time
 HITL_test = Power()
 
 print("Turning off all outputs")
-OUTPUTS = [OUT_1, OUT_2, OUT_3, OUT_4, OUT_5, OUT_6]
+OUTPUTS = ["comms", "burnwire_1", "burnwire_2", "glowplug", "solenoid", "electrolyzer"]
 for i in range(0, 6):
     HITL_test.set_single_output(OUTPUTS[i], 0,0)
 
@@ -18,16 +18,18 @@ time.sleep(5)
 
 # Turn every channel on then off sequentially using set_single_output
 print("\n --- TESTING OUPUTS --- \n")
-for i in range(0, 6):
-    current_output = OUTPUTS[i]
-    print(" ### TESTING OUT_" + str(i) + " ###\n")
+out_num = 0
+for i in Outputs:
+    current_output = Outputs.name
+    print(" ### TESTING OUT_" + str(out_num) + " ###\n")
     HITL_test.set_single_output(current_output, 1, 0)  # Turns on channel
     time.sleep(1)  # wait one second
     HK_data = HITL_test.get_hk_2()  # get the housekeeping data
     HITL_test.set_single_output(current_output, 0, 0)  # Turn off channel
-    print("OUT_" + str(i) + " System Current: " + str(HK_data.cursys))
-    print("OUT_" + str(i) + " Battery Voltage: " + str(HK_data.vbatt))
+    print("OUT_" + str(out_num) + " System Current: " + str(HK_data.cursys))
+    print("OUT_" + str(out_num) + " Battery Voltage: " + str(HK_data.vbatt))
     print("\n")
+    out_num = out_num + 1
     time.sleep(5)
 
 # Test the component-functions

@@ -340,7 +340,7 @@ class Power():
         time.sleep(.001*duration)
         self.set_single_output(OUT_GLOWPLUG, 0, 0)
 
-    # turns burnwire on for [duration] seconds, with a 
+    # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.
     def burnwire(self, duration, delay=0):
         time.sleep(delay)

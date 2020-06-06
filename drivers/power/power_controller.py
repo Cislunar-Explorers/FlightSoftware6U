@@ -99,6 +99,18 @@ class Outputs(Enum):
 OUT_PI_COMMS            = 11    # GPIO 17
 OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
 
+class PowerException(Exception):
+    def __init__(self, msg):
+        super().__init__(msg)
+
+class PowerInputError(PowerException):
+    def __init__(self, msg = "Invalid input!"):
+        super().__init__(msg)
+
+class PowerReadError(PowerException):
+    def __init__(selfself, msg = "Read Error! "):
+        super().__init__(msg)
+
 _ = ps._
 class Power():
     # initializes power object with bus [bus] and device address [addr]
@@ -133,11 +145,14 @@ class Power():
         try:
             # first two read bytes -> [command][error code][data]
             (x, r) = self._pi.i2c_read_device(self._dev, bytes+2)
-            assert r[1] == 0
-        except AssertionError:
-                print("Command %i failed with error code %i" % (r[0], r[1]))
-        else:
-            return r[2:]
+            if r[1] != 0:
+                raise PowerReadError
+            else:
+                return r[2:]
+        except PowerException:
+            print("Command %i failed with error code %i" % (r[0], r[1]))
+            return
+
 
     # Not sure what value is in the below function, need to get cleared up
     # pings value
@@ -200,49 +215,74 @@ class Power():
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
-        assert value in [0, 1] and type(value) == int, "value must be 0 or 1"
-        channel_num = None
-        for i in Outputs:
-            if i.name == channel:
-                channel_num = i.value
-        d = toBytes(delay, 2)
-        self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
+        try:
+            if value not in [0, 1]:
+                raise PowerInputError
+            else:
+                channel_num = None
+                for i in Outputs:
+                    if i.name == channel:
+                        channel_num = i.value
+                d = toBytes(delay, 2)
+                self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
+                return
+        except PowerException:
+            return
+
 
     # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV. 
     # Takes effect when MODE = 2, See SET_PV_AUTO.
     # volt1~volt3 [2 bytes] -> value in mV
-    # raises: AssertionError if voltages are over the max pv voltage
+    # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
-        assert volt1 <= MAX_PV_VOLTAGE and volt2 <= MAX_PV_VOLTAGE and volt3 <= MAX_PV_VOLTAGE
-        v = bytearray(6)
-        v[0:2] = toBytes(volt1, 2)
-        v[2:4] = toBytes(volt2, 2)
-        v[4:] = toBytes(volt3, 2)
-        self.write(CMD_SET_PV_VOLT, list(v))
+        try:
+            if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
+                raise PowerInputError
+            else:
+                v = bytearray(6)
+                v[0:2] = toBytes(volt1, 2)
+                v[2:4] = toBytes(volt2, 2)
+                v[4:] = toBytes(volt3, 2)
+                self.write(CMD_SET_PV_VOLT, list(v))
+                return
+        except PowerException:
+            return
 
     # Sets the solar cell power tracking mode:
     # mode [1 byte] ->
     # MODE = 0: Hardware default power point
     # MODE = 1: Maximum power point tracking
     # MODE = 2: Fixed software powerpoint, value set with SET_PV_VOLT, default 4V
-    # raises: AssertionError if mode is not 0, 1, or 2
+    # raises: PowerInputError if mode is not 0, 1, or 2
     # Not tested
     def set_pv_auto(self, mode):
-        assert mode in [0, 1, 2]
-        self.write(CMD_SET_PV_AUTO, [mode])
+        try:
+            if mode not in [0, 1, 2]:
+                raise PowerInputError
+            else:
+                self.write(CMD_SET_PV_AUTO, [mode])
+                return
+        except PowerException:
+            return
+
 
     # returns bytearray with heater modes
     # command   [1 byte]  -> 0 = Set heater on/off (toggle?)
     # heater    [1 byte]  -> 0 = BP4, 1 = Onboard, 2 = Both
     # mode      [1 byte]  -> 0 = OFF, 1 = ON
     # return    [2 bytes] -> heater modes
-    # raises: AssertionError if variables are not in correct range
+    # raises: PowerInputError if variables are not in correct range
     # Not tested
     def set_heater(self, command, heater, mode):
-        assert command == 0 and heater in [0, 1, 2] and mode in [0, 1]
-        self.write(CMD_SET_HEATER, [command, heater, mode])
-        return self.read(2)
+        try:
+            if command != 0 or heater not in [0, 1, 2] and mode not in [0, 1]:
+                raise PowerInputError
+            else:
+                self.write(CMD_SET_HEATER, [command, heater, mode])
+                return self.read(2)
+        except PowerException:
+            return
 
     # Not tested
     def get_heater(self):
@@ -261,10 +301,15 @@ class Power():
 
     # Use this command to control the config system.
     # cmd [1 byte] -> cmd = 1: Restore default config
-    # raises: AssertionError if command is not 1
+    # raises: PowerInputError if command is not 1
     def config_cmd(self, command):
-        assert command == 1
-        self.write(CMD_CONFIG_CMD, [command])
+        try:
+            if command != 1:
+                raise PowerInputError
+            else:
+                self.write(CMD_CONFIG_CMD, [command])
+        except PowerException:
+            return
 
     # returns eps_config_t structure
     def config_get(self):
@@ -272,9 +317,8 @@ class Power():
         return c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
 
     # takes eps_config_t struct and sets configuration
-    # raises: AssertionError if struct is not eps_config_t
+    # Input struct is of type eps_config_t
     def config_set(self, struct):
-        assert type(struct) == eps_config_t
         array = struct >>_>> c_structToBytes >>_>> bytesToList
         self.write(CMD_CONFIG_SET, array)
 
@@ -282,15 +326,22 @@ class Power():
     # including cycling permanent 5V and 3.3V and battery outputs.
     # Not tested- issue running through HITL server
     def hard_reset(self, are_you_sure=False):
-        assert are_you_sure is True
-        self.write(CMD_HARD_RESET, [])
+        if are_you_sure is True:
+            self.write(CMD_HARD_RESET, [])
+
 
     # Use this command to control the config 2 system.
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
-    # raises: AssertionError if command is not a valid value
+    # raises: PowerInputError if command is not a valid value
     def config2_cmd(self, command): 
-        assert command in [1, 2]
-        self.write(CMD_CONFIG2_CMD, [command]) 
+        try:
+            if command not in [1, 2]:
+                raise PowerInputError
+            else:
+                self.write(CMD_CONFIG2_CMD, [command])
+                return
+        except PowerException:
+            return
 
     # Use this command to request the P31 config 2.
     # returns esp_config2_t struct
@@ -300,9 +351,8 @@ class Power():
 
     # Use this command to send config 2 to the P31
     # and save it (remember to also confirm it)
-    # raises: AssertionError if struct is not eps_config2_t
+    # Input struct is of type eps_config2_t
     def config2_set(self, struct):
-        assert type(struct) == eps_config2_t
         array = struct >> _ >> c_structToBytes >> _ >> bytesToList
         self.write(CMD_CONFIG2_SET, array)
 
@@ -328,8 +378,8 @@ class Power():
 
     # switches on if [switch] is true, off otherwise, with a 
     # delay of [delay] seconds.
+    # Input switch is of type bool
     def electrolyzer(self, switch, delay=0):
-        assert type(switch) == bool
         self.set_single_output("electrolyzer", int(switch), delay)
 
     # spikes the solenoid for some number of 
@@ -338,10 +388,10 @@ class Power():
     # output must be off before the function is called
     def solenoid(self, spike, hold, delay=0):
         time.sleep(delay)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) # Enable voltage boost for solenoid current spike
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)  # Enable voltage boost for solenoid current spike
         self.set_single_output("solenoid", 1, 0)
         time.sleep(.001*spike)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW) # Disable voltage boost
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)  # Disable voltage boost
         time.sleep(.001*hold)
         # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
         self.set_single_output("solenoid", 0, 0)
@@ -373,8 +423,9 @@ class Power():
         else:
             GPIO.output(OUT_PI_COMMS, GPIO.LOW)
 
+    # Toggles comms amp on/off
+    # Input on is either True (on) or False (off)
     def comms_amplifier(self, on):
-        assert type(on) == bool, "Input 'on' must be either True (on) or False (off)"
         self.set_single_output("comms", int(on), 0)
 
 

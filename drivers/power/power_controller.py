@@ -108,7 +108,7 @@ class PowerInputError(PowerException):
         super().__init__(msg)
 
 class PowerReadError(PowerException):
-    def __init__(selfself, msg = "Read Error! "):
+    def __init__(self, msg = "Read Error! "):
         super().__init__(msg)
 
 _ = ps._

@@ -104,11 +104,11 @@ class PowerException(Exception):
         super().__init__(msg)
 
 class PowerInputError(PowerException):
-    def __init__(self, msg = "Invalid input!"):
+    def __init__(self, msg):
         super().__init__(msg)
 
 class PowerReadError(PowerException):
-    def __init__(self, msg = "Read Error! "):
+    def __init__(self, msg):
         super().__init__(msg)
 
 _ = ps._
@@ -142,16 +142,12 @@ class Power():
     # reads [bytes] number of bytes from the device and returns a bytearray
     # TODO: This function does not currently return the error code of the i2c stream. Is this something that we want?
     def read(self, bytes):
-        try:
-            # first two read bytes -> [command][error code][data]
-            (x, r) = self._pi.i2c_read_device(self._dev, bytes+2)
-            if r[1] != 0:
-                raise PowerReadError
-            else:
-                return r[2:]
-        except PowerException:
-            print("Command %i failed with error code %i" % (r[0], r[1]))
-            return
+        # first two read bytes -> [command][error code][data]
+        (x, r) = self._pi.i2c_read_device(self._dev, bytes+2)
+        if r[1] != 0:
+            raise PowerReadError("Read Error: Command %i failed with error code %i" % (r[0], r[1]))
+        else:
+            return r[2:]
 
 
     # Not sure what value is in the below function, need to get cleared up
@@ -215,19 +211,15 @@ class Power():
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
-        try:
-            if value not in [0, 1]:
-                raise PowerInputError
-            else:
-                channel_num = None
-                for i in Outputs:
-                    if i.name == channel:
-                        channel_num = i.value
-                d = toBytes(delay, 2)
-                self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
-                return
-        except PowerException:
-            return
+        if value not in [0, 1]:
+            raise PowerInputError("Invalid Input: value must be 0 or 1")
+        else:
+            channel_num = None
+            for i in Outputs:
+                if i.name == channel:
+                    channel_num = i.value
+            d = toBytes(delay, 2)
+            self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
 
 
     # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV. 
@@ -236,18 +228,14 @@ class Power():
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
-        try:
-            if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
-                raise PowerInputError
-            else:
-                v = bytearray(6)
-                v[0:2] = toBytes(volt1, 2)
-                v[2:4] = toBytes(volt2, 2)
-                v[4:] = toBytes(volt3, 2)
-                self.write(CMD_SET_PV_VOLT, list(v))
-                return
-        except PowerException:
-            return
+        if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
+            raise PowerInputError("Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE)
+        else:
+            v = bytearray(6)
+            v[0:2] = toBytes(volt1, 2)
+            v[2:4] = toBytes(volt2, 2)
+            v[4:] = toBytes(volt3, 2)
+            self.write(CMD_SET_PV_VOLT, list(v))
 
     # Sets the solar cell power tracking mode:
     # mode [1 byte] ->
@@ -257,14 +245,10 @@ class Power():
     # raises: PowerInputError if mode is not 0, 1, or 2
     # Not tested
     def set_pv_auto(self, mode):
-        try:
-            if mode not in [0, 1, 2]:
-                raise PowerInputError
-            else:
-                self.write(CMD_SET_PV_AUTO, [mode])
-                return
-        except PowerException:
-            return
+        if mode not in [0, 1, 2]:
+            raise PowerInputError("Invalid Input: mode must be 0, 1 or 2")
+        else:
+            self.write(CMD_SET_PV_AUTO, [mode])
 
 
     # returns bytearray with heater modes
@@ -275,14 +259,13 @@ class Power():
     # raises: PowerInputError if variables are not in correct range
     # Not tested
     def set_heater(self, command, heater, mode):
-        try:
             if command != 0 or heater not in [0, 1, 2] and mode not in [0, 1]:
-                raise PowerInputError
+                raise PowerInputError("""Invalid Input: command must be 0, 
+                heater must be 0, 1 or 2, and mode must be 0 or 1""")
             else:
                 self.write(CMD_SET_HEATER, [command, heater, mode])
                 return self.read(2)
-        except PowerException:
-            return
+
 
     # Not tested
     def get_heater(self):
@@ -303,13 +286,10 @@ class Power():
     # cmd [1 byte] -> cmd = 1: Restore default config
     # raises: PowerInputError if command is not 1
     def config_cmd(self, command):
-        try:
             if command != 1:
-                raise PowerInputError
+                raise PowerInputError("Invalid Input: command must be 1")
             else:
                 self.write(CMD_CONFIG_CMD, [command])
-        except PowerException:
-            return
 
     # returns eps_config_t structure
     def config_get(self):
@@ -333,15 +313,12 @@ class Power():
     # Use this command to control the config 2 system.
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
     # raises: PowerInputError if command is not a valid value
-    def config2_cmd(self, command): 
-        try:
-            if command not in [1, 2]:
-                raise PowerInputError
-            else:
-                self.write(CMD_CONFIG2_CMD, [command])
-                return
-        except PowerException:
-            return
+    def config2_cmd(self, command):
+        if command not in [1, 2]:
+            raise PowerInputError("Invalid Input: command must be 1 or 2")
+        else:
+            self.write(CMD_CONFIG2_CMD, [command])
+
 
     # Use this command to request the P31 config 2.
     # returns esp_config2_t struct

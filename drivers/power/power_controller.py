@@ -100,16 +100,13 @@ OUT_PI_COMMS            = 11    # GPIO 17
 OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
 
 class PowerException(Exception):
-    def __init__(self, msg):
-        super().__init__(msg)
+    pass
 
 class PowerInputError(PowerException):
-    def __init__(self, msg):
-        super().__init__(msg)
+    pass
 
 class PowerReadError(PowerException):
-    def __init__(self, msg):
-        super().__init__(msg)
+    pass
 
 _ = ps._
 class Power():

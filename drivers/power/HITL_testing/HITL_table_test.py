@@ -20,7 +20,7 @@ time.sleep(5)
 print("\n --- TESTING OUPUTS --- \n")
 out_num = 0
 for i in Outputs:
-    current_output = Outputs.name
+    current_output = Outputs(i).name
     print(" ### TESTING OUT_" + str(out_num) + " ###\n")
     HITL_test.set_single_output(current_output, 1, 0)  # Turns on channel
     time.sleep(1)  # wait one second

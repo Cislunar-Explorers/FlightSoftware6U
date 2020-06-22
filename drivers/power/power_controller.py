@@ -81,8 +81,8 @@ class Outputs(Enum):
     glowplug     = OUT_4
     solenoid     = OUT_5
     electrolyzer = OUT_6
-    heater       = OUT_HEATER
-    switch       = OUT_SWITCH
+#    heater       = OUT_HEATER
+#    switch       = OUT_SWITCH
 
 
 # Outputs on board:
@@ -213,8 +213,8 @@ class Power():
         else:
             channel_num = None
             for i in Outputs:
-                if i.name == channel:
-                    channel_num = i.value
+                if Outputs(i).name == channel:
+                    channel_num = Outputs(i).value
             d = toBytes(delay, 2)
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
 

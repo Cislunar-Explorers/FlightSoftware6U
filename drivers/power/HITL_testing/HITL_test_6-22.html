@@ -1,0 +1,147 @@
+<pre>/home/pi/FlightSoftware/drivers/power/power_controller.py:120: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
+/home/pi/FlightSoftware/drivers/power/power_controller.py:121: RuntimeWarning: This channel is already in use, continuing anyway.  Use GPIO.setwarnings(False) to disable warnings.
+  GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
+Turning off all outputs
+ --- TESTING  displayAll --- 
+
+<font color="#8AE234">***************-HOUSEKEEPING-***************</font>
+<font color="#555753">Photo-voltaic inputs:        </font>1-<font color="#EF2929">0mV</font> 2-<font color="#EF2929">0mV</font> 3-<font color="#EF2929">0mV</font>
+<font color="#555753">Total photo current:         </font><font color="#EF2929">13mA</font>
+<font color="#555753">Battery voltage:             </font><font color="#EF2929">7403mV</font>
+<font color="#555753">Total system current:        </font><font color="#EF2929">275mA</font>
+<font color="#555753">Temp of boost converters:    </font>1-<font color="#EF2929">31degC</font> 2-<font color="#EF2929">33degC</font> 3-<font color="#EF2929">31degC</font> batt-<font color="#EF2929">31degC</font>
+<font color="#555753">External batt temp:          </font>1-<font color="#EF2929">0degC</font> 2-<font color="#EF2929">0degC</font>
+<font color="#555753">Latchups:                    </font>1-[<font color="#EF2929">0</font>] 2-[<font color="#EF2929">0</font>] 3-[<font color="#EF2929">0</font>] 4-[<font color="#EF2929">0</font>] 5-[<font color="#EF2929">0</font>] 6-[<font color="#EF2929">0</font>]
+<font color="#555753">Cause of last reset:         </font><font color="#EF2929">I2C WDT reset</font>
+<font color="#555753">Number of reboots:           </font><font color="#EF2929">52736</font>
+<font color="#555753">Number of software errors:   </font><font color="#EF2929">2</font>
+<font color="#555753">PPT mode:                    </font><font color="#EF2929">0</font>
+<font color="#555753">Channel output:              </font>00000000
+<font color="#8AE234">***************-CONFIG-***************</font>
+<font color="#555753">PPT mode:                    </font><font color="#EF2929">FIXED[2]</font>
+<font color="#555753">Battheater mode:             </font><font color="#EF2929">MANUAL[0]</font>
+<font color="#555753">Battheater low:              </font><font color="#EF2929">0degC</font>
+<font color="#555753">Battheater high:             </font><font color="#EF2929">5degC</font>
+<font color="#555753">Nominal mode output value:   </font>1-[<font color="#EF2929">1</font>] 2-[<font color="#EF2929">1</font>] 3-[<font color="#EF2929">1</font>] 4-[<font color="#EF2929">1</font>] 5-[<font color="#EF2929">1</font>] 6-[<font color="#EF2929">1</font>] 7-[<font color="#EF2929">0</font>] 8-[<font color="#EF2929">0</font>]
+<font color="#555753">Safe mode output value:      </font>1-[<font color="#EF2929">1</font>] 2-[<font color="#EF2929">1</font>] 3-[<font color="#EF2929">1</font>] 4-[<font color="#EF2929">1</font>] 5-[<font color="#EF2929">1</font>] 6-[<font color="#EF2929">1</font>] 7-[<font color="#EF2929">0</font>] 8-[<font color="#EF2929">0</font>]
+<font color="#555753">Output initial on:           </font>1-[<font color="#EF2929">0s</font>] 2-[<font color="#EF2929">0s</font>] 3-[<font color="#EF2929">0s</font>] 4-[<font color="#EF2929">0s</font>] 5-[<font color="#EF2929">0s</font>] 6-[<font color="#EF2929">0s</font>] 7-[<font color="#EF2929">0s</font>] 8-[<font color="#EF2929">0s</font>]
+<font color="#555753">Output initial off:          </font>1-[<font color="#EF2929">0s</font>] 2-[<font color="#EF2929">0s</font>] 3-[<font color="#EF2929">0s</font>] 4-[<font color="#EF2929">0s</font>] 5-[<font color="#EF2929">0s</font>] 6-[<font color="#EF2929">0s</font>] 7-[<font color="#EF2929">0s</font>] 8-[<font color="#EF2929">0s</font>]
+<font color="#555753">PPT point for boost conv:    </font>1-<font color="#EF2929">3700mV</font> 2-<font color="#EF2929">3700mV</font> 3-<font color="#EF2929">3700mV</font>
+<font color="#8AE234">***************-CONFIG2-***************</font>
+<font color="#555753">Batt Max Voltage:            </font><font color="#EF2929">2mV</font>
+<font color="#555753">Batt Safe Voltage:           </font><font color="#EF2929">0mV</font>
+<font color="#555753">Batt Critical Voltage:       </font><font color="#EF2929">6mV</font>
+<font color="#555753">Batt Normal Voltage:         </font><font color="#EF2929">11mV</font>
+
+Beginning output testing in 5 seconds
+
+
+ --- TESTING OUPUTS --- 
+
+ ### TESTING OUT_0 ###
+
+OUT_0 System Current: 263
+OUT_0 Battery Voltage: 7403
+
+
+ ### TESTING OUT_1 ###
+
+OUT_1 System Current: 263
+OUT_1 Battery Voltage: 7403
+
+
+ ### TESTING OUT_2 ###
+
+OUT_2 System Current: 263
+OUT_2 Battery Voltage: 7403
+
+
+ ### TESTING OUT_3 ###
+
+OUT_3 System Current: 263
+OUT_3 Battery Voltage: 7403
+
+
+ ### TESTING OUT_4 ###
+
+OUT_4 System Current: 263
+OUT_4 Battery Voltage: 7403
+
+
+ ### TESTING OUT_5 ###
+
+OUT_5 System Current: 251
+OUT_5 Battery Voltage: 7403
+
+
+Testing component functions in 5 seconds
+
+--- TESTING COMPONENT FUNCTIONS --- 
+
+Testing burnwire:
+You should see HITL outputs 9 and 10 light up
+<font color="#8AE234">***************-HOUSEKEEPING-***************</font>
+<font color="#555753">Photo-voltaic inputs:        </font>1-<font color="#EF2929">0mV</font> 2-<font color="#EF2929">0mV</font> 3-<font color="#EF2929">0mV</font>
+<font color="#555753">Total photo current:         </font><font color="#EF2929">13mA</font>
+<font color="#555753">Battery voltage:             </font><font color="#EF2929">7403mV</font>
+<font color="#555753">Total system current:        </font><font color="#EF2929">263mA</font>
+<font color="#555753">Temp of boost converters:    </font>1-<font color="#EF2929">31degC</font> 2-<font color="#EF2929">33degC</font> 3-<font color="#EF2929">31degC</font> batt-<font color="#EF2929">31degC</font>
+<font color="#555753">External batt temp:          </font>1-<font color="#EF2929">0degC</font> 2-<font color="#EF2929">0degC</font>
+<font color="#555753">Latchups:                    </font>1-[<font color="#EF2929">0</font>] 2-[<font color="#EF2929">0</font>] 3-[<font color="#EF2929">0</font>] 4-[<font color="#EF2929">0</font>] 5-[<font color="#EF2929">0</font>] 6-[<font color="#EF2929">0</font>]
+<font color="#555753">Cause of last reset:         </font><font color="#EF2929">I2C WDT reset</font>
+<font color="#555753">Number of reboots:           </font><font color="#EF2929">52736</font>
+<font color="#555753">Number of software errors:   </font><font color="#EF2929">2</font>
+<font color="#555753">PPT mode:                    </font><font color="#EF2929">96</font>
+<font color="#555753">Channel output:              </font>01100000
+<font color="#8AE234">***************-CONFIG-***************</font>
+<font color="#555753">PPT mode:                    </font><font color="#EF2929">FIXED[2]</font>
+<font color="#555753">Battheater mode:             </font><font color="#EF2929">MANUAL[0]</font>
+<font color="#555753">Battheater low:              </font><font color="#EF2929">0degC</font>
+<font color="#555753">Battheater high:             </font><font color="#EF2929">5degC</font>
+<font color="#555753">Nominal mode output value:   </font>1-[<font color="#EF2929">1</font>] 2-[<font color="#EF2929">1</font>] 3-[<font color="#EF2929">1</font>] 4-[<font color="#EF2929">1</font>] 5-[<font color="#EF2929">1</font>] 6-[<font color="#EF2929">1</font>] 7-[<font color="#EF2929">0</font>] 8-[<font color="#EF2929">0</font>]
+<font color="#555753">Safe mode output value:      </font>1-[<font color="#EF2929">1</font>] 2-[<font color="#EF2929">1</font>] 3-[<font color="#EF2929">1</font>] 4-[<font color="#EF2929">1</font>] 5-[<font color="#EF2929">1</font>] 6-[<font color="#EF2929">1</font>] 7-[<font color="#EF2929">0</font>] 8-[<font color="#EF2929">0</font>]
+<font color="#555753">Output initial on:           </font>1-[<font color="#EF2929">0s</font>] 2-[<font color="#EF2929">0s</font>] 3-[<font color="#EF2929">0s</font>] 4-[<font color="#EF2929">0s</font>] 5-[<font color="#EF2929">0s</font>] 6-[<font color="#EF2929">0s</font>] 7-[<font color="#EF2929">0s</font>] 8-[<font color="#EF2929">0s</font>]
+<font color="#555753">Output initial off:          </font>1-[<font color="#EF2929">0s</font>] 2-[<font color="#EF2929">0s</font>] 3-[<font color="#EF2929">0s</font>] 4-[<font color="#EF2929">0s</font>] 5-[<font color="#EF2929">0s</font>] 6-[<font color="#EF2929">0s</font>] 7-[<font color="#EF2929">0s</font>] 8-[<font color="#EF2929">0s</font>]
+<font color="#555753">PPT point for boost conv:    </font>1-<font color="#EF2929">3700mV</font> 2-<font color="#EF2929">3700mV</font> 3-<font color="#EF2929">3700mV</font>
+<font color="#8AE234">***************-CONFIG2-***************</font>
+<font color="#555753">Batt Max Voltage:            </font><font color="#EF2929">2mV</font>
+<font color="#555753">Batt Safe Voltage:           </font><font color="#EF2929">0mV</font>
+<font color="#555753">Batt Critical Voltage:       </font><font color="#EF2929">6mV</font>
+<font color="#555753">Batt Normal Voltage:         </font><font color="#EF2929">11mV</font>
+Testing Glowplug
+You should see output 11 light up
+Testing Solenoid
+You should see HITL output 12 light up
+Testing Electrolyzer
+You should see HITL output 13 light up for 10 seconds
+
+Component function testing done
+
+--- Testing WDTs ---
+
+Initial WDT data:
+I2C Time left: 597
+GND Time left: 0
+CSP Pings left: &lt;power_structs.c_ubyte_Array_2 object at 0xb6641d50&gt;
+I2C Reboots: 196608
+GND Reboots: 0
+CPS Reboots: &lt;ctypes._endian.c_ulong_be_Array_2 object at 0xb6641ee0&gt;
+
+WDT data after I2C ping
+I2C Time left: 595
+GND Time left: 0
+CSP Pings left: &lt;power_structs.c_ubyte_Array_2 object at 0xb6641ee0&gt;
+I2C Reboots: 196608
+GND Reboots: 0
+CPS Reboots: &lt;ctypes._endian.c_ulong_be_Array_2 object at 0xb6641f30&gt;
+
+WDT data after Ground timer reset
+I2C Time left: 595
+GND Time left: 0
+CSP Pings left: &lt;power_structs.c_ubyte_Array_2 object at 0xb6641f30&gt;
+I2C Reboots: 196608
+GND Reboots: 0
+CPS Reboots: &lt;ctypes._endian.c_ulong_be_Array_2 object at 0xb6641f80&gt;
+WDT Testing Done.
+</pre>

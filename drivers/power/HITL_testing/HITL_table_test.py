@@ -13,6 +13,15 @@ for i in range(0, 6):
 print(" --- TESTING  displayAll --- \n")
 HITL_test.displayAll()
 
+WDT_pre_data = HITL_test.get_hk_wdt()
+print("\nPre-Test WDT data:")
+print("I2C Time left: " + str(WDT_pre_data.wdt_i2c_time_left))
+print("GND Time left: " + str(WDT_pre_data.wdt_gnd_time_left))
+print("CSP Pings left: " + str(WDT_pre_data.wdt_csp_pings_left))
+print("I2C Reboots: " + str(WDT_pre_data.counter_wdt_i2c))
+print("GND Reboots: " + str(WDT_pre_data.counter_wdt_gnd))
+print("CPS Reboots: " + str(WDT_pre_data.counter_wdt_csp))
+
 print("\nBeginning output testing in 5 seconds\n")
 time.sleep(5)
 
@@ -66,7 +75,7 @@ time.sleep(1)
 
 # get wdt data
 WDT_data = HITL_test.get_hk_wdt()
-print("Initial WDT data:")
+print("Initial post-Test WDT data:")
 print("I2C Time left: " + str(WDT_data.wdt_i2c_time_left))
 print("GND Time left: " + str(WDT_data.wdt_gnd_time_left))
 print("CSP Pings left: " + str(WDT_data.wdt_csp_pings_left))

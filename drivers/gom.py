@@ -82,11 +82,12 @@ class Gomspace:
         self.gom.burnwire(duration, delay)
 
     def set_electrolysis(self, status: bool, delay = 0):
-        """switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
+        """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
         self.electrolysis = status
         self.gom.electrolyzer(status, delay)
 
     def is_electrolyzing(self):
+        """Returns status of electrolyzer"""
         return self.electrolysis
 
     #TODO

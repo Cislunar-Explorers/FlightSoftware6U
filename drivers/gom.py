@@ -14,6 +14,7 @@ class Hk(Enum):
 class Gomspace:
     def __init__(self):
         self.gom = pc.Power()
+        self.electrolysis = False
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
@@ -80,15 +81,13 @@ class Gomspace:
         """Turns on both burnwires for [duration] seconds after [delay] seconds. Does a display_all half way through"""
         self.gom.burnwire(duration, delay)
 
-    # TODO
-    def get_health_data(self):
-        return {}
+    def set_electrolysis(self, status: bool, delay = 0):
+        """switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
+        self.electrolysis = status
+        self.gom.electrolyzer(status, delay)
 
     def is_electrolyzing(self):
         return self.electrolysis
-
-    def set_electrolysis(self, status: bool):
-        self.electrolysis = status
 
     #TODO
     def read_battery_percentage(self):

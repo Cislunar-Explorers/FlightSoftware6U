@@ -1,3 +1,6 @@
+These are pressure readings when the analog to digital converter is connected to the 0 volt ground pin on the RPi.
+This serves as a sanity check for a psi pressure reading of 0 psi.
+Readings taken once per second for 20 seconds.
 0.0
 0.0
 0.0

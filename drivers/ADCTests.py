@@ -8,50 +8,53 @@ def test_ADC_initialize():
     return ADC
 
 
-def test_ADC_read_pressure(testADC):
-    print(testADC.read_pressure(testADC))
+def test_ADC_read_pressure():
+    print(ADC.read_pressure())
 
 
-def test_ADC_read_pressure_continuous(testADC):
+def test_ADC_read_pressure_continuous():
     while True:
-        print(testADC.read_pressure(testADC))
+        print(ADC.read_pressure())
         time.sleep(1)
 
 
-def test_ADC_read_pressure_20(testADC):
+def test_ADC_read_pressure_20():
     x = 0
+    print("These are pressure readings when the analog to digital converter is connected to the 0 volt ground pin, 3.3V, and 5V on the RPi.")
+    print("Ouput given in psi.")
+    print("Readings taken once per second for 20 seconds.")
     while x < 20:
-        test_ADC_read_pressure(testADC)
+        test_ADC_read_pressure()
         x = x + 1
         time.sleep(1)
 
 
-def test_ADC_read_temperature(testADC):
+def test_ADC_read_temperature():
     print("--------------------------")
     print("Celsius:")
-    cel = testADC.read_temperature(testADC)
+    cel = ADC.read_temperature()
     print(cel)
     print("Fahrenheit:")
     print(cel * 1.8 + 32)
 
 
-def test_ADC_read_temperature_continuous(testADC):
+def test_ADC_read_temperature_continuous():
     while True:
-        test_ADC_read_temperature(testADC)
+        test_ADC_read_temperature()
         time.sleep(1)
 
 
-def test_ADC_read_temperature_20(testADC):
+def test_ADC_read_temperature_20():
     x = 0
     while x < 20:
-        test_ADC_read_temperature(testADC)
+        test_ADC_read_temperature()
         x = x + 1
         time.sleep(1)
 
 
-def test_ADC_get_gyro_temp(testADC):
+def test_ADC_get_gyro_temp():
     print("Cold junction temperature fro gyro sensor in Celsius:")
-    print(testADC.get_gyro_temp(testADC))
+    print(ADC.get_gyro_temp())
 
 
 if True:
@@ -59,7 +62,7 @@ if True:
     test_ADC_get_gyro_temp(testADC)
     # test_ADC_read_pressure_20(testADC)
     print("Conversion sanity check: 25.6 degrees")
-    print(ADC.convert_volt_to_temp(testADC, ADC.convert_temp_to_volt(testADC, 25.6)))
+    print(ADC.convert_volt_to_temp(ADC.convert_temp_to_volt(25.6)))
     print("Conversion sanity check: 2.023 mV")
-    print(ADC.convert_temp_to_volt(testADC, ADC.convert_volt_to_temp(testADC, 2.023)))
-    test_ADC_read_temperature_continuous(testADC)
+    print(ADC.convert_temp_to_volt(ADC.convert_volt_to_temp(2.023)))
+    test_ADC_read_temperature_continuous()

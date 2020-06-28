@@ -62,11 +62,11 @@ class ADC:
     # Requires a cold junction temperature taken from the Adafruit BNO055 gyroscopic sensor
     def read_temperature(self):
         hot_junc_volt = self.ads.readADCSingleEnded(channel=1, pga=256, sps=64)
-        cold_junc_temp = ADC.get_gyro_temp(self)
+        cold_junc_temp = self.get_gyro_temp()
         # Need cold junction voltage converted from temperature
-        cold_junc_volt = ADC.convert_temp_to_volt(self, cold_junc_temp)
+        cold_junc_volt = self.convert_temp_to_volt(cold_junc_temp)
         # Add the hot and cold junction voltages and convert to temperature
-        temperature = ADC.convert_volt_to_temp(self, hot_junc_volt + cold_junc_volt)
+        temperature = self.convert_volt_to_temp(hot_junc_volt + cold_junc_volt)
 
         return temperature
 

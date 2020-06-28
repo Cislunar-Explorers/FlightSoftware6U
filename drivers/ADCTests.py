@@ -1,3 +1,15 @@
+# CislunarExplorers/FlightSoftware/drivers/ADCTests.py
+#
+# Created by Stefan Brechter (scb262@cornell.edu) on 03/11/2020
+#
+# Cislunar Explorers
+# Space Systems Design Studio
+# Cornell University
+#
+# For detailed descriptions and analysis of the following test file please
+# look at the accompanying End of Semester Report found here:
+# https://cornell.app.box.com/file/664230352636
+
 from ADCDriver import ADC
 import time
 

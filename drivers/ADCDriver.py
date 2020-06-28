@@ -7,6 +7,10 @@
 # Cislunar Explorers
 # Space Systems Design Studio
 # Cornell University
+#
+# For detailed descriptions and analysis of the following driver please
+# look at the accompanying End of Semester Report found here:
+# https://cornell.app.box.com/file/664230352636
 
 import ADS1115
 import adafruit_fxas21002c

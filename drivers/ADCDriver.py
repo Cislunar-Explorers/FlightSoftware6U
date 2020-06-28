@@ -20,7 +20,7 @@ class ADC:
     i2c = busio.I2C(board.SCL, board.SDA)
     gyro = adafruit_fxas21002c.FXAS21002C(i2c)
 
-    # For the thermo couple conversion from voltage to temperature.
+    # Polynomial approximation constants for the thermocouple conversion from voltage to temperature.
     T0 = -8.7935962e0
 
     V0 = -3.4489914e-1
@@ -34,7 +34,7 @@ class ADC:
     Q2 = -2.0397750e-2
     Q3 = -1.8424107e-3
 
-    # For the thermo couple conversion from temperature to voltage.
+    # Polynomial approximation constants for the thermocouple conversion from temperature to voltage.
     T0T = 2.5e01
 
     V0T = 1.0003453e0

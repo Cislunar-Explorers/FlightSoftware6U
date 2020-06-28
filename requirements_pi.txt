@@ -2,3 +2,5 @@ picamera
 ADS1115
 adafruit-circuitpython-fxos8700
 adafruit-circuitpython-fxas21002c
+pigpio
+RPi.GPIO

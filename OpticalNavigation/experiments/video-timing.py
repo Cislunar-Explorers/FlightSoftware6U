@@ -3,6 +3,7 @@ from math import ceil, floor
 from fractions import Fraction
 from picamera import PiCamera, mmal, PiVideoFrameType
 from picamera.mmalobj import to_rational
+import os
 
 # Analog and digital gain parameters (not exposed in picamera-1.13)
 MMAL_PARAMETER_ANALOG_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x59
@@ -46,3 +47,5 @@ with PiCamera(resolution = (3280//2, 2464//2),
         lastTimestamp = f.timestamp
 
     camera.stop_recording()
+    print('Generating frames')
+    os.system('ffmpeg -i pivideo.mjpg -vcodec copy frame%02d.jpg')

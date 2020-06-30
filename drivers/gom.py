@@ -1,4 +1,4 @@
-import power_controller as pc
+from power_controller import *
 from enum import Enum
 
 class Hk(Enum):
@@ -13,7 +13,7 @@ class Hk(Enum):
 
 class Gomspace:
     def __init__(self):
-        self.gom = pc.Power()
+        self.gom = Power()
         self.electrolysis = False
 
     def tick_wdt(self):

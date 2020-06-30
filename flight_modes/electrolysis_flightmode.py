@@ -1,7 +1,7 @@
 from .flight_mode import FlightMode
 # TODO confirm path for ADC
 from ..drivers.ADCDriver import ADC
-from ..drivers.gom import Gomspace
+from ..drivers.gom import *
 from utils.constants import (
     LOW_CRACKING_PRESSURE,
     HIGH_CRACKING_PRESSURE,
@@ -32,9 +32,17 @@ class ElectrolysisMode(FlightMode):
         # If electrolyzing is turned on, check to see if I should turn it off
         curr_pressure = self.pressure_sensor.read_pressure()
         if curr_pressure >= IDEAL_CRACKING_PRESSURE:
-            self.gom.set_electrolysis(False)
-            self.completed_task()
+            try:
+                self.gom.set_electrolysis(False)
+            except PowerException as e:
+                print(e)
+            else:
+                self.completed_task()
         else:
             # Keep running mode until pressure condition satisfied
-            self.gom.set_electrolysis(True)
-            self.run_mode()
+            try:
+                self.gom.set_electrolysis(True)
+            except PowerException as e:
+                print(e)
+            else:
+                self.run_mode()

@@ -139,7 +139,7 @@ class Power():
 
     # writes byte list [values] with command register [cmd]
     # raises: ValueError if cmd or values are not bytes
-    # TODO Implement PowerWriteError once new I2C library is implemented
+    # TODO: Implement PowerWriteError once we switch to new I2C library
     def write(self, cmd, values):
         self._pi.i2c_write_device(self._dev, bytearray([cmd]+values))
 
@@ -226,7 +226,7 @@ class Power():
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
             # Gather housekeeping data to make sure that the output is actually changed
             Hk_data = self.get_hk_1()
-            if bin(Hk_data)[channel+1:channel+2] != value:
+            if bin(Hk_data.channel_status)[channel+1:channel+2] != value:
                 raise PowerOutputError("Output not changed!")
 
 

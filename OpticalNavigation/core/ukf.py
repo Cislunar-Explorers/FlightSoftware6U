@@ -61,6 +61,7 @@ def quaternion_multiply(quaternion1, quaternion0):
     """
     Hamiltonian Product
     Source: https://stackoverflow.com/questions/39000758/how-to-multiply-two-quaternions-by-python-or-numpy
+    https://math.stackexchange.com/questions/40164/how-do-you-rotate-a-vector-by-a-unit-quaternion
     """
     w0, x0, y0, z0 = quaternion0
     w1, x1, y1, z1 = quaternion1

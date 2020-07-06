@@ -26,8 +26,8 @@ TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_moonEph = os.path.join('ephemeris'
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_sunEph = os.path.join('ephemeris','sun_eph.csv')
 
 CISLUNAR_TEST_TRAJ = os.path.join(TEST_DATA_DIR, 'data', 'CislunarFullTraj_60secs')
-CISLUNAR_TEST_TRAJ_moonEph = os.path.join(CISLUNAR_TEST_TRAJ, 'ephemeris', 'moon_eph.csv')
-CISLUNAR_TEST_TRAJ_sunEph = os.path.join(CISLUNAR_TEST_TRAJ, 'ephemeris', 'sun_eph.csv')
+CISLUNAR_TEST_TRAJ_moonEph = os.path.join(CISLUNAR_TEST_TRAJ, 'ephemeris', 'sampled_moon_eph.csv')
+CISLUNAR_TEST_TRAJ_sunEph = os.path.join(CISLUNAR_TEST_TRAJ, 'ephemeris', 'sampled_sun_eph.csv')
 CISLUNAR_TEST_TRAJ_traj = os.path.join(CISLUNAR_TEST_TRAJ, 'trajectory', 'trajectory.csv')
 CISLUNAR_TEST_TRAJ_att = os.path.join(CISLUNAR_TEST_TRAJ, 'attitude', 'attitude.csv')
 

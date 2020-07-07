@@ -29,20 +29,39 @@ class ElectrolysisMode(FlightMode):
     # If we have reached this cracking pressure, then turn electrolysis off
     # and set task_completed to True
     def run_mode(self):
-        # If electrolyzing is turned on, check to see if I should turn it off
-        curr_pressure = self.pressure_sensor.read_pressure()
-        if curr_pressure >= IDEAL_CRACKING_PRESSURE:
+    # TODO Make it that doesn't stay in mode for long time (can leave while it is on)
+        curr_pressure = self.read_pressure()
+        # Keep electrolysis running if below pressure limit
+        if curr_pressure < IDEAL_CRACKING_PRESSURE:
+            # Only send i2c command if already not running
+            if not self.gom.is_electrolyzing():
+                try:
+                    self.gom.set_electrolysis(True)
+                except PowerException as e:
+                    print(e)
+            self.run_mode()
+        # Turn off after reaching optimal pressure
+        else:
             try:
                 self.gom.set_electrolysis(False)
             except PowerException as e:
                 print(e)
-            else:
-                self.completed_task()
-        else:
-            # Keep running mode until pressure condition satisfied
-            try:
-                self.gom.set_electrolysis(True)
-            except PowerException as e:
-                print(e)
-            else:
-                self.run_mode()
+            self.completed_task()
+
+        # If electrolyzing is turned on, check to see if I should turn it off
+        #curr_pressure = self.pressure_sensor.read_pressure()
+        #if curr_pressure >= IDEAL_CRACKING_PRESSURE:
+        #    try:
+        #        self.gom.set_electrolysis(False)
+        #    except PowerException as e:
+        #        print(e)
+        #    else:
+        #        self.completed_task()
+        #else:
+        #    # Keep running mode until pressure condition satisfied
+        #    try:
+        #        self.gom.set_electrolysis(True)
+        #    except PowerException as e:
+        #        print(e)
+        #    else:
+        #        self.run_mode()

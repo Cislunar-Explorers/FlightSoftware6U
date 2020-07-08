@@ -224,11 +224,6 @@ class Power():
                     channel_num = Outputs(i).value
             d = toBytes(delay, 2)
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
-            # Gather housekeeping data to make sure that the output is actually changed
-            Hk_data = self.get_hk_1()
-            if bin(Hk_data.channel_status)[channel+1:channel+2] != value:
-                raise PowerOutputError("Output not changed!")
-
 
     # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV. 
     # Takes effect when MODE = 2, See SET_PV_AUTO.

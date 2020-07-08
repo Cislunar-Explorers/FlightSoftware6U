@@ -81,10 +81,16 @@ class Gomspace:
         """Turns on both burnwires for [duration] seconds after [delay] seconds. Does a display_all half way through"""
         self.gom.burnwire(duration, delay)
 
-    def set_electrolysis(self, status: bool, delay = 0):
+    def set_electrolysis(self, status: bool, delay = 0, timing_crit = 1):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
         self.electrolysis = status
         self.gom.electrolyzer(status, delay)
+        # If timing
+        if timing_crit == 0:
+            # Gather housekeeping data to make sure that the output is actually changed
+            Hk_data = self.get_hk_1()
+            if bin(Hk_data.channel_status)[Outputs.electrolyzer.value + 1:Outputs.electrolyzer.value + 2] != int(status):
+                raise PowerOutputError("Output not changed!")
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""

@@ -36,14 +36,14 @@ class ElectrolysisMode(FlightMode):
             # Only send i2c command if already not running
             if not self.gom.is_electrolyzing():
                 try:
-                    self.gom.set_electrolysis(True, timing_crit = 0)
+                    self.gom.set_electrolysis(True, time_crit = 0)
                 except PowerException as e:
                     print(e)
             self.run_mode()
         # Turn off after reaching optimal pressure
         else:
             try:
-                self.gom.set_electrolysis(False, timing_crit = 0)
+                self.gom.set_electrolysis(False, time_crit = 0)
             except PowerException as e:
                 print(e)
             self.completed_task()

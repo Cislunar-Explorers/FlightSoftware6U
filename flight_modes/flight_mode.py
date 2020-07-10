@@ -53,6 +53,8 @@ class FlightMode:
 
     def update_state(self):
         flight_mode_id = self.flight_mode_id
+        # if timer has ended:
+        #   self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
         if flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
                 self.gom.read_battery_percentage()

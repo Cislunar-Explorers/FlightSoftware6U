@@ -5,6 +5,19 @@ at every hour to desired interval.
 The 1-hour samples were generating using JPL's HORIZONS program:
 https://ssd.jpl.nasa.gov/horizons.cgi#top
 
+Spacecraft coordinate frame is: https://help.agi.com/stk/11.0.1/Content/attitude/attTypes_nadirEci.htm#:~:text=Nadir%20Alignment%20with%20ECI%20Velocity%20Constraint%20Attitude%20Profile,offset%20about%20the%20nadir%20vector.
++X = FORWARD (body frame)
++Z = NADIR (body frame)
+
+Legend: 
+Dashed-black arrow: velocity vector (Forward)
+Dashed-Red arrow: Rotated X basis vector (using quaternion mult)
+Dashed-Green arrow: Rotated Y basis vector (using quaternion mult)
+Dashed-Blue arrow: Rotated Z basis vector (using quaternion mult)
+Solid-Red arrow: Rotated X basis vector (using attitude matrix)
+Solid-Green arrow: Rotated Y basis vector (using attitude matrix)
+Solid-Blue arrow: Rotated Z basis vector (using attitude matrix)
+
 Eashaan Kumar, ek485
 Summer 2020
 """
@@ -13,7 +26,7 @@ import pandas as pd
 import numpy as np
 import math
 import os
-# from tqdm import tqdm
+from tqdm import tqdm
 from scipy.interpolate import InterpolatedUnivariateSpline
 from animations import LiveMultipleTrajectoryPlot
 
@@ -55,7 +68,7 @@ def changeEph(path, sample_rate):
     Ephdf = pd.read_csv(path)
     m = np.zeros((len(Ephdf.index),6))
 
-    for index, row in Ephdf.iterrows():
+    for index, row in tqdm(Ephdf.iterrows(), total=Ephdf.shape[0]):
         m[index, 0] = float(row['x'])
         m[index, 1] = float(row['y'])
         m[index, 2] = float(row['z'])
@@ -105,89 +118,92 @@ def isOrthogonal(a, b):
     return [err < 1e-3, err]
 
 if __name__ == "__main__":
-    # INITIAL_MOON_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', '1hr_moon_eph.csv')
-    # INITIAL_SUN_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', '1hr_sun_eph.csv')
+    INITIAL_MOON_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', '1hr_moon_eph.csv')
+    INITIAL_SUN_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', '1hr_sun_eph.csv')
     INITIAL_TRAJ_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'trajectory', 'traj.csv')
-    INITIAL_ATT_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'attitude', 'attitude.csv')
-    SAMPLED_MOON_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', 'sampled_moon_eph.csv')
-    SAMPLED_SUN_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', 'sampled_sun_eph.csv')
+    df = changeEph(INITIAL_TRAJ_PATH, 1./60.)
+    df.to_csv(os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'trajectory', 'trajsec.csv'))
+
+    # # INITIAL_ATT_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'attitude', 'attitude.csv')
+    # # SAMPLED_MOON_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', 'sampled_moon_eph.csv')
+    # # SAMPLED_SUN_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'ephemeris', 'sampled_sun_eph.csv')
     
-    # moonDf = changeEph(INITIAL_MOON_PATH, 1./60.)
-    # sunDf = changeEph(INITIAL_SUN_PATH, 1./60.)
-    moonDf = pd.read_csv(SAMPLED_MOON_PATH)
-    sunDf = pd.read_csv(SAMPLED_SUN_PATH)
-    trajDf = pd.read_csv(INITIAL_TRAJ_PATH)
-    attDf = pd.read_csv(INITIAL_ATT_PATH)
-    assert len(moonDf.index) == len(sunDf.index) == len(trajDf.index) == len(attDf.index)
-    # moonDf.to_csv(SAMPLED_MOON_PATH, index=False)
-    # sunDf.to_csv(SAMPLED_SUN_PATH, index=False)
+    # # moonDf = changeEph(INITIAL_MOON_PATH, 1./60.)
+    # # sunDf = changeEph(INITIAL_SUN_PATH, 1./60.)
+    # moonDf = pd.read_csv(SAMPLED_MOON_PATH)
+    # sunDf = pd.read_csv(SAMPLED_SUN_PATH)
+    # trajDf = pd.read_csv(INITIAL_TRAJ_PATH)
+    # attDf = pd.read_csv(INITIAL_ATT_PATH)
+    # assert len(moonDf.index) == len(sunDf.index) == len(trajDf.index) == len(attDf.index)
+    # # moonDf.to_csv(SAMPLED_MOON_PATH, index=False)
+    # # sunDf.to_csv(SAMPLED_SUN_PATH, index=False)
 
-    liveTraj = LiveMultipleTrajectoryPlot(trajectories=3, trackingArrows=7)
-    liveTraj.setTrajectorySettings(0, 'red', 'moon 1 hour', 0.5)
-    liveTraj.setTrajectorySettings(1, 'blue', 'sun 1 hour', 0.5)
-    liveTraj.setTrajectorySettings(2, 'green', 'sat 1 hour', 0.5)
-    liveTraj.setTrackingArrowSettings(0, style="-|>", color="r", lw=1, ls='dashed')
-    liveTraj.setTrackingArrowSettings(1, style="-|>", color="g", lw=1, ls='dashed')
-    liveTraj.setTrackingArrowSettings(2, style="-|>", color="b", lw=1, ls='dashed')
-    liveTraj.setTrackingArrowSettings(3, style="-|>", color="r", lw=1, ls='-')
-    liveTraj.setTrackingArrowSettings(4, style="-|>", color="g", lw=1, ls='-')
-    liveTraj.setTrackingArrowSettings(5, style="-|>", color="b", lw=1, ls='-')
-    liveTraj.setTrackingArrowSettings(6, style="-|>", color="black", lw=1, ls='dashed')
+    # liveTraj = LiveMultipleTrajectoryPlot(trajectories=2, trackingArrows=7)
+    # liveTraj.setTrajectorySettings(0, 'red', 'moon 1 min', 0.5)
+    # # liveTraj.setTrajectorySettings(1, 'blue', 'sun 1 min', 0.5)
+    # liveTraj.setTrajectorySettings(1, 'green', 'sat 1 min', 0.5)
+    # liveTraj.setTrackingArrowSettings(0, style="-|>", color="r", lw=1, ls='dashed')
+    # liveTraj.setTrackingArrowSettings(1, style="-|>", color="g", lw=1, ls='dashed')
+    # liveTraj.setTrackingArrowSettings(2, style="-|>", color="b", lw=1, ls='dashed')
+    # liveTraj.setTrackingArrowSettings(3, style="-|>", color="r", lw=1, ls='-')
+    # liveTraj.setTrackingArrowSettings(4, style="-|>", color="g", lw=1, ls='-')
+    # liveTraj.setTrackingArrowSettings(5, style="-|>", color="b", lw=1, ls='-')
+    # liveTraj.setTrackingArrowSettings(6, style="-|>", color="black", lw=1, ls='dashed')
 
-    for index, row in moonDf.iterrows():
-        # print(moonDf['x'][index], sunDf['x'][index])
-        if index % (60) == 0: # sample at hour interval
-            # liveTraj.updateTraj(0, moonDf['x'][index], moonDf['y'][index], moonDf['z'][index])
-            # liveTraj.updateTraj(1, sunDf['x'][index], sunDf['y'][index], sunDf['z'][index])
-            liveTraj.updateTraj(2, trajDf['x'][index], trajDf['y'][index], trajDf['z'][index])
-            start_pos = np.array([trajDf['x'][index], trajDf['y'][index], trajDf['z'][index]])
-            # Velocity
-            new_vector = np.array([trajDf['vx'][index], trajDf['vy'][index], trajDf['vz'][index]])
-            new_vector /= np.linalg.norm(new_vector)
-            liveTraj.updateAtt(6, start_pos, new_vector)
+    # for index, row in moonDf.iterrows():
+    #     # print(moonDf['x'][index], sunDf['x'][index])
+    #     if index % (60) == 0: # sample at hour interval
+    #         liveTraj.updateTraj(0, moonDf['x'][index], moonDf['y'][index], moonDf['z'][index])
+    #         # liveTraj.updateTraj(1, sunDf['x'][index], sunDf['y'][index], sunDf['z'][index])
+    #         liveTraj.updateTraj(1, trajDf['x'][index], trajDf['y'][index], trajDf['z'][index])
+    #         start_pos = np.array([trajDf['x'][index], trajDf['y'][index], trajDf['z'][index]])
+    #         # Velocity
+    #         new_vector = np.array([trajDf['vx'][index], trajDf['vy'][index], trajDf['vz'][index]])
+    #         new_vector /= np.linalg.norm(new_vector)
+    #         liveTraj.updateAtt(6, start_pos, new_vector)
 
-            # Extract quaternions
-            q = np.array([attDf['q1'][index], attDf['q2'][index],attDf['q3'][index],attDf['q4'][index]])
-            assert abs(np.linalg.norm(q) - 1) < 1e-3
-            Aq = attitudeMatrix(q)
+    #         # Extract quaternions
+    #         q = np.array([attDf['q1'][index], attDf['q2'][index],attDf['q3'][index],attDf['q4'][index]])
+    #         assert abs(np.linalg.norm(q) - 1) < 1e-3
+    #         Aq = attitudeMatrix(q)
 
-            # X axis of spacecraft
-            local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
-            X_qm = getRotatedVector(local_vector, q.copy())
-            X_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
+    #         # X axis of spacecraft
+    #         local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
+    #         X_qm = getRotatedVector(local_vector, q.copy())
+    #         X_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
 
-            # assert abs(np.linalg.norm(X_qm) - 1) < 1e-6
-            # assert abs(np.linalg.norm(X_A) - 1) < 1e-3
+    #         # assert abs(np.linalg.norm(X_qm) - 1) < 1e-6
+    #         # assert abs(np.linalg.norm(X_A) - 1) < 1e-3
 
-            # Y axis of spacecraft
-            local_vector = np.array([0, 1, 0, 0]) # last 0 is padding
-            Y_qm = getRotatedVector(local_vector, q.copy())
-            Y_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
+    #         # Y axis of spacecraft
+    #         local_vector = np.array([0, 1, 0, 0]) # last 0 is padding
+    #         Y_qm = getRotatedVector(local_vector, q.copy())
+    #         Y_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
 
-            # assert abs(np.linalg.norm(Y_qm) - 1) < 1e-6
-            # assert abs(np.linalg.norm(Y_A) - 1) < 1e-3
+    #         # assert abs(np.linalg.norm(Y_qm) - 1) < 1e-6
+    #         # assert abs(np.linalg.norm(Y_A) - 1) < 1e-3
 
-            # Z axis of spacecraft
-            local_vector = np.array([0, 0, 1, 0]) # last 0 is padding
-            Z_qm = getRotatedVector(local_vector, q.copy())
-            Z_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
+    #         # Z axis of spacecraft
+    #         local_vector = np.array([0, 0, 1, 0]) # last 0 is padding
+    #         Z_qm = getRotatedVector(local_vector, q.copy())
+    #         Z_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
 
-            # assert abs(np.linalg.norm(Z_qm) - 1) < 1e-6
-            # assert abs(np.linalg.norm(Z_A) - 1) < 1e-3
+    #         # assert abs(np.linalg.norm(Z_qm) - 1) < 1e-6
+    #         # assert abs(np.linalg.norm(Z_A) - 1) < 1e-3
 
-            # XYZ should be orthonormal
-            print(isOrthogonal(X_A, Y_A)[1], isOrthogonal(X_A, Z_A)[1], isOrthogonal(Y_A, Z_A)[1])
-            print(isOrthogonal(X_qm, Y_qm)[1], isOrthogonal(X_qm, Z_qm)[1], isOrthogonal(Y_qm, Z_qm)[1])
-            # assert isOrthogonal(X_A, Y_A)[0] and isOrthogonal(X_A, Z_A)[0] and isOrthogonal(Y_A, Z_A)[0] 
-            # assert isOrthogonal(X_qm, Y_qm)[0] and isOrthogonal(X_qm, Z_qm)[0] and isOrthogonal(Y_qm, Z_qm)[0]
+    #         # XYZ should be orthonormal
+    #         print(isOrthogonal(X_A, Y_A)[1], isOrthogonal(X_A, Z_A)[1], isOrthogonal(Y_A, Z_A)[1])
+    #         print(isOrthogonal(X_qm, Y_qm)[1], isOrthogonal(X_qm, Z_qm)[1], isOrthogonal(Y_qm, Z_qm)[1])
+    #         # assert isOrthogonal(X_A, Y_A)[0] and isOrthogonal(X_A, Z_A)[0] and isOrthogonal(Y_A, Z_A)[0] 
+    #         # assert isOrthogonal(X_qm, Y_qm)[0] and isOrthogonal(X_qm, Z_qm)[0] and isOrthogonal(Y_qm, Z_qm)[0]
 
-            liveTraj.updateAtt(0, start_pos, X_qm)
-            liveTraj.updateAtt(1, start_pos, Y_qm)
-            liveTraj.updateAtt(2, start_pos, Z_qm)
-            liveTraj.updateAtt(3, start_pos, X_A)
-            liveTraj.updateAtt(4, start_pos, Y_A)
-            liveTraj.updateAtt(5, start_pos, Z_A)
+    #         # liveTraj.updateAtt(0, start_pos, X_qm)
+    #         # liveTraj.updateAtt(1, start_pos, Y_qm)
+    #         # liveTraj.updateAtt(2, start_pos, Z_qm)
+    #         liveTraj.updateAtt(3, start_pos, X_A)
+    #         liveTraj.updateAtt(4, start_pos, Y_A)
+    #         liveTraj.updateAtt(5, start_pos, Z_A)
 
 
-            liveTraj.renderUKF(text="{}/{}".format(index,len(moonDf.index)),delay=0.01)
+    #         liveTraj.renderUKF(text="{}/{}".format(index,len(moonDf.index)),delay=0.01)
 

@@ -1,5 +1,5 @@
 from FlightSoftware.drivers.power.power_controller import *
-
+import FlightSoftware.utils.log
 
 def test_burnwire():    # input (duration, delay)
     pwr = Power()
@@ -10,3 +10,5 @@ def test_burnwire():    # input (duration, delay)
     pwr.burnwire(2, 2)
     print("Test 3: ")
     pwr.burnwire(0, 0)
+    print("Test 4: ")
+    pwr.burnwire(0, 3)

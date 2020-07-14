@@ -18,6 +18,9 @@ class TimeTest:
     # Create RTC instance:
     rtc = adafruit_ds3231.DS3231(i2c)
 
+    def __init__(self):
+        pass
+
     def drift_rate(self, time_span):
 
         # time span

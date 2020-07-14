@@ -21,15 +21,17 @@ class TimeTest:
     def __init__(self):
         pass
 
-    def drift_rate(self, time_span):
+    def reset_rtc(self):
+        t = datetime.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
+        self.rtc.datetime = t  # reset rtc to current time
+        log.info('Set DS3132 time to: {}'.format(t))
 
+    def drift_rate(self, time_span):
         # time span
         log.info('Time span: {}'.format(time_span))
 
         # set current time
-        t = datetime.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
-        self.rtc.datetime = t  # reset rtc to current time
-        log.info('Set DS3132 time to: {}'.format(t))
+        self.reset_rtc()
 
         # waiting sequence
         print('Finding Drift Rate')
@@ -55,5 +57,7 @@ class TimeTest:
         else:
             log.info('Drift Rate within Data Sheet Threshold Accuracy of 3.5ppm')
 
-    def recover_time(self):
-        pass
+    def recover(self):
+        self.reset_rtc()    # reset RTC
+
+

@@ -4,7 +4,7 @@ import sys
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format="%(asctime)s [%(levelname)s] [%(pathname)s:%(filename)s:%(lineno)s] %(message)s",
     handlers=[
         RotatingFileHandler("cislunar.log", maxBytes=4096, backupCount=10),
         logging.StreamHandler(sys.stdout),
@@ -12,3 +12,6 @@ logging.basicConfig(
 )
 
 log = logging.getLogger("CislunarExplorers")
+
+def get_log():
+    return log

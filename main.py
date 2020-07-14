@@ -11,6 +11,9 @@ from utils.constants import (
     LOG_DIR,
     CISLUNAR_BASE_DIR,
     DB_FILE,
+    LOW_CRACKING_PRESSURE,
+    HIGH_CRACKING_PRESSURE,
+    IDEAL_CRACKING_PRESSURE
 )
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
@@ -63,7 +66,14 @@ class MainSatelliteThread(Thread):
 
     # TODO
     def poll_inputs(self):
-        pass
+        # Switch on/off electrolyzer
+        curr_pressure = self.pressure_sensor.read_pressure()
+        if curr_pressure < IDEAL_CRACKING_PRESSURE:
+                if not self.gom.is_electrolyzing():
+                    self.gom.set_electrolysis(True)
+        else:
+            self.gom.set_electrolysis(False)
+
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.flight_mode = build_flight_mode(self, new_flight_mode_id)

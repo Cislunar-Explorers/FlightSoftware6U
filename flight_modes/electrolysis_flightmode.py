@@ -9,6 +9,11 @@ from utils.constants import (
     FMEnum
 )
 
+# ----------------------------------------------------------------------
+# This code has been refactored into the poll_inputs method in main.py
+# due to a change in the design flow of the electrolysis code
+# ----------------------------------------------------------------------
+
 
 # Electrolyze until pressure in the tank reaches IDEAL_CRACKING_PRESSURE
 # TODO determine correct values based on testing

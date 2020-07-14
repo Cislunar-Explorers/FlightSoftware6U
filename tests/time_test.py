@@ -28,7 +28,7 @@ class TimeTest:
 
         # set current time
         t = datetime.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
-        self.rtc.datetime = t    # reset rtc to current time
+        self.rtc.datetime = t  # reset rtc to current time
         log.info('Set DS3132 time to: {}'.format(t))
 
         # waiting sequence
@@ -41,16 +41,19 @@ class TimeTest:
         rtc_time = self.rtc.datetime
         clock_time = datetime.datetime.now()
         drift_time = abs(rtc_time - clock_time)
-        drift_rate = drift_time.total_seconds()/time_span
+        drift_rate = drift_time.total_seconds() / time_span
 
         log.info('Drift Time: {} seconds'.format(drift_time))
         log.info('DS3231 Drift Rate: {} seconds per clock second'.format(drift_rate))
 
         # check accuracy
-        thresh_acc = 0.0000035   # data sheet informed accuracy 3.5ppm
+        thresh_acc = 0.0000035  # data sheet informed accuracy 3.5ppm
         try:
             assert drift_rate < thresh_acc
         except AssertionError:
             log.info('Drift Rate NOT within Data Sheet Threshold Accuracy of 3.5ppm')
         else:
             log.info('Drift Rate within Data Sheet Threshold Accuracy of 3.5ppm')
+
+    def recover_time(self):
+        pass

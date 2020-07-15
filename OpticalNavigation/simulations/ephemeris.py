@@ -48,9 +48,14 @@ def quaternion_multiply(quaternion1, quaternion0):
 
 def attitudeMatrix(quaternion):
     q1, q2, q3, q4 = quaternion
-    return np.array([[q1**2-q2**2-q3**2+q4**2, 2*(q1*q2+q3*q4), 2*(q1*q3-q2*q4)], 
-                     [2*(q2*q1+q3*q4), -q1**2+q2**2-q3**2+q4**2, 2*(q2*q3-q1*q4)], 
-                     [2*(q3*q1-q2*q4), 2*(q3*q2-q1*q4), -q1**2-q2**2+q3**2+q4**2]], dtype=np.float64)
+    i, j, k, r = q1, q2, q3, q4
+    s = 1.0/(np.linalg.norm(q)**2)
+    # return np.array([[q1**2-q2**2-q3**2+q4**2, 2*(q1*q2+q3*q4), 2*(q1*q3-q2*q4)], 
+    #                  [2*(q2*q1+q3*q4), -q1**2+q2**2-q3**2+q4**2, 2*(q2*q3-q1*q4)], 
+    #                  [2*(q3*q1-q2*q4), 2*(q3*q2-q1*q4), -q1**2-q2**2+q3**2+q4**2]], dtype=np.float64)
+    return np.array([[1-2*s*(j**2+k**2), 2*s*(i*j-k*r), 2*s*(i*k+j*r)], 
+                     [2*s*(i*j+k*r), 1-2*s*(i*i+k*k), 2*s*(j*k-i*r)], 
+                     [2*s*(i*k-j*r), 2*s*(j*k+i*r), 1-2*s*(i*i+j*j)]], dtype=np.float64)
 
 
 
@@ -161,9 +166,9 @@ if __name__ == "__main__":
             # assert abs(np.linalg.norm(Z_A) - 1) < 1e-3
 
             # XYZ should be orthonormal
-            # print(isOrthogonal(X_A, Y_A)[1], isOrthogonal(X_A, Z_A)[1], isOrthogonal(Y_A, Z_A)[1])
+            print(isOrthogonal(X_A, Y_A)[1], isOrthogonal(X_A, Z_A)[1], isOrthogonal(Y_A, Z_A)[1])
             # print(isOrthogonal(X_qm, Y_qm)[1], isOrthogonal(X_qm, Z_qm)[1], isOrthogonal(Y_qm, Z_qm)[1])
-            # assert isOrthogonal(X_A, Y_A)[0] and isOrthogonal(X_A, Z_A)[0] and isOrthogonal(Y_A, Z_A)[0] 
+            assert isOrthogonal(X_A, Y_A)[0] and isOrthogonal(X_A, Z_A)[0] and isOrthogonal(Y_A, Z_A)[0] 
             # assert isOrthogonal(X_qm, Y_qm)[0] and isOrthogonal(X_qm, Z_qm)[0] and isOrthogonal(Y_qm, Z_qm)[0]
 
             # liveTraj.updateAtt(0, start_pos, X_qm)

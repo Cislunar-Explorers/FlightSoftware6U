@@ -14,16 +14,16 @@ from numpy.linalg import pinv
 import numpy as np
 import matplotlib.pyplot as plt
 
-from tests.animations import LiveTrajectoryPlot
+from OpticalNavigation.simulations.animations import LiveTrajectoryPlot
 
-from core.attitude import crs, meas_model, quaternionComposition, quaternionInv
+from OpticalNavigation.core.attitude import crs, meas_model, quaternionComposition, quaternionInv
 
-from tests.const import TEST_6HOURS_meas, TEST_6HOURS_moonEph, TEST_6HOURS_sunEph, TEST_6HOURS_traj
-from tests.const import TEST_C1_DISCRETIZED_meas, TEST_C1_DISCRETIZED_moonEph, TEST_C1_DISCRETIZED_sunEph, TEST_C1_DISCRETIZED_traj, TEST_C1_DISCRETIZED_matlab
+from OpticalNavigation.tests.const import TEST_6HOURS_meas, TEST_6HOURS_moonEph, TEST_6HOURS_sunEph, TEST_6HOURS_traj
+from OpticalNavigation.tests.const import TEST_C1_DISCRETIZED_meas, TEST_C1_DISCRETIZED_moonEph, TEST_C1_DISCRETIZED_sunEph, TEST_C1_DISCRETIZED_traj, TEST_C1_DISCRETIZED_matlab
 
-from tests.const import SPACECRAFT_I_B, DAMPER_C, DAMPER_I_D, INTEGRATION_TIMESTEP, TORQUE_THRUSTER
+from OpticalNavigation.tests.const import SPACECRAFT_I_B, DAMPER_C, DAMPER_I_D, INTEGRATION_TIMESTEP, TORQUE_THRUSTER
 
-from core.const import _a, _f
+from OpticalNavigation.core.const import _a, _f
 
 # try:
 #     from collections.abc import Iterable  # noqa
@@ -354,7 +354,7 @@ z5 = m
 z6 = s
 """
 
-def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaInit, biasInit, quat, gyroSampleCount, gyroSigma, gyroNoiseSigma):
+def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaInit, biasInit, quat, gyroSampleCount, gyroSigma, gyroNoiseSigma, att_meas=False):
     """
         ____________
         Description:
@@ -379,6 +379,7 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
         [gyroSampleCount]: number of gyro measurements between each camera measurement
         [gyroSigma]: std of gyro measurements
         [gyroNoiseSigma]: std of gyro measurement noise
+        [att_meas]: should generate attitude data
         ________
         Returns:
         camera measurements, omegas, biases, sunEph, moonEph, trueTraj, mainThrustKickTimes/Amounts/Durations
@@ -424,7 +425,7 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
     episode = 6 * 60 * 60       # seconds (6 hours * 60 min/hr * 60 sec/min)
     print('----------------------\n6 Hours Dataset\n----------------------\n')
     for t in tqdm(range(moonEphdf['x'].size), desc='Computing timeline'):
-        if t % episode == 0 and t is not 0:
+        if t % episode == 0 and t != 0:
             currentT += episode
         time.append(currentT)
         currentT += 60                 # measurements were taken 60 seconds apart
@@ -522,8 +523,11 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
         moonVectors.append(moonVec)
         sunVectors.append(sunVec)
 
-    q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz = generateSyntheticData(quat, cameradt, coldGasThrustKickTime, omegaInit, biasInit, 1.0/gyroSampleCount, totalIntegrationTime, gyroSigma, gyroNoiseSigma)
-    return q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz, d_camMeas, d_moonEph, d_sunEph, d_traj, earthVectors, moonVectors, sunVectors, totalIntegrationTime
+    if att_meas:
+        q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz = generateSyntheticData(quat, cameradt, coldGasThrustKickTime, omegaInit, biasInit, 1.0/gyroSampleCount, totalIntegrationTime, gyroSigma, gyroNoiseSigma)
+        return q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz, d_camMeas, d_moonEph, d_sunEph, d_traj, earthVectors, moonVectors, sunVectors, totalIntegrationTime
+    else:
+        return d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime
     
     # # graph
     # liveTraj = LiveTrajectoryPlot()

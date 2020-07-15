@@ -86,14 +86,18 @@ class LiveMultipleTrajectoryPlot:
     For arrow styles, visit: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.ArrowStyle.html
     For line styles (ls), visit: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.Arrow.html#matplotlib.patches.Arrow
     """
-    def __init__(self, trajectories=1, trackingArrows=1):
+    def __init__(self, trajectories=1, trackingArrows=1, bounds=None):
         self.trajectories = []
         self.settings = []
         self.trackingArrows = []
         self.trackingArrowsSettings = []
+        self.traceLimits = []
+        self.leadingBlob = []
         for i in range(trajectories):
             self.trajectories.append({'x':[],'y':[],'z':[]})
-            self.settings.append({'color':'','label':'','alpha':''})
+            self.settings.append({'color':'','label':'','alpha':'','ls':''})
+            self.traceLimits.append(None)
+            self.leadingBlob.append({'size':0, 'shape':'0', 'color':'red', 'alpha':0, 'label':'N/A'})
         for i in range(trackingArrows):
             self.trackingArrows.append({'x':[0,0], 'y':[0,0], 'z':[0,0]})
             self.trackingArrowsSettings.append({'mutation_scale':20, 'lw':2, 'arrowstyle':"-|>", 'color':"r", 'ls':'-'})
@@ -101,12 +105,31 @@ class LiveMultipleTrajectoryPlot:
         plt.ion()
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection='3d')
+        self.bounds = bounds;
 
-    def setTrajectorySettings(self, i, color, label, alpha):
-        self.settings[i]['color'] = color
-        self.settings[i]['label'] = label
-        self.settings[i]['alpha'] = alpha
+    # def setSimulationBounds(self, ):
+    #     self.ax.set_aspect('auto')
 
+
+    #     self.ax.set_xbound(lower=xmin, upper=xmax)
+    #     self.ax.set_ybound(lower=ymin, upper=ymax)
+    #     self.ax.set_zbound(lower=zmin, upper=zmax)
+
+    def setTrajectorySettings(self, i, color, label, alpha, ls):
+        """
+        https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.axes.Axes.plot.html
+        '-' 	solid line style
+        '--' 	dashed line style
+        '-.' 	dash-dot line style
+        ':' 	dotted line style
+        """
+        if color is None or label is None or alpha is None or ls is None:
+            self.settings[i] = None
+        else:
+            self.settings[i]['color'] = color
+            self.settings[i]['label'] = label
+            self.settings[i]['alpha'] = alpha
+            self.settings[i]['ls'] = ls
 
     def updateTraj(self, i, x, y, z):
         self.trajectories[i]['x'].append(x)
@@ -139,6 +162,23 @@ class LiveMultipleTrajectoryPlot:
         self.trackingArrowsSettings[i]['arrowstyle'] = style 
         self.trackingArrowsSettings[i]['color'] = color
 
+    def setTraceLimit(self, i, lim):
+        self.traceLimits[i] = lim
+
+    def setLeadingBlob(self, i, size, shape, color, alpha, label):
+        """
+        [size]: marker size (int)
+        [shape]: marker style (https://matplotlib.org/3.1.0/api/markers_api.html)
+        [color]: marker color
+        [alpha]: marker alpha
+        [label]: marker label
+        """
+        self.leadingBlob[i]['size'] = size
+        self.leadingBlob[i]['shape'] = shape
+        self.leadingBlob[i]['color'] = color
+        self.leadingBlob[i]['alpha'] = alpha
+        self.leadingBlob[i]['label'] = label
+
     def renderUKF(self, delay=0.001, text=''):
         self.ax.cla()
         self.fig.suptitle(text)
@@ -146,8 +186,14 @@ class LiveMultipleTrajectoryPlot:
         for i in range(len(self.trajectories)):
             traj = self.trajectories[i]
             settings = self.settings[i]
-            self.ax.plot(traj['x'], traj['y'], traj['z'], color=settings['color'], label=settings['label'],alpha=settings['alpha'])
-
+            traceLim = self.traceLimits[i]  # Grab last N elements, which removes older portions of the trajectory
+            blob = self.leadingBlob[i]
+            if traceLim is None:
+                traceLim = len(traj['x'])   # Do not remove any portion of the path
+            if traceLim > 0 and settings is not None:
+                self.ax.plot(traj['x'][-traceLim:], traj['y'][-traceLim:], traj['z'][-traceLim:], color=settings['color'], label=settings['label'],alpha=settings['alpha'], ls=settings['ls'])
+            if blob['size'] > 0:
+                self.ax.plot([traj['x'][-1]], [traj['y'][-1]], [traj['z'][-1]], color=blob['color'], label=blob['label'], alpha=blob['alpha'], markersize=blob['size'], marker=blob['shape'])
         # Arrows
         for i in range(len(self.trackingArrows)):
             a = Arrow3D(self.trackingArrows[i]['x'], self.trackingArrows[i]['y'], self.trackingArrows[i]['z'], 
@@ -161,6 +207,10 @@ class LiveMultipleTrajectoryPlot:
         self.ax.set_xlabel('$X$', fontsize=20, rotation=150)
         self.ax.set_ylabel('$Y$', fontsize=20)
         self.ax.set_zlabel('$Z$', fontsize=20, rotation=60)
+
+        if self.bounds is not None:
+            self.ax.auto_scale_xyz([self.bounds[0], self.bounds[1]], [self.bounds[2], self.bounds[3]], [self.bounds[4], self.bounds[5]])
+            
         self.ax.legend()
         plt.draw()
         plt.pause(delay)

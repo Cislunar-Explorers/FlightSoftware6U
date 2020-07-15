@@ -1,7 +1,7 @@
 import numpy as np
 import math
-from core.const import CisLunarCameraParameters
-from core.const import MAIN_THRUST_ACCELERATION
+from OpticalNavigation.core.const import CisLunarCameraParameters
+from OpticalNavigation.core.const import MAIN_THRUST_ACCELERATION
 
 # How wrong our dynamics model is? e.g. how off in variance will we be due
 # to solar radiation pressure, galactic particles, and bad gravity model? 

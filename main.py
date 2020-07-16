@@ -69,8 +69,8 @@ class MainSatelliteThread(Thread):
         # Switch on/off electrolyzer
         curr_pressure = self.pressure_sensor.read_pressure()
         if curr_pressure < IDEAL_CRACKING_PRESSURE:
-                if not self.gom.is_electrolyzing():
-                    self.gom.set_electrolysis(True)
+            if not self.gom.is_electrolyzing():
+                self.gom.set_electrolysis(True)
         else:
             self.gom.set_electrolysis(False)
 

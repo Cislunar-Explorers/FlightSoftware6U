@@ -1,5 +1,6 @@
 import gc
 from time import sleep
+from datetime import datetime
 import os
 
 from utils.constants import (  # noqa F401
@@ -38,6 +39,7 @@ no_transition_modes = [
 ]
 
 
+
 class FlightMode:
 
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
@@ -47,17 +49,22 @@ class FlightMode:
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
     command_arg_unpackers = {}
 
+    last_opnav_run = None # static function
+
     def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
 
     def update_state(self):
         flight_mode_id = self.flight_mode_id
-        # curr_time = datetime.now()
-        # if curr_time-last_opnav_run > opnav limit:
-        #   self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
-        # add elif to below if
-        if flight_mode_id == FMEnum.LowBatterySafety.value:
+
+        # Check if opnav needs to be run
+        curr_time = datetime.now()
+        time_diff = curr_time - FlightMode.last_opnav_run
+        if time_diff.seconds * 60 > OPNAV_INTERVAL:
+            self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
+
+        elif flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
                 self.gom.read_battery_percentage()
                 >= EXIT_LOW_BATTERY_MODE_THRESHOLD
@@ -76,9 +83,9 @@ class FlightMode:
         elif flight_mode_id == FMEnum.Boot.value:
             pass
 
-        elif flight_mode_id == FMEnum.Electrolysis.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
+        #elif flight_mode_id == FMEnum.Electrolysis.value:
+        #    if self.task_completed is True:
+        #        self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
 
         elif flight_mode_id == FMEnum.Restart.value:
             if self.task_completed is True:

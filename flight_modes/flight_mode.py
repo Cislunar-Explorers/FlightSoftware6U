@@ -49,7 +49,7 @@ class FlightMode:
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
     command_arg_unpackers = {}
 
-    last_opnav_run = None # static function
+    last_opnav_run = None # static get function, move to database?
 
     def __init__(self, parent):
         self.parent = parent

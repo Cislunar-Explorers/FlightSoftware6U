@@ -61,7 +61,7 @@ class FlightMode:
         # Check if opnav needs to be run
         curr_time = datetime.now()
         time_diff = curr_time - FlightMode.last_opnav_run
-        if time_diff.seconds * 60 > OPNAV_INTERVAL:
+        if time_diff.seconds * 60 > OPNAV_INTERVAL: # implement interval(in minutes) in constants.py
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
         elif flight_mode_id == FMEnum.LowBatterySafety.value:

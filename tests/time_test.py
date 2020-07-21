@@ -11,8 +11,8 @@ import busio as io
 
 import adafruit_ds3231
 
+
 class RTC:
-    
 
     def __init__(self):
         self.i2c = io.I2C(board.SCL, board.SDA)  # Change to appropriate I2C clock & data pins
@@ -60,3 +60,7 @@ class RTC:
         self.reset_rtc()    # reset RTC
 
 
+rtc1 = RTC()
+rtc1.drift_rate(5)
+rtc1.drift_rate(20)
+rtc1.drift_rate(300)

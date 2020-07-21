@@ -12,7 +12,6 @@ import busio as io
 import adafruit_ds3231
 
 
-<<<<<<< HEAD
 class RTC:
 
     def __init__(self):
@@ -20,7 +19,7 @@ class RTC:
 
         # Create RTC instance:
         self.rtc = adafruit_ds3231.DS3231(self.i2c)
-=======
+
 class TimeTest:
     i2c = io.I2C(board.SCL, board.SDA)  # Change to appropriate I2C clock & data pins
 
@@ -29,7 +28,6 @@ class TimeTest:
 
     def __init__(self):
         pass
->>>>>>> acc916b855a2682c26082ee5fc5b0c7a264a3b3d
 
     def reset_rtc(self):
         t = datetime.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
@@ -52,16 +50,16 @@ class TimeTest:
         # calculate drift rate
         rtc_time = self.rtc.datetime
         clock_time = datetime.datetime.now()
-        drift_time = abs(rtc_time - clock_time)
-        drift_rate = drift_time.total_seconds() / time_span
+        d_time = abs(rtc_time - clock_time)
+        d_rate = d_time.total_seconds() / time_span
 
-        log.info('Drift Time: {} seconds'.format(drift_time))
-        log.info('DS3231 Drift Rate: {} seconds per clock second'.format(drift_rate))
+        log.info('Drift Time: {} seconds'.format(d_time))
+        log.info('DS3231 Drift Rate: {} seconds per clock second'.format(d_rate))
 
         # check accuracy
         thresh_acc = 0.0000035  # data sheet informed accuracy 3.5ppm
         try:
-            assert drift_rate < thresh_acc
+            assert d_rate < thresh_acc
         except AssertionError:
             log.info('Drift Rate NOT within Data Sheet Threshold Accuracy of 3.5ppm')
         else:
@@ -71,10 +69,8 @@ class TimeTest:
         self.reset_rtc()    # reset RTC
 
 
-<<<<<<< HEAD
 rtc1 = RTC()
 rtc1.drift_rate(5)
 rtc1.drift_rate(20)
 rtc1.drift_rate(300)
-=======
->>>>>>> acc916b855a2682c26082ee5fc5b0c7a264a3b3d
+

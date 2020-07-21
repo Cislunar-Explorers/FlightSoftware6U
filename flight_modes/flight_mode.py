@@ -55,12 +55,18 @@ class FlightMode:
         self.parent = parent
         self.task_completed = False
 
+    @classmethod
     def update_state(self):
         flight_mode_id = self.flight_mode_id
 
+        # implement burn command queue logic
+        # if need_to_burn:
+        #     self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
+
+
         # Check if opnav needs to be run
         curr_time = datetime.now()
-        time_diff = curr_time - FlightMode.last_opnav_run
+        time_diff = curr_time - FlightMode.last_opnav_run # TODO: find where to store last opnav run
         if time_diff.seconds * 60 > OPNAV_INTERVAL: # implement interval(in minutes) in constants.py
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
@@ -105,7 +111,7 @@ class FlightMode:
         else:
             raise UnknownFlightModeException(flight_mode_id)
 
-    @classmethod
+
     def register_commands(cls):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 

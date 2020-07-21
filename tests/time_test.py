@@ -12,6 +12,7 @@ import busio as io
 import adafruit_ds3231
 
 
+<<<<<<< HEAD
 class RTC:
 
     def __init__(self):
@@ -19,6 +20,16 @@ class RTC:
 
         # Create RTC instance:
         self.rtc = adafruit_ds3231.DS3231(self.i2c)
+=======
+class TimeTest:
+    i2c = io.I2C(board.SCL, board.SDA)  # Change to appropriate I2C clock & data pins
+
+    # Create RTC instance:
+    rtc = adafruit_ds3231.DS3231(i2c)
+
+    def __init__(self):
+        pass
+>>>>>>> acc916b855a2682c26082ee5fc5b0c7a264a3b3d
 
     def reset_rtc(self):
         t = datetime.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
@@ -60,7 +71,10 @@ class RTC:
         self.reset_rtc()    # reset RTC
 
 
+<<<<<<< HEAD
 rtc1 = RTC()
 rtc1.drift_rate(5)
 rtc1.drift_rate(20)
 rtc1.drift_rate(300)
+=======
+>>>>>>> acc916b855a2682c26082ee5fc5b0c7a264a3b3d

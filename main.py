@@ -2,6 +2,7 @@ import os
 import sys
 from threading import Thread
 from time import sleep
+from datetime import datetime
 from queue import Queue
 import signal
 
@@ -34,8 +35,10 @@ class MainSatelliteThread(Thread):
         super().__init__()
         self.command_queue = Queue()
         self.commands_to_execute = []
+        self.burn_queue = Queue()
         self.init_comms()
         self.init_sensors()
+        self.last_opnav_run = datetime.now() # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.attach_sigint_handler()  # FIXME
         if os.path.isdir(self.log_dir):
@@ -55,8 +58,8 @@ class MainSatelliteThread(Thread):
     # TODO
     def init_sensors(self):
         self.gom = Gomspace()
-        self.pressure_sensor = PressureSensor()
-
+        self.pressure_sensor = PressureSensor() # pass through self so need_to_burn function
+                                                # (to be made) can access burn queue
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)

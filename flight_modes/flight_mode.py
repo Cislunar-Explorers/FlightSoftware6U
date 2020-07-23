@@ -49,8 +49,6 @@ class FlightMode:
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
     command_arg_unpackers = {}
 
-    last_opnav_run = None # static get function, move to database?
-
     def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
@@ -66,7 +64,7 @@ class FlightMode:
 
         # Check if opnav needs to be run
         curr_time = datetime.now()
-        time_diff = curr_time - FlightMode.last_opnav_run # TODO: find where to store last opnav run
+        time_diff = curr_time - self.parent.last_opnav_run # TODO: find where to store last opnav run
         if time_diff.seconds * 60 > OPNAV_INTERVAL: # implement interval(in minutes) in constants.py
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 

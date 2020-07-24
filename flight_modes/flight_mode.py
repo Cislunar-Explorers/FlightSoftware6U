@@ -57,14 +57,15 @@ class FlightMode:
     def update_state(self):
         flight_mode_id = self.flight_mode_id
 
-        # implement burn command queue logic
-        # if need_to_burn:
-        #     self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
+        # Burn command queue logic
+        # TODO implment need_to_burn function in ADC
+        if self.parent.pressure_sensor.need_to_burn():
+            self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
 
 
         # Check if opnav needs to be run
         curr_time = datetime.now()
-        time_diff = curr_time - self.parent.last_opnav_run # TODO: find where to store last opnav run
+        time_diff = curr_time - self.parent.last_opnav_run
         if time_diff.seconds * 60 > OPNAV_INTERVAL: # implement interval(in minutes) in constants.py
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 

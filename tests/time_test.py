@@ -18,7 +18,7 @@ def get_log():
 
 import time
 import board
-import datetime
+import datetime as dt
 
 # For hardware I2C (M0 boards) use this line:
 import busio as io
@@ -38,7 +38,7 @@ class RTC:
         self.rtc = adafruit_ds3231.DS3231(self.i2c)
 
     def reset_rtc(self):
-        t = datetime.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
+        t = dt.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
         self.rtc.datetime = t  # reset rtc to current time
         log.info('Set DS3132 time to: {}'.format(t))
 
@@ -48,7 +48,7 @@ class RTC:
 
         # set current time
         self.reset_rtc()
-        clock_time_init = datetime.datetime.now()
+        clock_time_init = dt.datetime.now()
 
         # waiting sequence
         print('Finding Drift Rate')
@@ -59,7 +59,7 @@ class RTC:
 
         # calculate drift rate
         rtc_time_final = self.rtc.datetime
-        clock_time_final = datetime.datetime.now()
+        clock_time_final = dt.datetime.now()
         d_time = abs(rtc_time_final - clock_time_final)
         d_rate = d_time.total_seconds() / abs(clock_time_final - clock_time_init)
 

@@ -20,15 +20,6 @@ class RTC:
         # Create RTC instance:
         self.rtc = adafruit_ds3231.DS3231(self.i2c)
 
-class TimeTest:
-    i2c = io.I2C(board.SCL, board.SDA)  # Change to appropriate I2C clock & data pins
-
-    # Create RTC instance:
-    rtc = adafruit_ds3231.DS3231(i2c)
-
-    def __init__(self):
-        pass
-
     def reset_rtc(self):
         t = datetime.datetime.now()  # current time= year, mon, date, hour, min, sec and microseconds
         self.rtc.datetime = t  # reset rtc to current time
@@ -40,18 +31,20 @@ class TimeTest:
 
         # set current time
         self.reset_rtc()
+        clock_time_init = datetime.datetime.now()
 
         # waiting sequence
         print('Finding Drift Rate')
         for i in range(time_span):
-            print('.')
+            if i % 10 == 0:
+                print('{} seconds passed'.format(i))
             time.sleep(1)
 
         # calculate drift rate
-        rtc_time = self.rtc.datetime
-        clock_time = datetime.datetime.now()
-        d_time = abs(rtc_time - clock_time)
-        d_rate = d_time.total_seconds() / time_span
+        rtc_time_final = self.rtc.datetime
+        clock_time_final = datetime.datetime.now()
+        d_time = abs(rtc_time_final - clock_time_final)
+        d_rate = d_time.total_seconds() / abs(clock_time_final - clock_time_init)
 
         log.info('Drift Time: {} seconds'.format(d_time))
         log.info('DS3231 Drift Rate: {} seconds per clock second'.format(d_rate))

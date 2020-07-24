@@ -1,4 +1,4 @@
-from FlightSoftware.utils.log import *
+from utils.log import *
 import time
 import board
 import datetime

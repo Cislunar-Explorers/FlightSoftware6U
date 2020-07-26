@@ -189,7 +189,6 @@ def sixhours(visual_analysis, state_error, part_start, part_end, kickTime=None):
     assert posError <= POS_ERROR, 'Position error is too large'
     assert velError <= VEL_ERROR, 'Velocity error is too large'
 
-
 def sixhours_timestep(visual_analysis, state_error, part_start, part_end, timestep, kickTime=None):
     """
     [part_start, part_end): start (inclusive) and end (exclusive) indices of trajectory
@@ -287,3 +286,57 @@ def test_ukf_6hours_large_starting_noise_timestep(visual_analysis):
     sixhours_timestep(visual_analysis, LARGE_STARTING_NOISE, 1100, 1400, 60*60*24)
     sixhours_timestep(visual_analysis, LARGE_STARTING_NOISE, 1500, 1800, 60*60*24) # TODO: Volatile test: depends on random starting noise
 
+def cislunar1_timestep(visual_analysis, state_error, part_start, part_end, timestep, kickTime=None):
+    """
+    [part_start, part_end): start (inclusive) and end (exclusive) indices of trajectory
+    """
+    from OpticalNavigation.tests.const import TEST_CISLUNAR1_meas, TEST_CISLUNAR1_moonEph, TEST_CISLUNAR1_sunEph, TEST_CISLUNAR1_traj
+    d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime = get6HoursBatch(part_start, part_end, part_start, timestep, np.array([1,1,1,1,1,1]), np.array([1,1,1]), np.array([1,1,1,1]), 1, 1, 1, att_meas=False)
+    # trajTruthdf = pd.read_csv(TEST_6HOURS_traj)
+    # moonEphdf = pd.read_csv(TEST_6HOURS_moonEph)
+    # sunEphdf = pd.read_csv(TEST_6HOURS_sunEph)
+    # measEphdf = pd.read_csv(TEST_6HOURS_meas)
+    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
+    state = (np.array([d_traj['x'][0], d_traj['y'][0], d_traj['z'][0], d_traj['vx'][0], d_traj['vy'][0], d_traj['vz'][0]], dtype=np.float)).reshape(6,1)
+    R = np.diag(np.array(state_error, dtype=np.float))
+    error = np.random.multivariate_normal(np.zeros((6,)),R).reshape(6,1)
+    state = state + error
+
+    liveTraj = None
+    if visual_analysis == "True":
+        liveTraj = LiveTrajectoryPlot()
+
+    # print(int(trajTruthdf.shape[0]*1 - 1))
+    for t in tqdm(range( len(d_traj['x']) ), desc ='Trajectory Completion'):
+        moonEph = (np.array([d_moonEph['x'][t], d_moonEph['y'][t], d_moonEph['z'][t], d_moonEph['vx'][t], d_moonEph['vy'][t], d_moonEph['vz'][t]], dtype=np.float)).reshape(1,6)
+        sunEph = (np.array([d_sunEph['x'][t], d_sunEph['y'][t], d_sunEph['z'][t], d_sunEph['vx'][t], d_sunEph['vy'][t], d_sunEph['vz'][t]], dtype=np.float)).reshape(1,6)
+        meas = (np.array([d_camMeas['z1'][t], d_camMeas['z2'][t], d_camMeas['z3'][t], d_camMeas['z4'][t], d_camMeas['z5'][t], d_camMeas['z6'][t]], dtype=np.float)).reshape(6,1)
+        orientation = None
+        if kickTime is not None and t > kickTime:
+            orientation = [0, 0, 0, 1]
+        state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, orientation=orientation, dynamicsOnly=False)
+        # Per iteration error
+        traj = (np.array([d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
+        traj = traj.flatten()
+        fstate = state.flatten()
+        posError = math.sqrt( np.sum((traj[:3] - fstate[:3])**2) )
+        velError = math.sqrt( np.sum((traj[3:6] - fstate[3:6])**2) )
+        # plot
+        if liveTraj:
+            liveTraj.updateEstimatedTraj(fstate[0], fstate[1], fstate[2])
+            liveTraj.updateTrueTraj(traj[0], traj[1], traj[2])
+            liveTraj.renderUKF(text="Iteration {} - Pos Error {} - Vel Error {}".format(t, round(posError), round(velError)))
+
+    if liveTraj:
+        liveTraj.close()
+
+    t = part_end - 1
+    traj = (np.array([d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
+        
+    traj = traj.flatten()
+    state = state.flatten()
+    posError = math.sqrt( np.sum((traj[:3] - state[:3])**2) )
+    velError = math.sqrt( np.sum((traj[3:6] - state[3:6])**2) )
+    print('Position error: {}\nVelocity error: {}'.format(posError, velError))
+    assert posError <= POS_ERROR, 'Position error is too large'
+    assert velError <= VEL_ERROR, 'Velocity error is too large'

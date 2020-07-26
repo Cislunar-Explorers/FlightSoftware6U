@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import NX, LAM, _a, _f
+from core.const import NX, LAM, _a, _f
 import numpy
 from numpy.linalg import inv
 from numpy.linalg import pinv

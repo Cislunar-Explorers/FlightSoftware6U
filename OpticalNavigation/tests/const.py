@@ -70,7 +70,7 @@ SPACECRAFT_I_B = np.array([[(1./12.)*SPACECRAFT_MASS*(SPACECRAFT_HEIGHT**2. + SP
                   [0., 0., (1./12.)*SPACECRAFT_MASS*(SPACECRAFT_WIDTH**2. + SPACECRAFT_HEIGHT**2.)]]) #spacecraft inertia tensor
  # R * F where R = distance of cold-gas nozzle from center of mass of spacecraft
  # and F = force exerted by the thruster.
-TORQUE_THRUSTER = np.array([[.1, 0., 0.]]).T
+TORQUE_THRUSTER = np.array([[0, 0.1, 0]]).T # Torque exerted on the body
 
 DAMPER_MASS = 8 #damper mass in kg
 DAMPER_RADIUS = 0.1 #damper radius in meters

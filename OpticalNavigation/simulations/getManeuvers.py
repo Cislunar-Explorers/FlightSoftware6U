@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from tests.gen_opnav_data import generateSyntheticData
+import argparse
+import os
 
 monthsToNum = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04',
                 'May':'05','Jun':'06','Jul':'07','Aug':'08',
@@ -44,12 +46,13 @@ def extractCheckpoints(checkPointsDf, missionEndDate):
 
 def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline):
     """
-    Creates attitude synthetic data for each maneuver using the VNC (Earth) attitude data
+    Creates attitude synthetic data for each maneuver using the VNC (Earth) attitude quaternions
     and sythentic attitude data propogated using nutation damping physics.
     
     The key drawback of this method of attitude synthesis is that the quaternions snap from
-    point to point before start of each maneuver as attitude control is not simulated. Therefore,
-    a continuous version of the attitude UKF cannot be tested with the trajectory UKF.
+    point to point before start of each maneuver. This is due to the difficulty of simulating 
+    true attitude control behavior. Therefore, a continuous version of the attitude UKF 
+    cannot be tested along with the trajectory UKF.
     """
     sectionStartTime = missionStartDate
     sectionEndTime = None
@@ -145,4 +148,38 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
 
     return missionParams
 
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-d", "--opnavdataset", help = "path to OpNav Dataset root folder")
+    ap.add_argument("-r", "--samplingRate", help = "sampling rate of ephemeris/traj to seconds. Eg: if data is in 1-min interval, -r=60")
+    ap.add_argument("-o", "--outfile", help = "name of output csv file (include .csv); will be created in root/attitude/")
+    args = vars(ap.parse_args())
 
+    INITIAL_TRAJ_PATH = os.path.join(args['opnavdataset'], 'trajectory', '1min_stk_active_sampled_traj.csv')
+    INITIAL_VNC_PATH = os.path.join(args['opnavdataset'], 'attitude', '1min_sampled_vncearth_stk_active_attitude.csv')
+    INITIAL_ATT_PATH = os.path.join(args['opnavdataset'], 'attitude', args['outfile'])
+    SAMPLED_MOON_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
+    SAMPLED_SUN_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
+    MANEUVER_CHECKPOINT_PATH = os.path.join(args['opnavdataset'], 'maneuvers','checkpoints.csv')
+    START_END_DATES_PATH = os.path.join(args['opnavdataset'], 'startEndDates.csv')
+
+    simSamplingRate = float(args['samplingRate'])
+    
+    moonDf = pd.read_csv(SAMPLED_MOON_PATH)
+    # sunDf = pd.read_csv(SAMPLED_SUN_PATH)
+    trajDf = pd.read_csv(INITIAL_TRAJ_PATH)
+    vncDf = pd.read_csv(INITIAL_VNC_PATH)
+    manCheckDf = pd.read_csv(MANEUVER_CHECKPOINT_PATH)
+    startEndDatesDf = pd.read_csv(START_END_DATES_PATH)
+
+    # Obtain mission timeline (in seconds)
+    missionStartDate, missionEndDate = getMissionTimeline(startEndDatesDf)    
+    maneuversDict = extractCheckpoints(manCheckDf, missionEndDate)
+    # print(missionStartDate, missionEndDate, simSamplingRate)
+    missionTimeline = np.arange(missionStartDate, missionEndDate+simSamplingRate, simSamplingRate)
+
+    # Obtain mission attitude data
+    # Uncomment the following 3 lines to generate attitude data for simulation (eg. if you have a new dataset, if you want a different spin rate)...
+    missionParams = createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline)
+    attDf = pd.DataFrame.from_dict(missionParams)
+    attDf.to_csv(os.path.join(INITIAL_ATT_PATH), index=False)

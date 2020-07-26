@@ -8,12 +8,6 @@ from sim import isOrthogonal, attitudeMatrix
 from attitudeSim import getCameraVectors, rotateVector
 
 
-"""
-Run python createCZML.py > temp.text
-Remove the last comma from temp.text (for the last row, z coordinate)
-copy everything and paste into CislunarExplorersCesium/Cesium-1.66/Apps/cislunar.czml in the 'cartesian' section.
-Set start and end dates acccordingly.
-"""
 def output_CZML(trajDfpath, attDfPath, original_csv_timescale_in_seconds, startDate, endDate):
     """
     [original_csv_timescale_in_seconds] is used to label each row with the right time (in seconds), where the
@@ -407,8 +401,10 @@ def output_CZML(trajDfpath, attDfPath, original_csv_timescale_in_seconds, startD
 
 
 if __name__ == "__main__":
+    # The sampled trajectory CSV
     INITIAL_TRAJ_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'trajectory', '1min_stk_active_sampled_traj.csv')
-    INITIAL_ATT_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'attitude', 'att.csv')
+    # Attitude CSV based on maneuver data (getManeuver.py)
+    INITIAL_ATT_PATH = os.path.join('D:', 'OpNav', 'data', 'CislunarFullTraj_60secs', 'attitude', 'discrete_att_with_maneuver_nutations.csv')
 
     startDate = "2018-10-09T16:15:34.0000Z"
     endDate = "2019-08-12T02:15:34.0000Z"

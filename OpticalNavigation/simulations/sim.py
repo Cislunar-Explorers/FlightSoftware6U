@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     INITIAL_TRAJ_PATH = os.path.join(args['opnavdataset'], 'trajectory', '1min_stk_active_sampled_traj.csv')
     INITIAL_VNC_PATH = os.path.join(args['opnavdataset'], 'attitude', '1min_sampled_vncearth_stk_active_attitude.csv')
-    INITIAL_ATT_PATH = os.path.join(args['opnavdataset'], 'attitude', 'att.csv')
+    INITIAL_ATT_PATH = os.path.join(args['opnavdataset'], 'attitude', 'discrete_att_with_maneuver_nutations.csv')
     SAMPLED_MOON_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
     SAMPLED_SUN_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
     MANEUVER_CHECKPOINT_PATH = os.path.join(args['opnavdataset'], 'maneuvers','checkpoints.csv')

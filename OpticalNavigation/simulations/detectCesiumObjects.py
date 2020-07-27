@@ -4,6 +4,8 @@ import cv2
 import argparse
 import copy
 import math
+import os
+from tqdm import tqdm
 
 from core.find import round_up_to_odd
 from core.preprocess import rectilinearToStereographicProjection
@@ -90,7 +92,55 @@ def detectAndReplaceCesiumSun(image, path):
         return image[padSize:-padSize, padSize:-padSize,:], x - padSize, y - padSize,  6
     return None
 
-# TODO: Add Sun and Earth Detection
+"""
+Use this function for detecting the yellow Cesium Sun and replacing it with a new Sun image.
+Precondition: Cesium Sun is generated using the following settings
+in GenerateCesium.html:
+scene.sun.glowFactor = 1;
+scene.sun.sunBloom = true;
+[image]: cv2 image where we are looking for the Sun
+[path]: new Sun image to replace the current Sun image with
+Returns:
+image with new Sun, sun X and Y pos, sun radius (of new Sun)
+"""
+def detectCesiumSun(image):
+    boundaries = CesiumSun_HSV_BOUNDARIES
+    # Replacement sun
+    padSize = int(max(image.shape[0]/2, image.shape[1]/2))
+    image = np.pad(image, [(padSize, padSize), (padSize, padSize), (0,0)], mode='constant', constant_values=0)
+
+    original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    output = None
+    # Note: Calculates mask for one boundary only
+    for lower,upper in boundaries:
+        lower = np.array(lower, dtype = "uint8")
+        upper = np.array(upper, dtype = "uint8")
+
+        mask = cv2.inRange(original_hsv, lower, upper)
+        output = cv2.bitwise_and(original_hsv, original_hsv, mask = mask)
+
+    gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
+    # Increase gray mask brightness for non-black pixels only
+    gray[gray > 1] = 255
+
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=15, minRadius=1, maxRadius=0)
+    if circles is not None:
+        circle = circles[0][0]
+        x = int(circle[0])
+        y = int(circle[1])
+        r = int(circle[2])
+        # Clear out current sun pixels
+        # image[y-y:y+r, x-r:x+r] = 0
+        # Plot new sun
+        # newRad = int(padSize/2)
+        # print(y-newRad,y+newRad, x-newRad,x+newRad)
+        # image[y-newRad:y+newRad, x-newRad:x+newRad] = newSun
+        # cv2.circle(image, (x, y), r, (255, 255, 255), 2)
+        # cv2.circle(image, (x, y), 2, (0, 0, 255), 1)
+        return image[padSize:-padSize, padSize:-padSize,:], x - padSize, y - padSize,  r
+    return None
+
 """
 Use this function for detecting the Cesium Earth.
 Precondition: Cesium Moon is generated using the following settings
@@ -109,6 +159,9 @@ def detectCesiumEarth(image):
     boundaries = CesiumEarth_HSV_BOUNDARIES
     # Replacement sun
     upsampledImage, upsampleFactor = cv2.pyrUp(cv2.pyrUp(cv2.pyrUp(image))), 2*2*2
+
+    padSize = int(max(upsampledImage.shape[0]/2, upsampledImage.shape[1]/2))
+    upsampledImage = np.pad(upsampledImage, [(padSize, padSize), (padSize, padSize), (0,0)], mode='constant', constant_values=0)
 
     original_hsv = cv2.cvtColor(upsampledImage, cv2.COLOR_BGR2HSV)
 
@@ -131,22 +184,21 @@ def detectCesiumEarth(image):
 
     original_median_blurred = cv2.medianBlur(gray, round_up_to_odd(1))
 
-    circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=30, minRadius=1, maxRadius=0)
-    if circles is not None:
-        circle = circles[0][0]
-        x = int((circle[0])/upsampleFactor) # The detected circle is always a bit off-center
-        y = int((circle[1])/upsampleFactor)
-        r = int(circle[2]/upsampleFactor)
+    up_pad_circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=30, minRadius=1, maxRadius=0)
+    if up_pad_circles is not None:
+        up_pad_circle = up_pad_circles[0][0]
+        x = int((up_pad_circle[0]-padSize)/upsampleFactor) # The detected circle is always a bit off-center
+        y = int((up_pad_circle[1]-padSize)/upsampleFactor)
+        r = int((up_pad_circle[2])/upsampleFactor)
         # r = int(r * 1.5) # The detected circle is always a bit smaller than is should be
-        x1 = int(circle[0])
-        y1 = int(circle[1])
-        r1 = int(circle[2])
+        # x1 = int(up_pad_circle[0])
+        # y1 = int(up_pad_circle[1])
+        # r1 = int(up_pad_circle[2])
         cv2.circle(image, (x, y), r, (255, 0, 0), 2)
         cv2.circle(image, (x, y), 2, (0, 0, 255), 1)
-        uph, upw, _ = upsampledImage.shape
-        print(x, y, r)
+        # uph, upw, _ = upsampledImage.shape
         return image, x, y, r
-    return None, None, None, None
+    return None
 
 """
 Use this function for detecting the Cesium Moon with red texture.
@@ -160,6 +212,9 @@ def detectCesiumRedMoon(image):
     boundaries = CesiumRedMoon_HSV_BOUNDARIES
     # Replacement sun
     upsampledImage, upsampleFactor = cv2.pyrUp(cv2.pyrUp(cv2.pyrUp(image))), 2*2*2
+
+    padSize = int(max(upsampledImage.shape[0]/2, upsampledImage.shape[1]/2))
+    upsampledImage = np.pad(upsampledImage, [(padSize, padSize), (padSize, padSize), (0,0)], mode='constant', constant_values=0)
 
     original_hsv = cv2.cvtColor(upsampledImage, cv2.COLOR_BGR2HSV)
 
@@ -187,42 +242,95 @@ def detectCesiumRedMoon(image):
 
     original_median_blurred = cv2.medianBlur(gray_blurred, round_up_to_odd(11))
 
-    circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=30, minRadius=1, maxRadius=0)
-    if circles is not None:
-        circle = circles[0][0]
-        print(circle)
-        x = int((circle[0])/upsampleFactor) # The detected circle is always a bit off-center
-        y = int((circle[1])/upsampleFactor)
-        r = int(circle[2]/upsampleFactor)
-        x1 = int(circle[0])
-        y1 = int(circle[1])
-        r1 = int(circle[2])
-        cv2.circle(upsampledImage, (x*upsampleFactor, y*upsampleFactor), r*upsampleFactor, (255, 255, 255), 1)
-        cv2.circle(upsampledImage, (x*upsampleFactor, y*upsampleFactor), 2, (0, 255, 255), 1)
-        uph, upw, _ = upsampledImage.shape
-        return upsampledImage[max(0,y1-(r1+100)):min(y1+(r1+100),uph), max(x1-(r1+100),0):min(x1+(r1+100), upw)], x, y, r
-    return None, None, None, None
+    up_pad_circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=30, minRadius=1, maxRadius=0)
+    if up_pad_circles is not None:
+        up_pad_circle = up_pad_circles[0][0]
+        x = int((up_pad_circle[0]-padSize)/upsampleFactor) # The detected circle is always a bit off-center
+        y = int((up_pad_circle[1]-padSize)/upsampleFactor)
+        r = int((up_pad_circle[2])/upsampleFactor)
+        # r = int(r * 1.5) # The detected circle is always a bit smaller than is should be
+        # x1 = int(up_pad_circle[0])
+        # y1 = int(up_pad_circle[1])
+        # r1 = int(up_pad_circle[2])
+        cv2.circle(image, (x, y), r, (255, 0, 0), 2)
+        cv2.circle(image, (x, y), 2, (0, 0, 255), 1)
+        # uph, upw, _ = upsampledImage.shape
+        return image, x, y, r
+    return None
+
+def obtainCesiumMeasurements(path):
+    """
+    - Given a set of images organized by iterations, this function returns set of measurements
+    - removes blank images
+    [path]: location of iterations folder
+    """
+    currIter = 0
+    iterPath = os.path.join(path, f'{currIter}')
+    print(iterPath)
+
+    def findObjectsInCamera(cam, camPath):
+        for filename in os.listdir(camPath):
+            imagePath = os.path.join(camPath, filename)
+            image = cv2.imread(imagePath)
+            if np.min(image) == np.max(image) == 0:
+                os.remove(imagePath)
+                continue
+            stereoImage = rectilinearToStereographicProjection(image)
+            moonRes = detectCesiumRedMoon(copy.copy(stereoImage))
+            sunRes = detectCesiumSun(copy.copy(stereoImage))
+            earthRes = detectCesiumEarth(copy.copy(stereoImage))
+
+            if moonRes is not None:
+                (_, moonX, moonY, moonR) = moonRes
+                cv2.circle(stereoImage, (moonX, moonY), moonR, (255, 255, 255), 2)
+                cv2.circle(stereoImage, (moonX, moonY), 2, (0, 0, 255), 1)
+            if earthRes is not None:
+                (_, earthX, earthY, earthR) = earthRes
+                cv2.circle(stereoImage, (earthX, earthY), earthR, (255, 0, 0), 2)
+                cv2.circle(stereoImage, (earthX, earthY), 2, (0, 0, 255), 1)
+            if sunRes is not None:
+                (_, sunX, sunY, sunR) = sunRes
+                cv2.circle(stereoImage, (sunX, sunY), sunR, (0, 255, 255), 2)
+                cv2.circle(stereoImage, (sunX, sunY), 2, (0, 0, 255), 1)
+            cv2.imshow(f'Stereographic corrected {filename}', stereoImage)
+            cv2.waitKey(0)
+            cv2.destroyWindow(f'Stereographic corrected {filename}')
+
+    while os.path.exists(iterPath):
+        cam1Path = os.path.join(iterPath, f'1')
+        cam2Path = os.path.join(iterPath, f'2')
+        cam3Path = os.path.join(iterPath, f'3')
+        # Check if all camera views exists
+        if not os.path.exists(cam1Path) or not os.path.exists(cam2Path) or not os.path.exists(cam3Path):
+            continue
+        print(iterPath)
+        findObjectsInCamera(1, cam1Path)
+        findObjectsInCamera(2, cam2Path)
+        findObjectsInCamera(3, cam3Path)
+
+        currIter += 1
+        iterPath = os.path.join(path, f'{currIter}')
+
+        
 
 if __name__ == "__main__":
     """
     Run "python FilterCesiumSun.py -i=<IMAGE>" to test this module
     """
     ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--image", help = "path to the base image")
+    ap.add_argument("-p", "--path", help = "path to the iterations folder")
     args = vars(ap.parse_args())
+
+    obtainCesiumMeasurements(args['path'])
     
-    true_image = cv2.imread(args["image"])
-    stereoImage = rectilinearToStereographicProjection(true_image)
+    # true_image = cv2.imread(args["path"])
+    # stereoImage = rectilinearToStereographicProjection(true_image)
     # img = detectCesiumSun(true_image, TEMPLATE_SUN_PATH)  
     # img, _, _, _ = detectCesiumRedMoon(true_image)      
-    img, _, _, _ = detectCesiumEarth(stereoImage)    
-    img2, _, _, _ = detectCesiumEarth(true_image)        
-    if img is not None:
-        cv2.imshow("Result Stereographic", img)
-        cv2.imshow("Result Rectilinear", img2)
-        cv2.waitKey(0)
-        cv2.imwrite("stereographic.png", img)
-        cv2.imwrite("rectilinear.png", img2)
-    else:
-        print("NO circle")
+    # img, _, _, _ = detectCesiumRedMoon(stereoImage)    
+    # if img is not None:
+    #     cv2.imshow("Result Stereographic", img)
+    #     cv2.waitKey(0)
+    # else:
+    #     print("NO circle")
 

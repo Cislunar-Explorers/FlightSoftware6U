@@ -31,14 +31,7 @@ from animations import LiveMultipleTrajectoryPlot
 import argparse
 from getManeuvers import extractCheckpoints, getMissionTimeline, createDiscreteAttitudeManeuvers
 from datetime import datetime
-
-def attitudeMatrix(quaternion):
-    q1, q2, q3, q4 = quaternion
-    i, j, k, r = q1, q2, q3, q4
-    s = 1.0/(np.linalg.norm(quaternion)**2)
-    return np.array([[1-2*s*(j**2+k**2), 2*s*(i*j-k*r), 2*s*(i*k+j*r)], 
-                     [2*s*(i*j+k*r), 1-2*s*(i*i+k*k), 2*s*(j*k-i*r)], 
-                     [2*s*(i*k-j*r), 2*s*(j*k+i*r), 1-2*s*(i*i+j*j)]], dtype=np.float64)
+from core.ukf import attitudeMatrix
 
 def isOrthogonal(a, b):
     err = abs((a*b).sum())

@@ -36,9 +36,11 @@ def getCameraVectors(posY, posZ):
     camera1vector = rotateVector(camera2vector, posZ, -60)
     camera3vector = rotateVector(camera2vector, posZ, 60)
     return camera1vector, camera2vector, camera3vector
-##############################
 
-if __name__ == "__main__":
+def simulateSyntheticAttitudeData():
+    """
+    Simulates synthetic quaternions generated with nutation damping physics
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("-a", "--kickduration", help = "how long is the cold gas thruster firing")
     args = vars(ap.parse_args())
@@ -132,4 +134,116 @@ if __name__ == "__main__":
 
     liveAtt.close()
     liveOmegas.close()
+
+def simulateCesiumFixedViewpoints():
+    """
+    Displays the Up and Foward axis used in the Cesium sim for image synthesis.
+    This is only for debugging purposes.
+    """
+    liveAtt = LiveMultipleAttitudePlot(bounds=[-1, 1, -1, 1, -1, 1])
+
+    # arrowIds = [
+    #     # elevation 0 (Cam 1)
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 0'),
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 1'),
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 2'),
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 3'),
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 4'),
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 5'),
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 6'),
+    #     liveAtt.addArrowFromOrigin(color='r', label='C1 7'),
+
+    #     # elevation -60 (Cam 2)
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 0'),
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 1'),
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 2'),
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 3'),
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 4'),
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 5'),
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 6'),
+    #     liveAtt.addArrowFromOrigin(color='g', label='C2 7'),
+
+    #     # elevation 60 (Cam 3)
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 0'),
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 1'),
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 2'),
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 3'),
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 4'),
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 5'),
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 6'),
+    #     liveAtt.addArrowFromOrigin(color='b', label='C3 7')
+    # ]
+
+    # Forward axis
+    # elevation 0 (Cam 1)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F0', alpha=0.5), 0, 0, 1)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F1', alpha=0.5), 0.7, 0, 0.7)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F2', alpha=0.5), 1, 0, 0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F3', alpha=0.5), 0.7, 0, -0.7)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F4', alpha=0.5), 0, 0, -1)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F5', alpha=0.5), -0.7, 0, -0.7)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F6', alpha=0.5), -1, 0, 0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='F7', alpha=0.5), -0.7, 0, 0.7)
+
+    # Up axis
+    # elevation 0 (Cam 1)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='r', label='U*', ls='--', alpha=0.5), 0,1,0)
+
+    # Forward Axis
+    # elevation -60 (Cam 2)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F0', alpha=0.5), 0,-0.9,0.5)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F1', alpha=0.5), 0.4,-0.9,0.4)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F2', alpha=0.5), 0.5,-0.9,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F3', alpha=0.5), 0.4,-0.9,-0.4)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F4', alpha=0.5), 0,-0.9,-0.5)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F5', alpha=0.5), -0.4,-0.9,-0.4)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F6', alpha=0.5), -0.5,-0.9,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='F7', alpha=0.5), -0.4,-0.9,0.4)
+
+    # Up Axis
+    # elevation -60 (Cam 2)
+    # Scaled up by factor of 2 so they are easy to differentiate
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U0', ls='-.', alpha=0.5), 0,0.5*2,0.9*2)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U1', ls='-.', alpha=0.5), 0.6*2,0.5*2,0.6*2)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U2', ls='-.', alpha=0.5), 0.9*2,0.5*2,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U3', ls='-.', alpha=0.5), 0.6*2,0.5*2,-0.6*2)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U4', ls='-.', alpha=0.5), 0,0.5*2,-0.9*2)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U5', ls='-.', alpha=0.5), -0.6*2,0.5*2,-0.6*2)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U6', ls='-.', alpha=0.5), -0.9*2,0.5*2,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='g', label='U7', ls='-.', alpha=0.5), -0.6*2,0.5*2,0.6*2)
+
+    # Forward Axis
+    # elevation 60 (Cam 3)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F0', alpha=0.5), 0,0.9,0.5)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F1', alpha=0.5), 0.4,0.9,0.4)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F2', alpha=0.5), 0.5,0.9,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F3', alpha=0.5), 0.4,0.9,-0.4)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F4', alpha=0.5), 0, 0.9, -0.5)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F5', alpha=0.5), -0.4,0.9,-0.4)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F6', alpha=0.5), -0.5,0.9,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='F7', alpha=0.5), -0.4,0.9,0.4)
+
+    # Up Axis
+    # elevation 60 (Cam 3)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U0', ls='--', alpha=0.5), 0,0.5,-0.9)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U1', ls='--', alpha=0.5), -0.6,0.5,-0.6)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U2', ls='--', alpha=0.5), -0.9,0.5,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U3', ls='--', alpha=0.5), -0.6,0.5,0.6)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U4', ls='--', alpha=0.5), 0,0.5,0.9)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U5', ls='--', alpha=0.5), 0.6,0.5,0.6)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U6', ls='--', alpha=0.5), 0.9,0.5,0)
+    liveAtt.updateOriginArrow(liveAtt.addArrowFromOrigin(color='b', label='U7', ls='--', alpha=0.5), 0.6,0.5,-0.6)
+
+    while(True):
+        liveAtt.render(text="Cesium Viewpoints",delay=0.001)
+
+    liveAtt.close()
+    liveOmegas.close()
+
+
+
+##############################
+
+if __name__ == "__main__":
+    simulateCesiumFixedViewpoints()
 

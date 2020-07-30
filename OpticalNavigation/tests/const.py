@@ -13,6 +13,30 @@ class MatlabTestCameraParameters:
     dcam13 = -60
     dcam23 = -120
 
+class MatlabTestCameraParameters:
+    # Camera constants
+    # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
+    hFov = 62.2
+    vFov = 48.8
+    hPix = 3280
+    vPix = 813
+    #Angular Separation Between Cameras (degrees)
+    dcam12 = 60
+    dcam13 = -60
+    dcam23 = -120
+
+class CesiumTestCameraParameters:
+    # Camera constants
+    # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
+    hFov = 62.2
+    vFov = 48.8
+    hPix = 640
+    vPix = 480
+    #Angular Separation Between Cameras (degrees)
+    dcam12 = -60 # Cam 2 looks down
+    dcam13 = 60 # Cam 3 looks up
+    dcam23 = 120
+
 TEST_DATA_DIR = os.path.join('D:', 'OpNav')
 
 TEST_ECLIPSEANDCRESCENTIMAGES = os.path.join(TEST_DATA_DIR, 'data','EclipseAndCrescentImages')

@@ -86,9 +86,9 @@ def extractMeasurements(circlesDf, measurementDir):
                                                             )
                         # Keep most direct relative distances
                         # Average all detected radii
-                        measurement[0] = min(measurement[0], m[0])
-                        measurement[1] = min(measurement[1], m[1])
-                        measurement[2] = min(measurement[2], m[2])
+                        measurement[0] = m[0]
+                        measurement[1] = m[1]
+                        measurement[2] = m[2]
                         measurement[3] = min(measurement[3], m[3])
                         measurement[4] = min(measurement[4], m[4])
                         measurement[5] = min(measurement[5], m[5])
@@ -127,7 +127,7 @@ def extractMeasurements(circlesDf, measurementDir):
 
     # for index, row in circlesDf.iterrows():
     df = pd.DataFrame.from_dict(measurements)
-    df.to_csv(os.path.join(measurementDir, 'meas_min.csv'), index=False)
+    df.to_csv(os.path.join(measurementDir, 'meas.csv'), index=False)
         
 
 if __name__ == "__main__":

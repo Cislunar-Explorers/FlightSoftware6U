@@ -44,7 +44,7 @@ def extractCheckpoints(checkPointsDf, missionEndDate):
     
     return maneuvers
 
-def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline):
+def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline, gyro_t):
     """
     Creates attitude synthetic data for each maneuver using the VNC (Earth) attitude quaternions
     and sythentic attitude data propogated using nutation damping physics.
@@ -69,13 +69,13 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
     cameradt = 60 # seconds
     coldGasThrustKickTime = 0 # seconds, beginning of each propagation sequence
     coldGasKickDuration = float(10)
-    omegaInit = [0.5, 0.5, 0.5, 0., 0., 0.]
+    omegaInit = [3, 0.1, 0.1, 0., 0., 0.]
     biasInit=[0., 0., 0.]
-    gyroSampleCount = 4.
+    gyroSampleCount = 1.0/gyro_t
 
     gyroNoiseSigma = 1.e-7
     gyroSigma = 1.e-10
-    gyro_t = 1.0 / gyroSampleCount
+    # gyro_t = 1.0/gyroSampleCount
     # meas_sigma = 8.7e-4
 
     newData = False
@@ -95,7 +95,7 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
                 currentManeuver += 1
                 # Uncomment this line if you want the satellite to spin for the entire propagation step
                 # propEndTime = maneuversDict['startTime'][currentManeuver]
-                propEndTime = min(propStartTime + 1000, missionEndDate)
+                propEndTime = min(propStartTime + 200, missionEndDate)
                 newData = False
         else:
             isManeuver = False
@@ -151,7 +151,9 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-d", "--opnavdataset", help = "path to OpNav Dataset root folder")
+    ap.add_argument("-s", "--startendcsv", help = "name of CSV file that contains start and end date to generate data (like root/startEndDates.csv)")
     ap.add_argument("-r", "--samplingRate", help = "sampling rate of ephemeris/traj to seconds. Eg: if data is in 1-min interval, -r=60")
+    ap.add_argument("-g", "--gyro_t", help = "time delta (seconds) between each gyro measurement")
     ap.add_argument("-o", "--outfile", help = "name of output csv file (include .csv); will be created in root/attitude/")
     args = vars(ap.parse_args())
 
@@ -161,7 +163,7 @@ if __name__ == "__main__":
     SAMPLED_MOON_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
     SAMPLED_SUN_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
     MANEUVER_CHECKPOINT_PATH = os.path.join(args['opnavdataset'], 'maneuvers','checkpoints.csv')
-    START_END_DATES_PATH = os.path.join(args['opnavdataset'], 'startEndDates.csv')
+    START_END_DATES_PATH = args['startendcsv']#os.path.join(args['opnavdataset'], 'startEndDates.csv')
 
     simSamplingRate = float(args['samplingRate'])
     
@@ -180,6 +182,6 @@ if __name__ == "__main__":
 
     # Obtain mission attitude data
     # Uncomment the following 3 lines to generate attitude data for simulation (eg. if you have a new dataset, if you want a different spin rate)...
-    missionParams = createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline)
+    missionParams = createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline, float(args['gyro_t']))
     attDf = pd.DataFrame.from_dict(missionParams)
     attDf.to_csv(os.path.join(INITIAL_ATT_PATH), index=False)

@@ -28,7 +28,7 @@ from utils.struct import (
 )
 
 # Necessary modes to implement
-# BootUp, Restart, Normal, Eclipse, Safety, Electrolysis, Propulsion,
+# BootUp, Restart, Normal, Eclipse, Safety, Propulsion,
 # Attitude Adjustment, Transmitting, OpNav (image processing)
 # TestModes
 
@@ -87,10 +87,6 @@ class FlightMode:
 
         elif flight_mode_id == FMEnum.Boot.value:
             pass
-
-        #elif flight_mode_id == FMEnum.Electrolysis.value:
-        #    if self.task_completed is True:
-        #        self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
 
         elif flight_mode_id == FMEnum.Restart.value:
             if self.task_completed is True:

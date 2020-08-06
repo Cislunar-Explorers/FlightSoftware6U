@@ -58,11 +58,10 @@ class FMEnum(IntEnum):
     LowBatterySafety = 3
     Safety = 4
     OpNav = 5
-    Electrolysis = 6
-    Maneuver = 7
-    SensorMode = 8  # Send command directly to sensor
-    TestMode = 9  # Execute specified test
-    CommsMode = 10
+    Maneuver = 6
+    SensorMode = 7  # Send command directly to sensor
+    TestMode = 8  # Execute specified test
+    CommsMode = 9
 
 
 @unique
@@ -99,15 +98,6 @@ class SafetyCommandEnum(IntEnum):
 class OpNavCommandEnum(IntEnum):
     RunOpNav = 0  # no args
     SetInterval = 1  # arg=interval in minutes packed as an int
-
-
-@unique
-class ElectrolysisCommandEnum(IntEnum):
-    SetLowCrackingPressure = 0
-    SetIdealCrackingPressure = 1
-    SetHighCrackingPressure = 2
-    RunElectrolysis = 3
-    TurnOffElectrolysis = 4
 
 
 @unique

@@ -8,6 +8,7 @@ from utils.constants import (  # noqa F401
     EXIT_LOW_BATTERY_MODE_THRESHOLD,
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
+    OPNAV_INTERVAL,
     BOOTUP_SEPARATION_DELAY,
     FMEnum,
     NormalCommandEnum,
@@ -58,15 +59,15 @@ class FlightMode:
         flight_mode_id = self.flight_mode_id
 
         # Burn command queue logic
-        # TODO implment need_to_burn function in ADC
+        # TODO implment need_to_burn function in ADC driver
         if self.parent.pressure_sensor.need_to_burn():
             self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
-
+            return
 
         # Check if opnav needs to be run
         curr_time = datetime.now()
         time_diff = curr_time - self.parent.last_opnav_run
-        if time_diff.seconds * 60 > OPNAV_INTERVAL: # implement interval(in minutes) in constants.py
+        if time_diff.seconds * 60 > OPNAV_INTERVAL:
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
         elif flight_mode_id == FMEnum.LowBatterySafety.value:

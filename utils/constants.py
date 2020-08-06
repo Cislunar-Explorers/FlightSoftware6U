@@ -19,6 +19,9 @@ LOW_CRACKING_PRESSURE = 10.0
 HIGH_CRACKING_PRESSURE = 20.0
 IDEAL_CRACKING_PRESSURE = 15.0
 
+# OpNav timing interval in minutes
+OPNAV_INTERVAL = 60
+
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
     os.path.expanduser("~"), ".cislunar-flight-software"

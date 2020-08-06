@@ -71,7 +71,6 @@ class Gomspace:
     def solenoid(self, spike, hold, delay=0):
         """Spikes the solenoid at 20V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
         self.gom.solenoid(spike, hold, delay)
-        # self.electrolysis = False
 
     def glowplug(self, duration, delay=0):
         """Pulses the glowplug for [duration] milliseconds with after a delay of [delay] seconds"""

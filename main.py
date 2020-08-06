@@ -58,8 +58,8 @@ class MainSatelliteThread(Thread):
     # TODO
     def init_sensors(self):
         self.gom = Gomspace()
-        self.pressure_sensor = PressureSensor() # pass through self so need_to_burn function
-                                                # (to be made) in pressure_sensor can access burn queue
+        self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
+                                                # in pressure_sensor (to be made) can access burn queue"""
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)

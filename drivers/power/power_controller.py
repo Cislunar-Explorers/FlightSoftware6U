@@ -81,8 +81,8 @@ class Outputs(Enum):
     glowplug     = OUT_4
     solenoid     = OUT_5
     electrolyzer = OUT_6
-    heater       = OUT_HEATER
-    switch       = OUT_SWITCH
+    #heater       = OUT_HEATER  #Not included for remote testing purposes
+    #switch       = OUT_SWITCH
 
 
 # Outputs on board:
@@ -106,6 +106,12 @@ class PowerInputError(PowerException):
     pass
 
 class PowerReadError(PowerException):
+    pass
+
+class PowerWriteError(PowerException):
+    pass
+
+class PowerOutputError(PowerException):
     pass
 
 _ = ps._
@@ -133,6 +139,7 @@ class Power():
 
     # writes byte list [values] with command register [cmd]
     # raises: ValueError if cmd or values are not bytes
+    # TODO: Implement PowerWriteError once we switch to new I2C library
     def write(self, cmd, values):
         self._pi.i2c_write_device(self._dev, bytearray([cmd]+values))
 
@@ -212,12 +219,11 @@ class Power():
             raise PowerInputError("Invalid Input: value must be 0 or 1")
         else:
             channel_num = None
-            for i in Outputs:
-                if i.name == channel:
-                    channel_num = i.value
+            for out in Outputs:
+                if Outputs(out).name == channel:
+                    channel_num = Outputs(out).value
             d = toBytes(delay, 2)
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
-
 
     # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV. 
     # Takes effect when MODE = 2, See SET_PV_AUTO.

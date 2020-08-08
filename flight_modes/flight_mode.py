@@ -1,5 +1,6 @@
 import gc
 from time import sleep
+from datetime import datetime
 import os
 
 from utils.constants import (  # noqa F401
@@ -7,6 +8,7 @@ from utils.constants import (  # noqa F401
     EXIT_LOW_BATTERY_MODE_THRESHOLD,
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
+    OPNAV_INTERVAL,
     BOOTUP_SEPARATION_DELAY,
     FMEnum,
     NormalCommandEnum,
@@ -27,7 +29,7 @@ from utils.struct import (
 )
 
 # Necessary modes to implement
-# BootUp, Restart, Normal, Eclipse, Safety, Electrolysis, Propulsion,
+# BootUp, Restart, Normal, Eclipse, Safety, Propulsion,
 # Attitude Adjustment, Transmitting, OpNav (image processing)
 # TestModes
 
@@ -36,6 +38,7 @@ no_transition_modes = [
     FMEnum.TestMode.value,
     FMEnum.CommsMode.value,
 ]
+
 
 
 class FlightMode:
@@ -51,9 +54,23 @@ class FlightMode:
         self.parent = parent
         self.task_completed = False
 
+    @classmethod
     def update_state(self):
         flight_mode_id = self.flight_mode_id
-        if flight_mode_id == FMEnum.LowBatterySafety.value:
+
+        # Burn command queue logic
+        # TODO implment need_to_burn function in ADC driver
+        if self.parent.pressure_sensor.need_to_burn():
+            self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
+            return
+
+        # Check if opnav needs to be run
+        curr_time = datetime.now()
+        time_diff = curr_time - self.parent.last_opnav_run
+        if time_diff.seconds * 60 > OPNAV_INTERVAL:
+            self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
+
+        elif flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
                 self.gom.read_battery_percentage()
                 >= EXIT_LOW_BATTERY_MODE_THRESHOLD
@@ -71,10 +88,6 @@ class FlightMode:
 
         elif flight_mode_id == FMEnum.Boot.value:
             pass
-
-        elif flight_mode_id == FMEnum.Electrolysis.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
 
         elif flight_mode_id == FMEnum.Restart.value:
             if self.task_completed is True:
@@ -94,7 +107,7 @@ class FlightMode:
         else:
             raise UnknownFlightModeException(flight_mode_id)
 
-    @classmethod
+
     def register_commands(cls):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
@@ -207,35 +220,6 @@ class RestartMode(FlightMode):
     # ever running
     def run_mode(self):
         pass
-
-
-# Electrolyze until pressure in the tank reaches IDEAL_CRACKING_PRESSURE
-# TODO determine correct values based on testing
-# TODO determine which of cracking pressures to change on
-# NOTE: if we go with LOW_CRACKING_PRESSURE ensure that pressure
-# doesn't dip below in interval between exiting
-# electrolysis and hitting ignition
-class ElectrolysisMode(FlightMode):
-
-    flight_mode_id = FMEnum.Electrolysis.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.pressure_sensor = parent.pressure_sensor
-        self.gom = parent.gom
-
-    # Turn electrolysis on if propellant tank is below IDEAL_CRACKING_PRESSURE
-    # If we have reached this cracking pressure, then turn electrolysis off
-    # and set task_completed to True
-    def run_mode(self):
-        # If electrolyzing is turned on, check to see if I should turn it off
-        curr_pressure = self.pressure_sensor.read_value()
-        if curr_pressure >= IDEAL_CRACKING_PRESSURE:
-            self.gom.set_electrolysis(False)
-            self.completed_task()
-        else:
-            self.gom.set_electrolysis(True)
-
 
 class LowBatterySafetyMode(FlightMode):
 

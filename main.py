@@ -2,6 +2,7 @@ import os
 import sys
 from threading import Thread
 from time import sleep
+from datetime import datetime
 from queue import Queue
 import signal
 
@@ -11,6 +12,9 @@ from utils.constants import (
     LOG_DIR,
     CISLUNAR_BASE_DIR,
     DB_FILE,
+    LOW_CRACKING_PRESSURE,
+    HIGH_CRACKING_PRESSURE,
+    IDEAL_CRACKING_PRESSURE
 )
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
@@ -31,8 +35,10 @@ class MainSatelliteThread(Thread):
         super().__init__()
         self.command_queue = Queue()
         self.commands_to_execute = []
+        self.burn_queue = Queue()
         self.init_comms()
         self.init_sensors()
+        self.last_opnav_run = datetime.now() # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.attach_sigint_handler()  # FIXME
         if os.path.isdir(self.log_dir):
@@ -52,8 +58,8 @@ class MainSatelliteThread(Thread):
     # TODO
     def init_sensors(self):
         self.gom = Gomspace()
-        self.pressure_sensor = PressureSensor()
-
+        self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
+                                                # in pressure_sensor (to be made) can access burn queue"""
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)
@@ -63,7 +69,14 @@ class MainSatelliteThread(Thread):
 
     # TODO
     def poll_inputs(self):
-        pass
+        # Switch on/off electrolyzer
+        curr_pressure = self.pressure_sensor.read_pressure()
+        if curr_pressure < IDEAL_CRACKING_PRESSURE:
+            if not self.gom.is_electrolyzing():
+                self.gom.set_electrolysis(True)
+        else:
+            self.gom.set_electrolysis(False)
+
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.flight_mode = build_flight_mode(self, new_flight_mode_id)

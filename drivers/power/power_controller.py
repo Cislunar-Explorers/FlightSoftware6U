@@ -219,9 +219,9 @@ class Power():
             raise PowerInputError("Invalid Input: value must be 0 or 1")
         else:
             channel_num = None
-            for i in Outputs:
-                if Outputs(i).name == channel:
-                    channel_num = Outputs(i).value
+            for out in Outputs:
+                if Outputs(out).name == channel:
+                    channel_num = Outputs(out).value
             d = toBytes(delay, 2)
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
 

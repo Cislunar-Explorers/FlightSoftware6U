@@ -34,28 +34,100 @@ measurements, gyroscope measurements, main thruster fire sequences and cold-gas 
 fire sequences at specified times. The output will be the current position, velocity, 
 attitude and angular velocity estimates. 
 """
-def process(startTime, duration, moonTable, sunTable, initPosVel, initOmega, initQuat, camDir, gyroCSV):
+def process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState, initQuaternionState, gyroVars):
     """
-    [startTime] start time index for ephemeris tables
-    [duration] how long the observation mode lasted
-    [moonTable, sunTable] full ephemeris tables
-    [initPosVel] previous position and velocity estimate
-    [initOmega] previous angular velocity estimate
-    [initQuat] previous orientation quaternion estimate
-    [camDir] directory of the camera video clips
-    [gyroCSV] location of the gyro measurements csv file
+    For an example of input format, see tests.test_pipeline.testRandomData()
+    [batch]: dictionary with camera measurement, gyro measurement, and thrust acceleration measurement data
+    [initTrajState]: (6,1) np array pos,vel from last run of traj UKF
+    [traj_P]: (6,6) np matrix representing traj UKF covariance matrix
+    [cameraParams]: data camera parameters
+    [att_P]: (6,6) np matrix representing att UKF covariance matrix 
+    [initAttitudeState]: (6,1) np array initial attitude State
+    [initQuaterionState]: (6,1) np array initial quaternion state (could be a guess)
+    [gyroVars]: (gyro_sigma, gyro_sample_rate, Q, R) where
+                [gyro_sigma]: float
+                [gyro_sample_rate]: average sample time elapsed between each gyro measurement (seconds)
+                [Q]: (6,6) np matrix
+                [R]: (6,6) np matrix
     Returns:
-    [newPos, newVel, newOmega, newQuat]
+    [newPos, newVel, newOmega, newQuat, trajP, trajK]
     """
-    # Pull entries from database and re-format in desired tables
-    # Pull ephemeris tables and identify start and end times
-    # Pull main thrust fire times
-    # Organize measurements into groups, and batch them by thrust fires.
-    # Filtering Step:
-    #   Feed a batch into Traj-UKF and obtain position estimates history
-    #   Propagate position to each of the N gyro times using estimated velocity, for each pos-vel estimate in history
-    #   Calculate Sun, Moon and Earth positions in body frame
-    #   Feed new measurement vectors and gyro vectors into Att-UKF.
-    #   (Next iteration of Traj-UKF will use quaternion history for thrust fire dynamics propagation)
-    pass
+    trajState = initTrajState
+    traj_K = None
+    attState = initAttitudeState
+    quat = initQuaternionState
+    
+    for ib, b in enumerate(batch):
+        print(ib)
+        # Run Trajectory UKF
+        if b['main_thrust']['fire'] is False:
+            main_thrust_info = None
+        else:
+            main_thrust_info = {
+                'kick_orientation': quat/np.linalg.norm(quat),
+                'acceleration_magnitude': b['main_thrust']['thrust_mag']
+            }
+            # Aq = attitudeMatrix(q)
+            # # X axis of spacecraft
+            # local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
+            # X_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
+        trajState, traj_P, traj_K = runPosVelUKF(b['ephemeris']['moon'], 
+                                       b['ephemeris']['sun'], 
+                                       b['cam_meas'], 
+                                       trajState,
+                                       b['cam_dt'], 
+                                       traj_P, 
+                                       cameraParams,
+                                       main_thrust_info=main_thrust_info,
+                                       dynamicsOnly=False)
+        # Prepare Gyro data
+        totalIntegrationTime = 0
+        omegas = np.zeros((len(b['gyro_meas']),3))
+        biases = np.zeros((len(b['gyro_meas']),3))
+        estimatedSatState = np.zeros((len(b['gyro_meas']),3))
+        moonPos = np.zeros((len(b['gyro_meas']),3))
+        sunPos = np.zeros((len(b['gyro_meas']),3))
+
+        tempSatState = trajState.flatten()
+        tempMoonState = b['ephemeris']['moon'].flatten()
+        tempSunState = b['ephemeris']['sun'].flatten()
+        timeline = [0]*(len(b['gyro_meas']))
+        prevTime = 0
+        for i in range(omegas.shape[0]):
+            om = b['gyro_meas'][i]['omega'].flatten()
+            bi = b['gyro_meas'][i]['bias'].flatten()
+            omegas[i][0] = om[0]
+            omegas[i][1] = om[1]
+            omegas[i][2] = om[2]
+            biases[i][0] = bi[0]
+            biases[i][1] = bi[1]
+            biases[i][2] = bi[2]
+            estimatedSatState[i][0] = tempSatState[0]
+            estimatedSatState[i][1] = tempSatState[1]
+            estimatedSatState[i][2] = tempSatState[2]
+            moonPos[i][0] = tempMoonState[0]
+            moonPos[i][1] = tempMoonState[1]
+            moonPos[i][2] = tempMoonState[2]
+            sunPos[i][0] = tempSunState[0]
+            sunPos[i][1] = tempSunState[1]
+            sunPos[i][2] = tempSunState[2]
+            prevTime += b['gyro_meas'][i]['dt']
+            timeline[i] = prevTime
+
+
+        att_P, quat, attState = runAttitudeUKFWithKick(b['cam_dt'], 
+                                                       gyroVars, 
+                                                       att_P, 
+                                                       attState, 
+                                                       quat, 
+                                                       omegas, 
+                                                       biases, 
+                                                       estimatedSatState, 
+                                                       moonPos, 
+                                                       sunPos, 
+                                                       timeline,
+                                                       singleIteration=True)
+
+    
+    # END
 

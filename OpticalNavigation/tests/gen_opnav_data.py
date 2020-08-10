@@ -14,7 +14,7 @@ from numpy.linalg import pinv
 import numpy as np
 import matplotlib.pyplot as plt
 
-from tests.animations import LiveTrajectoryPlot
+from simulations.animations import LiveTrajectoryPlot
 
 from core.attitude import crs, meas_model, quaternionComposition, quaternionInv
 
@@ -37,7 +37,7 @@ from core.const import _a, _f
 """
 Generate Synthetic Data for Attitude Estimation
 """
-def propagateSpacecraft(X, t, kickTime):
+def propagateSpacecraft(X, t, kickTime, duration=10):
     """
     Integration step at time [t] with cold-gas thruster fired at [kickTime].
     """
@@ -49,7 +49,7 @@ def propagateSpacecraft(X, t, kickTime):
     
     inner_sc = (np.dot(crs(omega_sc), np.dot(SPACECRAFT_I_B, omega_sc)) - DAMPER_C*omega_d +
                     int(0.5*(np.sign(t - kickTime)+1))*TORQUE_THRUSTER -
-                    int(0.5*(np.sign(t - (kickTime + 2))+1))*TORQUE_THRUSTER)
+                    int(0.5*(np.sign(t - (kickTime + duration))+1))*TORQUE_THRUSTER)
     omega_sc_dot = (np.dot(-1.*pinv(SPACECRAFT_I_B), inner_sc))
     
     right_d = np.dot(crs(omega_sc), np.dot(DAMPER_I_D, omega_d + omega_sc)) + DAMPER_C*omega_d
@@ -61,13 +61,12 @@ def propagateSpacecraft(X, t, kickTime):
     
     return derivs
 
-def goSpacecraft(X, tstop, delta_t, kickTime):
+def goSpacecraft(X, tstop, delta_t, kickTime, duration):
     """
     Integration for angular momentum and angular velocity
     """
     a_t = np.arange(0, tstop, delta_t)
-    asol = integrate.odeint(propagateSpacecraft, X, a_t, args=(kickTime,))
-    print("integration time steps {}".format(len(a_t)))
+    asol = integrate.odeint(propagateSpacecraft, X, a_t, args=(kickTime,duration))
     hx, hy, hz = [], [], []
     htotx, htoty, htotz = [], [], []
     omegasx, omegasy, omegasz = [], [], []
@@ -83,18 +82,18 @@ def goSpacecraft(X, tstop, delta_t, kickTime):
         hdamp = np.dot(DAMPER_I_D, omega_damper + omega_spacecraft)
         htot = h + hdamp
         hnorm.extend([np.linalg.norm(htot)])
-        htotx.extend([htot[0][0]])
+        htotx.extend([htot[2][0]]) # swap x and z axis to get body coordinates
         htoty.extend([htot[1][0]])
-        htotz.extend([htot[2][0]])
-        hx.extend([h[0][0]])
+        htotz.extend([htot[0][0]])
+        hx.extend([h[2][0]])    # swap x and z axis to get body coordinates
         hy.extend([h[1][0]])
-        hz.extend([h[2][0]])
-        omegasx.extend([i[0]])
+        hz.extend([h[0][0]])
+        omegasx.extend([i[2]]) # swap x and z axis to get body coordinates
         omegasy.extend([i[1]])
-        omegasz.extend([i[2]])
-        omegadx.extend([i[3]])
+        omegasz.extend([i[0]])
+        omegadx.extend([i[5]]) # swap x and z axis to get body coordinates
         omegady.extend([i[4]])
-        omegadz.extend([i[5]])
+        omegadz.extend([i[3]])
     return [hx, hy, hz, omegasx, omegasy, omegasz,
             omegadx, omegady, omegadz, htotx, htoty, htotz, hnorm,
             h_norm_spacecraft]
@@ -131,15 +130,14 @@ def obtainAllQuatsfromAngVel(q0, tstop, delta_t, ws):
         q4.extend([i[3]])
     return [q1, q2, q3, q4]
 
-def plotSpacecraft(omega_init, tstop, delta_t, kickTime):
+def plotSpacecraft(omega_init, tstop, delta_t, kickTime, duration):
     """
     Obtain angular velocities from time 0 to [tstop] with initial
     velocity [omega_init] and cold-gas thruster fire time [kickTime].
     """
-    print(tstop, delta_t)
     time = np.arange(0, tstop, delta_t)
     X = omega_init
-    omega = goSpacecraft(X, tstop, delta_t, kickTime)
+    omega = goSpacecraft(X, tstop, delta_t, kickTime, duration)
     omega[0] = np.array(omega[0])
     omega[1] = np.array(omega[1])
     omega[2] = np.array(omega[2])
@@ -161,7 +159,7 @@ def goBias(tstop, gyro_t, bias_init, gyroSigma, gyroNoiseSigma):
     bias = [biasx, biasy, biasz]
     return bias
 
-def generateSyntheticData(quat, cameradt, kickTime, omega_init, bias_init, gyro_sample_rate, totalIntegrationTime, gyroSigma, gyroNoiseSigma):
+def generateSyntheticData(quat, cameradt, kickTime, duration, omega_init, bias_init, gyro_sample_rate, totalIntegrationTime, gyroSigma, gyroNoiseSigma, integrationTimeStep=INTEGRATION_TIMESTEP):
     """
     Generates fake attitude data for sampling.
     [quat]: starting quaternion; should just be a guess
@@ -172,10 +170,21 @@ def generateSyntheticData(quat, cameradt, kickTime, omega_init, bias_init, gyro_
     [totalIntegrationTime]: how long the sequence lasts
     [gyroSigma]: gyro error standard deviation
     [gyroNoiseSigma]: gyro noise error standard deviation
+    
+    NOTE: THe X and Z axis are switched since Hunter's code assumes spin axis is +Z. The body spins around +X.
     """
+
+    temp = omega_init[0]
+    omega_init[0] = omega_init[2]
+    omega_init[2] = temp
+
+    temp = bias_init[0]
+    bias_init[0] = bias_init[2]
+    bias_init[2] = temp
+
     print("Generating angular velocity...")
-    angular_momentum_history = plotSpacecraft(omega_init, totalIntegrationTime, INTEGRATION_TIMESTEP, kickTime);
-    totaltime = np.arange(0, totalIntegrationTime, INTEGRATION_TIMESTEP)
+    angular_momentum_history = plotSpacecraft(omega_init, totalIntegrationTime, integrationTimeStep, kickTime, duration);
+    totaltime = np.arange(0, totalIntegrationTime, integrationTimeStep)
     hx = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[9])
     hy = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[10])
     hz = InterpolatedUnivariateSpline(totaltime, angular_momentum_history[11])
@@ -185,7 +194,7 @@ def generateSyntheticData(quat, cameradt, kickTime, omega_init, bias_init, gyro_
 
     print("Obtaining quaternions from states...")
     q0 = quat/np.linalg.norm(quat)
-    quaternion_history = obtainAllQuatsfromAngVel(q0.flatten(), totalIntegrationTime, INTEGRATION_TIMESTEP, (omegax, omegay, omegaz));
+    quaternion_history = obtainAllQuatsfromAngVel(q0.flatten(), totalIntegrationTime, integrationTimeStep, (omegax, omegay, omegaz));
     q1 = InterpolatedUnivariateSpline(totaltime, quaternion_history[0])
     q2 = InterpolatedUnivariateSpline(totaltime, quaternion_history[1])
     q3 = InterpolatedUnivariateSpline(totaltime, quaternion_history[2])
@@ -343,7 +352,15 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz, timeline):
     plt.yscale('log')
     plt.show()
 
-
+# def genAttitudeData(missionStartDate, missionEndDate, maneuversDict, missionTimeline, attDf, quat, cameradt):
+#     currentSectionStartDate = missionStartDate
+#     currentSectionEndDate = None
+#     for i in range(len(maneuversDict['startTime'])):
+#         currentSectionEndDate = maneuversDict['startTime']
+#         totalIntegrationTime = currentSectionEndDate - currentSectionStartDate
+#         # Propogate
+#         q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz = generateSyntheticData(quat, cameradt, coldGasThrustKickTime, coldGasKickDuration, omegaInit, biasInit, 1.0/gyroSampleCount, totalIntegrationTime, gyroSigma, gyroNoiseSigma)
+#         return q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz, d_camMeas, d_moonEph, d_sunEph, d_traj, earthVectors, moonVectors, sunVectors, totalIntegrationTime
 
 """
 z1 = em
@@ -354,7 +371,7 @@ z5 = m
 z6 = s
 """
 
-def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaInit, biasInit, quat, gyroSampleCount, gyroSigma, gyroNoiseSigma):
+def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, coldGasKickDuration, cameradt, omegaInit, biasInit, quat, gyroSampleCount, gyroSigma, gyroNoiseSigma, att_meas=False):
     """
         ____________
         Description:
@@ -368,8 +385,6 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
         Parameters:
         [startTime]: start time for the ephemeris tables (s)
         [endTime]: end time for the ephemeris tables, or None for full trajectory (s)
-        [mainThrustKickTime]: when main thruster was fired (s)
-                            startTime <= mainThrustKickTime <= endTime
         [coldGasThrustKickTime]: when cold-gas thruster was fired (s)
                             startTime <= coldGasThrustKickTime <= endTime
         [cameradt]: time delay between each camera measurement
@@ -379,6 +394,7 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
         [gyroSampleCount]: number of gyro measurements between each camera measurement
         [gyroSigma]: std of gyro measurements
         [gyroNoiseSigma]: std of gyro measurement noise
+        [att_meas]: should generate attitude data
         ________
         Returns:
         camera measurements, omegas, biases, sunEph, moonEph, trueTraj, mainThrustKickTimes/Amounts/Durations
@@ -424,7 +440,7 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
     episode = 6 * 60 * 60       # seconds (6 hours * 60 min/hr * 60 sec/min)
     print('----------------------\n6 Hours Dataset\n----------------------\n')
     for t in tqdm(range(moonEphdf['x'].size), desc='Computing timeline'):
-        if t % episode == 0 and t is not 0:
+        if t % episode == 0 and t != 0:
             currentT += episode
         time.append(currentT)
         currentT += 60                 # measurements were taken 60 seconds apart
@@ -522,8 +538,11 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
         moonVectors.append(moonVec)
         sunVectors.append(sunVec)
 
-    q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz = generateSyntheticData(quat, cameradt, coldGasThrustKickTime, omegaInit, biasInit, 1.0/gyroSampleCount, totalIntegrationTime, gyroSigma, gyroNoiseSigma)
-    return q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz, d_camMeas, d_moonEph, d_sunEph, d_traj, earthVectors, moonVectors, sunVectors, totalIntegrationTime
+    if att_meas:
+        q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz = generateSyntheticData(quat, cameradt, coldGasThrustKickTime, coldGasKickDuration, omegaInit, biasInit, 1.0/gyroSampleCount, totalIntegrationTime, gyroSigma, gyroNoiseSigma)
+        return q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz, d_camMeas, d_moonEph, d_sunEph, d_traj, earthVectors, moonVectors, sunVectors, totalIntegrationTime
+    else:
+        return d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime
     
     # # graph
     # liveTraj = LiveTrajectoryPlot()

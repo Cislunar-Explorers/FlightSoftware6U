@@ -54,25 +54,21 @@ _ = Operator(lambda x, y: y(x))
 
 # Color class for formatting
 class Color:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    GRAY = '\033[90m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    GRAY = "\033[90m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 # ----------------------------------------------STRUCTS
 class TestingStruct(BigEndianStructure):
-    _fields_ = [
-        ("field1", c_uint8),
-        ("field2", c_uint8),
-        ("field3", c_uint16)
-    ]
+    _fields_ = [("field1", c_uint8), ("field2", c_uint8), ("field3", c_uint16)]
 
 
 class hkparam_t(BigEndianStructure):
@@ -81,9 +77,15 @@ class hkparam_t(BigEndianStructure):
         ("pc", c_uint16),  # Total photo current [mA]
         ("bv", c_uint16),  # Battery voltage [mV]
         ("sc", c_uint16),  # Total system current [mA]
-        ("temp", c_int16 * 4),  # Temp. of boost converters (1,2,3) and onboard battery [degC]
+        (
+            "temp",
+            c_int16 * 4,
+        ),  # Temp. of boost converters (1,2,3) and onboard battery [degC]
         ("batt_temp", c_int16 * 2),  # External board battery temperatures [degC];
-        ("latchup", c_uint16 * 6),  # Number of latch-ups on each output 5V and +3V3 channel
+        (
+            "latchup",
+            c_uint16 * 6,
+        ),  # Number of latch-ups on each output 5V and +3V3 channel
         # Order[5V1 5V2 5V3 3.3V1 3.3V2 3.3V3]
         # Transmit as 5V1 first and 3.3V3 last
         ("reset", c_uint8),  # Cause of last EPS reset
@@ -126,11 +128,17 @@ class eps_hk_t(BigEndianStructure):
         ("counter_wdt_gnd", c_uint32),  # Number of WDT GND reboots
         ("counter_wdt_csp", c_uint32 * 2),  # Number of WDT CSP reboots
         ("counter_boot", c_uint32),  # Number of EPS reboots
-        ("temp", c_int16 * 6),  # Temperatures [degC] [0 = TEMP1, TEMP2, TEMP3, TEMP4, BP4a, BP4b]
+        (
+            "temp",
+            c_int16 * 6,
+        ),  # Temperatures [degC] [0 = TEMP1, TEMP2, TEMP3, TEMP4, BP4a, BP4b]
         ("bootcause", c_uint8),  # Cause of last EPS reset
-        ("battmode", c_uint8),  # Mode for battery [0 = initial, 1 = undervoltage, 2 = safemode, 3 = nominal, 4=full]
+        (
+            "battmode",
+            c_uint8,
+        ),  # Mode for battery [0 = initial, 1 = undervoltage, 2 = safemode, 3 = nominal, 4=full]
         ("pptmode", c_uint8),  # Mode of PPT tracker [1=MPPT, 2=FIXED]
-        ("reserved2", c_uint16)
+        ("reserved2", c_uint16),
     ]
 
 
@@ -141,7 +149,7 @@ class eps_hk_vi_t(BigEndianStructure):
         ("curin", c_uint16 * 3),  # Current in [mA]
         ("cursun", c_uint16),  # Current from boost converters [mA]
         ("cursys", c_uint16),  # Current out of battery [mA]
-        ("reserved1", c_uint16)  # Reserved for future use
+        ("reserved1", c_uint16),  # Reserved for future use
     ]
 
 
@@ -162,18 +170,24 @@ class eps_hk_wdt_t(BigEndianStructure):
         ("wdt_csp_pings_left", c_uint8 * 2),  # Pings left on CSP wdt
         ("counter_wdt_i2c", c_uint32),  # Number of WDT I2C reboots
         ("counter_wdt_gnd", c_uint32),  # Number of WDT GND reboots
-        ("counter_wdt_csp", c_uint32 * 2)  # Number of WDT CSP reboots
+        ("counter_wdt_csp", c_uint32 * 2),  # Number of WDT CSP reboots
     ]
 
 
 class eps_hk_basic_t(BigEndianStructure):
     _fields_ = [
         ("counter_boot", c_uint32),  # Number of EPS reboots
-        ("temp", c_int16 * 6),  # Temperatures [degC] [0 = TEMP1, TEMP2, TEMP3, TEMP4, BATT0, BATT1]
+        (
+            "temp",
+            c_int16 * 6,
+        ),  # Temperatures [degC] [0 = TEMP1, TEMP2, TEMP3, TEMP4, BATT0, BATT1]
         ("bootcause", c_uint8),  # Cause of last EPS reset
-        ("battmode", c_uint8),  # Mode for battery [0 = initial, 1 = undervoltage, 2 = safemode, 3 = nominal, 4=full]
+        (
+            "battmode",
+            c_uint8,
+        ),  # Mode for battery [0 = initial, 1 = undervoltage, 2 = safemode, 3 = nominal, 4=full]
         ("pptmode", c_uint8),  # Mode of PPT tracker [1=MPPT, 2=FIXED]
-        ("reserved2", c_uint16)
+        ("reserved2", c_uint16),
     ]
 
 
@@ -185,9 +199,15 @@ class eps_config_t(BigEndianStructure):
         ("battheater_high", c_int8),  # Turn heater off at [degC]
         ("output_normal_value", c_uint8 * 8),  # Nominal mode output value
         ("output_safe_value", c_uint8 * 8),  # Safe mode output value
-        ("output_initial_on_delay", c_uint16 * 8),  # Output switches: init with these on delays [s]
-        ("output_initial_off_delay", c_uint16 * 8),  # Output switches: init with these on delays [s]
-        ("vboost", c_uint16 * 3)  # Fixed PPT point for boost converters [mV]
+        (
+            "output_initial_on_delay",
+            c_uint16 * 8,
+        ),  # Output switches: init with these on delays [s]
+        (
+            "output_initial_off_delay",
+            c_uint16 * 8,
+        ),  # Output switches: init with these on delays [s]
+        ("vboost", c_uint16 * 3),  # Fixed PPT point for boost converters [mV]
     ]
 
 
@@ -198,7 +218,7 @@ class eps_config2_t(BigEndianStructure):
         ("batt_criticalvoltage", c_uint16),
         ("batt_normalvoltage", c_uint16),
         ("reserved1", c_uint32 * 2),
-        ("reserved2", c_uint8 * 4)
+        ("reserved2", c_uint8 * 4),
     ]
 
 
@@ -214,7 +234,7 @@ def isStruct(s):
         eps_hk_wdt_t,
         eps_hk_basic_t,
         eps_config_t,
-        eps_config2_t
+        eps_config2_t,
     ]
     return type(s) in allStructs
 
@@ -229,17 +249,18 @@ def isCByteArray(arr):
 # returns TestingStruct if string does not match any struct
 # raises: AssertionError if s is not a string
 def structMaker(s):
-    assert s is str
+    assert type(s) is str
 
-    struct_options = {"hkparam_t": hkparam_t(),
-                      "eps_hk_t": eps_hk_t(),
-                      "eps_hk_vi_t": eps_hk_vi_t(),
-                      "eps_hk_out_t": eps_hk_out_t(),
-                      "eps_hk_wdt_t": eps_hk_wdt_t(),
-                      "eps_hk_basic_t": eps_hk_basic_t(),
-                      "eps_config_t": eps_config_t(),
-                      "eps_config2_t": eps_config2_t()
-                      }
+    struct_options = {
+        "hkparam_t": hkparam_t(),
+        "eps_hk_t": eps_hk_t(),
+        "eps_hk_vi_t": eps_hk_vi_t(),
+        "eps_hk_out_t": eps_hk_out_t(),
+        "eps_hk_wdt_t": eps_hk_wdt_t(),
+        "eps_hk_basic_t": eps_hk_basic_t(),
+        "eps_config_t": eps_config_t(),
+        "eps_config2_t": eps_config2_t(),
+    }
     try:
         return struct_options[s]
     except KeyError:
@@ -249,9 +270,9 @@ def structMaker(s):
 # struct -> c_bytearray
 # takes a struct [s] and converts it into a ctypes
 # bytearray of the appropriate size.
-# note: bytes are stored in order, e.g. the first field 
-# of the struct is stored starting in index 0 of the 
-# byte array and so on. 
+# note: bytes are stored in order, e.g. the first field
+# of the struct is stored starting in index 0 of the
+# byte array and so on.
 # raises: AssertionError if s is not a struct
 def c_structToByteArray(s):
     assert isStruct(s)
@@ -263,8 +284,8 @@ def c_structToByteArray(s):
 
 
 # c_bytearray -> bytearray
-# takes a ctypes bytearray [b] and converts it into a 
-# python bytearray of the appropriate size, adjusting 
+# takes a ctypes bytearray [b] and converts it into a
+# python bytearray of the appropriate size, adjusting
 # for negative values (although it shouldn't matter in the end)
 # raises: AssertionError if b is not a ctypes byte array
 def c_byteArrayToBytes(b):
@@ -279,8 +300,8 @@ def c_byteArrayToBytes(b):
 
 
 # c_bytearray -> struct
-# takes a ctypes bytearray [b] and converts it into a 
-# struct [s]. Raises assertion error if the size of the 
+# takes a ctypes bytearray [b] and converts it into a
+# struct [s]. Raises assertion error if the size of the
 # bytearray does not match the size of the struct.
 # raises: AssertionError if s is not a string
 #         AssertionError if b is not correct size
@@ -300,13 +321,15 @@ def toBytes(i, num):
     assert type(i) == int and type(num) == int
     binary = bin(i)[2:]
     rem = len(binary) % 8
-    binary = '0' * (8 - rem) + binary  # add zeros to make it 8 bit
+    binary = "0" * (8 - rem) + binary  # add zeros to make it 8 bit
     size = int(len(binary) / 8)  # Cast to int added during testing
-    bytes = '0' * 8 * (num - size) + binary  # add zeros to make it into right num of bytes
+    bytes = (
+        "0" * 8 * (num - size) + binary
+    )  # add zeros to make it into right num of bytes
 
     acc = []
     for n in range(num):
-        acc += [int(bytes[8 * n:8 * (n + 1)], 2)]
+        acc += [int(bytes[8 * n : 8 * (n + 1)], 2)]
 
     return bytearray(acc)
 
@@ -350,6 +373,7 @@ def bytesToList(b):
 # color functions
 # were rewritten from lambda functions on 2020-08-24. Need to be tested!
 
+
 def B(x):
     return Color.BOLD + x + Color.ENDC
 
@@ -383,15 +407,17 @@ def displayHK(hk):
     assert type(hk) == hkparam_t
 
     def RES(x):
-        reset_reasons = {0: "Unknown reset",
-                         1: "Dedicated WDT reset",
-                         2: "I2C WDT reset",
-                         3: "Hard reset",
-                         4: "Soft reset",
-                         5: "Stack overflow reset",
-                         6: "Timer overflow reset",
-                         7: "Brownout or power-on reset",
-                         8: "Internal WDT reset"}
+        reset_reasons = {
+            0: "Unknown reset",
+            1: "Dedicated WDT reset",
+            2: "I2C WDT reset",
+            3: "Hard reset",
+            4: "Soft reset",
+            5: "Stack overflow reset",
+            6: "Timer overflow reset",
+            7: "Brownout or power-on reset",
+            8: "Internal WDT reset",
+        }
         return reset_reasons.get(x, "ERROR")
 
     def mult(x, y):
@@ -404,39 +430,69 @@ def displayHK(hk):
         return y[x:]
 
     print(G("***************-HOUSEKEEPING-***************"))
-    print(GR("Photo-voltaic inputs:        ") + "1-%s 2-%s 3-%s" % (R(mv(hk.pv[0])),
-                                                                    R(mv(hk.pv[1])),
-                                                                    R(mv(hk.pv[2]))))
+    print(
+        GR("Photo-voltaic inputs:        ") +
+        "1-%s 2-%s 3-%s" % (R(mv(hk.pv[0])), R(mv(hk.pv[1])), R(mv(hk.pv[2])))
+    )
 
     print(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
     print(GR("Battery voltage:             ") + "%s" % (R(mv(hk.bv))))
     print(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
 
-    print(GR("Temp of boost converters:    ") + "1-%s 2-%s 3-%s batt-%s" % (R(degc(hk.temp[0])),
-                                                                            R(degc(hk.temp[1])),
-                                                                            R(degc(hk.temp[2])),
-                                                                            R(degc(hk.temp[3]))))
+    print(
+        GR("Temp of boost converters:    ") +
+        "1-%s 2-%s 3-%s batt-%s"
+        % (
+            R(degc(hk.temp[0])),
+            R(degc(hk.temp[1])),
+            R(degc(hk.temp[2])),
+            R(degc(hk.temp[3])),
+        )
+    )
 
-    print(GR("External batt temp:          ") + "1-%s 2-%s" % (R(degc(hk.batt_temp[0])),
-                                                               R(degc(hk.batt_temp[1]))))
+    print(
+        GR("External batt temp:          ") +
+        "1-%s 2-%s" % (R(degc(hk.batt_temp[0])), R(degc(hk.batt_temp[1])))
+    )
 
-    print(GR("Latchups:                    ") + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]" % (
-        R(hk.latchup[0]),
-        R(hk.latchup[1]),
-        R(hk.latchup[2]),
-        R(hk.latchup[3]),
-        R(hk.latchup[4]),
-        R(hk.latchup[5])))
+    print(
+        GR("Latchups:                    ") +
+        "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]"
+        % (
+            R(hk.latchup[0]),
+            R(hk.latchup[1]),
+            R(hk.latchup[2]),
+            R(hk.latchup[3]),
+            R(hk.latchup[4]),
+            R(hk.latchup[5]),
+        )
+    )
 
     print(GR("Cause of last reset:         ") + "%s" % (R(RES(hk.reset))))
     print(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
     print(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
     print(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
-    # I honestly can't figure out what's going on here:
-    print(GR("Channel output:              ") + "%s" % ((hk.channel_status >> _ >> bin >> _ >> substr(
-        2) >> _ >> len >> _ >> mult(-1) >> _ >> add(8) >> _ >> mult("0")) + (
-                                                                hk.channel_status >> _ >> bin >> _ >> str >> _ >> substr(
-                                                            2))) >> _ >> R)
+    print(
+        GR("Channel output:              ") + "%s"
+        % R(
+            (
+                hk.channel_status
+                >> _
+                >> bin
+                >> _
+                >> substr(2)
+                >> _
+                >> len
+                >> _
+                >> mult(-1)
+                >> _
+                >> add(8)
+                >> _
+                >> mult("0")
+            )
+            + (hk.channel_status >> _ >> bin >> _ >> str >> _ >> substr(2))
+        )
+    )
 
 
 # prints config info given eps_config_t struct
@@ -454,53 +510,78 @@ def displayConfig(conf):
 
     print(G("***************-CONFIG-***************"))
     print(GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode))))
-    print(GR("Battheater mode:             ") + "%s" % (R(battheatermode(conf.battheater_mode))))
+    print(
+        GR("Battheater mode:             ")
+        + "%s" % (R(battheatermode(conf.battheater_mode)))
+    )
     print(GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low))))
     print(GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high))))
 
-    print(GR("Nominal mode output value:   ") + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (
-        R(conf.output_normal_value[0]),
-        R(conf.output_normal_value[1]),
-        R(conf.output_normal_value[2]),
-        R(conf.output_normal_value[3]),
-        R(conf.output_normal_value[4]),
-        R(conf.output_normal_value[5]),
-        R(conf.output_normal_value[6]),
-        R(conf.output_normal_value[7])))
+    print(
+        GR("Nominal mode output value:   ")
+        + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
+        % (
+            R(conf.output_normal_value[0]),
+            R(conf.output_normal_value[1]),
+            R(conf.output_normal_value[2]),
+            R(conf.output_normal_value[3]),
+            R(conf.output_normal_value[4]),
+            R(conf.output_normal_value[5]),
+            R(conf.output_normal_value[6]),
+            R(conf.output_normal_value[7]),
+        )
+    )
 
-    print(GR("Safe mode output value:      ") + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (
-        R(conf.output_safe_value[0]),
-        R(conf.output_safe_value[1]),
-        R(conf.output_safe_value[2]),
-        R(conf.output_safe_value[3]),
-        R(conf.output_safe_value[4]),
-        R(conf.output_safe_value[5]),
-        R(conf.output_safe_value[6]),
-        R(conf.output_safe_value[7])))
+    print(
+        GR("Safe mode output value:      ")
+        + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
+        % (
+            R(conf.output_safe_value[0]),
+            R(conf.output_safe_value[1]),
+            R(conf.output_safe_value[2]),
+            R(conf.output_safe_value[3]),
+            R(conf.output_safe_value[4]),
+            R(conf.output_safe_value[5]),
+            R(conf.output_safe_value[6]),
+            R(conf.output_safe_value[7]),
+        )
+    )
 
-    print(GR("Output initial on:           ") + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (
-        R(sec(conf.output_intial_on_delay[0])),
-        R(sec(conf.output_intial_on_delay[1])),
-        R(sec(conf.output_intial_on_delay[2])),
-        R(sec(conf.output_intial_on_delay[3])),
-        R(sec(conf.output_intial_on_delay[4])),
-        R(sec(conf.output_intial_on_delay[5])),
-        R(sec(conf.output_intial_on_delay[6])),
-        R(sec(conf.output_intial_on_delay[7]))))
+    print(
+        GR("Output initial on:           ")
+        + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
+        % (
+            R(sec(conf.output_intial_on_delay[0])),
+            R(sec(conf.output_intial_on_delay[1])),
+            R(sec(conf.output_intial_on_delay[2])),
+            R(sec(conf.output_intial_on_delay[3])),
+            R(sec(conf.output_intial_on_delay[4])),
+            R(sec(conf.output_intial_on_delay[5])),
+            R(sec(conf.output_intial_on_delay[6])),
+            R(sec(conf.output_intial_on_delay[7])),
+        )
+    )
 
-    print(GR("Output initial off:          ") + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]" % (
-        R(sec(conf.output_intial_off_delay[0])),
-        R(sec(conf.output_intial_off_delay[1])),
-        R(sec(conf.output_intial_off_delay[2])),
-        R(sec(conf.output_intial_off_delay[3])),
-        R(sec(conf.output_intial_off_delay[4])),
-        R(sec(conf.output_intial_off_delay[5])),
-        R(sec(conf.output_intial_off_delay[6])),
-        R(sec(conf.output_intial_off_delay[7]))))
+    print(
+        GR("Output initial off:          ")
+        + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
+        % (
+            R(sec(conf.output_intial_off_delay[0])),
+            R(sec(conf.output_intial_off_delay[1])),
+            R(sec(conf.output_intial_off_delay[2])),
+            R(sec(conf.output_intial_off_delay[3])),
+            R(sec(conf.output_intial_off_delay[4])),
+            R(sec(conf.output_intial_off_delay[5])),
+            R(sec(conf.output_intial_off_delay[6])),
+            R(sec(conf.output_intial_off_delay[7])),
+        )
+    )
 
-    print(GR("PPT point for boost conv:    ") + "1-%s 2-%s 3-%s" % (R(mv(conf.vboost[0])),
-                                                                    R(mv(conf.vboost[1])),
-                                                                    R(mv(conf.vboost[2]))))
+    print(
+        GR("PPT point for boost conv:    ")
+        + "1-%s 2-%s 3-%s"
+        % (R(mv(conf.vboost[0])), R(mv(conf.vboost[1])), R(mv(conf.vboost[2])))
+    )
 
 
 # prints config2 info given eps_config2_t struct
@@ -509,7 +590,9 @@ def displayConfig2(conf):
     print("***************-CONFIG2-***************" >> _ >> G)
     print(GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage))))
     print(GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage))))
-    print(GR("Batt Critical Voltage:       ") + "%s" % (R(mv(conf.batt_criticalvoltage))))
+    print(
+        GR("Batt Critical Voltage:       ") + "%s" % (R(mv(conf.batt_criticalvoltage)))
+    )
     print(GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage))))
 
 

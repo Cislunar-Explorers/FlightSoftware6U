@@ -19,68 +19,71 @@ import time
 from enum import Enum
 
 # power device address
-POWER_ADDRESS           = 0x02
+POWER_ADDRESS = 0x02
 
 # raspberry pi bus number
-PI_BUS                  = 1
+PI_BUS = 1
 
 # allowed ranges
-MAX_PV_VOLTAGE			= 4000  # TODO: change later
+MAX_PV_VOLTAGE = 4000  # TODO: change later
 
 # command registers
-CMD_PING                = 0x01
-CMD_REBOOT              = 0x04
-CMD_GET_HK              = 0x08
-CMD_SET_OUTPUT          = 0x09
-CMD_SET_SINGLE_OUTPUT   = 0x0A
-CMD_SET_PV_VOLT         = 0x0B
-CMD_SET_PV_AUTO         = 0x0C
-CMD_SET_HEATER          = 0x0D
-CMD_RESET_COUNTERS      = 0x0F
-CMD_RESET_WDT           = 0x10
-CMD_CONFIG_CMD          = 0x11
-CMD_CONFIG_GET          = 0x12
-CMD_CONFIG_SET          = 0x13
-CMD_HARD_RESET          = 0x14
-CMD_CONFIG2_CMD         = 0x15
-CMD_CONFIG2_GET         = 0x16
-CMD_CONFIG2_SET         = 0x17
+CMD_PING = 0x01
+CMD_REBOOT = 0x04
+CMD_GET_HK = 0x08
+CMD_SET_OUTPUT = 0x09
+CMD_SET_SINGLE_OUTPUT = 0x0A
+CMD_SET_PV_VOLT = 0x0B
+CMD_SET_PV_AUTO = 0x0C
+CMD_SET_HEATER = 0x0D
+CMD_RESET_COUNTERS = 0x0F
+CMD_RESET_WDT = 0x10
+CMD_CONFIG_CMD = 0x11
+CMD_CONFIG_GET = 0x12
+CMD_CONFIG_SET = 0x13
+CMD_HARD_RESET = 0x14
+CMD_CONFIG2_CMD = 0x15
+CMD_CONFIG2_GET = 0x16
+CMD_CONFIG2_SET = 0x17
 
 # struct sizes in bytes
-SIZE_HKPARAM_T          = 44
-SIZE_EPS_HK_T           = 136
-SIZE_EPS_HK_VI_T        = 20
-SIZE_EPS_HK_OUT_T       = 64
-SIZE_EPS_HK_WDT_T       = 28
-SIZE_EPS_HK_BASIC_T     = 24
-SIZE_EPS_CONFIG_T       = 58
-SIZE_EPS_CONFIG2_T      = 20
+SIZE_HKPARAM_T = 44
+SIZE_EPS_HK_T = 136
+SIZE_EPS_HK_VI_T = 20
+SIZE_EPS_HK_OUT_T = 64
+SIZE_EPS_HK_WDT_T = 28
+SIZE_EPS_HK_BASIC_T = 24
+SIZE_EPS_CONFIG_T = 58
+SIZE_EPS_CONFIG2_T = 20
 
 # power output channels
-OUT_1                   = 0  # 5V
-OUT_2                   = 1  # 5V
-OUT_3                   = 2  # 5V
-OUT_4                   = 3  # 5V
-OUT_5                   = 4  # 5V
-OUT_6                   = 5  # 3.3V
-OUT_HEATER              = 6
-OUT_SWITCH              = 7
+OUT_1 = 0  # 5V
+OUT_2 = 1  # 5V
+OUT_3 = 2  # 5V
+OUT_4 = 3  # 5V
+OUT_5 = 4  # 5V
+OUT_6 = 5  # 3.3V
+OUT_HEATER = 6
+OUT_SWITCH = 7
 
 # powered components
-OUT_COMMS_AMP       = OUT_1
-OUT_BURNWIRE_1      = OUT_2
-OUT_BURNWIRE_2      = OUT_3
-OUT_GLOWPLUG        = OUT_4
-OUT_SOLENOID        = OUT_5
-OUT_ELECTROLYZER    = OUT_6
+OUT_COMMS_AMP = OUT_1
+OUT_BURNWIRE_1 = OUT_2
+OUT_BURNWIRE_2 = OUT_3
+OUT_GLOWPLUG = OUT_4
+OUT_SOLENOID = OUT_5
+OUT_ELECTROLYZER = OUT_6
+
 
 class Outputs(Enum):
-    comms        = OUT_1
-    burnwire_1   = OUT_2
-    burnwire_2   = OUT_3
-    glowplug     = OUT_4
-    solenoid     = OUT_5
+    comms = OUT_1
+    burnwire_1 = OUT_2
+    burnwire_2 = OUT_3
+    glowplug = OUT_4
+    solenoid = OUT_5
     electrolyzer = OUT_6
+
+
 #    heater       = OUT_HEATER
 #    switch       = OUT_SWITCH
 
@@ -96,8 +99,8 @@ class Outputs(Enum):
 #
 
 # pi outputs
-OUT_PI_COMMS            = 11    # GPIO 17
-OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
+OUT_PI_COMMS = 11  # GPIO 17
+OUT_PI_SOLENOID_ENABLE = 40  # GPIO 21
 
 
 class PowerException(Exception):
@@ -140,18 +143,18 @@ class Power:
     # writes byte list [values] with command register [cmd]
     # raises: ValueError if cmd or values are not bytes
     def write(self, cmd, values):
-        self._pi.i2c_write_device(self._dev, bytearray([cmd]+values))
+        self._pi.i2c_write_device(self._dev, bytearray([cmd] + values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
-    # TODO: This function does not currently return the error code of the i2c stream. Is this something that we want?
     def read(self, bytes):
         # first two read bytes -> [command][error code][data]
-        (x, r) = self._pi.i2c_read_device(self._dev, bytes+2)
+        (x, r) = self._pi.i2c_read_device(self._dev, bytes + 2)
         if r[1] != 0:
-            raise PowerReadError("Read Error: Command %i failed with error code %i" % (r[0], r[1]))
+            raise PowerReadError(
+                "Read Error: Command %i failed with error code %i" % (r[0], r[1])
+            )
         else:
             return r[2:]
-
 
     # Not sure what value is in the below function, need to get cleared up
     # pings value
@@ -201,7 +204,7 @@ class Power:
         array = self.read(SIZE_EPS_HK_BASIC_T)
         return c_bytesToStruct(array, "eps_hk_basic_t")
 
-    # sets voltage output channels with bit mask: 
+    # sets voltage output channels with bit mask:
     # byte [1 byte] -> [NC NC 3.3V3 3.3V2 3.3V1 5V3 5V2 5V1]
     # raises: ValueError if byte is not char
     def set_output(self, byte):
@@ -222,17 +225,18 @@ class Power:
                 if Outputs(i).name == channel:
                     channel_num = Outputs(i).value
             d = toBytes(delay, 2)
-            self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value]+list(d))
+            self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value] + list(d))
 
-
-    # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV. 
+    # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV.
     # Takes effect when MODE = 2, See SET_PV_AUTO.
     # volt1~volt3 [2 bytes] -> value in mV
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
         if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
-            raise PowerInputError("Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE)
+            raise PowerInputError(
+                "Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE
+            )
         else:
             v = bytearray(6)
             v[0:2] = toBytes(volt1, 2)
@@ -253,7 +257,6 @@ class Power:
         else:
             self.write(CMD_SET_PV_AUTO, [mode])
 
-
     # returns bytearray with heater modes
     # command   [1 byte]  -> 0 = Set heater on/off (toggle?)
     # heater    [1 byte]  -> 0 = BP4, 1 = Onboard, 2 = Both
@@ -262,13 +265,14 @@ class Power:
     # raises: PowerInputError if variables are not in correct range
     # Not tested
     def set_heater(self, command, heater, mode):
-            if command != 0 or heater not in [0, 1, 2] and mode not in [0, 1]:
-                raise PowerInputError("""Invalid Input: command must be 0, 
-                heater must be 0, 1 or 2, and mode must be 0 or 1""")
-            else:
-                self.write(CMD_SET_HEATER, [command, heater, mode])
-                return self.read(2)
-
+        if command != 0 or heater not in [0, 1, 2] and mode not in [0, 1]:
+            raise PowerInputError(
+                """Invalid Input: command must be 0,
+                heater must be 0, 1 or 2, and mode must be 0 or 1"""
+            )
+        else:
+            self.write(CMD_SET_HEATER, [command, heater, mode])
+            return self.read(2)
 
     # Not tested
     def get_heater(self):
@@ -289,10 +293,10 @@ class Power:
     # cmd [1 byte] -> cmd = 1: Restore default config
     # raises: PowerInputError if command is not 1
     def config_cmd(self, command):
-            if command != 1:
-                raise PowerInputError("Invalid Input: command must be 1")
-            else:
-                self.write(CMD_CONFIG_CMD, [command])
+        if command != 1:
+            raise PowerInputError("Invalid Input: command must be 1")
+        else:
+            self.write(CMD_CONFIG_CMD, [command])
 
     # returns eps_config_t structure
     def config_get(self):
@@ -302,7 +306,7 @@ class Power:
     # takes eps_config_t struct and sets configuration
     # Input struct is of type eps_config_t
     def config_set(self, struct):
-        array = struct >>_>> c_structToBytes >>_>> bytesToList
+        array = struct >> _ >> c_structToBytes >> _ >> bytesToList
         self.write(CMD_CONFIG_SET, array)
 
     # Send this command to perform a hard reset of the P31u,
@@ -312,7 +316,6 @@ class Power:
         if are_you_sure is True:
             self.write(CMD_HARD_RESET, [])
 
-
     # Use this command to control the config 2 system.
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
     # raises: PowerInputError if command is not a valid value
@@ -321,7 +324,6 @@ class Power:
             raise PowerInputError("Invalid Input: command must be 1 or 2")
         else:
             self.write(CMD_CONFIG2_CMD, [command])
-
 
     # Use this command to request the P31 config 2.
     # returns esp_config2_t struct
@@ -339,13 +341,13 @@ class Power:
     # Higher level functions -------------------------------------------------
 
     # output must be off before the function is called.
-    # pulses output [output] high for some amount of 
-    # milliseconds [duration]; called after a delay of 
+    # pulses output [output] high for some amount of
+    # milliseconds [duration]; called after a delay of
     # [delay] seconds.
     def pulse(self, output, duration, delay=0):
         time.sleep(delay)
         self.set_single_output(output, 1, 0)
-        time.sleep(duration*.001)
+        time.sleep(duration * 0.001)
         self.set_single_output(output, 0, 0)
 
     # output must be off before the function is called
@@ -353,26 +355,28 @@ class Power:
     def pulse_pi(self, output, duration, delay=0):
         time.sleep(delay)
         GPIO.output(output, GPIO.HIGH)
-        time.sleep(duration*.001)
+        time.sleep(duration * 0.001)
         GPIO.output(output, GPIO.LOW)
 
-    # switches on if [switch] is true, off otherwise, with a 
+    # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
     # Input switch is of type bool
     def electrolyzer(self, switch, delay=0):
         self.set_single_output("electrolyzer", int(switch), delay)
 
-    # spikes the solenoid for some number of 
-    # milliseconds [spike] and holds at 5v for [hold] 
+    # spikes the solenoid for some number of
+    # milliseconds [spike] and holds at 5v for [hold]
     # milliseconds with delay of [delay] seconds.
     # output must be off before the function is called
     def solenoid(self, spike, hold, delay=0):
         time.sleep(delay)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)  # Enable voltage boost for solenoid current spike
+        GPIO.output(
+            OUT_PI_SOLENOID_ENABLE, GPIO.HIGH
+        )  # Enable voltage boost for solenoid current spike
         self.set_single_output("solenoid", 1, 0)
-        time.sleep(.001*spike)
+        time.sleep(0.001 * spike)
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)  # Disable voltage boost
-        time.sleep(.001*hold)
+        time.sleep(0.001 * hold)
         # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
         self.set_single_output("solenoid", 0, 0)
 
@@ -382,7 +386,7 @@ class Power:
     def glowplug(self, duration, delay=0):
         time.sleep(delay)
         self.set_single_output("glowplug", 1, 0)
-        time.sleep(.001*duration)
+        time.sleep(0.001 * duration)
         self.set_single_output("glowplug", 0, 0)
 
     # turns both burnwires on for [duration] seconds, with a
@@ -391,9 +395,9 @@ class Power:
         time.sleep(delay)
         self.set_single_output("burnwire_1", 1, 0)
         self.set_single_output("burnwire_2", 1, 0)
-        time.sleep(duration/2)
+        time.sleep(duration / 2)
         self.displayAll()
-        time.sleep(duration/2)
+        time.sleep(duration / 2)
         self.set_single_output("burnwire_1", 0, 0)
         self.set_single_output("burnwire_2", 0, 0)
 
@@ -408,13 +412,12 @@ class Power:
     def comms_amplifier(self, on):
         self.set_single_output("comms", int(on), 0)
 
-
     def adjust_string(self, string, length):
         new = string
         if len(new) > length:
             new = new[:length]
         elif len(new) < length:
-            new += " "*(length-len(new))
+            new += " " * (length - len(new))
         return new
 
     # Legacy stuff, may or may not be useful
@@ -438,16 +441,38 @@ class Power:
 
     def chamber(self, name, t):
         text_file = open(name, "w")
-        header = "time:"+str(t)+"\n"
+        header = "time:" + str(t) + "\n"
         text_file.write(header)
         while True:
             try:
                 hk = self.get_hk_1()
-                nxt = "pv "+str(hk.pv[0])+","+str(hk.pv[1])+","+str(hk.pv[2])+"\n" + \
-                      "pc "+str(hk.pc)+"\n" + \
-                      "bv "+str(hk.bv)+"\n" + \
-                      "sc "+str(hk.sc)+"\n" + \
-                      "temp "+str(hk.temp[0])+","+str(hk.temp[1])+","+str(hk.temp[2])+","+str(hk.temp[3])+"\n@\n"
+                nxt = (
+                    "pv "
+                    + str(hk.pv[0])
+                    + ","
+                    + str(hk.pv[1])
+                    + ","
+                    + str(hk.pv[2])
+                    + "\n"
+                    + "pc "
+                    + str(hk.pc)
+                    + "\n"
+                    + "bv "
+                    + str(hk.bv)
+                    + "\n"
+                    + "sc "
+                    + str(hk.sc)
+                    + "\n"
+                    + "temp "
+                    + str(hk.temp[0])
+                    + ","
+                    + str(hk.temp[1])
+                    + ","
+                    + str(hk.temp[2])
+                    + ","
+                    + str(hk.temp[3])
+                    + "\n@\n"
+                )
                 print(nxt)
                 text_file.write(nxt)
             except:

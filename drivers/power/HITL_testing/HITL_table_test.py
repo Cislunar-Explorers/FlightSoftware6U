@@ -8,7 +8,7 @@ HITL_test = Power()
 print("Turning off all outputs")
 OUTPUTS = ["comms", "burnwire_1", "burnwire_2", "glowplug", "solenoid", "electrolyzer"]
 for i in range(0, 6):
-    HITL_test.set_single_output(OUTPUTS[i], 0,0)
+    HITL_test.set_single_output(OUTPUTS[i], 0, 0)
 
 print(" --- TESTING  displayAll --- \n")
 HITL_test.displayAll()
@@ -59,7 +59,7 @@ time.sleep(1)
 
 print("Testing Solenoid")
 print("You should see HITL output 12 light up")
-HITL_test.solenoid(10,990)
+HITL_test.solenoid(10, 990)
 time.sleep(1)
 
 print("Testing Electrolyzer")

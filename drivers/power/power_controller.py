@@ -99,21 +99,27 @@ class Outputs(Enum):
 OUT_PI_COMMS            = 11    # GPIO 17
 OUT_PI_SOLENOID_ENABLE  = 40    # GPIO 21
 
+
 class PowerException(Exception):
     pass
+
 
 class PowerInputError(PowerException):
     pass
 
+
 class PowerReadError(PowerException):
     pass
 
+
 _ = ps._
-class Power():
+
+
+class Power:
     # initializes power object with bus [bus] and device address [addr]
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
-        self._pi = pi()                                     # initialize pigpio object
-        self._dev = self._pi.i2c_open(bus, addr, flags)     # initialize i2c device
+        self._pi = pi()  # initialize pigpio object
+        self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
         # initialize pi outputs
         GPIO.setmode(GPIO.BOARD)

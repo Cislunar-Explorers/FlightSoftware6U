@@ -1,8 +1,9 @@
 import power_controller as pc
 from enum import Enum
 
+
 class Hk(Enum):
-    DEFAULT = "defualt"
+    DEFAULT = "default"
     EPS = "eps"
     VI = "vi"
     OUT = "out"
@@ -10,6 +11,7 @@ class Hk(Enum):
     BASIC = "basic"
     CONFIG = "config"
     CONFIG2 = "config2"
+
 
 class Gomspace:
     def __init__(self):
@@ -22,30 +24,25 @@ class Gomspace:
     def get_health_data(self, level=Hk.DEFAULT.value):
         """Returns a struct containing housekeeping data.
             The level parameter specifies which command gets sent to the P31u and what data you get back.
-            level must be either one of the following: \n
+            level must be  one of the following: \n
             ["default", "eps", "vi", "out", "wdt", "basic", "config", "config2"]\n
-            or the index of one of the above: i.e. get_health_data("eps") is the same as get_health_data(1)\n
-            If no argument is provided, returns the same as "default" or 0\n
+            If no argument is provided, returns the same as "default" \n
             Every option returns a different struct, the documentation for which can be found in power_structs.py or in
-            the GomSpace P31u manual"""
+            the GomSpace NanoPower P31u manual"""
 
-        if level == Hk.DEFAULT.value:
-            return self.gom.get_hk_1()
-        elif level == Hk.EPS.value:
-            return self.gom.get_hk_2()
-        elif level == Hk.VI.value:
-            return self.gom.get_hk_2_vi()
-        elif level == Hk.OUT.value:
-            return self.gom.get_hk_out()
-        elif level == Hk.WDT.value:
-            return self.gom.get_hk_wdt()
-        elif level == Hk.BASIC.value:
-            return self.gom.get_hk_2_basic()
-        elif level == Hk.CONFIG.value:
-            return self.gom.config_get()
-        elif level == Hk.CONFIG2.value:
-            return self.gom.config2_get()
-        else:
+        hk_dict = {Hk.DEFAULT.value: self.gom.get_hk_1(),
+                   Hk.EPS.value: self.gom.get_hk_2(),
+                   Hk.VI.value: self.gom.get_hk_2_vi(),
+                   Hk.OUT.value: self.gom.get_hk_out(),
+                   Hk.WDT.value: self.gom.get_hk_wdt(),
+                   Hk.BASIC.value: self.gom.get_hk_2_basic(),
+                   Hk.CONFIG.value: self.gom.config_get(),
+                   Hk.CONFIG2.value: self.gom.config2_get()
+                   }
+
+        try:
+            return hk_dict[level]
+        except KeyError:
             raise ValueError("Invalid Input!")
 
     def set_output(self, channel, value, delay=0):
@@ -90,6 +87,6 @@ class Gomspace:
     def set_electrolysis(self, status: bool):
         self.electrolysis = status
 
-    #TODO
+    # TODO
     def read_battery_percentage(self):
         return 0.7

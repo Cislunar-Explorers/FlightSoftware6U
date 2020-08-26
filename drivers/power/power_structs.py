@@ -12,6 +12,7 @@
 #
 
 from ctypes import *
+import logging
 
 
 # ----------------------------------------------FORMATTING
@@ -374,31 +375,31 @@ def bytesToList(b):
 # were rewritten from lambda functions on 2020-08-24. Need to be tested!
 
 
-def B(x):
+def B(x) -> str:
     return Color.BOLD + x + Color.ENDC
 
 
-def G(x):
+def G(x) -> str:
     return Color.GREEN + x + Color.ENDC
 
 
-def R(x):
+def R(x) -> str:
     return Color.RED + x + Color.ENDC
 
 
-def GR(x):
-    return Color.GRAY + x + Color.ENDC
+def GR(x) -> str:
+    return Color.GRAY + str(x) + Color.ENDC
 
 
-def mv(x: str):
+def mv(x: str) -> str:
     return x + "mV"
 
 
-def ma(x: str):
+def ma(x: str) -> str:
     return x + "mA"
 
 
-def degc(x: str):
+def degc(x: str) -> str:
     return x + "degC"
 
 
@@ -431,8 +432,8 @@ def displayHK(hk):
 
     print(G("***************-HOUSEKEEPING-***************"))
     print(
-        GR("Photo-voltaic inputs:        ") +
-        "1-%s 2-%s 3-%s" % (R(mv(hk.pv[0])), R(mv(hk.pv[1])), R(mv(hk.pv[2])))
+        GR("Photo-voltaic inputs:        ")
+        + "1-%s 2-%s 3-%s" % (R(mv(hk.pv[0])), R(mv(hk.pv[1])), R(mv(hk.pv[2])))
     )
 
     print(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
@@ -440,8 +441,8 @@ def displayHK(hk):
     print(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
 
     print(
-        GR("Temp of boost converters:    ") +
-        "1-%s 2-%s 3-%s batt-%s"
+        GR("Temp of boost converters:    ")
+        + "1-%s 2-%s 3-%s batt-%s"
         % (
             R(degc(hk.temp[0])),
             R(degc(hk.temp[1])),
@@ -451,13 +452,13 @@ def displayHK(hk):
     )
 
     print(
-        GR("External batt temp:          ") +
-        "1-%s 2-%s" % (R(degc(hk.batt_temp[0])), R(degc(hk.batt_temp[1])))
+        GR("External batt temp:          ")
+        + "1-%s 2-%s" % (R(degc(hk.batt_temp[0])), R(degc(hk.batt_temp[1])))
     )
 
     print(
-        GR("Latchups:                    ") +
-        "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]"
+        GR("Latchups:                    ")
+        + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]"
         % (
             R(hk.latchup[0]),
             R(hk.latchup[1]),
@@ -473,7 +474,8 @@ def displayHK(hk):
     print(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
     print(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
     print(
-        GR("Channel output:              ") + "%s"
+        GR("Channel output:              ")
+        + "%s"
         % R(
             (
                 hk.channel_status

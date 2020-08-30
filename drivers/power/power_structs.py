@@ -342,7 +342,6 @@ def c_bytesToByteArray(i):
     return (c_byte * len(i))(*i)
 
 
-
 # struct -> c_bytearray -> bytearray
 # converts a struct [s] into a python bytearray of the appropriate size.
 # raises: AssertionError if s is not a struct

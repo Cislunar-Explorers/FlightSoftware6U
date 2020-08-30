@@ -89,17 +89,6 @@ class Outputs(Enum):
 #    switch       = OUT_SWITCH
 
 
-class Outputs(Enum):
-    comms        = OUT_1
-    burnwire_1   = OUT_2
-    burnwire_2   = OUT_3
-    glowplug     = OUT_4
-    solenoid     = OUT_5
-    electrolyzer = OUT_6
-    #heater       = OUT_HEATER  #Not included for remote testing purposes
-    #switch       = OUT_SWITCH
-
-
 # Outputs on board:
 #
 #       H1
@@ -126,21 +115,6 @@ class PowerInputError(PowerException):
 class PowerReadError(PowerException):
     pass
 
-
-class PowerException(Exception):
-    pass
-
-class PowerInputError(PowerException):
-    pass
-
-class PowerReadError(PowerException):
-    pass
-
-class PowerWriteError(PowerException):
-    pass
-
-class PowerOutputError(PowerException):
-    pass
 
 _ = ps._
 
@@ -287,8 +261,12 @@ class Power:
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
+        logging.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
         if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
-            raise PowerInputError("Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE)
+            logging.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")
+            raise PowerInputError(
+                "Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE
+            )
         else:
             v = bytearray(6)
             v[0:2] = toBytes(volt1, 2)

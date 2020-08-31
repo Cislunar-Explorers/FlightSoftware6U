@@ -251,8 +251,8 @@ class Power:
         else:
             channel_num = None
             for i in Outputs:
-                if Outputs(i).name == channel:
-                    channel_num = Outputs(i).value
+                if i.name == channel:
+                    channel_num = i.value
             d = toBytes(delay, 2)
 
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value] + list(d))

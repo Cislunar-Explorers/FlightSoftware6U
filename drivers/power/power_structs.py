@@ -16,6 +16,7 @@ from FlightSoftware.utils.log import get_log
 
 logger = get_log()
 
+
 # ----------------------------------------------FORMATTING
 # define custom infix operators
 class Operator(object):
@@ -486,13 +487,13 @@ def displayHK(hk):
                     >> _
                     >> substr(2)
                     >> _
-                >> len
-                >> _
-                >> mult(-1)
-                >> _
-                >> add(8)
-                >> _
-                >> mult("0")
+                    >> len
+                    >> _
+                    >> mult(-1)
+                    >> _
+                    >> add(8)
+                    >> _
+                    >> mult("0")
             )
             + (hk.channel_status >> _ >> bin >> _ >> str >> _ >> substr(2))
         )
@@ -515,13 +516,19 @@ def displayConfig(conf):
         return x + "s"
 
     logger.info(G("***************-CONFIG-***************"))
-    logger.info(GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode))))
+    logger.info(
+        GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode)))
+    )
     logger.info(
         GR("Battheater mode:             ")
         + "%s" % (R(battheatermode(conf.battheater_mode)))
     )
-    logger.info(GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low))))
-    logger.info(GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high))))
+    logger.info(
+        GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low)))
+    )
+    logger.info(
+        GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high)))
+    )
 
     logger.info(
         GR("Nominal mode output value:   ")
@@ -594,12 +601,18 @@ def displayConfig(conf):
 def displayConfig2(conf):
     assert type(conf) == eps_config2_t
     logger.info(G("***************-CONFIG2-***************"))
-    logger.info(GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage))))
-    logger.info(GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage))))
+    logger.info(
+        GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage)))
+    )
+    logger.info(
+        GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage)))
+    )
     logger.info(
         GR("Batt Critical Voltage:       ") + "%s" % (R(mv(conf.batt_criticalvoltage)))
     )
-    logger.info(GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage))))
+    logger.info(
+        GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage)))
+    )
 
 
 # ----------------------------------------------CONSTANTS

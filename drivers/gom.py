@@ -113,25 +113,6 @@ class Gomspace:
         )
         self.gom.burnwire(duration, delay)
 
-        if level == Hk.DEFAULT.value:
-            return self.gom.get_hk_1()
-        elif level == Hk.EPS.value:
-            return self.gom.get_hk_2()
-        elif level == Hk.VI.value:
-            return self.gom.get_hk_2_vi()
-        elif level == Hk.OUT.value:
-            return self.gom.get_hk_out()
-        elif level == Hk.WDT.value:
-            return self.gom.get_hk_wdt()
-        elif level == Hk.BASIC.value:
-            return self.gom.get_hk_2_basic()
-        elif level == Hk.CONFIG.value:
-            return self.gom.config_get()
-        elif level == Hk.CONFIG2.value:
-            return self.gom.config2_get()
-        else:
-            raise ValueError("Invalid Input!")
-
     def set_output(self, channel, value, delay=0):
         """Sets a single controllable output either on or off.
             channel must be a string that corresponds to one of

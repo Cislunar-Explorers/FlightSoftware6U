@@ -265,6 +265,7 @@ def structMaker(s):
     try:
         return struct_options[s]
     except KeyError:
+        logging.warning("In structMaker: input not valid. Return TestStruct")
         return TestingStruct()
 
 
@@ -430,17 +431,17 @@ def displayHK(hk):
     def substr(x, y):
         return y[x:]
 
-    print(G("***************-HOUSEKEEPING-***************"))
-    print(
+    logging.info(G("***************-HOUSEKEEPING-***************"))
+    logging.info(
         GR("Photo-voltaic inputs:        ")
         + "1-%s 2-%s 3-%s" % (R(mv(hk.pv[0])), R(mv(hk.pv[1])), R(mv(hk.pv[2])))
     )
 
-    print(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
-    print(GR("Battery voltage:             ") + "%s" % (R(mv(hk.bv))))
-    print(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
+    logging.info(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
+    logging.info(GR("Battery voltage:             ") + "%s" % (R(mv(hk.bv))))
+    logging.info(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
 
-    print(
+    logging.info(
         GR("Temp of boost converters:    ")
         + "1-%s 2-%s 3-%s batt-%s"
         % (
@@ -451,12 +452,12 @@ def displayHK(hk):
         )
     )
 
-    print(
+    logging.info(
         GR("External batt temp:          ")
         + "1-%s 2-%s" % (R(degc(hk.batt_temp[0])), R(degc(hk.batt_temp[1])))
     )
 
-    print(
+    logging.info(
         GR("Latchups:                    ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]"
         % (
@@ -469,21 +470,21 @@ def displayHK(hk):
         )
     )
 
-    print(GR("Cause of last reset:         ") + "%s" % (R(RES(hk.reset))))
-    print(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
-    print(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
-    print(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
-    print(
+    logging.info(GR("Cause of last reset:         ") + "%s" % (R(RES(hk.reset))))
+    logging.info(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
+    logging.info(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
+    logging.info(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
+    logging.info(
         GR("Channel output:              ")
         + "%s"
         % R(
             (
-                hk.channel_status
-                >> _
-                >> bin
-                >> _
-                >> substr(2)
-                >> _
+                    hk.channel_status
+                    >> _
+                    >> bin
+                    >> _
+                    >> substr(2)
+                    >> _
                 >> len
                 >> _
                 >> mult(-1)
@@ -510,16 +511,16 @@ def displayConfig(conf):
     def sec(x: str):
         return x + "s"
 
-    print(G("***************-CONFIG-***************"))
-    print(GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode))))
-    print(
+    logging.info(G("***************-CONFIG-***************"))
+    logging.info(GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode))))
+    logging.info(
         GR("Battheater mode:             ")
         + "%s" % (R(battheatermode(conf.battheater_mode)))
     )
-    print(GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low))))
-    print(GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high))))
+    logging.info(GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low))))
+    logging.info(GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high))))
 
-    print(
+    logging.info(
         GR("Nominal mode output value:   ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -534,7 +535,7 @@ def displayConfig(conf):
         )
     )
 
-    print(
+    logging.info(
         GR("Safe mode output value:      ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -549,7 +550,7 @@ def displayConfig(conf):
         )
     )
 
-    print(
+    logging.info(
         GR("Output initial on:           ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -564,7 +565,7 @@ def displayConfig(conf):
         )
     )
 
-    print(
+    logging.info(
         GR("Output initial off:          ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -579,7 +580,7 @@ def displayConfig(conf):
         )
     )
 
-    print(
+    logging.info(
         GR("PPT point for boost conv:    ")
         + "1-%s 2-%s 3-%s"
         % (R(mv(conf.vboost[0])), R(mv(conf.vboost[1])), R(mv(conf.vboost[2])))
@@ -589,13 +590,13 @@ def displayConfig(conf):
 # prints config2 info given eps_config2_t struct
 def displayConfig2(conf):
     assert type(conf) == eps_config2_t
-    print("***************-CONFIG2-***************" >> _ >> G)
-    print(GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage))))
-    print(GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage))))
-    print(
+    logging.info("***************-CONFIG2-***************" >> _ >> G)
+    logging.info(GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage))))
+    logging.info(GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage))))
+    logging.info(
         GR("Batt Critical Voltage:       ") + "%s" % (R(mv(conf.batt_criticalvoltage)))
     )
-    print(GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage))))
+    logging.info(GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage))))
 
 
 # ----------------------------------------------CONSTANTS

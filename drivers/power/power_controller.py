@@ -357,7 +357,7 @@ class Power:
     def hard_reset(self, are_you_sure=False):
         if are_you_sure:
             logging.info("Hard reset Passcode correct: Performing hard reset")
-            logging.warning("Cycling permanent 5V and 3.3V and battery outputs")
+            logging.critical("Cycling permanent 5V and 3.3V and battery outputs")
             self.write(CMD_HARD_RESET, [])
         else:
             logging.info("Hard reset Passcode incorrect: Aborting hard reset")

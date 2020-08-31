@@ -16,8 +16,8 @@ from power_structs import *
 import power_structs as ps
 import RPi.GPIO as GPIO
 import time
-import logging
 from enum import Enum
+
 
 # power device address
 POWER_ADDRESS = 0x02
@@ -122,7 +122,7 @@ _ = ps._
 class Power:
     # initializes power object with bus [bus] and device address [addr]
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
-        logging.debug(
+        logger.debug(
             "Initializing Power object with bus %s, device address %s, and flags %s",
             bus,
             addr,
@@ -151,18 +151,18 @@ class Power:
     # raises: ValueError if cmd or values are not bytes
     # TODO: Implement PowerWriteError once we switch to new I2C library
     def write(self, cmd, values):
-        logging.debug("Writing to register %s with byte list %s", cmd, values)
+        logger.debug("Writing to register %s with byte list %s", cmd, values)
         self._pi.i2c_write_device(self._dev, bytearray([cmd] + values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
     def read(self, bytes):
         # first two read bytes -> [command][error code][data]
-        logging.debug("Reading %s bytes from the device", bytes)
+        logger.debug("Reading %s bytes from the device", bytes)
         (x, r) = self._pi.i2c_read_device(self._dev, bytes + 2)
-        logging.debug("Read %s, and %s from device", x, r)
+        logger.debug("Read %s, and %s from device", x, r)
         if r[1] != 0:
             # TODO: ask Aaron whether we want to raise an exception, or just log an error for cases like these:
-            logging.error("Command %i failed with error code %i", r[0], r[1])
+            logger.error("Command %i failed with error code %i", r[0], r[1])
             raise PowerReadError(
                 "Read Error: Command %i failed with error code %i" % (r[0], r[1])
             )
@@ -174,53 +174,53 @@ class Power:
     # value [1 byte]
     # raises: ValueError if value is not a byte
     def ping(self, value):
-        logging.debug("Pinging %s", value)
+        logger.debug("Pinging %s", value)
         self.write(CMD_PING, [value])
         return self.read(1)
 
     # reboot the system
     def reboot(self):
-        logging.info("Performing Gomspace reboot")
+        logger.info("Performing Gomspace reboot")
         self.write(CMD_REBOOT, [0x80, 0x07, 0x80, 0x07])
 
     # returns hkparam_t struct
     def get_hk_1(self):
-        logging.info("Running get_hk_1")
+        logger.debug("Running get_hk_1")
         self.write(CMD_GET_HK, [])
         array = self.read(SIZE_HKPARAM_T)
         return c_bytesToStruct(array, "hkparam_t")
 
     # returns eps_hk_t struct
     def get_hk_2(self):
-        logging.info("Running get_hk_2")
+        logger.debug("Running get_hk_2")
         self.write(CMD_GET_HK, [0x00])
         array = self.read(SIZE_EPS_HK_T)
         return c_bytesToStruct(array, "eps_hk_t")
 
     # returns eps_hk_vi_t struct
     def get_hk_2_vi(self):
-        logging.info("Running get_hk_2_vi")
+        logger.debug("Running get_hk_2_vi")
         self.write(CMD_GET_HK, [0x01])
         array = self.read(SIZE_EPS_HK_VI_T)
         return c_bytesToStruct(array, "eps_hk_vi_t")
 
     # returns eps_hk_out_t struct
     def get_hk_out(self):
-        logging.info("Running get_hk_out")
+        logger.debug("Running get_hk_out")
         self.write(CMD_GET_HK, [0x02])
         array = self.read(SIZE_EPS_HK_OUT_T)
         return c_bytesToStruct(array, "eps_hk_out_t")
 
     # returns eps_hk_wdt_t struct
     def get_hk_wdt(self):
-        logging.info("Running get_hk_wdt")
+        logger.debug("Running get_hk_wdt")
         self.write(CMD_GET_HK, [0x03])
         array = self.read(SIZE_EPS_HK_WDT_T)
         return c_bytesToStruct(array, "eps_hk_wdt_t")
 
     # returns eps_hk_basic_t struct
     def get_hk_2_basic(self):
-        logging.info("Running get_hk_2_basic")
+        logger.debug("Running get_hk_2_basic")
         self.write(CMD_GET_HK, [0x04])
         array = self.read(SIZE_EPS_HK_BASIC_T)
         return c_bytesToStruct(array, "eps_hk_basic_t")
@@ -229,7 +229,7 @@ class Power:
     # byte [1 byte] -> [NC NC 3.3V3 3.3V2 3.3V1 5V3 5V2 5V1]
     # raises: ValueError if byte is not char
     def set_output(self, byte):
-        logging.info("Setting outputs to %s", byte)
+        logger.debug("Setting outputs to %s", byte)
         self.write(CMD_SET_OUTPUT, [byte])
 
     # sets a single output on or off:
@@ -239,6 +239,13 @@ class Power:
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
+        logger.debug(
+            "Setting single channel %s output to value %s after delay %s",
+            channel,
+            value,
+            delay,
+        )
+
         if value not in [0, 1]:
             raise PowerInputError("Invalid Input: value must be 0 or 1")
         else:
@@ -247,12 +254,7 @@ class Power:
                 if Outputs(i).name == channel:
                     channel_num = Outputs(i).value
             d = toBytes(delay, 2)
-            logging.debug(
-                "Setting single channel %s output to value %s after delay %s",
-                channel_num,
-                value,
-                delay,
-            )
+
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value] + list(d))
 
     # Set the voltage on the photo-voltaic inputs V1, V2, V3 in mV.
@@ -261,9 +263,9 @@ class Power:
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
-        logging.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
+        logger.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
         if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
-            logging.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")
+            logger.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")
             raise PowerInputError(
                 "Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE
             )
@@ -282,7 +284,7 @@ class Power:
     # raises: PowerInputError if mode is not 0, 1, or 2
     # Not tested
     def set_pv_auto(self, mode):
-        logging.debug("Setting solar cell power tracking to mode %i", mode)
+        logger.debug("Setting solar cell power tracking to mode %i", mode)
         if mode not in [0, 1, 2]:
             raise PowerInputError("Invalid Input: mode must be 0, 1 or 2")
         else:
@@ -296,9 +298,9 @@ class Power:
     # raises: PowerInputError if variables are not in correct range
     # Not tested
     def set_heater(self, command, heater, mode):
-        logging.info("Setting heater %i to mode %i", heater, mode)
+        logger.debug("Setting heater %i to mode %i", heater, mode)
         if command != 0 or heater not in [0, 1, 2] and mode not in [0, 1]:
-            logging.error(
+            logger.error(
                 "Invalid Input: command must be 0,heater must be 0, 1 or 2, and mode must be 0 or 1"
             )
             raise PowerInputError(
@@ -311,43 +313,43 @@ class Power:
 
     # Not tested
     def get_heater(self):
-        logging.info("Running command get_heater")
+        logger.debug("Running get_heater")
         self.write(CMD_SET_HEATER, [])
         return self.read(2)
 
     # resets the boot counter and WDT counters.
     # Not tested
     def reset_counters(self):
-        logging.info("Resetting boot and WDT counters")
+        logger.debug("Resetting boot and WDT counters")
         self.write(CMD_RESET_COUNTERS, [0x42])
 
     # resets (kicks) dedicated WDT.
     # Not tested
     def reset_wdt(self):
-        logging.info("Resetting WDT")
+        logger.debug("Resetting WDT")
         self.write(CMD_RESET_WDT, [0x78])
 
     # Use this command to control the config system.
     # cmd [1 byte] -> cmd = 1: Restore default config
     # raises: PowerInputError if command is not 1
     def config_cmd(self, command):
-        logging.info("Running config_cmd: restoring default config")
+        logger.debug("Running config_cmd: restoring default config")
         if command != 1:
-            logging.error("Invalid input: command must be 1")
+            logger.error("Invalid input: command must be 1")
             raise PowerInputError("Invalid Input: command must be 1")
         else:
             self.write(CMD_CONFIG_CMD, [command])
 
     # returns eps_config_t structure
     def config_get(self):
-        logging.info("Running config_get")
+        logger.debug("Getting current config")
         self.write(CMD_CONFIG_GET, [])
         return c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
 
     # takes eps_config_t struct and sets configuration
     # Input struct is of type eps_config_t
     def config_set(self, struct):
-        logging.info("Running config_set")
+        logger.debug("Setting current config")
         array = struct >> _ >> c_structToBytes >> _ >> bytesToList
         self.write(CMD_CONFIG_SET, array)
 
@@ -356,19 +358,19 @@ class Power:
     # Not tested- issue running through HITL server
     def hard_reset(self, are_you_sure=False):
         if are_you_sure:
-            logging.info("Hard reset Passcode correct: Performing hard reset")
-            logging.critical("Cycling permanent 5V and 3.3V and battery outputs")
+            logger.info("Hard reset Passcode correct: Performing hard reset")
+            logger.critical("Cycling permanent 5V and 3.3V and battery outputs")
             self.write(CMD_HARD_RESET, [])
         else:
-            logging.info("Hard reset Passcode incorrect: Aborting hard reset")
+            logger.info("Hard reset Passcode incorrect: Aborting hard reset")
 
     # Use this command to control the config 2 system.
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
     # raises: PowerInputError if command is not a valid value
     def config2_cmd(self, command):
-        logging.info("Running config2_cmd")
+        logger.debug("Running config2_cmd with command=%s", command)
         if command not in [1, 2]:
-            logging.error("Invalid Input: command must be 1 or 2")
+            logger.error("Invalid Input: command must be 1 or 2")
             raise PowerInputError("Invalid Input: command must be 1 or 2")
         else:
             self.write(CMD_CONFIG2_CMD, [command])
@@ -376,7 +378,7 @@ class Power:
     # Use this command to request the P31 config 2.
     # returns esp_config2_t struct
     def config2_get(self):
-        logging.info("Running config2_get")
+        logger.debug("Getting config2")
         self.write(CMD_CONFIG2_GET, [])
         return c_bytesToStruct(self.read(SIZE_EPS_CONFIG2_T), "eps_config2_t")
 
@@ -384,7 +386,7 @@ class Power:
     # and save it (remember to also confirm it [using config2_cmd?])
     # Input struct is of type eps_config2_t
     def config2_set(self, struct):
-        logging.info("Running config2_set")
+        logger.debug("Setting config2")
         array = struct >> _ >> c_structToBytes >> _ >> bytesToList
         self.write(CMD_CONFIG2_SET, array)
 
@@ -395,7 +397,7 @@ class Power:
     # milliseconds [duration]; called after a delay of
     # [delay] seconds.
     def pulse(self, output, duration, delay=0):
-        logging.info("Pulsing Gom output %i on for %i ms after a %i sec delay")
+        logger.debug("Pulsing Gom output %i on for %i ms after a %i sec delay")
         time.sleep(delay)
         self.set_single_output(output, 1, 0)
         time.sleep(duration * 0.001)
@@ -404,19 +406,19 @@ class Power:
     # output must be off before the function is called
     # pulses high for duration amount of milliseconds
     def pulse_pi(self, output, duration, delay=0):
-        logging.info("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
+        logger.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
         time.sleep(delay)
-        logging.debug("Setting GPIO channel %i HIGH", output)
+        logger.debug("Setting GPIO channel %i HIGH", output)
         GPIO.output(output, GPIO.HIGH)
         time.sleep(duration * 0.001)
-        logging.debug("Setting GPIO channel %i LOW", output)
+        logger.debug("Setting GPIO channel %i LOW", output)
         GPIO.output(output, GPIO.LOW)
 
     # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
     # Input switch is of type bool
     def electrolyzer(self, switch, delay=0):
-        logging.info(
+        logger.debug(
             "Setting electrolyzer to mode %i after a delay of %i seconds", switch, delay
         )
         self.set_single_output("electrolyzer", int(switch), delay)
@@ -426,7 +428,7 @@ class Power:
     # delay of [delay] seconds.
     # output must be off before the function is called
     def solenoid(self, spike, hold, delay=0):
-        logging.debug(
+        logger.debug(
             "Spiking solenoid for %i ms, holding for %i ms, with a delay of %i sec",
             spike,
             hold,
@@ -447,7 +449,7 @@ class Power:
     # delay of [delay] seconds.
     # output must be off before the function is called
     def glowplug(self, duration, delay=0):
-        logging.debug(
+        logger.debug(
             "Pulsing glowplug for %i ms with a delay of %i sec", duration, delay
         )
         time.sleep(delay)
@@ -478,69 +480,70 @@ class Power:
     def comms_amplifier(self, on):
         self.set_single_output("comms", int(on), 0)
 
-    def adjust_string(self, string, length):
-        new = string
-        if len(new) > length:
-            new = new[:length]
-        elif len(new) < length:
-            new += " " * (length - len(new))
-        return new
-
     # Legacy stuff, may or may not be useful
-    def nasa_demo(self):
-        r = input("electrolyzers: ")
-        self.electrolyzer(True)
-        time.sleep(float(r))
-        self.electrolyzer(False)
 
-        r = input("sparkplug:")
-        self.sparkplug(3)
+    # def adjust_string(self, string, length):
+    #     new = string
+    #     if len(new) > length:
+    #         new = new[:length]
+    #     elif len(new) < length:
+    #         new += " " * (length - len(new))
+    #     return new
 
-        r = input("solenoid:")
-        self.solenoid(10, 250)
+    # def nasa_demo(self):
+    #     r = input("electrolyzers: ")
+    #     self.electrolyzer(True)
+    #     time.sleep(float(r))
+    #     self.electrolyzer(False)
+    #
+    #     r = input("sparkplug:")
+    #     self.sparkplug(3)
+    #
+    #     r = input("solenoid:")
+    #     self.solenoid(10, 250)
+    #
+    #     r = input("burnwire:")
+    #     self.burnwire(4)
+    #
+    #     r = input("sensor data:")
+    #     self.display_sensors()
 
-        r = input("burnwire:")
-        self.burnwire(4)
-
-        r = input("sensor data:")
-        self.display_sensors()
-
-    def chamber(self, name, t):
-        text_file = open(name, "w")
-        header = "time:" + str(t) + "\n"
-        text_file.write(header)
-        while True:
-            try:
-                hk = self.get_hk_1()
-                nxt = (
-                    "pv "
-                    + str(hk.pv[0])
-                    + ","
-                    + str(hk.pv[1])
-                    + ","
-                    + str(hk.pv[2])
-                    + "\n"
-                    + "pc "
-                    + str(hk.pc)
-                    + "\n"
-                    + "bv "
-                    + str(hk.bv)
-                    + "\n"
-                    + "sc "
-                    + str(hk.sc)
-                    + "\n"
-                    + "temp "
-                    + str(hk.temp[0])
-                    + ","
-                    + str(hk.temp[1])
-                    + ","
-                    + str(hk.temp[2])
-                    + ","
-                    + str(hk.temp[3])
-                    + "\n@\n"
-                )
-                print(nxt)
-                text_file.write(nxt)
-            except:
-                print("recovered from error")
-            time.sleep(t)
+    # def chamber(self, name, t):
+    #     text_file = open(name, "w")
+    #     header = "time:" + str(t) + "\n"
+    #     text_file.write(header)
+    #     while True:
+    #         try:
+    #             hk = self.get_hk_1()
+    #             nxt = (
+    #                 "pv "
+    #                 + str(hk.pv[0])
+    #                 + ","
+    #                 + str(hk.pv[1])
+    #                 + ","
+    #                 + str(hk.pv[2])
+    #                 + "\n"
+    #                 + "pc "
+    #                 + str(hk.pc)
+    #                 + "\n"
+    #                 + "bv "
+    #                 + str(hk.bv)
+    #                 + "\n"
+    #                 + "sc "
+    #                 + str(hk.sc)
+    #                 + "\n"
+    #                 + "temp "
+    #                 + str(hk.temp[0])
+    #                 + ","
+    #                 + str(hk.temp[1])
+    #                 + ","
+    #                 + str(hk.temp[2])
+    #                 + ","
+    #                 + str(hk.temp[3])
+    #                 + "\n@\n"
+    #             )
+    #             print(nxt)
+    #             text_file.write(nxt)
+    #         except:
+    #             print("recovered from error")
+    #         time.sleep(t)

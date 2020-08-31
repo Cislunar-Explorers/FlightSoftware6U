@@ -12,8 +12,9 @@
 #
 
 from ctypes import *
-import logging
+from FlightSoftware.utils.log import get_log
 
+logger = get_log()
 
 # ----------------------------------------------FORMATTING
 # define custom infix operators
@@ -265,7 +266,7 @@ def structMaker(s):
     try:
         return struct_options[s]
     except KeyError:
-        logging.warning("In structMaker: input not valid. Return TestStruct")
+        logger.warning("In structMaker: input not valid. Return TestStruct")
         return TestingStruct()
 
 
@@ -431,17 +432,17 @@ def displayHK(hk):
     def substr(x, y):
         return y[x:]
 
-    logging.info(G("***************-HOUSEKEEPING-***************"))
-    logging.info(
+    logger.info(G("***************-HOUSEKEEPING-***************"))
+    logger.info(
         GR("Photo-voltaic inputs:        ")
         + "1-%s 2-%s 3-%s" % (R(mv(hk.pv[0])), R(mv(hk.pv[1])), R(mv(hk.pv[2])))
     )
 
-    logging.info(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
-    logging.info(GR("Battery voltage:             ") + "%s" % (R(mv(hk.bv))))
-    logging.info(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
+    logger.info(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
+    logger.info(GR("Battery voltage:             ") + "%s" % (R(mv(hk.bv))))
+    logger.info(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
 
-    logging.info(
+    logger.info(
         GR("Temp of boost converters:    ")
         + "1-%s 2-%s 3-%s batt-%s"
         % (
@@ -452,12 +453,12 @@ def displayHK(hk):
         )
     )
 
-    logging.info(
+    logger.info(
         GR("External batt temp:          ")
         + "1-%s 2-%s" % (R(degc(hk.batt_temp[0])), R(degc(hk.batt_temp[1])))
     )
 
-    logging.info(
+    logger.info(
         GR("Latchups:                    ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]"
         % (
@@ -470,11 +471,11 @@ def displayHK(hk):
         )
     )
 
-    logging.info(GR("Cause of last reset:         ") + "%s" % (R(RES(hk.reset))))
-    logging.info(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
-    logging.info(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
-    logging.info(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
-    logging.info(
+    logger.info(GR("Cause of last reset:         ") + "%s" % (R(RES(hk.reset))))
+    logger.info(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
+    logger.info(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
+    logger.info(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
+    logger.info(
         GR("Channel output:              ")
         + "%s"
         % R(
@@ -503,24 +504,26 @@ def displayConfig(conf):
     assert type(conf) == eps_config_t
 
     def pptmode(x: int):
+        logger.debug("PPT Mode code: %s", x)
         return {1: "AUTO[1]", 2: "FIXED[2]"}.get(x, "ERROR")
 
     def battheatermode(x: int):
+        logger.debug("BattHeater Mode code: %s", x)
         return {0: "MANUAL[0]", 1: "AUTO[1]"}.get(x, "ERROR")
 
     def sec(x: str):
         return x + "s"
 
-    logging.info(G("***************-CONFIG-***************"))
-    logging.info(GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode))))
-    logging.info(
+    logger.info(G("***************-CONFIG-***************"))
+    logger.info(GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode))))
+    logger.info(
         GR("Battheater mode:             ")
         + "%s" % (R(battheatermode(conf.battheater_mode)))
     )
-    logging.info(GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low))))
-    logging.info(GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high))))
+    logger.info(GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low))))
+    logger.info(GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high))))
 
-    logging.info(
+    logger.info(
         GR("Nominal mode output value:   ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -535,7 +538,7 @@ def displayConfig(conf):
         )
     )
 
-    logging.info(
+    logger.info(
         GR("Safe mode output value:      ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -550,7 +553,7 @@ def displayConfig(conf):
         )
     )
 
-    logging.info(
+    logger.info(
         GR("Output initial on:           ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -565,7 +568,7 @@ def displayConfig(conf):
         )
     )
 
-    logging.info(
+    logger.info(
         GR("Output initial off:          ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -580,7 +583,7 @@ def displayConfig(conf):
         )
     )
 
-    logging.info(
+    logger.info(
         GR("PPT point for boost conv:    ")
         + "1-%s 2-%s 3-%s"
         % (R(mv(conf.vboost[0])), R(mv(conf.vboost[1])), R(mv(conf.vboost[2])))
@@ -590,13 +593,13 @@ def displayConfig(conf):
 # prints config2 info given eps_config2_t struct
 def displayConfig2(conf):
     assert type(conf) == eps_config2_t
-    logging.info("***************-CONFIG2-***************" >> _ >> G)
-    logging.info(GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage))))
-    logging.info(GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage))))
-    logging.info(
+    logger.info(G("***************-CONFIG2-***************"))
+    logger.info(GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage))))
+    logger.info(GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage))))
+    logger.info(
         GR("Batt Critical Voltage:       ") + "%s" % (R(mv(conf.batt_criticalvoltage)))
     )
-    logging.info(GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage))))
+    logger.info(GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage))))
 
 
 # ----------------------------------------------CONSTANTS

@@ -1,12 +1,5 @@
 from power_structs import *
-import logging
 
-logging.basicConfig(
-    filename="gomPowerTest.log",
-    level=logging.DEBUG,
-    format="[%(asctime)s]  %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S%z",  # ISO8601 timestamp
-)
 
 if __name__ == "__main__":
     logging.debug("----TESTING SEND/RECV----\n")

@@ -76,28 +76,14 @@ class Gomspace:
 
     def solenoid(self, spike, hold, delay=0):
         """Spikes the solenoid at 20V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
-        logger.info(
-            "Spiking solenoid for %s ms, holding for %s ms, after a delay of %s seconds",
-            spike,
-            hold,
-            delay,
-        )
         self.gom.solenoid(spike, hold, delay)
 
     def glowplug(self, duration, delay=0):
         """Pulses the glowplug for [duration] milliseconds with after a delay of [delay] seconds"""
-        logger.info(
-            "Pulsing glowplug for %s ms after a delay of %s sec", duration, delay
-        )
         self.gom.glowplug(duration, delay)
 
     def burnwires(self, duration, delay=0):
         """Turns on both burnwires for [duration] seconds after [delay] seconds. Does a display_all half way through"""
-        logger.info(
-            "Turning on both burnwires for %s seconds after a delay of %s sec",
-            duration,
-            delay,
-        )
         self.gom.burnwire(duration, delay)
 
     def set_electrolysis(self, status: bool, delay=0):

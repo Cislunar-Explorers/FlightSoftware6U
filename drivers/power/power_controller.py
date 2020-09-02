@@ -460,6 +460,11 @@ class Power:
     # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.
     def burnwire(self, duration, delay=0):
+        logger.debug(
+            "Turning on both burnwires for %s seconds after a delay of %s sec",
+            duration,
+            delay,
+        )
         time.sleep(delay)
         self.set_single_output("burnwire_1", 1, 0)
         self.set_single_output("burnwire_2", 1, 0)

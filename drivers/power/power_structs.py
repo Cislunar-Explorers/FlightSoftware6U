@@ -382,8 +382,20 @@ def B(x) -> str:
     return Color.BOLD + x + Color.ENDC
 
 
+def BL(x) -> str:
+    return Color.BLUE + x + Color.ENDC
+
+
+def W(x) -> str:
+    return Color.WARNING + x + Color.ENDC
+
+
 def G(x) -> str:
     return Color.GREEN + x + Color.ENDC
+
+
+def F(x) -> str:
+    return Color.FAIL + x + Color.ENDC
 
 
 def R(x) -> str:
@@ -406,23 +418,24 @@ def degc(x: str) -> str:
     return x + "degC"
 
 
+def RES(x):
+    reset_reasons = {
+        0: "Unknown reset",
+        1: "Dedicated WDT reset",
+        2: "I2C WDT reset",
+        3: "Hard reset",
+        4: "Soft reset",
+        5: "Stack overflow reset",
+        6: "Timer overflow reset",
+        7: "Brownout or power-on reset",
+        8: "Internal WDT reset",
+    }
+    return reset_reasons.get(x, "ERROR")
+
+
 # prints housekeeping info given hkparam_t struct
 def displayHK(hk):
     assert type(hk) == hkparam_t
-
-    def RES(x):
-        reset_reasons = {
-            0: "Unknown reset",
-            1: "Dedicated WDT reset",
-            2: "I2C WDT reset",
-            3: "Hard reset",
-            4: "Soft reset",
-            5: "Stack overflow reset",
-            6: "Timer overflow reset",
-            7: "Brownout or power-on reset",
-            8: "Internal WDT reset",
-        }
-        return reset_reasons.get(x, "ERROR")
 
     def mult(x, y):
         return x * y
@@ -612,6 +625,69 @@ def displayConfig2(conf):
     )
     logger.info(
         GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage)))
+    )
+
+
+def displayHk2(hk2):
+    assert type(hk2) is eps_hk_t
+
+    def RJ4(x):
+        return str(x).rjust(4, " ")
+
+    def RJ5(x):
+        return str(x).rjust(5, " ")
+
+    def batt_mode():
+        modes = {
+            0: BL("Initial"),
+            1: F("Undervoltage"),
+            2: W("Safe Mode"),
+            3: G("Nominal"),
+            4: G("Full"),
+        }
+        return B(modes.get(hk2.battmode, "ERROR").ljust(13 + 9))
+
+    def channel_state(i):
+        return f"--> EN:{hk2.output[i]} [{RJ4(hk2.curout[i])}, {RJ4(hk2.latchup[i])},{RJ5(hk2.output_on_delta[i])},{RJ5(hk2.output_off_delta[i])}]"
+
+    logger.info(
+        "\nInputs	               |=======|         Outputs            I(mA), LUPs, ttON, ttOFF\n"
+        " 1:              +-------------------+   0 (H1-47) %s\n" % channel_state(0)
+        + "   %s mV ->    |  Voltage          |\n" % RJ4(hk2.vboost[0])
+        + "   %s mA ->    |  %s mV         |   1 (H1-49) %s\n"
+        % (RJ4(hk2.curin[0]), B(RJ5(hk2.vbatt)), channel_state(1))
+        + "   %s mW ->    |                   |\n"
+        % RJ4(hk2.curin[0] * hk2.vboost[0] // 1000)
+        + "                 |  Input            |   2 (H1-51) %s\n" % channel_state(2)
+        + " 2:              |  %s mA         |\n" % RJ5(hk2.cursun)
+        + "   %s mV ->    |  %s mW         |   3 (H1-48) %s\n"
+        % (RJ4(hk2.vboost[1]), RJ5(hk2.vbatt * hk2.cursun // 1000), channel_state(3))
+        + "   %s mA ->    |                   |\n" % RJ4(hk2.curin[1])
+        + "   %s mW ->    |  Output           |   4 (H1-50) %s\n"
+        % (RJ4(hk2.curin[1] * hk2.vboost[1] // 1000), channel_state(4))
+        + "                 |  %s mA         |\n" % RJ5(hk2.cursys)
+        + " 3:              |  %s mW	     |   5 (H1-52) %s\n"
+        % (RJ5(hk2.cursys * hk2.vbatt // 1000), channel_state(5))
+        + "   %s mV ->    |                   |\n" % RJ4(hk2.vboost[2])
+        + "   %s mA ->    |  Mode             |   6         --> EN:%d\n"
+        % (RJ4(hk2.curin[2]), hk2.output[6])
+        + "   %s mW ->    |  %s: %s |\n"
+        % (RJ4(hk2.curin[2] * hk2.vboost[2] // 1000), str(hk2.battmode), batt_mode())
+        + "                 +-------------------+   7         --> EN:%d\n"
+        % hk2.output[7]
+    )
+    logger.info(
+        f"\n"
+        f"                 1    2    3    4    5    6\n"
+        f"Temp (degC): {''.join([RJ5(t) for t in hk2.temp])}\n"
+        f"\n"
+        f"Boots\n"
+        f"Counts: {RJ5(hk2.counter_boot)}\n"
+        f"Last Cause: {hk2.bootcause} ({RES(hk2.bootcause)})\n"
+        f"\n"
+        f"WDTs      i2c   gnd  csp1  csp2\n"
+        f"Count:  {RJ5(hk2.counter_wdt_i2c)} {RJ5(hk2.counter_wdt_gnd)} {RJ5(hk2.counter_wdt_csp[0])} {RJ5(hk2.counter_wdt_csp[1])}\n"
+        f" Left:  {RJ5(hk2.wdt_i2c_time_left)} {RJ5(hk2.wdt_gnd_time_left)} {RJ5(hk2.wdt_csp_pings_left[0])} {RJ5(hk2.wdt_csp_pings_left[1])}\n"
     )
 
 

@@ -45,10 +45,12 @@ class FlightMode:
 
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
     command_codecs = {}
+    sensordata_codecs = {}
 
     # Map argument names to (packer,unpacker) tuples
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
     command_arg_unpackers = {}
+    sensordata_arg_unpackers = {}
 
     def __init__(self, parent):
         self.parent = parent

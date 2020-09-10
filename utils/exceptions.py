@@ -9,13 +9,20 @@ class UnknownFlightModeException(CislunarException):
         super().__init__(f"Unkown flight mode id: {fm_id}")
 
 
-class CommandException(CislunarException):
-    """Raise when exception occurs during command handling"""
+class SerializationException(CislunarException):
+    """Raise when an exception occurs during serialization"""
 
+class DeserializationException(CislunarException):
+    """Raise when an exception occurs during deserialization"""
 
-class CommandPackingException(CommandException):
+class CommandPackingException(SerializationException):
     """Raise when an exception occurs while packing a command"""
 
-
-class CommandUnpackingException(CommandException):
+class CommandUnpackingException(DeserializationException):
     """Raise when an exception occurs while unpacking a command"""
+
+class DownlinkDataPackingException(SerializationException):
+    """Raise when an exception occurs while packing downlink data"""
+
+class DownlinkDataUnpackingException(DeserializationException):
+    """Raise when an exception occurs while unpacking downlink data"""

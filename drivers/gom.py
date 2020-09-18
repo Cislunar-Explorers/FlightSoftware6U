@@ -1,7 +1,9 @@
 import power_controller as pc
+import power_structs as ps
 from enum import Enum
 
-logger = pc.logger
+logger = ps.gom_logger
+
 
 class Hk(Enum):
     DEFAULT = "default"
@@ -17,6 +19,8 @@ class Hk(Enum):
 class Gomspace:
     def __init__(self):
         self.gom = pc.Power()
+        self.electrolysis = False
+        # Should we implement a gom  "state" variable - i.e. which channel is on or off
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
@@ -44,7 +48,7 @@ class Gomspace:
 
         try:
             logger.debug("Getting health data %s from get_health_data" % level)
-            return hk_dict[level]
+            return hk_dict[level.lower()]
         except KeyError:
             logger.warning(
                 "Invalid argument in get_health_data. Getting default health data"

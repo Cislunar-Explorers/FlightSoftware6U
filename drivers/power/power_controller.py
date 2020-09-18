@@ -11,8 +11,7 @@
 #         Higher level functions completed
 #         Some testing necessary
 
-from pigpio import *
-from power_structs import *
+import pigpio
 import power_structs as ps
 import RPi.GPIO as GPIO
 import time
@@ -122,13 +121,13 @@ _ = ps._
 class Power:
     # initializes power object with bus [bus] and device address [addr]
     def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
-        logger.debug(
+        ps.gom_logger.debug(
             "Initializing Power object with bus %s, device address %s, and flags %s",
             bus,
             addr,
             flags,
         )
-        self._pi = pi()  # initialize pigpio object
+        self._pi = pigpio.pi()  # initialize pigpio object
         self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
         # initialize pi outputs
@@ -143,26 +142,26 @@ class Power:
 
     # prints housekeeping/config/config2
     def displayAll(self):
-        displayHK(self.get_hk_1())
-        displayConfig(self.config_get())
-        displayConfig2(self.config2_get())
+        ps.displayHK(self.get_hk_1())
+        ps.displayConfig(self.config_get())
+        ps.displayConfig2(self.config2_get())
 
     # writes byte list [values] with command register [cmd]
     # raises: ValueError if cmd or values are not bytes
     # TODO: Implement PowerWriteError once we switch to new I2C library
     def write(self, cmd, values):
-        logger.debug("Writing to register %s with byte list %s", cmd, values)
+        ps.gom_logger.debug("Writing to register %s with byte list %s", cmd, values)
         self._pi.i2c_write_device(self._dev, bytearray([cmd] + values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
     def read(self, bytes):
         # first two read bytes -> [command][error code][data]
-        logger.debug("Reading %s bytes from the device", bytes)
+        ps.gom_logger.debug("Reading %s bytes from the device", bytes)
         (x, r) = self._pi.i2c_read_device(self._dev, bytes + 2)
-        logger.debug("Read %s, and %s from device", x, r)
+        ps.gom_logger.debug("Read %s, and %s from device", x, r)
         if r[1] != 0:
             # TODO: ask Aaron whether we want to raise an exception, or just log an error for cases like these:
-            logger.error("Command %i failed with error code %i", r[0], r[1])
+            ps.gom_logger.error("Command %i failed with error code %i", r[0], r[1])
             raise PowerReadError(
                 "Read Error: Command %i failed with error code %i" % (r[0], r[1])
             )
@@ -174,62 +173,62 @@ class Power:
     # value [1 byte]
     # raises: ValueError if value is not a byte
     def ping(self, value):
-        logger.debug("Pinging %s", value)
+        ps.gom_logger.debug("Pinging %s", value)
         self.write(CMD_PING, [value])
         return self.read(1)
 
     # reboot the system
     def reboot(self):
-        logger.info("Performing Gomspace reboot")
+        ps.gom_logger.info("Performing Gomspace reboot")
         self.write(CMD_REBOOT, [0x80, 0x07, 0x80, 0x07])
 
     # returns hkparam_t struct
     def get_hk_1(self):
-        logger.debug("Running get_hk_1")
+        ps.gom_logger.debug("Running get_hk_1")
         self.write(CMD_GET_HK, [])
         array = self.read(SIZE_HKPARAM_T)
-        return c_bytesToStruct(array, "hkparam_t")
+        return ps.c_bytesToStruct(array, "hkparam_t")
 
     # returns eps_hk_t struct
     def get_hk_2(self):
-        logger.debug("Running get_hk_2")
+        ps.gom_logger.debug("Running get_hk_2")
         self.write(CMD_GET_HK, [0x00])
         array = self.read(SIZE_EPS_HK_T)
-        return c_bytesToStruct(array, "eps_hk_t")
+        return ps.c_bytesToStruct(array, "eps_hk_t")
 
     # returns eps_hk_vi_t struct
     def get_hk_2_vi(self):
-        logger.debug("Running get_hk_2_vi")
+        ps.gom_logger.debug("Running get_hk_2_vi")
         self.write(CMD_GET_HK, [0x01])
         array = self.read(SIZE_EPS_HK_VI_T)
-        return c_bytesToStruct(array, "eps_hk_vi_t")
+        return ps.c_bytesToStruct(array, "eps_hk_vi_t")
 
     # returns eps_hk_out_t struct
     def get_hk_out(self):
-        logger.debug("Running get_hk_out")
+        ps.gom_logger.debug("Running get_hk_out")
         self.write(CMD_GET_HK, [0x02])
         array = self.read(SIZE_EPS_HK_OUT_T)
-        return c_bytesToStruct(array, "eps_hk_out_t")
+        return ps.c_bytesToStruct(array, "eps_hk_out_t")
 
     # returns eps_hk_wdt_t struct
     def get_hk_wdt(self):
-        logger.debug("Running get_hk_wdt")
+        ps.gom_logger.debug("Running get_hk_wdt")
         self.write(CMD_GET_HK, [0x03])
         array = self.read(SIZE_EPS_HK_WDT_T)
-        return c_bytesToStruct(array, "eps_hk_wdt_t")
+        return ps.c_bytesToStruct(array, "eps_hk_wdt_t")
 
     # returns eps_hk_basic_t struct
     def get_hk_2_basic(self):
-        logger.debug("Running get_hk_2_basic")
+        ps.gom_logger.debug("Running get_hk_2_basic")
         self.write(CMD_GET_HK, [0x04])
         array = self.read(SIZE_EPS_HK_BASIC_T)
-        return c_bytesToStruct(array, "eps_hk_basic_t")
+        return ps.c_bytesToStruct(array, "eps_hk_basic_t")
 
     # sets voltage output channels with bit mask:
     # byte [1 byte] -> [NC NC 3.3V3 3.3V2 3.3V1 5V3 5V2 5V1]
     # raises: ValueError if byte is not char
     def set_output(self, byte):
-        logger.debug("Setting outputs to %s", byte)
+        ps.gom_logger.debug("Setting outputs to %s", byte)
         self.write(CMD_SET_OUTPUT, [byte])
 
     # sets a single output on or off:
@@ -239,7 +238,7 @@ class Power:
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
     def set_single_output(self, channel, value, delay):
-        logger.debug(
+        ps.gom_logger.debug(
             "Setting single channel %s output to value %s after delay %s",
             channel,
             value,
@@ -253,7 +252,7 @@ class Power:
             for i in Outputs:
                 if i.name == channel:
                     channel_num = i.value
-            d = toBytes(delay, 2)
+            d = ps.toBytes(delay, 2)
 
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value] + list(d))
 
@@ -263,17 +262,17 @@ class Power:
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
-        logger.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
+        ps.gom_logger.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
         if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
-            logger.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")
+            ps.gom_logger.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")
             raise PowerInputError(
                 "Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE
             )
         else:
             v = bytearray(6)
-            v[0:2] = toBytes(volt1, 2)
-            v[2:4] = toBytes(volt2, 2)
-            v[4:] = toBytes(volt3, 2)
+            v[0:2] = ps.toBytes(volt1, 2)
+            v[2:4] = ps.toBytes(volt2, 2)
+            v[4:] = ps.toBytes(volt3, 2)
             self.write(CMD_SET_PV_VOLT, list(v))
 
     # Sets the solar cell power tracking mode:
@@ -284,7 +283,7 @@ class Power:
     # raises: PowerInputError if mode is not 0, 1, or 2
     # Not tested
     def set_pv_auto(self, mode):
-        logger.debug("Setting solar cell power tracking to mode %i", mode)
+        ps.gom_logger.debug("Setting solar cell power tracking to mode %i", mode)
         if mode not in [0, 1, 2]:
             raise PowerInputError("Invalid Input: mode must be 0, 1 or 2")
         else:
@@ -298,9 +297,9 @@ class Power:
     # raises: PowerInputError if variables are not in correct range
     # Not tested
     def set_heater(self, command, heater, mode):
-        logger.debug("Setting heater %i to mode %i", heater, mode)
+        ps.gom_logger.debug("Setting heater %i to mode %i", heater, mode)
         if command != 0 or heater not in [0, 1, 2] and mode not in [0, 1]:
-            logger.error(
+            ps.gom_logger.error(
                 "Invalid Input: command must be 0,heater must be 0, 1 or 2, and mode must be 0 or 1"
             )
             raise PowerInputError(
@@ -313,44 +312,44 @@ class Power:
 
     # Not tested
     def get_heater(self):
-        logger.debug("Running get_heater")
+        ps.gom_logger.debug("Running get_heater")
         self.write(CMD_SET_HEATER, [])
         return self.read(2)
 
     # resets the boot counter and WDT counters.
     # Not tested
     def reset_counters(self):
-        logger.debug("Resetting boot and WDT counters")
+        ps.gom_logger.debug("Resetting boot and WDT counters")
         self.write(CMD_RESET_COUNTERS, [0x42])
 
     # resets (kicks) dedicated WDT.
     # Not tested
     def reset_wdt(self):
-        logger.debug("Resetting WDT")
+        ps.gom_logger.debug("Resetting WDT")
         self.write(CMD_RESET_WDT, [0x78])
 
     # Use this command to control the config system.
     # cmd [1 byte] -> cmd = 1: Restore default config
     # raises: PowerInputError if command is not 1
     def config_cmd(self, command):
-        logger.debug("Running config_cmd: restoring default config")
+        ps.gom_logger.debug("Running config_cmd: restoring default config")
         if command != 1:
-            logger.error("Invalid input: command must be 1")
+            ps.gom_logger.error("Invalid input: command must be 1")
             raise PowerInputError("Invalid Input: command must be 1")
         else:
             self.write(CMD_CONFIG_CMD, [command])
 
     # returns eps_config_t structure
     def config_get(self):
-        logger.debug("Getting current config")
+        ps.gom_logger.debug("Getting current config")
         self.write(CMD_CONFIG_GET, [])
-        return c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
+        return ps.c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
 
     # takes eps_config_t struct and sets configuration
     # Input struct is of type eps_config_t
     def config_set(self, struct):
-        logger.debug("Setting current config")
-        array = struct >> _ >> c_structToBytes >> _ >> bytesToList
+        ps.gom_logger.debug("Setting current config")
+        array = struct >> _ >> ps.c_structToBytes >> _ >> ps.bytesToList
         self.write(CMD_CONFIG_SET, array)
 
     # Send this command to perform a hard reset of the P31u,
@@ -358,19 +357,19 @@ class Power:
     # Not tested- issue running through HITL server
     def hard_reset(self, are_you_sure=False):
         if are_you_sure:
-            logger.info("Hard reset Passcode correct: Performing hard reset")
-            logger.critical("Cycling permanent 5V and 3.3V and battery outputs")
+            ps.gom_logger.info("Hard reset Passcode correct: Performing hard reset")
+            ps.gom_logger.critical("Cycling permanent 5V and 3.3V and battery outputs")
             self.write(CMD_HARD_RESET, [])
         else:
-            logger.info("Hard reset Passcode incorrect: Aborting hard reset")
+            ps.gom_logger.info("Hard reset Passcode incorrect: Aborting hard reset")
 
     # Use this command to control the config 2 system.
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
     # raises: PowerInputError if command is not a valid value
     def config2_cmd(self, command):
-        logger.debug("Running config2_cmd with command=%s", command)
+        ps.gom_logger.debug("Running config2_cmd with command=%s", command)
         if command not in [1, 2]:
-            logger.error("Invalid Input: command must be 1 or 2")
+            ps.gom_logger.error("Invalid Input: command must be 1 or 2")
             raise PowerInputError("Invalid Input: command must be 1 or 2")
         else:
             self.write(CMD_CONFIG2_CMD, [command])
@@ -378,16 +377,16 @@ class Power:
     # Use this command to request the P31 config 2.
     # returns esp_config2_t struct
     def config2_get(self):
-        logger.debug("Getting config2")
+        ps.gom_logger.debug("Getting config2")
         self.write(CMD_CONFIG2_GET, [])
-        return c_bytesToStruct(self.read(SIZE_EPS_CONFIG2_T), "eps_config2_t")
+        return ps.c_bytesToStruct(self.read(SIZE_EPS_CONFIG2_T), "eps_config2_t")
 
     # Use this command to send config 2 to the P31
     # and save it (remember to also confirm it [using config2_cmd?])
     # Input struct is of type eps_config2_t
     def config2_set(self, struct):
-        logger.debug("Setting config2")
-        array = struct >> _ >> c_structToBytes >> _ >> bytesToList
+        ps.gom_logger.debug("Setting config2")
+        array = struct >> _ >> ps.c_structToBytes >> _ >> ps.bytesToList
         self.write(CMD_CONFIG2_SET, array)
 
     # Higher level functions -------------------------------------------------
@@ -397,7 +396,7 @@ class Power:
     # milliseconds [duration]; called after a delay of
     # [delay] seconds.
     def pulse(self, output, duration, delay=0):
-        logger.debug("Pulsing Gom output %i on for %i ms after a %i sec delay")
+        ps.gom_logger.debug("Pulsing Gom output %i on for %i ms after a %i sec delay")
         time.sleep(delay)
         self.set_single_output(output, 1, 0)
         time.sleep(duration * 0.001)
@@ -406,19 +405,19 @@ class Power:
     # output must be off before the function is called
     # pulses high for duration amount of milliseconds
     def pulse_pi(self, output, duration, delay=0):
-        logger.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
+        ps.gom_logger.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
         time.sleep(delay)
-        logger.debug("Setting GPIO channel %i HIGH", output)
+        ps.gom_logger.debug("Setting GPIO channel %i HIGH", output)
         GPIO.output(output, GPIO.HIGH)
         time.sleep(duration * 0.001)
-        logger.debug("Setting GPIO channel %i LOW", output)
+        ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
         GPIO.output(output, GPIO.LOW)
 
     # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
     # Input switch is of type bool
     def electrolyzer(self, switch, delay=0):
-        logger.debug(
+        ps.gom_logger.debug(
             "Setting electrolyzer to mode %i after a delay of %i seconds", switch, delay
         )
         self.set_single_output("electrolyzer", int(switch), delay)
@@ -428,7 +427,7 @@ class Power:
     # delay of [delay] seconds.
     # output must be off before the function is called
     def solenoid(self, spike, hold, delay=0):
-        logger.debug(
+        ps.gom_logger.debug(
             "Spiking solenoid for %i ms, holding for %i ms, with a delay of %i sec",
             spike,
             hold,
@@ -449,7 +448,7 @@ class Power:
     # delay of [delay] seconds.
     # output must be off before the function is called
     def glowplug(self, duration, delay=0):
-        logger.debug(
+        ps.gom_logger.debug(
             "Pulsing glowplug for %i ms with a delay of %i sec", duration, delay
         )
         time.sleep(delay)
@@ -460,7 +459,7 @@ class Power:
     # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.
     def burnwire(self, duration, delay=0):
-        logger.debug(
+        ps.gom_logger.debug(
             "Turning on both burnwires for %s seconds after a delay of %s sec",
             duration,
             delay,

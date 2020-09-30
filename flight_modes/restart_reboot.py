@@ -60,12 +60,12 @@ class BootUpMode( param? ):
 classRestartMode( param? ):
     def __init__(self):
 
-    do i need to assign any variables? i don't think so but not sure
+        #do i need to assign any variables? i don't think so but not sure
    
 
-    self.add_to_log()
-    self.add_to_restart_records()
-    self.write_to_i2c()
+        self.add_to_log()
+        self.add_to_restart_records()
+        self.write_to_i2c()
 
 
 

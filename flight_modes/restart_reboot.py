@@ -1,5 +1,5 @@
-# things to import:
-# time
+import time
+
 # os
 # from utils.db import create_sensor_tables_from_path
 # other stuff too?
@@ -27,8 +27,8 @@ class BootUpMode( param? ):
 
 
     def wait_a_minute(self):
-        # wait 1 minute before doing anything
-        # we don't want to blow up NASA
+        # waits 1 minute before doing anything
+        time.sleep(60)
 
     
     def create_database(self):

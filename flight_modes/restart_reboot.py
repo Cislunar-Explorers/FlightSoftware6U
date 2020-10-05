@@ -1,8 +1,10 @@
 import time
 from datetime import datetime
 import os
+import sys
 from utils.db import create_sensor_tables_from_path 
 from utils.constants import DB_FILE
+from utils.log import get_log
 
 
 
@@ -15,16 +17,12 @@ reboots = {}
 
 class BootUpMode:
     def __init__(self):
-
-        #do i need to assign any variables? i don't think so but not sure
        
-
         self.wait_a_minute()
         self.init_spin()
         self.init_add_to_log()
         self.init_camera()
         self.add_to_restart_records()
-
 
         # create a session... i don't know if the parameter is right here
         self.create_session = create_sensor_tables_from_path(DB_FILE)
@@ -43,7 +41,7 @@ class BootUpMode:
 
     def init_add_to_log(self):
         # make initial log entry 
-        pass
+        logger = get_log()
 
 
     def init_camera(self):
@@ -70,10 +68,10 @@ class RestartMode:
         self.write_to_i2c()
 
 
-
     def add_to_log(self):
         # make a log entry 
-        pass
+        logger = get_log()
+
 
     def add_to_restart_records(self):
         # record what number restart this is, and maybe the time?

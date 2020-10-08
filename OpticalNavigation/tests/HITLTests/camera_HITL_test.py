@@ -1,5 +1,5 @@
-from .video_capture import *
-from .img_preprocess import *
+from video_capture import *
+from img_preprocess import *
 
 # Current camera mux ports in use: 1, 3, 4
 
@@ -26,22 +26,25 @@ def singleCamRecFramerate():
 # Test 3: Multiplex cameras
 def multiCamRec():
     # Choose first camera mux port
+    print("Select port 1")
     selectCamera(1)
     # Record video
     img = rawObservation('mux_rec_1.mjpeg')
     print(f"End timestamp 1: {img['mux_rec_1.mjpeg']}")
 
     # Switch mux
+    print("Select port 3")
     selectCamera(3)
     # Record video
-    rawObservation('mux_rec_2.mjpeg')
-    print(f"End timestamp 2: {img['mux_rec_2.mjpeg']}")
+    img2 = rawObservation('mux_rec_2.mjpeg')
+    print(f"End timestamp 2: {img2['mux_rec_2.mjpeg']}")
 
     # Switch mux
+    print("Select port 4")
     selectCamera(4)
     # Record video
-    rawObservation('mux_rec_3.mjpeg')
-    print(f"End timestamp 3: {img['mux_rec_3.mjpeg']}")
+    img3 = rawObservation('mux_rec_3.mjpeg')
+    print(f"End timestamp 3: {img3['mux_rec_3.mjpeg']}")
     # Check file system after
 
 
@@ -59,6 +62,7 @@ def imgPreproc():
         retval, img = vid.read()
         if retval == True:
             cv2.imwrite(f'preproc_b4_F{i}.jpg', img)
+            print(f"Write image frame {i}  successful")
             preprocess(f'preproc_b4_F{i}.jpg', f'preproc_after_F{i}.jpg')
             i += 1
         else:
@@ -123,4 +127,4 @@ def multiImgPreproc():
 
 
 if __name__ == "__main__":
-    singleCamRec()
+    imgPreproc()

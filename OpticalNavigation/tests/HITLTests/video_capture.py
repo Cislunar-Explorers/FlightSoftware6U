@@ -23,7 +23,7 @@ oe2_pin = DigitalInOut(board.D18)
 oe2_pin.direction = Direction.OUTPUT
 
 
-def selectCamera(mux_id):
+def selectCamera(id):
     # Code from mux-test.py
     if id == 1:
         with mux:

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from math import radians, tan, pi, sin, cos
-from scipy.spatial.transform import Rotation
+#from scipy.spatial.transform import Rotation
 
 
 def preprocess(img_src, img_dest):
@@ -46,6 +46,8 @@ def preprocess(img_src, img_dest):
 
     # Initial guess
     row = np.tile(np.linspace(0, nr - 1, nr, dtype=np.float32)[np.newaxis].T, nc)
+
+    print("B4 rotate")
 
     # TODO: preallocate?
     def rotate(u, th, s):

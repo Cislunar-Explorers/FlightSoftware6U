@@ -108,3 +108,16 @@ def create_sensor_tables(engine):
 def create_sensor_tables_from_path(path: str):
     engine = create_engine(path)
     return create_sensor_tables(engine)
+
+
+class RebootsModel(SQLAlchemyTableBase):
+    __tablename__ = "Reboot Directory"
+
+    id = Column(Integer, primary_key=True)
+    type_of_reboot = Column(String)
+    reboot_at = Column(DateTime)
+
+    def __repr__(self):
+        return f"<RebootsModel(type_of_reboot={self.type_of_reboot}, "
+        f"reboot_at={str(self.reboot_at)})>"
+

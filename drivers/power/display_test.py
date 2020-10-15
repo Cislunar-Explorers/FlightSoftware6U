@@ -26,3 +26,4 @@ dtest.reserved1 = 2
 dtest.reserved2 = 2
 
 displayHk2(dtest)
+displayStruct(dtest)

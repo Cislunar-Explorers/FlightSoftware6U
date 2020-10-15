@@ -14,6 +14,7 @@
 from ctypes import *
 from FlightSoftware.utils.log import get_log
 
+# added logger!!!
 gom_logger = get_log()
 
 
@@ -690,10 +691,15 @@ def displayHk2(hk2):
         f" Left:  {RJ5(hk2.wdt_i2c_time_left)} {RJ5(hk2.wdt_gnd_time_left)} {RJ5(hk2.wdt_csp_pings_left[0])} {RJ5(hk2.wdt_csp_pings_left[1])}\n"
     )
 
-    def displayStruct(s):
-        assert type(s) is eps_hk_t
-        for i in s._fields_:
-            gom_logger.debug(f"{i[0]}: {i[1]}")
+
+def displayStruct(s):
+    assert isStruct(s)
+    for i in s._fields_:
+        b = getattr(s, i[0])
+        try:
+            gom_logger.info(f"{i[0]}: {b[:]}")
+        except(TypeError):
+            gom_logger.info(f"{i[0]}: {b}")
 
 
 # ----------------------------------------------CONSTANTS

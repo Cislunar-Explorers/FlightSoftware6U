@@ -1,6 +1,7 @@
 import power_controller as pc
 import power_structs as ps
 from enum import Enum
+from FlightSoftware.utils.parameters import gom_params
 
 logger = ps.gom_logger
 
@@ -99,6 +100,8 @@ class Gomspace:
         """Returns status of electrolyzer"""
         return self.electrolysis
 
-    # TODO
     def read_battery_percentage(self):
-        return 0.7
+        battery_data = self.get_health_data(level=Hk.VI.value)
+        battery_voltage = battery_data.vbatt
+        return (battery_voltage - gom_params["min_cell_voltage"]) / (
+                    gom_params["max_cell_voltage"] - gom_params["min_cell_voltage"])

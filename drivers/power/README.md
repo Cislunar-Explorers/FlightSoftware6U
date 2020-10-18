@@ -10,6 +10,9 @@ The Python libraries required for these drivers to run on the pi are:
 Additionally, a pigpio daemon (`pigpiod`) must be running and active on the pi before running any functions (Talk to Dr. Muhlberger about setting this up).
 The status of `pigpiod` can be found by running `systemctl status pigpiod` 
 
+## Documentation
+Documentation for the low-level drivers defined in `power_structs.py` and `power_controller.py` can be viewed at https://cornell.app.box.com/file/225179481737 and https://cornell.app.box.com/file/225179502007 respectively.
+
 ## Functions
 
 The drivers defined in `power_controller.py` and `power_structs.py`  and their statuses are shown here:

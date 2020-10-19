@@ -15,7 +15,7 @@ import pigpio
 import power_structs as ps
 import RPi.GPIO as GPIO
 import time
-from enum import Enum
+from FlightSoftware.utils.constants import GomOutputs
 
 
 # power device address
@@ -65,23 +65,6 @@ OUT_5 = 4  # 5V
 OUT_6 = 5  # 3.3V
 OUT_HEATER = 6
 OUT_SWITCH = 7
-
-# powered components
-OUT_COMMS_AMP = OUT_1
-OUT_BURNWIRE_1 = OUT_2
-OUT_BURNWIRE_2 = OUT_3
-OUT_GLOWPLUG = OUT_4
-OUT_SOLENOID = OUT_5
-OUT_ELECTROLYZER = OUT_6
-
-
-class Outputs(Enum):
-    comms = OUT_1
-    burnwire_1 = OUT_2
-    burnwire_2 = OUT_3
-    glowplug = OUT_4
-    solenoid = OUT_5
-    electrolyzer = OUT_6
 
 
 #    heater       = OUT_HEATER
@@ -154,10 +137,10 @@ class Power:
         self._pi.i2c_write_device(self._dev, bytearray([cmd] + values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
-    def read(self, bytes):
+    def read(self, num_bytes):
         # first two read bytes -> [command][error code][data]
-        ps.gom_logger.debug("Reading %s bytes from the device", bytes)
-        (x, r) = self._pi.i2c_read_device(self._dev, bytes + 2)
+        ps.gom_logger.debug("Reading %s bytes from the device", num_bytes)
+        (x, r) = self._pi.i2c_read_device(self._dev, num_bytes + 2)
         ps.gom_logger.debug("Read %s, and %s from device", x, r)
         if r[1] != 0:
             # TODO: ask Aaron whether we want to raise an exception, or just log an error for cases like these:
@@ -248,10 +231,7 @@ class Power:
         if value not in [0, 1]:
             raise PowerInputError("Invalid Input: value must be 0 or 1")
         else:
-            channel_num = None
-            for i in Outputs:
-                if i.name == channel:
-                    channel_num = i.value
+            channel_num = GomOutputs[channel].value
             d = ps.toBytes(delay, 2)
 
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value] + list(d))
@@ -458,19 +438,31 @@ class Power:
 
     # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.
-    def burnwire(self, duration, delay=0):
+    def burnwire1(self, duration, delay=0):
         ps.gom_logger.debug(
-            "Turning on both burnwires for %s seconds after a delay of %s sec",
+            "Turning on burnwire 1 for %s seconds after a delay of %s sec",
             duration,
             delay,
         )
         time.sleep(delay)
         self.set_single_output("burnwire_1", 1, 0)
-        self.set_single_output("burnwire_2", 1, 0)
         time.sleep(duration / 2)
         self.displayAll()
         time.sleep(duration / 2)
         self.set_single_output("burnwire_1", 0, 0)
+
+    # turns both burnwire 2 on for [duration] seconds, with a
+    # delay of [delay] seconds.
+    def burnwire2(self, duration, delay=0):
+        ps.gom_logger.debug(
+            "Turning on burnwire 2 for %s seconds after a delay of %s sec",
+            duration,
+            delay,
+        )
+
+        time.sleep(delay)
+        self.set_single_output("burnwire_2", 1, 0)
+        time.sleep(duration)
         self.set_single_output("burnwire_2", 0, 0)
 
     def comms(self, transmit):

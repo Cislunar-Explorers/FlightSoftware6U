@@ -1,3 +1,5 @@
+# Testing code, does not need to be on the satelite
+
 from power_structs import *
 
 dtest = eps_hk_t()

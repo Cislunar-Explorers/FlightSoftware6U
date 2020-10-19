@@ -1,7 +1,7 @@
 import power_controller as pc
 import power_structs as ps
 from enum import Enum
-from FlightSoftware.utils.parameters import gom_params
+from FlightSoftware.utils.constants import GomOutputs, GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
 
 logger = ps.gom_logger
 
@@ -20,8 +20,7 @@ class Hk(Enum):
 class Gomspace:
     def __init__(self):
         self.gom = pc.Power()
-        self.electrolysis = False
-        # Should we implement a gom  "state" variable - i.e. which channel is on or off
+        # Should we implement a gom "state" variable - i.e. which channel is on or off
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
@@ -87,21 +86,25 @@ class Gomspace:
         """Pulses the glowplug for [duration] milliseconds with after a delay of [delay] seconds"""
         self.gom.glowplug(duration, delay)
 
-    def burnwires(self, duration, delay=0):
-        """Turns on both burnwires for [duration] seconds after [delay] seconds. Does a display_all half way through"""
-        self.gom.burnwire(duration, delay)
+    def burnwire1(self, duration, delay=0):
+        """Turns on burnwire 1 for [duration] seconds after [delay] seconds. Does a display_all half way through"""
+        self.gom.burnwire1(duration, delay)
+
+    def burnwire2(self, duration, delay=0):
+        """Turns on burnwire 2 for [duration] seconds after [delay] seconds. Does a display_all half way through"""
+        self.gom.burnwire2(duration, delay)
 
     def set_electrolysis(self, status: bool, delay=0):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
-        self.electrolysis = status
         self.gom.electrolyzer(status, delay)
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""
-        return self.electrolysis
+        output_struct = self.get_health_data(level=Hk.OUT.value)
+        return bool(output_struct.output[GomOutputs.electrolyzer.value])
 
     def read_battery_percentage(self):
         battery_data = self.get_health_data(level=Hk.VI.value)
         battery_voltage = battery_data.vbatt
-        return (battery_voltage - gom_params["min_cell_voltage"]) / (
-                    gom_params["max_cell_voltage"] - gom_params["min_cell_voltage"])
+        return (battery_voltage - GOM_VOLTAGE_MIN) / (
+                GOM_VOLTAGE_MAX - GOM_VOLTAGE_MIN)

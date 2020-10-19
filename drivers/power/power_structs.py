@@ -14,7 +14,6 @@
 from ctypes import *
 from FlightSoftware.utils.log import get_log
 
-# added logger!!!
 gom_logger = get_log()
 
 
@@ -698,7 +697,7 @@ def displayStruct(s):
         b = getattr(s, i[0])
         try:
             gom_logger.info(f"{i[0]}: {b[:]}")
-        except(TypeError):
+        except TypeError:
             gom_logger.info(f"{i[0]}: {b}")
 
 

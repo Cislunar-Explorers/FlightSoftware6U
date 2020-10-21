@@ -1,7 +1,7 @@
-import power_controller as pc
-import power_structs as ps
+import drivers.power.power_controller as pc
+import drivers.power.power_structs as ps
 from enum import Enum
-from FlightSoftware.utils.constants import GomOutputs, GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
+from utils.constants import GomOutputs, GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
 
 logger = ps.gom_logger
 

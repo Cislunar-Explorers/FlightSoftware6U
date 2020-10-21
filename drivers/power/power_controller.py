@@ -12,10 +12,10 @@
 #         Some testing necessary
 
 import pigpio
-import power_structs as ps
+import drivers.power.power_structs as ps
 import RPi.GPIO as GPIO
 import time
-from FlightSoftware.utils.constants import GomOutputs
+from utils.constants import GomOutputs
 
 
 # power device address

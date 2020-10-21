@@ -12,7 +12,7 @@
 #
 
 from ctypes import *
-from FlightSoftware.utils.log import get_log
+from utils.log import get_log
 
 gom_logger = get_log()
 

@@ -1,0 +1,28 @@
+2020-10-21 14:29:50,287 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:466] [90mTemp of boost converters:    [0m1-[91m22degC[0m 2-[91m23degC[0m 3-[91m22degC[0m batt-[91m22degC[0m
+2020-10-21 14:29:50,304 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:472] [90mExternal batt temp:          [0m1-[91m0degC[0m 2-[91m0degC[0m
+2020-10-21 14:29:50,312 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:484] [90mLatchups:                    [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m]
+2020-10-21 14:29:50,320 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:488] [90mCause of last reset:         [0m[91mBrownout or power-on reset[0m
+2020-10-21 14:29:50,328 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:489] [90mNumber of reboots:           [0m[91m36864[0m
+2020-10-21 14:29:50,336 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:490] [90mNumber of software errors:   [0m[91m2[0m
+2020-10-21 14:29:50,344 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:491] [90mPPT mode:                    [0m[91m64[0m
+2020-10-21 14:41:19,393 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] pv: [348, 357, 349]
+2020-10-21 14:41:19,402 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] pc: 13
+2020-10-21 14:41:19,410 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] bv: 7109
+2020-10-21 14:41:19,417 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] sc: 311
+2020-10-21 14:41:19,426 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] temp: [22, 24, 22, 23]
+2020-10-21 14:41:19,434 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] batt_temp: [0, 0]
+2020-10-21 14:41:19,442 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] latchup: [0, 0, 0, 0, 0, 0]
+2020-10-21 14:41:19,450 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] reset: 7
+2020-10-21 14:41:19,458 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] bootcount: 36864
+2020-10-21 14:41:19,466 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] sw_errors: 2
+2020-10-21 14:41:19,474 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] ppt_mode: 0
+2020-10-21 14:41:19,482 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] channel_status: 0
+2020-10-21 14:41:21,585 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] vboost: [348, 357, 349]
+2020-10-21 14:41:21,593 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] vbatt: 7109
+2020-10-21 14:41:21,601 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] curin: [0, 0, 0]
+2020-10-21 14:41:21,609 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] cursun: 13
+2020-10-21 14:41:21,617 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] cursys: 275
+2020-10-21 14:41:21,625 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:701] reserved1: 512
+2020-10-21 14:41:21,633 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] curout: [0, 1, 0, 0, 0, 3]
+2020-10-21 14:41:21,641 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] output: [0, 0, 0, 0, 0, 0, 0, 0]
+2020-10-21 14:41:21,649 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:power_structs.py:699] output_on_delta: [0, 0, 0, 0, 0, 0, 0, 0]

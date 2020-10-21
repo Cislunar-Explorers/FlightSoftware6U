@@ -63,8 +63,8 @@ class GomOutputs(IntEnum):
     electrolyzer = 5
 
 
-GOM_VOLTAGE_MAX = 8.4
-GOM_VOLTAGE_MIN = 6.0
+GOM_VOLTAGE_MAX = 8400
+GOM_VOLTAGE_MIN = 6000
 
 
 @unique

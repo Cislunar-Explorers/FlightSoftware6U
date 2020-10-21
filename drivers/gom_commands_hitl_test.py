@@ -47,16 +47,16 @@ test.burnwire2(5)
 
 sleep(3)
 
-logger.debug("Is electrolyzing?: " + str(test.is_electrolyzing()))
+logger.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
 
 test.set_electrolysis(True)
 sleep(1)
-logger.debug("Is electrolyzing?: " + str(test.is_electrolyzing()))
+logger.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
 test.set_electrolysis(False)
 sleep(1)
-logger.debug("Is electrolyzing?: " + str(test.is_electrolyzing()))
+logger.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
 
-logger.debug("Battery %: " + str(test.read_battery_percentage()))
+logger.info("Battery %: " + str(test.read_battery_percentage()))

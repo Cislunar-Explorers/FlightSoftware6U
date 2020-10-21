@@ -96,7 +96,7 @@ class Gomspace:
 
     def set_electrolysis(self, status: bool, delay=0):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
-        self.gom.electrolyzer(status, delay)
+        self.gom.electrolyzer(status, delay=delay)
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""

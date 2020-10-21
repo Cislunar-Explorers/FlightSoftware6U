@@ -379,27 +379,27 @@ def bytesToList(b):
 
 
 def B(x) -> str:
-    return Color.BOLD + x + Color.ENDC
+    return Color.BOLD + str(x) + Color.ENDC
 
 
 def BL(x) -> str:
-    return Color.BLUE + x + Color.ENDC
+    return Color.BLUE + str(x) + Color.ENDC
 
 
 def W(x) -> str:
-    return Color.WARNING + x + Color.ENDC
+    return Color.WARNING + str(x) + Color.ENDC
 
 
 def G(x) -> str:
-    return Color.GREEN + x + Color.ENDC
+    return Color.GREEN + str(x) + Color.ENDC
 
 
 def F(x) -> str:
-    return Color.FAIL + x + Color.ENDC
+    return Color.FAIL + str(x) + Color.ENDC
 
 
 def R(x) -> str:
-    return Color.RED + x + Color.ENDC
+    return Color.RED + str(x) + Color.ENDC
 
 
 def GR(x) -> str:
@@ -407,15 +407,15 @@ def GR(x) -> str:
 
 
 def mv(x: str) -> str:
-    return x + "mV"
+    return str(x) + "mV"
 
 
 def ma(x: str) -> str:
-    return x + "mA"
+    return str(x) + "mA"
 
 
 def degc(x: str) -> str:
-    return x + "degC"
+    return str(x) + "degC"
 
 
 def RES(x):
@@ -489,28 +489,28 @@ def displayHK(hk):
     gom_logger.info(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
     gom_logger.info(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
     gom_logger.info(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
-    gom_logger.info(
-        GR("Channel output:              ")
-        + "%s"
-        % R(
-            (
-                    hk.channel_status
-                    >> _
-                    >> bin
-                    >> _
-                    >> substr(2)
-                    >> _
-                    >> len
-                    >> _
-                    >> mult(-1)
-                    >> _
-                    >> add(8)
-                    >> _
-                    >> mult("0")
-            )
-            + (hk.channel_status >> _ >> bin >> _ >> str >> _ >> substr(2))
-        )
-    )
+    #gom_logger.info(
+    #    GR("Channel output:              ")
+    #    + "%s"
+    #    % R(
+    #        (
+    #                hk.channel_status
+    #                >> _
+    #                >> bin
+    #                >> _
+    #                >> substr(2)
+    #                >> _
+    #                >> len
+    #                >> _
+    #                >> mult(-1)
+    #                >> _
+    #                >> add(8)
+    #                >> _
+    #                >> mult("0")
+    #        )
+    #        + (hk.channel_status >> _ >> bin >> _ >> str >> _ >> substr(2))
+    #    )
+    #)
 
 
 # prints config info given eps_config_t struct
@@ -526,7 +526,7 @@ def displayConfig(conf):
         return {0: "MANUAL[0]", 1: "AUTO[1]"}.get(x, "ERROR")
 
     def sec(x: str):
-        return x + "s"
+        return str(x) + "s"
 
     gom_logger.info(G("***************-CONFIG-***************"))
     gom_logger.info(
@@ -577,14 +577,14 @@ def displayConfig(conf):
         GR("Output initial on:           ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
-            R(sec(conf.output_intial_on_delay[0])),
-            R(sec(conf.output_intial_on_delay[1])),
-            R(sec(conf.output_intial_on_delay[2])),
-            R(sec(conf.output_intial_on_delay[3])),
-            R(sec(conf.output_intial_on_delay[4])),
-            R(sec(conf.output_intial_on_delay[5])),
-            R(sec(conf.output_intial_on_delay[6])),
-            R(sec(conf.output_intial_on_delay[7])),
+            R(sec(conf.output_initial_on_delay[0])),
+            R(sec(conf.output_initial_on_delay[1])),
+            R(sec(conf.output_initial_on_delay[2])),
+            R(sec(conf.output_initial_on_delay[3])),
+            R(sec(conf.output_initial_on_delay[4])),
+            R(sec(conf.output_initial_on_delay[5])),
+            R(sec(conf.output_initial_on_delay[6])),
+            R(sec(conf.output_initial_on_delay[7])),
         )
     )
 
@@ -592,14 +592,14 @@ def displayConfig(conf):
         GR("Output initial off:          ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
-            R(sec(conf.output_intial_off_delay[0])),
-            R(sec(conf.output_intial_off_delay[1])),
-            R(sec(conf.output_intial_off_delay[2])),
-            R(sec(conf.output_intial_off_delay[3])),
-            R(sec(conf.output_intial_off_delay[4])),
-            R(sec(conf.output_intial_off_delay[5])),
-            R(sec(conf.output_intial_off_delay[6])),
-            R(sec(conf.output_intial_off_delay[7])),
+            R(sec(conf.output_initial_off_delay[0])),
+            R(sec(conf.output_initial_off_delay[1])),
+            R(sec(conf.output_initial_off_delay[2])),
+            R(sec(conf.output_initial_off_delay[3])),
+            R(sec(conf.output_initial_off_delay[4])),
+            R(sec(conf.output_initial_off_delay[5])),
+            R(sec(conf.output_initial_off_delay[6])),
+            R(sec(conf.output_initial_off_delay[7])),
         )
     )
 

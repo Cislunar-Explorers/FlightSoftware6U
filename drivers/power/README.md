@@ -8,11 +8,14 @@ The Python libraries required for these drivers to run on the pi are:
  - `pigpio`
  
 Additionally, a pigpio daemon (`pigpiod`) must be running and active on the pi before running any functions (Talk to Dr. Muhlberger about setting this up).
-The status of `pigpiod` can be found by running `systemctl status pigpiod` 
+The status of `pigpiod` can be found by running `systemctl status pigpiod`. If it is not running run `sudo pigpiod` 
+
+## Documentation
+Documentation for the low-level drivers defined in `power_structs.py` and `power_controller.py` can be viewed at https://cornell.app.box.com/file/225179481737 and https://cornell.app.box.com/file/225179502007 respectively.
 
 ## Functions
 
-The drivers defined in `power_controller.py` and `power_structs.py`  and their statuses are shown here:
+The drivers defined in `power_controller.py` and `power_structs.py` and their statuses are shown here:
 
 | Function            | Tested | Status                                               | Test Date | Short Description                                                     |
 |---------------------|:------:|:----------------------------------------------------:|-----------|-----------------------------------------------------------------------|
@@ -23,11 +26,11 @@ The drivers defined in `power_controller.py` and `power_structs.py`  and their s
 | `ping`              |        | Unknown                                              |           | Pings value                                                           |
 | `reboot`            | x      | Working                                              | SP20      | Reboots the P31u without cycling permanent outputs                    |
 | `get_hk_1`          | x      | Working                                              | SP20      | Returns hk data                                                       |
-| `get_hk_2`          |        | Unknown                                              |           | Returns hk data                                                       |
-| `get_hk_2_vi`       |        | Unknown                                              |           | Returns electrical portion of `get_hk_2`                              |
-| `get_hk_out`        |        | Unknown                                              |           |                                                                       |
-| `get_hk_wdt`        |        | Unknown                                              |           |                                                                       |
-| `get_hk_2_basic`    |        | Unknown                                              |           |                                                                       |
+| `get_hk_2`          | x      | Working                                              | 2020-10-21| Returns hk data                                                       |
+| `get_hk_2_vi`       | x      | Working                                              | 2020-10-21| Returns electrical portion of `get_hk_2`                              |
+| `get_hk_out`        | x      | Working                                              | 2020-10-21|                                                                       |
+| `get_hk_wdt`        | x      | Working                                              | 2020-10-21|                                                                       |
+| `get_hk_2_basic`    | x      | Working                                              | 2020-10-21|                                                                       |
 | `set_output`        | x      | Working                                              | SP20      | Sets voltage output channels with bit mask                            |
 | `set_single_output` | x      | Working                                              | SP20      | Sets a single switchable output on or off                             |
 | `set_pv_volt`       |        | Unknown                                              |           | Sets voltage of photovoltaic inputs                                   |

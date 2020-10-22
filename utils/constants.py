@@ -53,6 +53,20 @@ ATTITUDE_Y = "attitude_y"
 ATTITUDE_Z = "attitude_z"
 
 
+# GOMspace Channel designations:
+class GomOutputs(IntEnum):
+    comms = 0
+    burnwire_1 = 1
+    burnwire_2 = 2
+    glowplug = 3
+    solenoid = 4
+    electrolyzer = 5
+
+
+GOM_VOLTAGE_MAX = 8400
+GOM_VOLTAGE_MIN = 6000
+
+
 @unique
 class FMEnum(IntEnum):
     Boot = 0

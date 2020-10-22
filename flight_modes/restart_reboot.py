@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
-import os
-import sys
+# import os
+# import sys
 
 from utils.db import create_sensor_tables_from_path
 from utils.constants import DB_FILE
@@ -109,9 +109,7 @@ class RestartMode(FlightMode):
         # this hopefully should select a camera
         mux.pick()
 
-    # this is the MuxManager object
-
-
+# this is the MuxManager object
 # created to initailize the cameras
 # this almost entirely comes from mux-test.py
 class MuxManager:

@@ -111,13 +111,13 @@ def create_sensor_tables_from_path(path: str):
 
 
 class RebootsModel(SQLAlchemyTableBase):
-    __tablename__ = "Reboot Directory"
+    __tablename__ = "Reboots"
 
     id = Column(Integer, primary_key=True)
-    type_of_reboot = Column(String)
+    is_bootup = Column(bool)
     reboot_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<RebootsModel(type_of_reboot={self.type_of_reboot}, "
+        return f"<RebootsModel(is boot up?={self.is_bootup}, "
         f"reboot_at={str(self.reboot_at)})>"
 

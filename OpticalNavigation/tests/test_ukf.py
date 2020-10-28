@@ -162,7 +162,7 @@ def sixhours(visual_analysis, state_error, part_start, part_end, kickTime=None):
         orientation = None
         if kickTime is not None and t > kickTime:
             orientation = [0, 0, 0, 1]
-        state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, orientation=orientation, dynamicsOnly=False)
+        state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, dynamicsOnly=False) # used to have this orientation=orientation, not sure why it's gone
         # Per iteration error
         traj = (np.array([trajTruthdf.iloc[t]['x'], trajTruthdf.iloc[t]['y'], trajTruthdf.iloc[t]['z'], trajTruthdf.iloc[t]['vx'], trajTruthdf.iloc[t]['vy'], trajTruthdf.iloc[t]['vz']], dtype=np.float)).reshape(6,1)
         traj = traj.flatten()
@@ -217,7 +217,8 @@ def sixhours_timestep(visual_analysis, state_error, part_start, part_end, timest
         orientation = None
         if kickTime is not None and t > kickTime:
             orientation = [0, 0, 0, 1]
-        state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, orientation=orientation, dynamicsOnly=False)
+        state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, dynamicsOnly=False) # used to have this, not sure why it's gone orientation=orientation
+        # Per iteration error
         # Per iteration error
         traj = (np.array([d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
         traj = traj.flatten()
@@ -314,7 +315,7 @@ def cislunar1_timestep(visual_analysis, state_error, part_start, part_end, times
         orientation = None
         if kickTime is not None and t > kickTime:
             orientation = [0, 0, 0, 1]
-        state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, orientation=orientation, dynamicsOnly=False)
+        state, P, K = runPosVelUKF(moonEph, sunEph, meas, state, 60, P, MatlabTestCameraParameters, dynamicsOnly=False) # used to have this, not sure why it's gone orientation=orientation
         # Per iteration error
         traj = (np.array([d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
         traj = traj.flatten()

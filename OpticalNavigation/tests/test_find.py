@@ -77,13 +77,13 @@ def test_earth():
         files.extend(glob.glob(extension))
     if len(files) == 0:
         if not os.path.isdir(loc):  
-            assert False, '\"{}\" is not a valid find dataset directory'.format(loc)
+            assert False, f'\"{loc}\" is not a valid find dataset directory'
         else:
             # TODO: When one camera doesn't output images
-            assert False, 'No images found in dataset directory \"{}\"'.format(loc)
+            assert False, f'No images found in dataset directory \"{loc}\"'
     for i, file in enumerate(files):
         print('-----------------------')
-        print('Target: {}'.format(file))
+        print(f'Target: {file}')
         true_img = cv2.imread(file)
         img = copy.copy(true_img)
         earthCircles = findEarth(img)
@@ -91,13 +91,13 @@ def test_earth():
         trueEarthData = (row['EarthX'].values[0], row['EarthY'].values[0], row['EarthR'].values[0])
 
         try:
-            self.checkErrors(earthCircles, trueEarthData)
+            checkErrors(earthCircles, trueEarthData)
         except Exception as e:
-            assert False, 'Could not calculate difference in center/radius for {} in {} --> {}'.format('Earth','file',str(e))
-        
+            assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
+            
         # No Exceptions were raised        
-        earthCenterError, earthRadiusError = self.calculateErrors(earthCircles[0][0], trueEarthData)
-        print('Earth Result: center error: {}, radius error: {}'.format(earthCenterError, earthRadiusError))
+        earthCenterError, earthRadiusError = calculateErrors(earthCircles[0][0], trueEarthData)
+        print(f'Earth Result: center error: {earthCenterError}, radius error: {earthRadiusError}')
         assert earthCenterError <= EARTH_CENTER_ERROR, 'Earth error too large'
         assert earthRadiusError <= EARTH_RADIUS_ERROR, 'Earth radius too large'
 
@@ -111,13 +111,13 @@ def test_sun():
         files.extend(glob.glob(extension))
     if len(files) == 0:
         if not os.path.isdir(loc):  
-            assert False, '\"{}\" is not a valid find dataset directory'.format(loc)
+            assert False, f'\"{loc}\" is not a valid find dataset directory'
         else:
             # TODO: When one camera doesn't output images
-            assert False, 'No images found in dataset directory \"{}\"'.format(loc)
+            assert False, f'No images found in dataset directory \"{loc}\"'
     for i, file in enumerate(files):
         print('-----------------------')
-        print('Target: {}'.format(file))
+        print(f'Target: {file}')
         true_img = cv2.imread(file)
         img = copy.copy(true_img)
         sunCircles = findSun(img)
@@ -125,13 +125,13 @@ def test_sun():
         trueSunData = (row['SunX'].values[0], row['SunY'].values[0], row['SunR'].values[0])
 
         try:
-            self.checkErrors(sunCircles, trueSunData)
+            checkErrors(sunCircles, trueSunData)
         except Exception as e:
-            assert False, 'Could not calculate difference in center/radius for {} in {} --> {}'.format('Earth','file',str(e))
+            assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
         
         # No Exceptions were raised        
-        sunCenterError, sunRadiusError = self.calculateErrors(sunCircles[0][0], trueSunData)
-        print('Sun Result: center error: {}, radius error: {}'.format(sunCenterError, sunRadiusError))
+        sunCenterError, sunRadiusError = calculateErrors(sunCircles[0][0], trueSunData)
+        print(f'Sun Result: center error: {sunCenterError}, radius error: {sunRadiusError}')
         assert sunCenterError <= SUN_CENTER_ERROR, 'Sun center error too large'
         assert sunRadiusError <= SUN_RADIUS_ERROR, 'Sun radius error too large'
 
@@ -145,13 +145,13 @@ def test_moon():
         files.extend(glob.glob(extension))
     if len(files) == 0:
         if not os.path.isdir(loc):  
-            assert False, '\"{}\" is not a valid find dataset directory'.format(loc)
+            assert False, f'\"{loc}\" is not a valid find dataset directory'
         else:
             # TODO: When one camera doesn't output images
-            assert False, 'No images found in dataset directory \"{}\"'.format(loc)
+            assert False, f'No images found in dataset directory \"{loc}\"'
     for i, file in enumerate(files):
         print('-----------------------')
-        print('Target: {}'.format(file))
+        print(f'Target: {file}')
         true_img = cv2.imread(file)
         img = copy.copy(true_img)
         moonCircles = findMoon(img)
@@ -159,12 +159,12 @@ def test_moon():
         trueMoonData = (row['MoonX'].values[0], row['MoonY'].values[0], row['MoonR'].values[0])
 
         try:
-            self.checkErrors(moonCircles, trueMoonData)
+            checkErrors(moonCircles, trueMoonData)
         except Exception as e:
-            assert False, 'Could not calculate difference in center/radius for {} in {} --> {}'.format('Earth','file',str(e))
+            assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
         
         # No Exceptions were raised        
-        moonCenterError, moonRadiusError = self.calculateErrors(moonCircles[0][0], trueMoonData)
-        print('Moon Result: center error: {}, radius error: {}'.format(moonCenterError, moonRadiusError))
+        moonCenterError, moonRadiusError = calculateErrors(moonCircles[0][0], trueMoonData)
+        print(f'Moon Result: center error: {moonCenterError}, radius error: {moonRadiusError}')
         assert moonCenterError < MOON_CENTER_ERROR, 'Moon center too large'
         assert moonRadiusError < MOON_RADIUS_ERROR, 'Moon radius too large'

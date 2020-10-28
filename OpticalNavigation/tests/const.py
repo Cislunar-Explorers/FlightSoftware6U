@@ -1,17 +1,6 @@
 import os
 import numpy as np
-
-class MatlabTestCameraParameters:
-    # Camera constants
-    # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
-    hFov = 62.2
-    vFov = 48.8
-    hPix = 3280
-    vPix = 813
-    #Angular Separation Between Cameras (degrees)
-    dcam12 = 60
-    dcam13 = -60
-    dcam23 = -120
+import pytest
 
 class MatlabTestCameraParameters:
     # Camera constants
@@ -37,32 +26,34 @@ class CesiumTestCameraParameters:
     dcam13 = 60 # Cam 3 looks up
     dcam23 = 120
 
-TEST_DATA_DIR = os.path.join('D:', 'OpNav')
+TEST_DATA_DIR = os.environ.get('TEST_DATA_DIR')
+if TEST_DATA_DIR == None:
+    pytest.exit('No TEST_DATA_DIR environmental variable found. Please set it.')
 
-TEST_ECLIPSEANDCRESCENTIMAGES = os.path.join(TEST_DATA_DIR, 'data','EclipseAndCrescentImages')
+TEST_ECLIPSEANDCRESCENTIMAGES = os.path.join(TEST_DATA_DIR,'EclipseAndCrescentImages')
 TEST_FIND_DATASET_IMAGE_DIR = 'images'
 TEST_FIND_DATASET_CIRCLES_DIR = os.path.join('circles','circles.csv')
 
-TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec = os.path.join(TEST_DATA_DIR, 'data','EM1_3DOF_Trajectory_June_27_2020_3600sec')
+TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec = os.path.join(TEST_DATA_DIR,'EM1_3DOF_Trajectory_June_27_2020_3600sec')
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_iterations = 'iterations'
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_trajectory = os.path.join('trajectory','trajectory.csv')
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_moonEph = os.path.join('ephemeris','moon_eph.csv')
 TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_sunEph = os.path.join('ephemeris','sun_eph.csv')
 
-CISLUNAR_TEST_TRAJ = os.path.join(TEST_DATA_DIR, 'data', 'CislunarFullTraj_60secs')
+CISLUNAR_TEST_TRAJ = os.path.join(TEST_DATA_DIR, 'CislunarFullTraj_60secs')
 CISLUNAR_TEST_TRAJ_moonEph = os.path.join(CISLUNAR_TEST_TRAJ, 'ephemeris', 'sampled_moon_eph.csv')
 CISLUNAR_TEST_TRAJ_sunEph = os.path.join(CISLUNAR_TEST_TRAJ, 'ephemeris', 'sampled_sun_eph.csv')
 CISLUNAR_TEST_TRAJ_traj = os.path.join(CISLUNAR_TEST_TRAJ, 'trajectory', 'trajectory.csv')
 CISLUNAR_TEST_TRAJ_att = os.path.join(CISLUNAR_TEST_TRAJ, 'attitude', 'attitude.csv')
 
-TEST_C1_DISCRETIZED = os.path.join(TEST_DATA_DIR, 'data', 'c1_discretized')
+TEST_C1_DISCRETIZED = os.path.join(TEST_DATA_DIR, 'c1_discretized')
 TEST_C1_DISCRETIZED_meas = os.path.join(TEST_C1_DISCRETIZED, 'measurements', 'measurements.csv')
 TEST_C1_DISCRETIZED_moonEph = os.path.join(TEST_C1_DISCRETIZED, 'ephemeris', 'moon_eph.csv')
 TEST_C1_DISCRETIZED_sunEph = os.path.join(TEST_C1_DISCRETIZED, 'ephemeris', 'sun_eph.csv')
 TEST_C1_DISCRETIZED_traj = os.path.join(TEST_C1_DISCRETIZED, 'trajectory', 'trajectory.csv')
 TEST_C1_DISCRETIZED_matlab = os.path.join(TEST_C1_DISCRETIZED, 'c1_discretized_ukf_k0.csv')
 
-TEST_6HOURS = os.path.join(TEST_DATA_DIR, 'data', '6Hours')
+TEST_6HOURS = os.path.join(TEST_DATA_DIR, '6Hours')
 TEST_6HOURS_meas = os.path.join(TEST_6HOURS, 'measurements', 'measurements.csv')
 TEST_6HOURS_moonEph = os.path.join(TEST_6HOURS, 'ephemeris', 'moon_eph.csv')
 TEST_6HOURS_sunEph = os.path.join(TEST_6HOURS, 'ephemeris', 'sun_eph.csv')

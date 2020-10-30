@@ -20,7 +20,7 @@ from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
 from drivers.dummy_sensors import PressureSensor
-from flight_modes.flight_mode import (
+from flight_modes.restart_reboot import (
     RestartMode,
     BootUpMode,
 )
@@ -133,4 +133,4 @@ if __name__ == "__main__":
     load_dotenv()
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
-    main.run()
+    main.run_mode()

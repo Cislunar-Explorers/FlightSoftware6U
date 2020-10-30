@@ -26,11 +26,21 @@ class BootUpMode(FlightMode):
         # initialize the camera
         self.init_camera()
 
+        self.selected = None
+
     # initialize the cameras, select a camera
     def init_camera(self):
         # TODO is this done right?
         mux = camera.CameraMux()
-        assert mux.detect()
+        if mux.detect():
+            self.selected = True
+        else:
+            self.selected = False
+            RestartMode(FlightMode)
+        for x in range(1, 5):
+            mux.selectCamera(x)
+
+
 
     # will add info about the bootup to the db
     def log(self):
@@ -71,7 +81,7 @@ class RestartMode(FlightMode):
 
     # initialize the cameras, select a camera
     def init_camera(self):
-        cam = camera.Camera()
+        assert camera.Camera()
         # TODO now what?
 
 

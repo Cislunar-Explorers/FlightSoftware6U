@@ -6,6 +6,8 @@ from utils.constants import BOOTUP_SEPARATION_DELAY
 from utils.db import RebootsModel
 import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
+import os
+from utils.constants import LOG_DIR
 
 
 class BootUpMode(FlightMode):
@@ -16,7 +18,9 @@ class BootUpMode(FlightMode):
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
-        # add info about boot up to database
+        # create the directory on the pi, this way next time a Restart is called
+        os.mkdir(LOG_DIR)
+
         self.log()
 
         # do the run_mode function inside flight_mode

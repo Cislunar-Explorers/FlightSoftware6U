@@ -9,6 +9,21 @@ from flight_modes.flight_mode import FlightMode
 import os
 from utils.constants import LOG_DIR
 
+# TODO
+# add logger statements!!! for HITL tests!!
+# antennae need to extend --> burn a burnwire (deploy automatically)
+
+# call:
+# parent.gom.burnwire_
+
+# another thing to test:
+    # bash rc file
+    # append it
+    # having bootup run immediately
+    # ~/.bashrc
+    # idk ask toby
+
+
 
 class BootUpMode(FlightMode):
     def __init__(self, parent):
@@ -44,8 +59,6 @@ class BootUpMode(FlightMode):
         for x in range(1, 5):
             mux.selectCamera(x)
 
-
-
     # will add info about the bootup to the db
     def log(self):
         is_bootup = True
@@ -55,6 +68,8 @@ class BootUpMode(FlightMode):
         self.session.add(new_bootup)
         self.session.commit()
 
+    def init_spin(self):
+        pass
 
 class RestartMode(FlightMode):
     def __init__(self, parent):

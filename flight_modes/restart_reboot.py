@@ -6,7 +6,9 @@ import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
 import random
-from utils.log import get_log as logger
+from utils.log import get_log
+
+logger = get_log()
 
 # another thing to test:
 # bash rc file
@@ -19,6 +21,7 @@ from utils.log import get_log as logger
 class BootUpMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
+
 
         logger.info("Boot up beginning...")
         logger.info("Time when sleep starts: " + str(datetime.now()))

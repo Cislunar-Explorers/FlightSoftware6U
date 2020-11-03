@@ -114,7 +114,7 @@ class RebootsModel(SQLAlchemyTableBase):
     __tablename__ = "Reboots"
 
     id = Column(Integer, primary_key=True)
-    is_bootup = Column(bool)
+    is_bootup = Column(Boolean)
     reboot_at = Column(DateTime)
 
     def __repr__(self):

@@ -101,7 +101,7 @@ class RestartMode(FlightMode):
         # initialize the cameras, select a random camera
         logger.info("Selecting a camera")
         assert camera.Camera()
-        cam = random.randrange(1, 5)
+        cam = random.choice(1, 3, 4)
         mux = camera.CameraMux()
         mux.selectCamera(cam)
         camera.Camera.initialize()

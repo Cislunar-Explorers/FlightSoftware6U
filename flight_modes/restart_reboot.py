@@ -1,20 +1,16 @@
 import time
 from datetime import datetime
-from utils.db import create_sensor_tables_from_path
-from utils.constants import DB_FILE
-from utils.constants import BOOTUP_SEPARATION_DELAY
-from utils.db import RebootsModel
+from utils.db import create_sensor_tables_from_path, RebootsModel
+from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, LOG_DIR
 import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
-from utils.constants import LOG_DIR
+import random
+from drivers.gom import Gomspace, logger
+from drivers.power import power_controller, power_structs
 
 # TODO
 # add logger statements!!! for HITL tests!!
-# antennae need to extend --> burn a burnwire (deploy automatically)
-
-# call:
-# parent.gom.burnwire_
 
 # another thing to test:
     # bash rc file
@@ -24,40 +20,47 @@ from utils.constants import LOG_DIR
     # idk ask toby
 
 
-
 class BootUpMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+        logger.info("Boot up beginning...")
+        logger.info("Time when sleep starts: " + str(datetime.now()))
         time.sleep(BOOTUP_SEPARATION_DELAY)
+        logger.info("Time when sleep stops: " + str(datetime.now()))
+
+        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
         # create the directory on the pi, this way next time a Restart is called
         os.mkdir(LOG_DIR)
 
+        logger.info("Logging info to DB...")
         self.log()
-
-        # do the run_mode function inside flight_mode
-        # no clue what this is really doing
-        super().run_mode(self)
-
-        # initialize the camera
-        self.init_camera()
-
         self.selected = None
 
-    # initialize the cameras, select a camera
-    def init_camera(self):
+        # deploy antennae
+        logger.info("Beginning burn wire...")
+        parent.gom = Gomspace()
+        parent.gom.burnwire1(5)
+
+    def run_mode(self):
+        # initialize the cameras, select a camera
         # TODO is this done right?
+        logger.info("Creating camera mux...")
         mux = camera.CameraMux()
+        logger.info("Is camera detected? " + str(mux.detect()))
         if mux.detect():
+            logger.info("Cam detected")
             self.selected = True
         else:
+            logger.info("Cam not detected...")
             self.selected = False
+            logger.info("Restarting...")
             RestartMode(FlightMode)
-        for x in range(1, 5):
-            mux.selectCamera(x)
+            RestartMode.run_mode()
+        mux.selectCamera(random.randrange(1, 5))
 
     # will add info about the bootup to the db
     def log(self):
@@ -67,26 +70,24 @@ class BootUpMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
+        logger.info("Log to DB complete...")
 
     def init_spin(self):
         pass
+
 
 class RestartMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+        logger.info("Restarting...")
+        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
         # add info about restart to database
+        logger.info("Logging to DB...")
         self.log()
-
-        # do the run_mode function inside flight_mode
-        # no clue what this is really doing
-        super().run_mode(self)
-
-        # double check that the cameras are good
-        self.init_camera()
 
     # this should add to the RebootsModel
     # will add info about the bootup to the db
@@ -97,11 +98,19 @@ class RestartMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
+        logger.info("Logging to DB complete...")
 
-    # initialize the cameras, select a camera
-    def init_camera(self):
+    def run_mode(self):
+        # initialize the cameras, select a random camera
+        logger.info("Selecting a camera")
         assert camera.Camera()
-        # TODO now what?
+        cam = random.randrange(1, 5)
+        mux = camera.CameraMux()
+        mux.selectCamera(cam)
+        camera.Camera.initialize()
+        logger.info("Camera detected? " + str(mux.detect()))
+
+
 
 
 

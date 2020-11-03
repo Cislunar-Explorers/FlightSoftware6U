@@ -9,15 +9,12 @@ import random
 from drivers.gom import Gomspace, logger
 from drivers.power import power_controller, power_structs
 
-# TODO
-# add logger statements!!! for HITL tests!!
-
 # another thing to test:
-    # bash rc file
-    # append it
-    # having bootup run immediately
-    # ~/.bashrc
-    # idk ask toby
+# bash rc file
+# append it
+# having bootup run immediately
+# ~/.bashrc
+# idk ask toby
 
 
 class BootUpMode(FlightMode):

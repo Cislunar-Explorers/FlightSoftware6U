@@ -25,7 +25,8 @@ class BootUpMode(FlightMode):
 
         logger.info("Boot up beginning...")
         logger.info("Time when sleep starts: " + str(datetime.now()))
-        time.sleep(BOOTUP_SEPARATION_DELAY)
+        #time.sleep(BOOTUP_SEPARATION_DELAY)
+        time.sleep(5)
         logger.info("Time when sleep stops: " + str(datetime.now()))
 
         logger.info("Creating DB session...")
@@ -33,7 +34,7 @@ class BootUpMode(FlightMode):
         self.session = create_session()
 
         # create the directory on the pi, this way next time a Restart is called
-        os.mkdir(LOG_DIR)
+        # os.mkdir(LOG_DIR)
 
         logger.info("Logging info to DB...")
         self.log()

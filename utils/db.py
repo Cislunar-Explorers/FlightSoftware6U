@@ -99,17 +99,6 @@ class OpNavCoordinatesModel(SQLAlchemyTableBase):
         )
 
 
-def create_sensor_tables(engine):
-    SQLAlchemyTableBase.metadata.create_all(engine)
-    create_session.configure(bind=engine)
-    return create_session
-
-
-def create_sensor_tables_from_path(path: str):
-    engine = create_engine(path)
-    return create_sensor_tables(engine)
-
-
 class RebootsModel(SQLAlchemyTableBase):
     __tablename__ = "Reboots"
 
@@ -121,3 +110,13 @@ class RebootsModel(SQLAlchemyTableBase):
         return f"<RebootsModel(is boot up?={self.is_bootup}, "
         f"reboot_at={str(self.reboot_at)})>"
 
+
+def create_sensor_tables(engine):
+    SQLAlchemyTableBase.metadata.create_all(engine)
+    create_session.configure(bind=engine)
+    return create_session
+
+
+def create_sensor_tables_from_path(path: str):
+    engine = create_engine(path)
+    return create_sensor_tables(engine)

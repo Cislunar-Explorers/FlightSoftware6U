@@ -37,8 +37,8 @@ class BootUpMode(FlightMode):
         self.selected = None
 
         # deploy antennae
-        logger.info("Beginning burn wire...")
-        parent.gom.burnwire1(5)
+        #logger.info("Beginning burn wire...")
+        #parent.gom.burnwire1(5)
 
     def run_mode(self):
         # initialize the cameras, select a camera

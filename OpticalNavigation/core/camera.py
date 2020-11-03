@@ -84,7 +84,7 @@ class Camera:
 
         # Full resolution
         with PiCamera(resolution=(3280, 2464),
-                      framerate=frame_rate,
+                      framerate=15,
                       sensor_mode=2,
                       clock_mode='raw') as camera:
             # Set fixed white balance

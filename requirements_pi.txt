@@ -2,4 +2,4 @@ picamera
 pigpio
 RPi.GPIO
 dotenv
-sqlalchemy
+SQLalchemy

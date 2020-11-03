@@ -36,7 +36,7 @@ class MainSatelliteThread(Thread):
         self.command_queue = Queue()
         self.commands_to_execute = []
         self.burn_queue = Queue()
-        self.init_comms()
+        # self.init_comms()
         self.init_sensors()
         self.last_opnav_run = datetime.now() # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR

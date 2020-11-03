@@ -107,5 +107,6 @@ class RestartMode(FlightMode):
         cam = random.choice([1, 3, 4])
         mux = camera.CameraMux()
         mux.selectCamera(cam)
-        camera.Camera.initialize()
+        cam_object = camera.Camera()
+        cam_object.initialize()
         logger.info("Camera detected? " + str(mux.detect()))

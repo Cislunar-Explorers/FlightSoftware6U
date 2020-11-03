@@ -6,8 +6,7 @@ import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
 import random
-from drivers.gom import Gomspace, logger
-from drivers.power import power_controller, power_structs
+from drivers.gom import logger
 
 # another thing to test:
 # bash rc file
@@ -39,7 +38,6 @@ class BootUpMode(FlightMode):
 
         # deploy antennae
         logger.info("Beginning burn wire...")
-        parent.gom = Gomspace()
         parent.gom.burnwire1(5)
 
     def run_mode(self):
@@ -51,13 +49,15 @@ class BootUpMode(FlightMode):
         if mux.detect():
             logger.info("Cam detected")
             self.selected = True
+            mux.selectCamera(random.choice(1, 3, 4))
         else:
             logger.info("Cam not detected...")
             self.selected = False
             logger.info("Restarting...")
-            RestartMode(FlightMode)
-            RestartMode.run_mode()
-        mux.selectCamera(random.choice(1, 3, 4))
+
+            # TODO make it so that main runs
+            # this will restart the Pi
+            os.system("sudo reboot")
 
     # will add info about the boot up to the db
     def log(self):

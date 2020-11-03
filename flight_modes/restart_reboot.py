@@ -6,7 +6,7 @@ import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
 import random
-from drivers.gom import logger
+from utils.log import get_log as logger
 
 # another thing to test:
 # bash rc file

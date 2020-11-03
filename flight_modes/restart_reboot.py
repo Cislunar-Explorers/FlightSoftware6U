@@ -57,7 +57,7 @@ class BootUpMode(FlightMode):
             logger.info("Restarting...")
             RestartMode(FlightMode)
             RestartMode.run_mode()
-        mux.selectCamera(random.choice(1,3,4))
+        mux.selectCamera(random.choice(1, 3, 4))
 
     # will add info about the bootup to the db
     def log(self):

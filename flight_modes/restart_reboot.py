@@ -53,7 +53,7 @@ class BootUpMode(FlightMode):
         if mux.detect():
             logger.info("Cam detected")
             self.selected = True
-            mux.selectCamera(random.choice(1, 3, 4))
+            mux.selectCamera(random.choice([1, 3, 4]))
         else:
             logger.info("Cam not detected...")
             self.selected = False
@@ -104,7 +104,7 @@ class RestartMode(FlightMode):
     def run_mode(self):
         # initialize the cameras, select a random camera
         logger.info("Selecting a camera")
-        cam = random.choice(1, 3, 4)
+        cam = random.choice([1, 3, 4])
         mux = camera.CameraMux()
         mux.selectCamera(cam)
         camera.Camera.initialize()

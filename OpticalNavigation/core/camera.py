@@ -68,6 +68,12 @@ class Camera:
     def __init__(self):
         pass
 
+    def initialize(self):
+        return PiCamera(resolution=(3280, 2464),
+                        framerate=15,
+                        sensor_mode=2,
+                        clock_mode='raw')
+
     # Code from video-timing.py
     def rawObservation(filename, frame_rate=15, shutterSpeed = 30000):
 

@@ -109,5 +109,6 @@ class RestartMode(FlightMode):
         mux.selectCamera(cam)
         cam_object = camera.Camera()
         cam_object.initialize()
+        self.session.query("Reboots").all()
         #logger.info("Camera detected? " + str(mux.detect()))
         cam_object.rawObservation("restart_cam_test.mjpeg")

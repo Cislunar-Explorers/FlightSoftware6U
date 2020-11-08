@@ -84,7 +84,7 @@ def c1_discretized(visual_analysis, state_error):
     state = state.flatten()
     posError = math.sqrt( np.sum((traj[:3] - state[:3])**2) )
     velError = math.sqrt( np.sum((traj[3:6] - state[3:6])**2) )
-    print('Position error: {}\nVelocity error: {}'.format(posError, velError))
+    print(f'Position error: {posError}\nVelocity error: {velError}')
     assert posError <= POS_ERROR, 'Position error is too large'
     assert velError <= VEL_ERROR, 'Velocity error is too large'
 
@@ -185,7 +185,7 @@ def sixhours(visual_analysis, state_error, part_start, part_end, kickTime=None):
     state = state.flatten()
     posError = math.sqrt( np.sum((traj[:3] - state[:3])**2) )
     velError = math.sqrt( np.sum((traj[3:6] - state[3:6])**2) )
-    print('Position error: {}\nVelocity error: {}'.format(posError, velError))
+    print(f'Position error: {posError}\nVelocity error: {velError}')
     assert posError <= POS_ERROR, 'Position error is too large'
     assert velError <= VEL_ERROR, 'Velocity error is too large'
 
@@ -241,7 +241,7 @@ def sixhours_timestep(visual_analysis, state_error, part_start, part_end, timest
     state = state.flatten()
     posError = math.sqrt( np.sum((traj[:3] - state[:3])**2) )
     velError = math.sqrt( np.sum((traj[3:6] - state[3:6])**2) )
-    print('Position error: {}\nVelocity error: {}'.format(posError, velError))
+    print(f'Position error: {posError}\nVelocity error: {velError}')
     assert posError <= POS_ERROR, 'Position error is too large'
     assert velError <= VEL_ERROR, 'Velocity error is too large'
 
@@ -338,6 +338,6 @@ def cislunar1_timestep(visual_analysis, state_error, part_start, part_end, times
     state = state.flatten()
     posError = math.sqrt( np.sum((traj[:3] - state[:3])**2) )
     velError = math.sqrt( np.sum((traj[3:6] - state[3:6])**2) )
-    print('Position error: {}\nVelocity error: {}'.format(posError, velError))
+    print(f'Position error: {posError}\nVelocity error: {velError}')
     assert posError <= POS_ERROR, 'Position error is too large'
     assert velError <= VEL_ERROR, 'Velocity error is too large'

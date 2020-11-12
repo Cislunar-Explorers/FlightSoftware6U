@@ -28,8 +28,8 @@ def mjpegToJpeg(inputFile):
             currentFrame += 1
         else:
             break
-    src.release()
-    cv2.destroyAllWindows()
+    #src.release()
+    #cv2.destroyAllWindows()
     return frames
 
 
@@ -59,17 +59,17 @@ def observe():
 
     recordings = {}
 
-    # To use on flight hardware
-    # mux = camera.CameraMux()
-    # for i in [1, 2, 3]: # make sure that these numbers correspond ot the ports on the hardware
-    #	mux.selectCamera(i)
-    #	cam = camera.Camera()
-    #	# Records exposure sequence 1 - change filename and shutterSpeed value
-    #	file1, timestamp1 = cam.camera.rawObservation(f"cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
-    #	# Records exposure sequence 2
-    #	file2, timestamp2 = cam.camera.rawObservation(f"cam{i}_expLow.mjpeg", shutterSpeed = 20000 )
-    #	recordings[file1] = timestamp1
-    #	recordings[file2] = timestamp2
+     # To use on flight hardware
+    mux = camera.CameraMux()
+    for i in [1, 2, 3]: # make sure that these numbers correspond ot the ports on the hardware
+        mux.selectCamera(i)
+    	cam = camera.Camera()
+    	# Records exposure sequence 1 - change filename and shutterSpeed value
+    	file1, timestamp1 = cam.rawObservation(f"cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
+    	# Records exposure sequence 2
+    	file2, timestamp2 = cam.rawObservation(f"cam{i}_expLow.mjpeg", shutterSpeed = 20000 )
+    	recordings[file1] = timestamp1
+    	recordings[file2] = timestamp2
 
     print("Data retrieved from cameras:")
     print(recordings)
@@ -80,12 +80,12 @@ def observe():
     recordings["cam1_expLow_rep.mjpeg"] = 10  # Sun video
     recordings["cam2_expHigh_rep.mjpeg"] = 10  # Earth video
     recordings["cam2_expLow_rep.mjpeg"] = 10  # Earth video
-    # del recordings["cam1_expHigh.mjpeg"]
-    # del recordings["cam1_expLow.mjpeg"]
-    # del recordings["cam2_expHigh.mjpeg"]
-    # del recordings["cam2_expLow.mjpeg"]
-    # del recordings["cam3_expHigh.mjpeg"]
-    # del recordings["cam3_expLow.mjpeg"]
+    del recordings["cam1_expHigh.mjpeg"]
+    del recordings["cam1_expLow.mjpeg"]
+    del recordings["cam2_expHigh.mjpeg"]
+    del recordings["cam2_expLow.mjpeg"]
+    del recordings["cam3_expHigh.mjpeg"]
+    del recordings["cam3_expLow.mjpeg"]
 
     # Three arrays for return data
     earthData = []

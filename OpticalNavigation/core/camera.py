@@ -81,13 +81,13 @@ class Camera:
         MMAL_PARAMETER_ANALOG_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x59
         MMAL_PARAMETER_DIGITAL_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x5A
 
-        print(filename + ", " + frame_rate)
-        assert type(filename) == str
-        assert type(frame_rate) == int
+        #print(filename + ", " + frame_rate)
+        #assert type(filename) == str
+        #assert type(frame_rate) == int
 
         # Full resolution
         with PiCamera(resolution=(3280, 2464),
-                      framerate=frame_rate,
+                      framerate=Fraction(frame_rate,1),
                       sensor_mode=2,
                       clock_mode='raw') as camera:
             # Set fixed white balance

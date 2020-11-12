@@ -115,7 +115,7 @@ class Camera:
             # t0 = time.monotonic()  # Host time when recording is commanded
             camera.start_recording(filename, format='mjpeg')
             lastTimestamp = camera.timestamp
-            print("First Timestamp: " + lastTimestamp)
+            print("First Timestamp: " + str(lastTimestamp))
             lastIndex = -1
             # Loop over expected frames
             for n in range(frame_rate): # One second
@@ -127,5 +127,5 @@ class Camera:
                 lastIndex = f.index
                 lastTimestamp = f.timestamp
             camera.stop_recording()
-            print("Last Timestamp: " + lastTimestamp)
+            print("Last Timestamp: " + str(lastTimestamp))
             return {filename: lastTimestamp}

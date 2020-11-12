@@ -5,8 +5,8 @@ import re
 import math
 
 import OpticalNavigation.core.img_preprocess as ip
-import OpticalNavigation.core.find
-import OpticalNavigation.core.camera
+import OpticalNavigation.core.find as find
+import OpticalNavigation.core.camera as camera
 
 #import img_preprocess as ip
 #import find

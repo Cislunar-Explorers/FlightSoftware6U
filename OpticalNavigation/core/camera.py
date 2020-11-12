@@ -128,4 +128,4 @@ class Camera:
                 lastTimestamp = f.timestamp
             camera.stop_recording()
             print("Last Timestamp: " + str(lastTimestamp))
-            return {filename: lastTimestamp}
+            return filename, lastTimestamp

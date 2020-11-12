@@ -66,7 +66,7 @@ def observe():
       cam = camera.Camera()
       #framerate_tmp = 15
       # Records exposure sequence 1 - change filename and shutterSpeed value
-      file1, timestamp1 = cam.rawObservation(f"cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
+      file1, timestamp1 = cam.rawObservation("cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
       # Records exposure sequence 2s
       file2, timestamp2 = cam.rawObservation(f"cam{i}_expLow.mjpeg",shutterSpeed = 20000 )
       recordings[file1] = timestamp1

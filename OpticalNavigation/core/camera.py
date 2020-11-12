@@ -110,9 +110,10 @@ class Camera:
             # t0 = time.monotonic()  # Host time when recording is commanded
             camera.start_recording(filename, format='mjpeg')
             lastTimestamp = camera.timestamp
+            print("First Timestamp: " + lastTimestamp)
             lastIndex = -1
             # Loop over expected frames
-            for n in range(2 * frame_rate):
+            for n in range(frame_rate): # One second
                 f = camera.frame
                 # If no new frame yet, sleep for half a frame
                 while f is None or f.index == lastIndex or f.frame_type == PiVideoFrameType.sps_header:
@@ -121,4 +122,5 @@ class Camera:
                 lastIndex = f.index
                 lastTimestamp = f.timestamp
             camera.stop_recording()
+            print("Last Timestamp: " + lastTimestamp)
             return {filename: lastTimestamp}

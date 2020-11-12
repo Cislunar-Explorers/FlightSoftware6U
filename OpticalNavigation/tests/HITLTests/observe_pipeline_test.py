@@ -1,14 +1,16 @@
 import argparse
-# import glob
 import os
 import cv2
 import re
 import math
 
-# import camera
 import core.img_preprocess as ip
 import core.find
+import core.camera
 
+#import img_preprocess as ip
+#import find
+# import camera
 
 # Adapted from https://www.geeksforgeeks.org/extract-images-from-video-in-python/
 def mjpegToJpeg(inputFile):
@@ -54,31 +56,36 @@ def observe():
     # Image: camera# + exposure + frame#.jpeg
     #
     #
-    #
-    #
-    #
 
     recordings = {}
 
     # To use on flight hardware
-    mux = camera.CameraMux()
-    for i in [1, 2, 3]:  # make sure that these numbers correspond ot the ports on the hardware
-        mux.selectCamera(i)
-        cam = camera.Camera()
-        # Records exposure sequence 1 - change filename and shutterSpeed value
-        file1, timestamp1 = cam.camera.rawObservation(f"cam{i}_expHigh.mjpeg",
-                                                      shutterSpeed=50000)  # add shutterspeed value
-        # Records exposure sequence 2
-        file2, timestamp2 = cam.camera.rawObservation(f"cam{i}_expLow.mjpeg", shutterSpeed=20000)
-        recordings[file1] = timestamp1
-        recordings[file2] = timestamp2
+    # mux = camera.CameraMux()
+    # for i in [1, 2, 3]: # make sure that these numbers correspond ot the ports on the hardware
+    #	mux.selectCamera(i)
+    #	cam = camera.Camera()
+    #	# Records exposure sequence 1 - change filename and shutterSpeed value
+    #	file1, timestamp1 = cam.camera.rawObservation(f"cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
+    #	# Records exposure sequence 2
+    #	file2, timestamp2 = cam.camera.rawObservation(f"cam{i}_expLow.mjpeg", shutterSpeed = 20000 )
+    #	recordings[file1] = timestamp1
+    #	recordings[file2] = timestamp2
 
     print("Data retrieved from cameras:")
     print(recordings)
 
     # Now recordings has list of filename, last_timestamp associations
-
-    recordings["cam1_expLow.mjpeg"] = 5
+    # Artificially manipulate recordings to use space videos
+    recordings["cam1_expHigh_rep.mjpeg"] = 10  # Sun video
+    recordings["cam1_expLow_rep.mjpeg"] = 10  # Sun video
+    recordings["cam2_expHigh_rep.mjpeg"] = 10  # Earth video
+    recordings["cam2_expLow_rep.mjpeg"] = 10  # Earth video
+    # del recordings["cam1_expHigh.mjpeg"]
+    # del recordings["cam1_expLow.mjpeg"]
+    # del recordings["cam2_expHigh.mjpeg"]
+    # del recordings["cam2_expLow.mjpeg"]
+    # del recordings["cam3_expHigh.mjpeg"]
+    # del recordings["cam3_expLow.mjpeg"]
 
     # Three arrays for return data
     earthData = []
@@ -106,12 +113,13 @@ def observe():
             sunDist = 1000000  # Some large number
             sunImage = None
             for i in imgData:
-                sunXdiff = abs(i[0][0] - centerX)
-                sunYdiff = abs(i[0][1] - centerY)
-                distToCenter = math.sqrt((sunXdiff ** 2) + (sunYdiff ** 2))
-                if distToCenter < sunDist:
-                    sunDist = distToCenter
-                    sunImage = i;
+                if i[0] is not None:
+                    sunXdiff = abs(i[0][0] - centerX)
+                    sunYdiff = abs(i[0][1] - centerY)
+                    distToCenter = math.sqrt((sunXdiff ** 2) + (sunYdiff ** 2))
+                    if distToCenter < sunDist:
+                        sunDist = distToCenter
+                        sunImage = i;
 
             if sunImage is not None:
                 sunFrameNum = int(re.search("[f](\d+)", sunImage[4]).group(1))
@@ -121,6 +129,7 @@ def observe():
                 sunDataGroup.append(sunFrameTimestamp)  # Timestamp
                 sunDataGroup.append(sunImage[0][0:2])  # Coordinate
                 sunDataGroup.append(sunImage[0][2])  # Radius
+                sunDataGroup.append(sunImage[4])  # Filename for debugging
                 sunData.append(sunDataGroup)
 
         # ----------------Done with sun processing---------------------------
@@ -158,6 +167,7 @@ def observe():
                 earthDataGroup.append(earthFrameTimestamp)  # Timestamp
                 earthDataGroup.append(earthImage[1][0:2])  # Coordinate
                 earthDataGroup.append(earthImage[1][2])  # Radius
+                earthDataGroup.append(earthImage[4])  # Filename for debugging
                 earthData.append(earthDataGroup)
 
             if moonImage is not None:
@@ -168,6 +178,7 @@ def observe():
                 moonDataGroup.append(moonFrameTimestamp)  # Timestamp
                 moonDataGroup.append(moonImage[0][0:2])  # Coordinate
                 moonDataGroup.append(moonImage[0][2])  # Radius
+                moonDataGroup.append(moonImage[4])  # Filename for debugging
                 moonData.append(moonDataGroup)
 
     return sunData, earthData, moonData
@@ -177,13 +188,21 @@ def observe():
 
 
 if __name__ == "__main__":
-    sun, earth, moon = observe()
-    print("Sun:")
-    print(sun)
-    print("Earth:")
-    print(earth)
-    print("Moon:")
-    print(moon)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-m", "--mode", help="Restart mode for camera mux or regular run")
+    args = vars(ap.parse_args())
+
+    if args["mode"] == "restart":
+        mux = camera.CameraMux()
+        mux.selectCamera(1)
+    else:
+        sun, earth, moon = observe()
+        print("Sun:")
+        print(sun)
+        print("Earth:")
+        print(earth)
+        print("Moon:")
+        print(moon)
 
 
 

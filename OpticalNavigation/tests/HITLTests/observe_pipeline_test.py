@@ -62,14 +62,14 @@ def observe():
      # To use on flight hardware
     mux = camera.CameraMux()
     for i in [1, 2, 3]: # make sure that these numbers correspond ot the ports on the hardware
-        mux.selectCamera(i)
-    	cam = camera.Camera()
-    	# Records exposure sequence 1 - change filename and shutterSpeed value
-    	file1, timestamp1 = cam.rawObservation(f"cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
-    	# Records exposure sequence 2
-    	file2, timestamp2 = cam.rawObservation(f"cam{i}_expLow.mjpeg", shutterSpeed = 20000 )
-    	recordings[file1] = timestamp1
-    	recordings[file2] = timestamp2
+      mux.selectCamera(i)
+      cam = camera.Camera()
+      # Records exposure sequence 1 - change filename and shutterSpeed value
+      file1, timestamp1 = cam.rawObservation(f"cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
+      # Records exposure sequence 2
+      file2, timestamp2 = cam.rawObservation(f"cam{i}_expLow.mjpeg", shutterSpeed = 20000 )
+      recordings[file1] = timestamp1
+      recordings[file2] = timestamp2
 
     print("Data retrieved from cameras:")
     print(recordings)

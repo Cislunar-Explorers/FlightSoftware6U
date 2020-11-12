@@ -4,7 +4,7 @@ import cv2
 import re
 import math
 
-import OpticamNavigation.core.img_preprocess as ip
+import OpticalNavigation.core.img_preprocess as ip
 import OpticalNavigation.core.find
 import OpticalNavigation.core.camera
 

@@ -3,6 +3,7 @@ import os
 import cv2
 import re
 import math
+import warnings
 
 import OpticalNavigation.core.img_preprocess as ip
 import OpticalNavigation.core.find as find
@@ -198,6 +199,7 @@ if __name__ == "__main__":
         mux.selectCamera(1)
         print("selected mux")
     else:
+        warnings.filterwarnings("ignore")
         sun, earth, moon = observe()
         print("Sun:")
         print(sun)

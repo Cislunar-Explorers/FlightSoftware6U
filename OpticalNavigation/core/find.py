@@ -117,8 +117,8 @@ def findMoon(image):
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
     gray_blurred = cv2.GaussianBlur(gray, (11,11), 0)
     
-    cv2.imshow('Blur', cv2.pyrDown(gray_blurred))
-    cv2.waitKey(0)
+    #cv2.imshow('Blur', cv2.pyrDown(gray_blurred))
+    #cv2.waitKey(0)
 
     # Increase brightness
     black_mask = np.clip( (gray_blurred + gray_blurred/255 * 10).astype('uint8') , a_min = 0, a_max=255)

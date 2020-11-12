@@ -195,6 +195,7 @@ if __name__ == "__main__":
     if args["mode"] == "restart":
         mux = camera.CameraMux()
         mux.selectCamera(1)
+        print("selected mux")
     else:
         sun, earth, moon = observe()
         print("Sun:")

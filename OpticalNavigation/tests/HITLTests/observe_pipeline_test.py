@@ -64,10 +64,11 @@ def observe():
     for i in [1, 2, 3]: # make sure that these numbers correspond ot the ports on the hardware
       mux.selectCamera(i)
       cam = camera.Camera()
+      framerate_tmp = 15
       # Records exposure sequence 1 - change filename and shutterSpeed value
-      file1, timestamp1 = cam.rawObservation(f"cam{i}_expHigh.mjpeg", shutterSpeed = 50000 ) # add shutterspeed value
+      file1, timestamp1 = cam.rawObservation(f"cam{i}_expHigh.mjpeg", framerate=framerate_tmp, shutterSpeed = 50000 ) # add shutterspeed value
       # Records exposure sequence 2
-      file2, timestamp2 = cam.rawObservation(f"cam{i}_expLow.mjpeg", shutterSpeed = 20000 )
+      file2, timestamp2 = cam.rawObservation(f"cam{i}_expLow.mjpeg", frame_rate=framerate_tmp, shutterSpeed = 20000 )
       recordings[file1] = timestamp1
       recordings[file2] = timestamp2
 

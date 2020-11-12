@@ -4,9 +4,9 @@ import cv2
 import re
 import math
 
-import core.img_preprocess as ip
-import core.find
-import core.camera
+import OpticamNavigation.core.img_preprocess as ip
+import OpticalNavigation.core.find
+import OpticalNavigation.core.camera
 
 #import img_preprocess as ip
 #import find

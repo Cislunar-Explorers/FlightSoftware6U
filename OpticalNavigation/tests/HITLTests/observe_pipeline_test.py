@@ -103,7 +103,7 @@ def observe():
         for i in frames:
             ip.preprocess(i, i)
             img = cv2.imread(i)
-            s, e, m, img = find.find(img, visualize=True)
+            s, e, m, img = find.find(img)
             data = [s, e, m, img, i]
             imgData.append(data)
 

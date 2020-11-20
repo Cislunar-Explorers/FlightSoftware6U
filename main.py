@@ -5,6 +5,7 @@ from time import sleep
 from datetime import datetime
 from queue import Queue
 import signal
+from utils.log import get_log
 
 from dotenv import load_dotenv
 
@@ -25,6 +26,7 @@ from flight_modes.restart_reboot import (
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
+from communications.commands import CommandHandler
 
 
 FOR_FLIGHT = None
@@ -37,9 +39,12 @@ class MainSatelliteThread(Thread):
         self.commands_to_execute = []
         self.burn_queue = Queue()
         self.init_comms()
-        #self.init_sensors()
-        self.last_opnav_run = datetime.now() # Figure out what to set to for first opnav run
+        self.command_handler = CommandHandler()
+        self.commands_dictionary = command_definitions(self)
+        # self.init_sensors()
+        self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
+        self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
@@ -55,6 +60,7 @@ class MainSatelliteThread(Thread):
         )
         self.comms.listen()
 
+
     # TODO
     def init_sensors(self):
         self.gom = Gomspace()
@@ -67,7 +73,7 @@ class MainSatelliteThread(Thread):
     def attach_sigint_handler(self):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
-    # TODO
+    # TODO (major: implement telemetry)
     def poll_inputs(self):
         # Switch on/off electrolyzer
         curr_pressure = self.pressure_sensor.read_pressure()
@@ -102,7 +108,7 @@ class MainSatelliteThread(Thread):
         ), "Didn't finish executing previous commands"
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
-        self.flight_mode.execute_current_commands()
+        self.flight_mode.execute_commands()
 
     # Run the current flight mode
     # TODO ensure comms thread halts during realtime ops

@@ -8,11 +8,9 @@ import os
 # Delay to wait on BootUp
 BOOTUP_SEPARATION_DELAY = 30.0
 
-
 # TODO determine correct values threshold values
 ENTER_LOW_BATTERY_MODE_THRESHOLD = 0.3
 EXIT_LOW_BATTERY_MODE_THRESHOLD = 0.5
-
 
 # Constants defining goal cracking pressures for electrolysis
 LOW_CRACKING_PRESSURE = 10.0
@@ -29,7 +27,6 @@ CISLUNAR_BASE_DIR = os.path.join(
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 
-
 MODE_SIZE = 1
 ID_SIZE = 1
 DATA_LEN_SIZE = 2
@@ -39,7 +36,6 @@ MODE_OFFSET = 0
 ID_OFFSET = 1
 DATA_LEN_OFFSET = 2
 DATA_OFFSET = 4
-
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -52,6 +48,14 @@ ATTITUDE_X = "attitude_x"
 ATTITUDE_Y = "attitude_y"
 ATTITUDE_Z = "attitude_z"
 
+GOM_VOLTAGE_MAX = 8400  # mV
+GOM_VOLTAGE_MIN = 6000
+
+# TODO: validate these values:
+SPLIT_BURNWIRE_DURATION = 1  # second
+ANTENNAE_BURNWIRE_DURATION = 1  # second
+GLOWPLUG_DURATION = 1  # SECOND
+
 
 class GomOutputs(IntEnum):
     comms = 0
@@ -61,9 +65,6 @@ class GomOutputs(IntEnum):
     solenoid = 4
     electrolyzer = 5
 
-
-GOM_VOLTAGE_MAX = 8400
-GOM_VOLTAGE_MIN = 6000
 
 @unique
 class FMEnum(IntEnum):
@@ -77,73 +78,121 @@ class FMEnum(IntEnum):
     SensorMode = 7  # Send command directly to sensor
     TestMode = 8  # Execute specified test
     CommsMode = 9
+    Command = 10
 
 
 @unique
 class BootCommandEnum(IntEnum):
-    Separate = 0
+    Switch = 0  # command for switching flightmode without executing any other commands
+    Split = 1
 
 
 @unique
 class RestartCommandEnum(IntEnum):
-    pass
+    Switch = 0  # command for switching flightmode without executing any other commands
 
 
 @unique
 class NormalCommandEnum(IntEnum):
-    RunOpNav = 0  # no args
-    SetDesiredAttitude = 1  # arg=attitude
-    SetAccelerate = 2  # arg=true/false
-    SetBreakpoint = 3  # arg=position x, y, z
+    Switch = 0  # command for switching flightmode without executing any other commands
+    RunOpNav = 1  # no args
+    SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
+    ## Really not sure what 3 and 4 are supposed to do:
+    # SetAccelerate = 3  # arg=true/false
+    # SetBreakpoint = 4  # arg=position x, y, z
+    SetParameter = 5
+    GatherCritialTelem = 6
+    GatherBasicTelem = 7
+    GatherDetailedTelem = 8
+    Verification = 9
+
+
+@unique
+class ElectrolysisCommandEnum(IntEnum):
+    Switch = 0
+    SetElectrolyzer = 1
+    SetParameter = 5
+    GatherCritialTelem = 6
+    GatherBasicTelem = 7
+    GatherDetailedTelem = 8
 
 
 @unique
 class LowBatterySafetyCommandEnum(IntEnum):
-    ExitLBSafetyMode = 0  # no args, # XXX this is an override command
-    SetExitLBSafetyMode = 1  # define battery percentage
+    Switch = 0  # command for switching flightmode without executing any other commands
+    ExitLBSafetyMode = 1  # no args, # XXX this is an override command
+    SetExitLBSafetyMode = 2  # define battery percentage
+    SetParameter = 5
+    GatherCritialTelem = 6
+    GatherBasicTelem = 7
+    GatherDetailedTelem = 8
 
 
 @unique
 class SafetyCommandEnum(IntEnum):
-    ExitSafetyMode = 0
-    SetExitSafetyMode = 1
+    Switch = 0  # command for switching flightmode without executing any other commands
+    ExitSafetyMode = 1
+    SetExitSafetyMode = 2
+    SetParameter = 5
+    GatherCritialTelem = 6
+    GatherBasicTelem = 7
+    GatherDetailedTelem = 8
 
 
 @unique
 class OpNavCommandEnum(IntEnum):
-    RunOpNav = 0  # no args
-    SetInterval = 1  # arg=interval in minutes packed as an int
+    Switch = 0  # command for switching flightmode without executing any other commands
+    RunOpNav = 1  # no args
+    SetInterval = 2  # arg=interval in minutes packed as an int
 
 
 @unique
 class ManeuverCommandEnum(IntEnum):
-    RunOpNav = 0  # no args
-    SetDesiredAttitude = 1  # arg=attitude
-    SetAccelerate = 2  # arg=true/false
-    SetBreakpoint = 3  # arg=?
+    Switch = 0  # command for switching flightmode without executing any other commands
+    RunOpNav = 1  # no args
+    SetDesiredAttitude = 2  # arg=attitude
+    SetAccelerate = 3  # arg=true/false
+    SetBreakpoint = 4  # arg=?
+    SetBurnTime = 9  # 1 arg: time at which thruster fires
 
 
 @unique
 class SensorsCommandEnum(IntEnum):
-    Thermocouple = 0
-    PressureTransducer = 1
-    Gomspace = 2
-    CameraMux = 3
-    Gyro = 4
-    RTC = 5
-    AX5043 = 6
+    Switch = 0  # command for switching flightmode without executing any other commands
+    Thermocouple = 1
+    PressureTransducer = 2
+    Gomspace = 3
+    CameraMux = 4
+    Gyro = 5
+    RTC = 6
+    AX5043 = 7
 
 
 @unique
 class TestCommandEnum(IntEnum):
-    SetTestMode = 0  # no args
-    TriggerBurnWire = 1  # no args
-    RunOpNav = 2  # no args
+    Switch = 0  # command for switching flightmode without executing any other commands
+    SetTestMode = 1  # no args
+    TriggerBurnWire = 2  # no args
+    RunOpNav = 3  # no args
+    GomPin = 6
 
 
 @unique
 class CommsCommandEnum(IntEnum):
+    Switch = 0  # command for switching flightmode without executing any other commands
     DownlinkFullDataPacket = 4  # no args
     SetDataPacket = 5  # arg=data packet id
 
 
+@unique
+class CommandCommandEnum(IntEnum):
+    Switch = 0  # command for switching flightmode without executing any other commands
+    SetParam = 1  # 2 args: key and value of parameter to be changed
+    SetSystemTime = 2  # 1 arg: UTC(?) time that the system clock should be set to
+    RebootPi = 3
+    RebootGom = 4
+    PowerCycle = 5
+    GomPin = 6  # 1 arg: which gom pin to toggle
+    GomGeneralCmd = 7
+    GeneralCmd = 8
+    CeaseComms = 170

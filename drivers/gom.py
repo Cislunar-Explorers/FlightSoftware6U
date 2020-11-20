@@ -1,7 +1,7 @@
 import drivers.power.power_controller as pc
 import drivers.power.power_structs as ps
 from enum import Enum
-from utils.constants import GomOutputs, GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
+from utils.constants import GomOutputs, GOM_VOLTAGE_MIN, GOM_VOLTAGE_MAX
 
 logger = ps.gom_logger
 
@@ -20,7 +20,6 @@ class Hk(Enum):
 class Gomspace:
     def __init__(self):
         self.gom = pc.Power()
-        # Should we implement a gom "state" variable - i.e. which channel is on or off
 
     def tick_wdt(self):
         """Resets dedicated WDT"""

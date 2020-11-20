@@ -1,5 +1,0 @@
-gom_params = {
-    # Values from GomSpace_Cell_Datasheet.pdf
-    "max_voltage": 8.4,
-    "min_voltage": 6.0
-}

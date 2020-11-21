@@ -76,7 +76,7 @@ class Camera:
 
 
     # Code from video-timing.py
-    def rawObservation(filename, frame_rate=15, shutterSpeed = 30000):
+    def rawObservation(self, filename, frame_rate=15, shutterSpeed = 30000):
 
         # Analog and digital gain parameters (not exposed in picamera-1.13)
         MMAL_PARAMETER_ANALOG_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x59

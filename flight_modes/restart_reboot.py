@@ -10,18 +10,9 @@ from utils.log import get_log
 
 logger = get_log()
 
-# another thing to test:
-# bash rc file
-# append it
-# having bootup run immediately
-# ~/.bashrc
-# idk ask toby
-
-
 class BootUpMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
-
 
         logger.info("Boot up beginning...")
         logger.info("Time when sleep starts: " + str(datetime.now()))
@@ -32,9 +23,6 @@ class BootUpMode(FlightMode):
         logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
-
-        # create the directory on the pi, this way next time a Restart is called
-        # os.mkdir(LOG_DIR)
 
         logger.info("Logging info to DB...")
         self.log()
@@ -63,9 +51,6 @@ class BootUpMode(FlightMode):
         self.session.add(new_bootup)
         self.session.commit()
         logger.info("Log to DB complete...")
-
-    def init_spin(self):
-        pass
 
 
 class RestartMode(FlightMode):
@@ -102,4 +87,3 @@ class RestartMode(FlightMode):
         cam_object.rawObservation("restart_cam_test.mjpeg")
 
         self.session.query(RebootsModel).all()
-        #logger.info("Camera detected? " + str(mux.detect()))

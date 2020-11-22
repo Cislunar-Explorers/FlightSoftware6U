@@ -49,19 +49,10 @@ class BootUpMode(FlightMode):
         # TODO is this done right?
         logger.info("Creating camera mux...")
         mux = camera.CameraMux()
-        logger.info("Is camera detected? " + str(mux.detect()))
-        if mux.detect():
-            logger.info("Cam detected")
-            self.selected = True
-            mux.selectCamera(random.choice([1, 3, 4]))
-        else:
-            logger.info("Cam not detected...")
-            self.selected = False
-            logger.info("Restarting...")
-
-            # TODO make it so that main runs
-            # this will restart the Pi
-            os.system("sudo reboot")
+        logger.info("Selecting a camera...")
+        mux.selectCamera(random.choice([1, 2, 3]))
+        logger.info("Transferring to RestartMode")
+        os.system("sudo reboot")
 
     # will add info about the boot up to the db
     def log(self):
@@ -104,12 +95,11 @@ class RestartMode(FlightMode):
     def run_mode(self):
         # initialize the cameras, select a random camera
         logger.info("Selecting a camera")
-        cam = random.choice([1, 3, 4])
         mux = camera.CameraMux()
-        mux.selectCamera(cam)
+        mux.selectCamera(random.choice([1, 2, 3]))
         cam_object = camera.Camera()
-        cam_object.initialize()
-        self.session.query("is_bootup").all()
-        self.session.query("reboot_at").all()
-        #logger.info("Camera detected? " + str(mux.detect()))
+        #cam_object.initialize()
         cam_object.rawObservation("restart_cam_test.mjpeg")
+
+        self.session.query(RebootsModel).all()
+        #logger.info("Camera detected? " + str(mux.detect()))

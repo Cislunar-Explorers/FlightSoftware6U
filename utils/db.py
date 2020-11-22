@@ -107,8 +107,7 @@ class RebootsModel(SQLAlchemyTableBase):
     reboot_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<RebootsModel(is boot up?={self.is_bootup}, "
-        f"reboot_at={str(self.reboot_at)})>"
+        return f"<RebootsModel(is boot up?={self.is_bootup}, "f"reboot_at={str(self.reboot_at)})>"
 
 
 def create_sensor_tables(engine):

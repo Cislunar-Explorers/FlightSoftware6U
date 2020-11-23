@@ -235,7 +235,14 @@ def sixhours_timestep(visual_analysis, state_error, part_start, part_end, timest
         liveTraj.close()
 
     t = part_end - 1
-    traj = (np.array([d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
+    print(f'{t=}')
+    print(len(d_traj['x']))
+    traj = (np.array([d_traj['x'][t],
+        d_traj['y'][t],
+        d_traj['z'][t],
+        d_traj['vx'][t],
+        d_traj['vy'][t],
+        d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
         
     traj = traj.flatten()
     state = state.flatten()
@@ -253,11 +260,10 @@ def test_ukf_6hours_zero_starting_noise_timestep(visual_analysis):
     - expected state is close to actual state
     - 
     """
-    # sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 0, 360, 100, 60*60*24)
-    # sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 361, 710, 60*60*24)
-    # sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 760, 1000, 60*60*24)
-    # sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 1100, 1400, 60*60*24)
-    sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 0,100000, 60*60)
+    sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 0, 360, 100, 60*60*24)
+    sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 361, 710, 60*60*24)
+    sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 760, 1000, 60*60*24)
+    sixhours_timestep(visual_analysis, ZERO_STARTING_NOISE, 1100, 1400, 60*60*24)
 
 def test_ukf_6hours_small_starting_noise_timestep(visual_analysis):
     """

@@ -335,6 +335,7 @@ def UKFSingle(cameradt, gyroVars, P0, x0, q0, omegas, biases, estimatedSatState,
     """
     # assert(omegas[0].shape[0] == biases.shape[0] == estimatedSatState.shape[0] == moonEph.shape[0] == sunEph.shape[0])
     n = moonEph.shape[0]
+    print(gyroVars)
     (gyro_sigma, gyro_sample_rate, Q, R) = gyroVars
 
     # Phist = numpy.zeros((int(n/gyroSampleCount), 6, 6))

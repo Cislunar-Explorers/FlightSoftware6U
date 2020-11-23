@@ -35,7 +35,7 @@ def test_attitude_6_hours(visual_analysis):
     endTime = 700
     
     q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz, d_camMeas, d_moonEph, d_sunEph, d_traj, earthVectors, moonVectors, sunVectors, totalIntegrationTime = \
-        get6HoursBatch(startTime, endTime, coldGasKickTime, cameraDt, omegaInit, biasInit, quat, gyroSampleCount, gyro_sigma, gyro_noise_sigma)
+        get6HoursBatch(startTime, endTime, coldGasKickTime, cameraDt, omegaInit, biasInit, quat, gyroSampleCount, gyro_sigma, gyro_noise_sigma, att_meas=True)
     numberOfMeasForTest = len(d_camMeas['z1'])
     
     P0 = np.array([[1.e-1, 0., 0., 0., 0., 0.],
@@ -104,7 +104,7 @@ def test_attitude_6_hours(visual_analysis):
         count = tempCount
 
     print("START")
-    results = runAttitudeUKFWithKick(cameraDt, totalIntegrationTime, (gyro_sigma, gyro_t, Q, R), P0, x0, quat, omegaMeasurements, biasMeasurements, estimatedSatStates, moonEph, sunEph, timeline)
+    results = runAttitudeUKFWithKick(cameraDt, (gyro_sigma, gyro_t, Q, R), P0, x0, quat, omegaMeasurements, biasMeasurements, estimatedSatStates, moonEph, sunEph, timeline)
     print("END")
 
     plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz, timeline)

@@ -62,6 +62,7 @@ def calculateErrors(cHat, c):
     Exception for false positive detections
     Exception for true negative detections
     """
+    print(cHat[0], c[0])
     xHat, yHat, rHat, x, y, r = float(cHat[0]), float(cHat[1]), float(cHat[2]), float(c[0]), float(c[1]), float(c[2])
     centerDistance = math.sqrt((xHat - x)**2 + (yHat - y)**2)
     radiusDistance = math.fabs(rHat - r)
@@ -86,20 +87,21 @@ def test_earth():
         print(f'Target: {file}')
         true_img = cv2.imread(file)
         img = copy.copy(true_img)
-        earthCircles = findEarth(img)
+        earthCircles, _ = findEarth(img)
         row = circles_df.loc[circles_df['Image'] == os.path.basename(file)]
         trueEarthData = (row['EarthX'].values[0], row['EarthY'].values[0], row['EarthR'].values[0])
 
         try:
             checkErrors(earthCircles, trueEarthData)
-        except Exception as e:
+        except (NaNError, NullEntry, FalsePositiveDetection, TrueNegativeDetection) as e:
             assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
             
-        # No Exceptions were raised        
-        earthCenterError, earthRadiusError = calculateErrors(earthCircles[0][0], trueEarthData)
-        print(f'Earth Result: center error: {earthCenterError}, radius error: {earthRadiusError}')
-        assert earthCenterError <= EARTH_CENTER_ERROR, 'Earth error too large'
-        assert earthRadiusError <= EARTH_RADIUS_ERROR, 'Earth radius too large'
+        # No Exceptions were raised
+        if not (earthCircles is None and '-' in trueEarthData):  
+            earthCenterError, earthRadiusError = calculateErrors(earthCircles[0][0], trueEarthData)
+            print(f'Earth Result: center error: {earthCenterError}, radius error: {earthRadiusError}')
+            assert earthCenterError <= EARTH_CENTER_ERROR, 'Earth error too large'
+            assert earthRadiusError <= EARTH_RADIUS_ERROR, 'Earth radius too large'
 
 def test_sun():
     # Read CSV for detection ground truths
@@ -120,20 +122,21 @@ def test_sun():
         print(f'Target: {file}')
         true_img = cv2.imread(file)
         img = copy.copy(true_img)
-        sunCircles = findSun(img)
+        sunCircles, _ = findSun(img)
         row = circles_df.loc[circles_df['Image'] == os.path.basename(file)]
         trueSunData = (row['SunX'].values[0], row['SunY'].values[0], row['SunR'].values[0])
 
         try:
             checkErrors(sunCircles, trueSunData)
-        except Exception as e:
+        except (NaNError, NullEntry, FalsePositiveDetection, TrueNegativeDetection) as e:
             assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
         
-        # No Exceptions were raised        
-        sunCenterError, sunRadiusError = calculateErrors(sunCircles[0][0], trueSunData)
-        print(f'Sun Result: center error: {sunCenterError}, radius error: {sunRadiusError}')
-        assert sunCenterError <= SUN_CENTER_ERROR, 'Sun center error too large'
-        assert sunRadiusError <= SUN_RADIUS_ERROR, 'Sun radius error too large'
+        # No Exceptions were raised
+        if not (sunCircles is None and '-' in trueSunData):
+            sunCenterError, sunRadiusError = calculateErrors(sunCircles[0][0], trueSunData)
+            print(f'Sun Result: center error: {sunCenterError}, radius error: {sunRadiusError}')
+            assert sunCenterError <= SUN_CENTER_ERROR, 'Sun center error too large'
+            assert sunRadiusError <= SUN_RADIUS_ERROR, 'Sun radius error too large'
 
 def test_moon():
     # Read CSV for detection ground truths
@@ -160,11 +163,12 @@ def test_moon():
 
         try:
             checkErrors(moonCircles, trueMoonData)
-        except Exception as e:
+        except (NaNError, NullEntry, FalsePositiveDetection, TrueNegativeDetection) as e:
             assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
         
-        # No Exceptions were raised        
-        moonCenterError, moonRadiusError = calculateErrors(moonCircles[0][0], trueMoonData)
-        print(f'Moon Result: center error: {moonCenterError}, radius error: {moonRadiusError}')
-        assert moonCenterError < MOON_CENTER_ERROR, 'Moon center too large'
-        assert moonRadiusError < MOON_RADIUS_ERROR, 'Moon radius too large'
+        # No Exceptions were raised
+        if not (moonCircles is None and '-' in moonCircles):      
+            moonCenterError, moonRadiusError = calculateErrors(moonCircles[0][0], trueMoonData)
+            print(f'Moon Result: center error: {moonCenterError}, radius error: {moonRadiusError}')
+            assert moonCenterError < MOON_CENTER_ERROR, 'Moon center too large'
+            assert moonRadiusError < MOON_RADIUS_ERROR, 'Moon radius too large'

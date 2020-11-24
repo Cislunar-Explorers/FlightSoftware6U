@@ -134,5 +134,5 @@ if __name__ == "__main__":
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
     main.run_mode()
-    main.join()  # TODO only for testing restart mode
+    sys.exit(0)  # TODO only for testing restart mode
 

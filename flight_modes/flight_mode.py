@@ -125,12 +125,12 @@ class FlightMode:
             # loop through commands in commands_to_execute list
             for command in self.parent.commands_to_execute:
                 command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
-                # if command's FM is the same as the current FM, excecute that command
+                # if command's FM is the same as the current FM, execute that command
                 if command_fm == self.flight_mode_id:
                     method_to_run = self.commands[command_fm][command_id]
                     method_to_run(*command_kwargs)  # Will not work.
                     # This works assuming command_kwargs is actually a tuple of arguments (not a kwarg:value dictionary)
-            # if the command's FM is different than the current FM, change FM and excecute command in that FM
+            # if the command's FM is different than the current FM, change FM and execute command in that FM
 
     def read_sensors(self):
         pass
@@ -211,6 +211,11 @@ class BootUpMode(FlightMode):
 
 class RestartMode(FlightMode):
 
+    def register_commands(cls):
+        pass
+
+    command_codecs = {}
+    command_arg_unpackers = {}
     flight_mode_id = FMEnum.Restart.value
 
     def __init__(self, parent):

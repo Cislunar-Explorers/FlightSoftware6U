@@ -104,7 +104,7 @@ class CommandDefinitions:
         self.set_parameter(constants, "EXIT_LOW_BATTERY_MODE_THRESHOLD", value)
 
     def set_opnav_interval(self, value):
-        value = max(value, 0)
+        assert value > 0
         self.set_parameter(constants, "OPNAV_INTERVAL", value)
 
     def change_attitude(self, theta, phi):
@@ -180,7 +180,7 @@ class CommandDefinitions:
             self.parent.logger.error(f"Incorrect args: {args} for gom method {command_string}")
 
     def general_command(self, method_name: str, args: tuple):
-        """Generalized satelite action command - very powerful and possibly dangerous.
+        """Generalized satellite action command - very powerful and possibly dangerous.
             Make sure you know exactly what you're doing when calling this."""
         method_to_call = getattr(self.parent, method_name)
         try:

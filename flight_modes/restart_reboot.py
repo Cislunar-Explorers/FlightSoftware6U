@@ -82,9 +82,11 @@ class RestartMode(FlightMode):
         mux = camera.CameraMux()
         mux.selectCamera(random.choice([1, 2, 3]))
         cam_object = camera.Camera()
-        #cam_object.initialize()
+        # cam_object.initialize()
         logger.info("Taking raw observation to test")
         cam_object.rawObservation("restart_cam_test.mjpeg")
 
         logger.info("Displaying sqlalchemy model:")
-        self.session.query(RebootsModel).all()
+        boots = self.session.query(RebootsModel).all()
+        for boot in boots:
+            print(boot)

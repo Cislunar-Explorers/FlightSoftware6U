@@ -37,8 +37,8 @@ class MainSatelliteThread(Thread):
         self.commands_to_execute = []
         self.burn_queue = Queue()
         self.init_comms()
-        #self.init_sensors()
-        self.last_opnav_run = datetime.now() # Figure out what to set to for first opnav run
+        # self.init_sensors()
+        self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.attach_sigint_handler()  # FIXME
         if os.path.isdir(self.log_dir):
@@ -107,8 +107,8 @@ class MainSatelliteThread(Thread):
     # Run the current flight mode
     # TODO ensure comms thread halts during realtime ops
     def run_mode(self):
-        with self.flight_mode:
-            self.flight_mode.run_mode()
+        # with self.flight_mode:
+        self.flight_mode.run_mode()
 
     # Wrap in try finally block to ensure it stays live
     def run(self):

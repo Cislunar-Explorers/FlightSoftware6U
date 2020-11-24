@@ -26,7 +26,6 @@ class BootUpMode(FlightMode):
 
         logger.info("Logging info to DB...")
         self.log()
-        self.selected = None
 
         # deploy antennae
         #logger.info("Beginning burn wire...")
@@ -84,6 +83,8 @@ class RestartMode(FlightMode):
         mux.selectCamera(random.choice([1, 2, 3]))
         cam_object = camera.Camera()
         #cam_object.initialize()
+        logger.info("Taking raw observation to test")
         cam_object.rawObservation("restart_cam_test.mjpeg")
 
+        logger.info("Displaying sqlalchemy model:")
         self.session.query(RebootsModel).all()

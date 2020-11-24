@@ -107,8 +107,8 @@ class MainSatelliteThread(Thread):
     # Run the current flight mode
     # TODO ensure comms thread halts during realtime ops
     def run_mode(self):
-        # with self.flight_mode:
-        self.flight_mode.run_mode()
+        with self.flight_mode:
+            self.flight_mode.run_mode()
 
     # Wrap in try finally block to ensure it stays live
     def run(self):
@@ -134,5 +134,5 @@ if __name__ == "__main__":
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
     main.run_mode()
-    sys.exit(0)  # TODO only for testing restart mode
+
 

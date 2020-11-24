@@ -90,3 +90,4 @@ class RestartMode(FlightMode):
         boots = self.session.query(RebootsModel).all()
         for boot in boots:
             print(boot)
+

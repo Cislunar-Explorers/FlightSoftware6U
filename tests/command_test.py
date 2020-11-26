@@ -2,7 +2,7 @@ from pytest import raises
 
 from communications.commands import CommandHandler
 from utils.struct import unpack_double, pack_double
-from utils.exceptions import CommandException
+from utils.exceptions import SerializationException
 
 
 class TestCommandHandler:
@@ -16,7 +16,7 @@ class TestCommandHandler:
         ch.register_new_codec(arg, pack_double, unpack_double)
         assert arg in ch.unpackers and arg in ch.packers
 
-        with raises(CommandException):
+        with raises(SerializationException):
             ch.register_new_codec(arg, pack_double, unpack_double)
 
     def test_command_serialization(self):
@@ -43,7 +43,13 @@ class TestCommandHandler:
 
         unpacked_mode, unpacked_app, unpacked_args = ch.unpack_command(command_buffer)
 
+        print('Mode: ' + str(unpacked_mode))
+        print('Application: ' + str(unpacked_app))
+        print(unpacked_args)
         assert unpacked_mode == mode_id
         assert unpacked_app == application_id
         assert unpacked_args[arg1] == kwargs[arg1]
         assert unpacked_args[arg2] == kwargs[arg2]
+
+tch = TestCommandHandler()
+tch.test_command_serialization()

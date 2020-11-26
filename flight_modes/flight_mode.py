@@ -128,8 +128,7 @@ class FlightMode:
                 # if command's FM is the same as the current FM, execute that command
                 if command_fm == self.flight_mode_id:
                     method_to_run = self.commands[command_fm][command_id]
-                    method_to_run(*command_kwargs)  # Will not work.
-                    # This works assuming command_kwargs is actually a tuple of arguments (not a kwarg:value dictionary)
+                    method_to_run(**command_kwargs)
             # if the command's FM is different than the current FM, change FM and execute command in that FM
 
     def read_sensors(self):

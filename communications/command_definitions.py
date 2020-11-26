@@ -10,63 +10,71 @@ class CommandDefinitions:
         self.parent = parent
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}
-        self.normal_commands = {1: self.run_opnav,
-                                2: self.change_attitude,
-                                5: self.set_parameter,
-                                6: self.gather_critical_telem,
-                                7: self.gather_basic_telem,
-                                8: self.gather_detailed_telem,
-                                9: self.verification
-                                }
+        self.normal_commands = {
+            1: self.run_opnav,
+            2: self.change_attitude,
+            5: self.set_parameter,
+            6: self.gather_critical_telem,
+            7: self.gather_basic_telem,
+            8: self.gather_detailed_telem,
+            9: self.verification
+        }
 
-        self.electrolysis_commands = {1: self.electrolysis,
-                                      5: self.set_parameter,
-                                      6: self.gather_critical_telem,
-                                      7: self.gather_basic_telem,
-                                      8: self.gather_detailed_telem
-                                      }
+        self.electrolysis_commands = {
+            1: self.electrolysis,
+            5: self.set_parameter,
+            6: self.gather_critical_telem,
+            7: self.gather_basic_telem,
+            8: self.gather_detailed_telem
+        }
 
-        self.low_battery_commands = {1: self.return_to_normal,
-                                     2: self.set_exit_lowbatt_threshold,
-                                     5: self.set_parameter,
-                                     6: self.gather_critical_telem,
-                                     7: self.gather_basic_telem,
-                                     8: self.gather_detailed_telem,
-                                     }
+        self.low_battery_commands = {
+            1: self.return_to_normal,
+            2: self.set_exit_lowbatt_threshold,
+            5: self.set_parameter,
+            6: self.gather_critical_telem,
+            7: self.gather_basic_telem,
+            8: self.gather_detailed_telem,
+        }
 
-        self.safety_commands = {1: self.return_to_normal,
-                                # 2: Not Implemented/need clarification,
-                                5: self.set_parameter,
-                                6: self.gather_critical_telem,
-                                7: self.gather_basic_telem,
-                                8: self.gather_detailed_telem
-                                }
+        self.safety_commands = {
+            1: self.return_to_normal,
+            # 2: Not Implemented/need clarification,
+            5: self.set_parameter,
+            6: self.gather_critical_telem,
+            7: self.gather_basic_telem,
+            8: self.gather_detailed_telem
+        }
 
-        self.opnav_commands = {1: self.run_opnav,
-                               2: self.set_opnav_interval
-                               }
+        self.opnav_commands = {
+            1: self.run_opnav,
+            2: self.set_opnav_interval
+        }
 
-        self.maneuver_commands = {1: self.run_opnav,
-                                  2: self.change_attitude,
-                                  9: self.burn}
+        self.maneuver_commands = {
+            1: self.run_opnav,
+            2: self.change_attitude,
+            9: self.burn}
 
         self.sensor_commands = {}
 
-        self.test_commands = {2: self.split,
-                              3: self.run_opnav,
-                              6: self.gom_outputs}
+        self.test_commands = {
+            2: self.split,
+            3: self.run_opnav,
+            6: self.gom_outputs}
 
         self.comms_commands = {}
 
-        self.command_commands = {1: self.set_parameter,
-                                 2: self.set_system_clock,
-                                 3: self.reboot_pi,
-                                 4: self.reboot_gom,
-                                 5: self.power_cycle,
-                                 6: self.gom_outputs,
-                                 7: self.gom_command,
-                                 8: self.general_command,
-                                 170: self.cease_comms}
+        self.command_commands = {
+            1: self.set_parameter,
+            2: self.set_system_clock,
+            3: self.reboot_pi,
+            4: self.reboot_gom,
+            5: self.power_cycle,
+            6: self.gom_outputs,
+            7: self.gom_command,
+            8: self.general_command,
+            170: self.cease_comms}
 
         self.COMMAND_DICT = {
             0: self.bootup_commands,

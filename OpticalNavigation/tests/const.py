@@ -62,6 +62,9 @@ TEST_6HOURS_traj = os.path.join(TEST_6HOURS, 'trajectory', 'trajectory.csv')
 POS_ERROR = 1000 # can be off by 1000 km
 VEL_ERROR = 1 # can be off by 1 km/s
 
+POS_ERROR_6HOURS = 1000
+VEL_ERROR_6HOURS = 5
+
 EARTH_CENTER_ERROR = 20
 EARTH_RADIUS_ERROR = 20 # Earth should be relatively easy to detect due to its blue color
 SUN_CENTER_ERROR = 5

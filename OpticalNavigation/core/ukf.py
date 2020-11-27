@@ -216,7 +216,7 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamic
     pNew = Pxx - K.dot(R.dot(K.T))
     return xNew, pNew, K
 
-def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, main_thrust_info=None, dynamicsOnly=False):
+def runTrajUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, main_thrust_info=None, dynamicsOnly=False):
     """
     Propogates dynamics model with instantaneous impulse from the main thruster.
     Due to the processing delays of the system and the short impulse duration, 

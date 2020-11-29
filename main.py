@@ -88,6 +88,7 @@ class MainSatelliteThread(Thread):
 
     def replace_flight_mode(self, new_flight_mode):
         self.flight_mode = new_flight_mode
+        self.logger.info(f"Changed to FM#{self.flight_mode.flight_mode_id}")
 
     def update_state(self):
         self.flight_mode.update_state()

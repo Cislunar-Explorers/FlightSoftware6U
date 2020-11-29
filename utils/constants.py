@@ -44,9 +44,11 @@ POSITION_Z = "position_z"
 
 ACCELERATE = "accelerate"
 
-ATTITUDE_X = "attitude_x"
-ATTITUDE_Y = "attitude_y"
-ATTITUDE_Z = "attitude_z"
+INDEX = "name"
+VALUE = "value"
+
+AZIMUTH = "theta"
+ELEVATION = "phi"
 
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
@@ -99,7 +101,7 @@ class NormalCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     RunOpNav = 1  # no args
     SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
-    ## Really not sure what 3 and 4 are supposed to do:
+    # Really not sure what 3 and 4 are supposed to do:
     # SetAccelerate = 3  # arg=true/false
     # SetBreakpoint = 4  # arg=position x, y, z
     SetParameter = 5

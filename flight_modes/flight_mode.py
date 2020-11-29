@@ -17,17 +17,20 @@ from utils.constants import (  # noqa F401
     POSITION_X,
     POSITION_Y,
     POSITION_Z,
-    ATTITUDE_X,
-    ATTITUDE_Y,
-    ATTITUDE_Z,
     ACCELERATE,
+    INDEX,
+    VALUE,
+    AZIMUTH,
+    ELEVATION
 )
 from utils.exceptions import UnknownFlightModeException
 from utils.struct import (
     pack_bool,
     pack_double,
+    pack_unsigned_int,
     unpack_bool,
     unpack_double,
+    unpack_unsigned_int
 )
 
 from communications.command_definitions import CommandDefinitions
@@ -185,10 +188,9 @@ class SensorMode(FlightMode):
 # BootUp mode tasks:
 # Sleep for 30 seconds to reach safe distance from Artemis I
 class BootUpMode(FlightMode):
+    flight_mode_id = FMEnum.Boot.value
     command_codecs = {BootCommandEnum.Split.value: ([], 0)}
     command_arg_unpackers = {}
-
-    flight_mode_id = FMEnum.Boot.value
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -324,18 +326,20 @@ class NormalMode(FlightMode):
     command_codecs = {
         NormalCommandEnum.RunOpNav.value: ([], 0),
         NormalCommandEnum.SetDesiredAttitude.value: (
-            [ATTITUDE_X, ATTITUDE_Y, ATTITUDE_Z],
-            24,
+            [AZIMUTH, ELEVATION],
+            16,
         ),
         NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
+        NormalCommandEnum.SetParameter.value: ([INDEX, VALUE], 12)
     }
 
     command_arg_unpackers = {
-        ATTITUDE_X: (pack_double, unpack_double),
-        ATTITUDE_Y: (pack_double, unpack_double),
-        ATTITUDE_Z: (pack_double, unpack_double),
+        AZIMUTH: (pack_double, unpack_double),
+        ELEVATION: (pack_double, unpack_double),
         ACCELERATE: (pack_bool, unpack_bool),
+        INDEX: (pack_unsigned_int, unpack_unsigned_int),
+        VALUE: (pack_double, unpack_double)
     }
 
     def __init__(self, parent):

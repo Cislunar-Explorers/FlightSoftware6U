@@ -90,9 +90,13 @@ class CommandDefinitions:
             10: self.command_commands
         }
 
+    def switch(self):
+        pass
+
     def split(self):
-        # read gyro rate data before split
-        self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION)
+        # Tell gom to power burnwires in five seconds
+        self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
+        # start reading gyro info
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
 
     def run_opnav(self):
@@ -136,11 +140,11 @@ class CommandDefinitions:
             self.parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
     def change_attitude(self, **kwargs):
-        theta = kwargs['theta']
-        phi = kwargs['phi']
+        azimuth = kwargs['theta']
+        elevation = kwargs['phi']
 
-        current_theta = telemetry.latest.theta
-        current_phi = telemetry.latest.phi
+        # current_theta = telemetry.latest.theta
+        # current_phi = telemetry.latest.phi
 
         raise NotImplementedError
 

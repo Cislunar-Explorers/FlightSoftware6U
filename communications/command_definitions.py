@@ -99,23 +99,49 @@ class CommandDefinitions:
         # self.parent.run_opnav
         raise NotImplementedError
 
-    def set_parameter(self, obj, name, value):
-        initial_value = getattr(obj, name)
-        setattr(obj, name, value)
-        changed_value = getattr(obj, name)
+    def set_parameter(self, **kwargs):
+        """Changes the values of a variable in constants.py"""
+        name = kwargs['name']
+        value = kwargs['value']
+
+        initial_value = getattr(constants, name)
+        setattr(constants, name, value)
+        changed_value = getattr(constants, name)
         self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
 
         # TODO: implement "saving" and reading of parameters to a text file
 
-    def set_exit_lowbatt_threshold(self, value):
-        assert 0 < value < 1.0
-        self.set_parameter(constants, "EXIT_LOW_BATTERY_MODE_THRESHOLD", value)
+    def set_exit_lowbatt_threshold(self, **kwargs):
+        """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
+        requires one kwarg and does some basic sanity checks on the passed value"""
+        value = kwargs['value']
+        try:
+            assert 0 < value < 1.0 and float(value) is float
+            if value >= constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+                self.parent.logger.error(
+                    f"New value for Exit LB thresh must be less than current Enter LB thresh value")
+                assert 0 == 1
+            self.set_parameter(name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
+        except AssertionError:
+            self.parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
 
-    def set_opnav_interval(self, value):
-        assert value > 0
-        self.set_parameter(constants, "OPNAV_INTERVAL", value)
+    def set_opnav_interval(self, **kwargs):
+        """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
+            requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
+        value = kwargs['value']
+        try:
+            assert value > 1
+            self.set_parameter(name="OPNAV_INTERVAL", value=value)
+        except AssertionError:
+            self.parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
-    def change_attitude(self, theta, phi):
+    def change_attitude(self, **kwargs):
+        theta = kwargs['theta']
+        phi = kwargs['phi']
+
+        current_theta = telemetry.latest.theta
+        current_phi = telemetry.latest.phi
+
         raise NotImplementedError
 
     def gather_critical_telem(self):
@@ -135,17 +161,24 @@ class CommandDefinitions:
         # Some verification defined by the NASA Cubequest challenge
         raise NotImplementedError
 
-    def electrolysis(self, state: bool, delay: int):
+    def electrolysis(self, **kwargs):
+        state = kwargs['state']
+        assert state is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
-    def burn(self, time, absolute: bool):
+    def burn(self, **kwargs):
+        time_burn = kwargs['time']
+        absolute = kwargs['absolute']
+
         if absolute:  # i.e. if we want to burn at a specific absolute time
-            delay = time - datetime.now()
+            delay = time_burn - datetime.now()
         else:  # if we want to burn exactly x seconds from receiving the command
             delay = time
 
-        delay = max(0, delay)  # makes sure we don't have negative delays
-        self.parent.gom.glowplug(constants.GLOWPLUG_DURATION, delay=delay)
+        if delay < 0:
+            self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
+        else:
+            self.parent.gom.glowplug(constants.GLOWPLUG_DURATION, delay=delay)
         # TODO: need to make gom commands asynchronous (currently they make the whole satellite sleep for the delay
         #  instead of using the gom's delay option)
 
@@ -162,37 +195,44 @@ class CommandDefinitions:
         # definitely should implement some sort of password and double verification to prevent accidental triggering
         raise NotImplementedError
 
-    def set_system_clock(self, unix_epoch):
+    def set_system_clock(self, **kwargs):  # Needs validation (talk to Viraj)
         # need to validate this works, and need to integrate updating RTC
+        unix_epoch = kwargs['epoch']
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
 
     def reboot_gom(self):
         self.parent.gom.gom.reboot()
 
-    def power_cycle(self, passcode):
-        self.parent.gom.hard_reset(bool(passcode))
+    def power_cycle(self, **kwargs):
+        passcode = kwargs['passcode']
+        self.parent.gom.hard_reset(passcode)
 
-    def gom_outputs(self, output_channel, state, delay):
+    def gom_outputs(self, **kwargs):
+        output_channel = kwargs['output_channel']
+        state = kwargs.get('state', 0)  # if 'state' is not found in kwargs, assume we want it to turn off
+        delay = kwargs.get('delay', 0)  # if 'delay' is not found in kwargs, assume we want it immediately
         self.parent.gom.set_output(output_channel, state, delay=delay)
 
-    def gom_command(self, command_string: str, args: tuple):
+    def gom_command(self, command_string: str, args: dict):
         """Generalized Gom command - very powerful and possibly dangerous.
-        Make sure you know exactly what you're doing when calling this."""
-
+        Make sure you know exactly what you're doing when calling this.
+        Will not work for flight since we dont have any string packers/unpackers"""
         method_to_call = getattr(self.parent.gom, command_string)
         try:
-            result = method_to_call(*args)
+            result = method_to_call(**args)
             return result
         except TypeError:
             self.parent.logger.error(f"Incorrect args: {args} for gom method {command_string}")
 
-    def general_command(self, method_name: str, args: tuple):
+    def general_command(self, method_name: str, args: dict):
         """Generalized satellite action command - very powerful and possibly dangerous.
-            Make sure you know exactly what you're doing when calling this."""
+            Make sure you know exactly what you're doing when calling this.
+            Will not work for flight since we dont have any string packers/unpackers"""
+
         method_to_call = getattr(self.parent, method_name)
         try:
-            result = method_to_call(*args)
+            result = method_to_call(**args)
             return result
         except TypeError:
-            self.parent.logger.error(f"Incorrect args: {args} for gom method {method_name}")
+            self.parent.logger.error(f"Incorrect arguments: {args} for method {method_name}")

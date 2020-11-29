@@ -336,7 +336,7 @@ class Power:
     # including cycling permanent 5V and 3.3V and battery outputs.
     # Not tested- issue running through HITL server
     def hard_reset(self, are_you_sure=False):
-        if are_you_sure:
+        if are_you_sure is True:
             ps.gom_logger.info("Hard reset Passcode correct: Performing hard reset")
             ps.gom_logger.critical("Cycling permanent 5V and 3.3V and battery outputs")
             self.write(CMD_HARD_RESET, [])
@@ -390,8 +390,8 @@ class Power:
         ps.gom_logger.debug("Setting GPIO channel %i HIGH", output)
         GPIO.output(output, GPIO.HIGH)
         time.sleep(duration * 0.001)
-        ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
         GPIO.output(output, GPIO.LOW)
+        ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
 
     # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
@@ -451,8 +451,9 @@ class Power:
         time.sleep(duration / 2)
         self.set_single_output("burnwire_1", 0, 0)
 
-    # turns both burnwire 2 on for [duration] seconds, with a
-    # delay of [delay] seconds.
+    # turns both burnwire 2 on for [duration] seconds, with a delay of [delay] seconds. Commands are written to the
+    # gom, which can act "asynchronously" with the pi (so that we can continuously collect gyro data without stopping
+    # the thread
     def burnwire2(self, duration, delay=0):
         ps.gom_logger.debug(
             "Turning on burnwire 2 for %s seconds after a delay of %s sec",
@@ -460,10 +461,8 @@ class Power:
             delay,
         )
 
-        time.sleep(delay)
-        self.set_single_output("burnwire_2", 1, 0)
-        time.sleep(duration)
-        self.set_single_output("burnwire_2", 0, 0)
+        self.set_single_output("burnwire_2", 1, delay=delay)
+        self.set_single_output("burnwire_2", 0, delay=delay + duration)
 
     def comms(self, transmit):
         if transmit:

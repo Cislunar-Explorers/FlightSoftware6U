@@ -57,16 +57,8 @@ ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
 
 
-class GomOutputs(IntEnum):
-    comms = 0
-    burnwire_1 = 1
-    burnwire_2 = 2
-    glowplug = 3
-    solenoid = 4
-    electrolyzer = 5
-
-
 # GOMspace Channel designations:
+@unique
 class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
@@ -74,10 +66,6 @@ class GomOutputs(IntEnum):
     glowplug = 3
     solenoid = 4
     electrolyzer = 5
-
-
-GOM_VOLTAGE_MAX = 8400
-GOM_VOLTAGE_MIN = 6000
 
 
 @unique

@@ -83,9 +83,8 @@ class MainSatelliteThread(Thread):
         else:
             self.gom.set_electrolysis(False)
 
-
     def replace_flight_mode_by_id(self, new_flight_mode_id):
-        self.flight_mode = build_flight_mode(self, new_flight_mode_id)
+        self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
 
     def replace_flight_mode(self, new_flight_mode):
         self.flight_mode = new_flight_mode

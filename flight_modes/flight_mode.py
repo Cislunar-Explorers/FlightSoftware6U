@@ -145,11 +145,11 @@ class FlightMode:
         pass
 
     def __enter__(self):
-        self.parent.logger.info(f"Entering Flight Mode {self.flight_mode_id}")
+        self.parent.logger.info(f"Starting flight mode {self.flight_mode_id}")
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        self.parent.logger.info(f"Exiting Flight Mode {self.flight_mode_id}")
+        self.parent.logger.info(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
             self.parent.logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
             self.parent.logger.error(f"Failed with traceback:\n {tb}")

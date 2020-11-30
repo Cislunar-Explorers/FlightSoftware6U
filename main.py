@@ -40,7 +40,7 @@ class MainSatelliteThread(Thread):
         self.burn_queue = Queue()
         self.init_comms()
         self.command_handler = CommandHandler()
-        self.commands_dictionary = command_definitions(self)
+        # self.commands_dictionary = command_definitions(self)
         # self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
@@ -104,11 +104,22 @@ class MainSatelliteThread(Thread):
     # Execute received commands
     def execute_commands(self):
         assert (
-            len(self.commands_to_execute) == 0
+                len(self.commands_to_execute) == 0
         ), "Didn't finish executing previous commands"
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
         self.flight_mode.execute_commands()
+
+    def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
+        # check if file exists
+
+        text_file = open(filename, "r")
+        for line in text_file:
+            self.command_queue.put(line)
+
+        text_file.close()
+
+        # delete file
 
     # Run the current flight mode
     # TODO ensure comms thread halts during realtime ops

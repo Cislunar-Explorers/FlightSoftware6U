@@ -21,7 +21,8 @@ from utils.constants import (  # noqa F401
     INDEX,
     VALUE,
     AZIMUTH,
-    ELEVATION
+    ELEVATION,
+    STATE
 )
 from utils.exceptions import UnknownFlightModeException
 from utils.struct import (
@@ -331,7 +332,8 @@ class NormalMode(FlightMode):
         ),
         NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-        NormalCommandEnum.SetParameter.value: ([INDEX, VALUE], 12)
+        NormalCommandEnum.SetParameter.value: ([INDEX, VALUE], 12),
+        NormalCommandEnum.SetElectrolysis.value: ([STATE], 1)
     }
 
     command_arg_unpackers = {
@@ -339,7 +341,8 @@ class NormalMode(FlightMode):
         ELEVATION: (pack_double, unpack_double),
         ACCELERATE: (pack_bool, unpack_bool),
         INDEX: (pack_unsigned_int, unpack_unsigned_int),
-        VALUE: (pack_double, unpack_double)
+        VALUE: (pack_double, unpack_double),
+        STATE: (pack_bool, unpack_bool)
     }
 
     def __init__(self, parent):

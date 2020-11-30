@@ -50,6 +50,8 @@ VALUE = "value"
 AZIMUTH = "theta"
 ELEVATION = "phi"
 
+STATE = "state"
+
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
 
@@ -57,6 +59,11 @@ GOM_VOLTAGE_MIN = 6000
 SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
+
+
+@unique
+class ConstantsEnum(IntEnum):
+    GOM_VOLTAGE_MAX = 1
 
 
 # GOMspace Channel designations:
@@ -101,6 +108,7 @@ class NormalCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     RunOpNav = 1  # no args
     SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
+    SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
     # Really not sure what 3 and 4 are supposed to do:
     # SetAccelerate = 3  # arg=true/false
     # SetBreakpoint = 4  # arg=position x, y, z

@@ -13,11 +13,13 @@ class CommandDefinitions:
         self.normal_commands = {
             1: self.run_opnav,
             2: self.change_attitude,
+            3: self.electrolysis,
             5: self.set_parameter,
             6: self.gather_critical_telem,
             7: self.gather_basic_telem,
             8: self.gather_detailed_telem,
-            9: self.verification
+            9: self.verification,
+            11: self.print_parameter
         }
 
         self.electrolysis_commands = {
@@ -204,6 +206,11 @@ class CommandDefinitions:
         unix_epoch = kwargs['epoch']
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
+
+    def print_parameter(self, **kwargs):
+        index = kwargs["index"]
+        value = constants
+        self.parent.logger.info()
 
     def reboot_gom(self):
         self.parent.gom.gom.reboot()

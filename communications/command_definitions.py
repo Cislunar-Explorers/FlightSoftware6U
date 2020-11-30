@@ -1,6 +1,7 @@
 from main import MainSatelliteThread
 from datetime import datetime
 import utils.constants as constants
+from utils.constants import FMEnum
 import os
 import time
 
@@ -79,17 +80,17 @@ class CommandDefinitions:
             170: self.cease_comms}
 
         self.COMMAND_DICT = {
-            0: self.bootup_commands,
-            1: self.restart_commands,
-            2: self.normal_commands,
-            3: self.low_battery_commands,
-            4: self.safety_commands,
-            5: self.opnav_commands,
-            6: self.maneuver_commands,
-            7: self.sensor_commands,
-            8: self.test_commands,
-            9: self.comms_commands,
-            10: self.command_commands
+            FMEnum.Boot.value: self.bootup_commands,
+            FMEnum.Restart.value: self.restart_commands,
+            FMEnum.Normal.value: self.normal_commands,
+            FMEnum.LowBatterySafety.value: self.low_battery_commands,
+            FMEnum.Safety.value: self.safety_commands,
+            FMEnum.OpNav.value: self.opnav_commands,
+            FMEnum.Maneuver.value: self.maneuver_commands,
+            FMEnum.SensorMode.value: self.sensor_commands,
+            FMEnum.TestMode.value: self.test_commands,
+            FMEnum.CommsMode: self.comms_commands,
+            FMEnum.Command.value: self.command_commands
         }
 
     def switch(self):
@@ -169,6 +170,7 @@ class CommandDefinitions:
 
     def electrolysis(self, **kwargs):
         state = kwargs['state']
+        delay = kwargs['delay']
         assert state is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
@@ -185,8 +187,6 @@ class CommandDefinitions:
             self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
         else:
             self.parent.gom.glowplug(constants.GLOWPLUG_DURATION, delay=delay)
-        # TODO: need to make gom commands asynchronous (currently they make the whole satellite sleep for the delay
-        #  instead of using the gom's delay option)
 
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(constants.FMEnum.Normal.value)
@@ -207,6 +207,7 @@ class CommandDefinitions:
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
 
+    # TODO
     def print_parameter(self, **kwargs):
         index = kwargs["index"]
         value = constants

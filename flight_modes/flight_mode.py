@@ -45,6 +45,7 @@ no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
     FMEnum.CommsMode.value,
+    FMEnum.Command.value
 ]
 
 
@@ -123,17 +124,29 @@ class FlightMode:
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def execute_commands(self):
+        bogus = bool()
         if len(self.parent.commands_to_execute) == 0:
             pass  # If I have no commands to execute do nothing
         else:
             # loop through commands in commands_to_execute list
             for command in self.parent.commands_to_execute:
-                command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
-                # if command's FM is the same as the current FM, execute that command
-                if command_fm == self.flight_mode_id:
-                    method_to_run = self.commands[command_fm][command_id]
+                bogus = False
+                try:
+                    command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
+
+                    assert command_fm in self.commands.COMMAND_DICT
+                    assert command_id in self.commands.COMMAND_DICT[command_fm]
+                except AssertionError:
+                    self.parent.logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
+                    bogus = True
+
+                if bogus is not True:
+                    # changes the flight mode if command's FM is different.
+                    if command_fm != self.flight_mode_id:
+                        self.parent.replace_flight_mode_by_id(command_fm)
+
+                    method_to_run = self.commands.COMMAND_DICT[command_fm][command_id]
                     method_to_run(**command_kwargs)
-            # if the command's FM is different than the current FM, change FM and execute command in that FM
 
     def read_sensors(self):
         pass

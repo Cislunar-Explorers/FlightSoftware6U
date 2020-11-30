@@ -7,7 +7,7 @@ from queue import Queue
 import signal
 from utils.log import get_log
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 from utils.constants import (
     LOG_DIR,
@@ -18,16 +18,15 @@ from utils.constants import (
     IDEAL_CRACKING_PRESSURE
 )
 from utils.db import create_sensor_tables_from_path
-from communications.comms_driver import CommunicationsSystem
-from drivers.gom import Gomspace
-from drivers.dummy_sensors import PressureSensor
+# from communications.comms_driver import CommunicationsSystem
+# from drivers.gom import Gomspace
+# from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
 from communications.commands import CommandHandler
-
 
 FOR_FLIGHT = None
 
@@ -38,7 +37,7 @@ class MainSatelliteThread(Thread):
         self.command_queue = Queue()
         self.commands_to_execute = []
         self.burn_queue = Queue()
-        self.init_comms()
+        # self.init_comms()
         self.command_handler = CommandHandler()
         # self.commands_dictionary = command_definitions(self)
         # self.init_sensors()
@@ -112,14 +111,14 @@ class MainSatelliteThread(Thread):
 
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         # check if file exists
+        if os.path.isfile(filename):
+            text_file = open(filename, "r")
+            for line in text_file:
+                self.command_queue.put(line)
 
-        text_file = open(filename, "r")
-        for line in text_file:
-            self.command_queue.put(line)
-
-        text_file.close()
-
-        # delete file
+            text_file.close()
+            # delete file
+            os.remove(filename)
 
     # Run the current flight mode
     # TODO ensure comms thread halts during realtime ops
@@ -147,7 +146,7 @@ class MainSatelliteThread(Thread):
 
 
 if __name__ == "__main__":
-    load_dotenv()
+    # load_dotenv()
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
-    main.run_mode()
+    main.run()

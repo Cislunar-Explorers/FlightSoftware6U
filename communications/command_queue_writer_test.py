@@ -11,20 +11,20 @@ commands.append(ch.pack_command(0, 1))
 commands.append(ch.pack_command(2, 1))
 
 # start electrolysis
-commands.append(ch.pack_command(2, 3, {"state": True}))
+commands.append(ch.pack_command(2, 3, **{"state": True}))
 
 # stop electrolysis
-commands.append(ch.pack_command(2, 3, {"state": False}))
+commands.append(ch.pack_command(2, 3, **{"state": False}))
 
 user_in = int(0)
 filename = "communications/command_queue.txt"
 while user_in > -1:
-    user_in = input("What command would you like to send?\n"
-                    "1: split\n"
-                    "2: opnav\n"
-                    "3: electrolysis start\n"
-                    "4: electrolysis stop\n")
-
-    file = open(filename, "w")
-    file.write(commands[user_in - 1])  # TODO covert bytes to str
-    file.close()
+    user_in = int(input("What command would you like to send?\n"
+                        "1: split\n"
+                        "2: opnav\n"
+                        "3: electrolysis start\n"
+                        "4: electrolysis stop\n"))
+    if user_in > -1:
+        file = open(filename, "w")
+        file.write(str(commands[user_in - 1], 'utf-8'))
+        file.close()

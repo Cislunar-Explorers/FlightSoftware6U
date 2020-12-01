@@ -15,7 +15,8 @@ from utils.constants import (
     DB_FILE,
     LOW_CRACKING_PRESSURE,
     HIGH_CRACKING_PRESSURE,
-    IDEAL_CRACKING_PRESSURE
+    IDEAL_CRACKING_PRESSURE,
+    FMEnum
 )
 from utils.db import create_sensor_tables_from_path
 # from communications.comms_driver import CommunicationsSystem
@@ -39,7 +40,6 @@ class MainSatelliteThread(Thread):
         self.burn_queue = Queue()
         # self.init_comms()
         self.command_handler = CommandHandler()
-        # self.commands_dictionary = command_definitions(self)
         # self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR

@@ -42,7 +42,6 @@ class BootUpMode(FlightMode):
 
         logger.info("Logging info to DB...")
         self.log()
-        self.selected = None
 
         # deploy antennae
         # logger.info("Beginning burn wire...")
@@ -66,6 +65,7 @@ class BootUpMode(FlightMode):
         #    # TODO make it so that main runs
         #    # this will restart the Pi
         #    os.system("sudo reboot")
+        self.parent.replace_flight_mode_by_id(2)
 
     # will add info about the boot up to the db
     def log(self):
@@ -118,7 +118,11 @@ class RestartMode(FlightMode):
         # mux.selectCamera(cam)
         # cam_object = camera.Camera()
         # cam_object.initialize()
-        self.session.query("is_bootup").all()
-        self.session.query("reboot_at").all()
+        logger.info("Displaying sqlalchemy model:")
+        boots = self.session.query(RebootsModel).all()
+        for boot in boots:
+            print(boot)
+
+        self.parent.replace_flight_mode_by_id(2)
         # logger.info("Camera detected? " + str(mux.detect()))
         # cam_object.rawObservation("restart_cam_test.mjpeg")

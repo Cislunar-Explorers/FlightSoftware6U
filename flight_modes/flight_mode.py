@@ -24,6 +24,9 @@ from utils.constants import (  # noqa F401
     STATE,
     INTERVAL
 )
+
+from utils.log import get_log
+
 from utils.exceptions import UnknownFlightModeException
 from utils.struct import (
     pack_bool,
@@ -48,6 +51,7 @@ no_transition_modes = [
     FMEnum.Command.value
 ]
 
+logger = get_log()
 
 class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
@@ -370,6 +374,10 @@ class NormalMode(FlightMode):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.last_opnav_run = self.parent.last_opnav_run
 
     def run_mode(self):
-        print("Execute normal mode")
+        time_since_last_run = datetime.now() - self.last_opnav_run
+        minutes_since_last_run = time_since_last_run.total_seconds() / 60.0
+        minutes_until_next_run = OPNAV_INTERVAL - minutes_since_last_run
+        logger.info(f"In NORMAL flight mode. Minutes until next OpNav run: {minutes_until_next_run}")

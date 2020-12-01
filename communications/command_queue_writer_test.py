@@ -36,3 +36,4 @@ while user_in > -1:
         file = open(filename, "a")
         file.write(str(commands[user_in - 1].hex()) + "\n")
         file.close()
+        logger.info(f"Wrote hex bytes {str(commands[user_in - 1].hex())}")

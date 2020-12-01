@@ -129,7 +129,10 @@ class FlightMode:
             pass  # If I have no commands to execute do nothing
         else:
             # loop through commands in commands_to_execute list
+            finished_commands = []
+
             for command in self.parent.commands_to_execute:
+
                 bogus = False
                 try:
                     command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
@@ -147,8 +150,11 @@ class FlightMode:
 
                     method_to_run = self.commands.COMMAND_DICT[command_fm][command_id]
                     method_to_run(**command_kwargs)
-
-                self.parent.commands_to_execute.remove(command)  # removes command from the list
+                finished_commands.append(command)
+            # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
+            #  exception occurs in the above for loop
+            for finished_command in finished_commands:
+                self.parent.commands_to_execute.remove(finished_command)
 
     def read_sensors(self):
         pass

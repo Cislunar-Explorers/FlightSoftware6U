@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, LOG_DIR
+from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, LOG_DIR, FMEnum, BootCommandEnum, RestartCommandEnum
 # import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
@@ -20,6 +20,10 @@ logger = get_log()
 
 
 class BootUpMode(FlightMode):
+    flight_mode_id = FMEnum.Boot.value
+    command_codecs = {BootCommandEnum.Split.value: ([], 0)}
+    command_arg_unpackers = {}
+
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -78,6 +82,10 @@ class BootUpMode(FlightMode):
 
 
 class RestartMode(FlightMode):
+    flight_mode_id = FMEnum.Restart.value
+    command_codecs = {}
+    command_arg_unpackers = {}
+
     def __init__(self, parent):
         super().__init__(parent)
 

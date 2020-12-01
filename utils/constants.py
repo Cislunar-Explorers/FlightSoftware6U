@@ -51,6 +51,7 @@ AZIMUTH = "theta"
 ELEVATION = "phi"
 
 STATE = "state"
+INTERVAL = "interval"
 
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
@@ -117,6 +118,7 @@ class NormalCommandEnum(IntEnum):
     GatherBasicTelem = 7
     GatherDetailedTelem = 8
     Verification = 9
+    SetOpnavInterval = 12
 
 
 @unique

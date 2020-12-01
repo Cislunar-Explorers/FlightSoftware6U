@@ -1,13 +1,14 @@
-from main import MainSatelliteThread
 from datetime import datetime
 import utils.constants as constants
 from utils.constants import FMEnum
 import os
 import time
+from utils.log import get_log
 
+logger = get_log()
 
 class CommandDefinitions:
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         self.parent = parent
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}
@@ -20,7 +21,8 @@ class CommandDefinitions:
             7: self.gather_basic_telem,
             8: self.gather_detailed_telem,
             9: self.verification,
-            11: self.print_parameter
+            11: self.print_parameter,
+            12: self.set_opnav_interval
         }
 
         self.electrolysis_commands = {
@@ -97,17 +99,23 @@ class CommandDefinitions:
         pass
 
     def split(self):
+        # for demo, delay of 0
+        self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=0)
         # Tell gom to power burnwires in five seconds
-        self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
+        # self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
 
     def run_opnav(self):
+        logger.info("Running OpNav Pipeline")
+        time.sleep(5)
+        logger.info("OpNav calculations complete. Resulting attitude is [x, y, z, phi, theta]")
         # self.parent.run_opnav
-        raise NotImplementedError
+        # raise NotImplementedError
 
     def set_parameter(self, **kwargs):
-        """Changes the values of a variable in constants.py"""
+        """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
+        string which we can't pack/unpack """
         name = kwargs['name']
         value = kwargs['value']
 
@@ -135,7 +143,7 @@ class CommandDefinitions:
     def set_opnav_interval(self, **kwargs):
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
             requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
-        value = kwargs['value']
+        value = kwargs['interval']
         try:
             assert value > 1
             self.set_parameter(name="OPNAV_INTERVAL", value=value)

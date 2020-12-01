@@ -2,7 +2,6 @@ import gc
 from time import sleep
 from datetime import datetime
 import os
-from main import MainSatelliteThread
 
 from utils.constants import (  # noqa F401
     LOW_CRACKING_PRESSURE,
@@ -22,7 +21,8 @@ from utils.constants import (  # noqa F401
     VALUE,
     AZIMUTH,
     ELEVATION,
-    STATE
+    STATE,
+    INTERVAL
 )
 from utils.exceptions import UnknownFlightModeException
 from utils.struct import (
@@ -59,7 +59,7 @@ class FlightMode:
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
         self.commands = CommandDefinitions(parent)
@@ -147,6 +147,8 @@ class FlightMode:
 
                     method_to_run = self.commands.COMMAND_DICT[command_fm][command_id]
                     method_to_run(**command_kwargs)
+
+                self.parent.commands_to_execute.remove(command)  # removes command from the list
 
     def read_sensors(self):
         pass
@@ -343,10 +345,11 @@ class NormalMode(FlightMode):
             [AZIMUTH, ELEVATION],
             16,
         ),
-        NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
+        # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
         NormalCommandEnum.SetParameter.value: ([INDEX, VALUE], 12),
-        NormalCommandEnum.SetElectrolysis.value: ([STATE], 1)
+        NormalCommandEnum.SetElectrolysis.value: ([STATE], 1),
+        NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4)
     }
 
     command_arg_unpackers = {
@@ -355,7 +358,8 @@ class NormalMode(FlightMode):
         ACCELERATE: (pack_bool, unpack_bool),
         INDEX: (pack_unsigned_int, unpack_unsigned_int),
         VALUE: (pack_double, unpack_double),
-        STATE: (pack_bool, unpack_bool)
+        STATE: (pack_bool, unpack_bool),
+        INTERVAL: (pack_unsigned_int, unpack_unsigned_int)
     }
 
     def __init__(self, parent):

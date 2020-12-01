@@ -455,7 +455,7 @@ class Power:
     # gom, which can act "asynchronously" with the pi (so that we can continuously collect gyro data without stopping
     # the thread
     def burnwire2(self, duration, delay=0):
-        ps.gom_logger.debug(
+        ps.gom_logger.info(
             "Turning on burnwire 2 for %s seconds after a delay of %s sec",
             duration,
             delay,

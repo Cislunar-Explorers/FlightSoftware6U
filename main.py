@@ -113,8 +113,8 @@ class MainSatelliteThread(Thread):
         # check if file exists
         if os.path.isfile(filename):
             text_file = open(filename, "r")
-            for line in text_file:
-                self.command_queue.put(line)
+            for hex_line in text_file:
+                self.command_queue.put(bytes.fromhex(hex_line))
 
             text_file.close()
             # delete file
@@ -131,8 +131,9 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
-                self.poll_inputs()
-                self.update_state()
+                # self.poll_inputs()
+                # self.update_state()
+                self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:

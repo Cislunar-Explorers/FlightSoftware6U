@@ -108,8 +108,10 @@ class CommandDefinitions:
 
     def run_opnav(self):
         logger.info("Running OpNav Pipeline")
-        time.sleep(5)
+        time.sleep(10)
         logger.info("OpNav calculations complete. Resulting attitude is [x, y, z, phi, theta]")
+        if self.parent.flight_mode.flight_mode_id == 2:
+            self.parent.flight_mode.last_opnav_run = datetime.now()
         # self.parent.run_opnav
         # raise NotImplementedError
 
@@ -119,9 +121,9 @@ class CommandDefinitions:
         name = kwargs['name']
         value = kwargs['value']
 
-        initial_value = getattr(constants, name)
-        setattr(constants, name, value)
-        changed_value = getattr(constants, name)
+        initial_value = getattr(self.parent.constants, name)
+        setattr(self.parent.constants, name, value)
+        changed_value = getattr(self.parent.constants, name)
         self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
 
         # TODO: implement "saving" and reading of parameters to a text file

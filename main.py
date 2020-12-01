@@ -7,7 +7,7 @@ from queue import Queue
 import signal
 from utils.log import get_log
 
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 from utils.constants import (
     LOG_DIR,
@@ -17,10 +17,12 @@ from utils.constants import (
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
     FMEnum
-)
+)  # TODO: optimize this import
+
+import utils.constants
 from utils.db import create_sensor_tables_from_path
 # from communications.comms_driver import CommunicationsSystem
-# from drivers.gom import Gomspace
+from drivers.gom import Gomspace
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -40,7 +42,7 @@ class MainSatelliteThread(Thread):
         self.burn_queue = Queue()
         # self.init_comms()
         self.command_handler = CommandHandler()
-        # self.init_sensors()
+        self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
@@ -52,6 +54,7 @@ class MainSatelliteThread(Thread):
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
+        self.constants = utils.constants
 
     def init_comms(self):
         self.comms = CommunicationsSystem(
@@ -63,8 +66,8 @@ class MainSatelliteThread(Thread):
     # TODO
     def init_sensors(self):
         self.gom = Gomspace()
-        self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
-                                                # in pressure_sensor (to be made) can access burn queue"""
+        # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
+        # in pressure_sensor (to be made) can access burn queue"""
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)
@@ -147,7 +150,7 @@ class MainSatelliteThread(Thread):
 
 
 if __name__ == "__main__":
-    # load_dotenv()
+    load_dotenv()
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
     main.run()

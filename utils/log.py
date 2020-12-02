@@ -13,5 +13,6 @@ logging.basicConfig(
 
 log = logging.getLogger("CislunarExplorers")
 
+
 def get_log():
     return log

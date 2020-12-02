@@ -37,7 +37,7 @@ class MainSatelliteThread(Thread):
         self.commands_to_execute = []
         self.burn_queue = Queue()
         self.init_comms()
-        # self.init_sensors()
+        # self.init_sensors()  # TODO FIX THIS!
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.attach_sigint_handler()  # FIXME
@@ -76,7 +76,6 @@ class MainSatelliteThread(Thread):
                 self.gom.set_electrolysis(True)
         else:
             self.gom.set_electrolysis(False)
-
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.flight_mode = build_flight_mode(self, new_flight_mode_id)
@@ -133,6 +132,6 @@ if __name__ == "__main__":
     load_dotenv()
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
-    main.run_mode()
+    main.run_mode()  # TODO going to actually be main.run()
 
 

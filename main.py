@@ -20,7 +20,7 @@ from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
 from drivers.dummy_sensors import PressureSensor
-from flight_modes.flight_mode import (
+from flight_modes.restart_reboot import (
     RestartMode,
     BootUpMode,
 )
@@ -37,16 +37,16 @@ class MainSatelliteThread(Thread):
         self.commands_to_execute = []
         self.burn_queue = Queue()
         self.init_comms()
-        self.init_sensors()
-        self.last_opnav_run = datetime.now() # Figure out what to set to for first opnav run
+        # self.init_sensors()  # TODO FIX THIS!
+        self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.attach_sigint_handler()  # FIXME
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
         else:
-            self.flight_mode = BootUpMode(self)
-        if not os.path.isdir(CISLUNAR_BASE_DIR):
             os.makedirs(CISLUNAR_BASE_DIR)
+            os.mkdir(LOG_DIR)
+            self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
 
     def init_comms(self):
@@ -76,7 +76,6 @@ class MainSatelliteThread(Thread):
                 self.gom.set_electrolysis(True)
         else:
             self.gom.set_electrolysis(False)
-
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.flight_mode = build_flight_mode(self, new_flight_mode_id)
@@ -133,4 +132,6 @@ if __name__ == "__main__":
     load_dotenv()
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
-    main.run()
+    main.run_mode()  # TODO going to actually be main.run()
+
+

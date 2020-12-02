@@ -147,3 +147,5 @@ class TestCommandEnum(IntEnum):
 class CommsCommandEnum(IntEnum):
     DownlinkFullDataPacket = 4  # no args
     SetDataPacket = 5  # arg=data packet id
+
+

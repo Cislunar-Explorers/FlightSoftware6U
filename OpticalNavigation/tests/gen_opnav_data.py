@@ -12,7 +12,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy import integrate
 from numpy.linalg import pinv
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from simulations.animations import LiveTrajectoryPlot
 
@@ -387,7 +387,6 @@ def get6HoursBatch(startTime, endTime, coldGasThrustKickTime, cameradt, omegaIni
         [endTime]: end time for the ephemeris tables, or None for full trajectory (s)
         [coldGasThrustKickTime]: when cold-gas thruster was fired (s)
                             startTime <= coldGasThrustKickTime <= endTime
-        [coldGasKickDuration]:
         [cameradt]: time delay between each camera measurement
         [omegaInit]: starting angular velocity of spacecraft with bias (6,)
         [biasInit]: starting bias of gyro (3,)

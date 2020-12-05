@@ -67,10 +67,6 @@ OUT_HEATER = 6
 OUT_SWITCH = 7
 
 
-#    heater       = OUT_HEATER
-#    switch       = OUT_SWITCH
-
-
 # Outputs on board:
 #
 #       H1
@@ -81,9 +77,9 @@ OUT_SWITCH = 7
 #     '-----'
 #
 
-# pi outputs
-OUT_PI_COMMS = 11  # GPIO 17
-OUT_PI_SOLENOID_ENABLE = 40  # GPIO 21
+# GPIO outputs
+OUT_PI_COMMS = 17  # Physical pin 11
+OUT_PI_SOLENOID_ENABLE = 21  # Physical pin 40
 
 
 class PowerException(Exception):
@@ -114,7 +110,7 @@ class Power:
         self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
         # initialize pi outputs
-        GPIO.setmode(GPIO.BOARD)
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
         GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
         GPIO.output(OUT_PI_COMMS, GPIO.LOW)

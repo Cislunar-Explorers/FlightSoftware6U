@@ -8,7 +8,7 @@ from tqdm import tqdm
 from core.opnav import process
 from tests.const import CesiumTestCameraParameters
 
-# from core.ukf import runPosVelUKF
+# from core.ukf import runTrajUKF
 # from tests.const import POS_ERROR, VEL_ERROR
 # from tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
 # from tests.const import MatlabTestCameraParameters

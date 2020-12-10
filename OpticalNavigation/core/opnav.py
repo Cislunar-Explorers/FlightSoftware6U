@@ -1,6 +1,6 @@
 from core.acquisition import startAcquisition, readOmega
 from core.cam_meas import cameraMeasurements
-from core.ukf import runPosVelUKF
+from core.ukf import runTrajUKF
 from core.attitude import runAttitudeUKFWithKick
 import numpy as np
 import traceback
@@ -71,7 +71,7 @@ def process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState
             # # X axis of spacecraft
             # local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
             # X_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
-        trajState, traj_P, traj_K = runPosVelUKF(b['ephemeris']['moon'], 
+        trajState, traj_P, traj_K = runTrajUKF(b['ephemeris']['moon'], 
                                        b['ephemeris']['sun'], 
                                        b['cam_meas'], 
                                        trajState,

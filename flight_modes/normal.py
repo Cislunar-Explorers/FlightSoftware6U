@@ -1,14 +1,8 @@
-import time
-from datetime import datetime
-from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY
-import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
-import os
-import random
 from utils.log import get_log
 
 logger = get_log()
+
 
 class NormalMode(FlightMode):
     def __init__(self, parent):
@@ -27,14 +21,20 @@ class NormalMode(FlightMode):
         self.downlink()
         logger.info("Waiting for next interval to run normal mode")
 
+    # TODO
     def check_sensors(self):
         pass
 
+    # TODO
     def check_battery(self):
         pass
 
+    # TODO
     def run_opnav(self):
+        # change the flight mode to opnav mode
+        # feed in an enum of normal mode so it knows to go back
         pass
 
+    # TODO
     def downlink(self):
         pass

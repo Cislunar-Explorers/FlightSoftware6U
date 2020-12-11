@@ -11,28 +11,30 @@ from utils.log import get_log
 logger = get_log()
 
 class NormalMode(FlightMode):
-
-    flight_mode_id = FMEnum.Normal.value
-
-    command_codecs = {
-        NormalCommandEnum.RunOpNav.value: ([], 0),
-        NormalCommandEnum.SetDesiredAttitude.value: (
-            [ATTITUDE_X, ATTITUDE_Y, ATTITUDE_Z],
-            24,
-        ),
-        NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
-        # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-    }
-
-    command_arg_unpackers = {
-        ATTITUDE_X: (pack_double, unpack_double),
-        ATTITUDE_Y: (pack_double, unpack_double),
-        ATTITUDE_Z: (pack_double, unpack_double),
-        ACCELERATE: (pack_bool, unpack_bool),
-    }
-
     def __init__(self, parent):
         super().__init__(parent)
+        logger.info("Now in normal mode...")
+        self.run_mode()
 
     def run_mode(self):
-        print("Execute normal mode")
+        logger.info("Checking sensors...")
+        self.check_sensors()
+        logger.info("Checking battery...")
+        self.check_battery()
+        logger.info("Now running op nav...")
+        self.run_opnav()
+        logger.info("Now downlinking data...")
+        self.downlink()
+        logger.info("Waiting for next interval to run normal mode")
+
+    def check_sensors(self):
+        pass
+
+    def check_battery(self):
+        pass
+
+    def run_opnav(self):
+        pass
+
+    def downlink(self):
+        pass

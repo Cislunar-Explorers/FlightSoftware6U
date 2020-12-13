@@ -1,6 +1,7 @@
 from flight_modes.flight_mode import FlightMode
 from utils.log import get_log
-from drivers.power import gom
+from drivers.gom import Gomspace
+from utils.constants import ENTER_LOW_BATTERY_MODE_THRESHOLD, FMEnum
 
 logger = get_log()
 
@@ -9,18 +10,17 @@ class NormalMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
         logger.info("Now in normal mode...")
-        self.run_mode()
+        self.battery = None   # placeholder until it's set
 
     def run_mode(self):
-        logger.info("Checking sensors...")
-        self.check_sensors()
         logger.info("Checking battery...")
         self.check_battery()
+        logger.info("Checking sensors...")
+        self.check_sensors()
         logger.info("Now running op nav...")
         self.run_opnav()
         logger.info("Now downlinking data...")
         self.downlink()
-        logger.info("Waiting for next interval to run normal mode")
 
     # TODO
     def check_sensors(self):
@@ -28,10 +28,12 @@ class NormalMode(FlightMode):
 
     # TODO
     def check_battery(self):
-        self.battery = gom.read_battery_percentage
+        self.battery = Gomspace.read_battery_percentage
         logger.info("Battery percentage (btw 0 and 1) is: ", self.battery)
-
-
+        if self.battery < ENTER_LOW_BATTERY_MODE_THRESHOLD:
+            #TODO
+            # enter low battery mode
+            pass
 
     # TODO
     def run_opnav(self):

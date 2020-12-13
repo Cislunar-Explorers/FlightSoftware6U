@@ -1,5 +1,6 @@
 from flight_modes.flight_mode import FlightMode
 from utils.log import get_log
+from drivers.power import gom
 
 logger = get_log()
 
@@ -27,7 +28,10 @@ class NormalMode(FlightMode):
 
     # TODO
     def check_battery(self):
-        pass
+        self.battery = gom.read_battery_percentage
+        logger.info("Battery percentage (btw 0 and 1) is: ", self.battery)
+
+
 
     # TODO
     def run_opnav(self):

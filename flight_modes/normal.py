@@ -19,19 +19,18 @@ class NormalMode(FlightMode):
         self.check_sensors()
         logger.info("Now running op nav...")
         self.run_opnav()
-        logger.info("Now downlinking data...")
+        logger.info("Now down linking data...")
         self.downlink()
 
     # TODO
     def check_sensors(self):
         pass
 
-    # TODO
     def check_battery(self):
         self.battery = Gomspace.read_battery_percentage
-        logger.info("Battery percentage (btw 0 and 1) is: ", self.battery)
+        logger.info("Battery percentage as decimal is: ", self.battery)
         if self.battery < ENTER_LOW_BATTERY_MODE_THRESHOLD:
-            #TODO
+            # TODO
             # enter low battery mode
             pass
 

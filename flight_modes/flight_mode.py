@@ -6,6 +6,7 @@ import os
 from utils.constants import (  # noqa F401
     LOW_CRACKING_PRESSURE,
     EXIT_LOW_BATTERY_MODE_THRESHOLD,
+    ENTER_LOW_BATTERY_MODE_THRESHOLD,
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
     OPNAV_INTERVAL,
@@ -40,7 +41,6 @@ no_transition_modes = [
 ]
 
 
-
 class FlightMode:
 
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
@@ -64,12 +64,14 @@ class FlightMode:
             self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
             return
 
+        # TODO is this staying?
         # Check if opnav needs to be run
         curr_time = datetime.now()
         time_diff = curr_time - self.parent.last_opnav_run
         if time_diff.seconds * 60 > OPNAV_INTERVAL:
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
+        # Go from low battery mode --> normal mode
         elif flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
                 self.gom.read_battery_percentage()
@@ -80,8 +82,15 @@ class FlightMode:
         elif flight_mode_id == FMEnum.Safety.value:
             raise NotImplementedError  # TODO
 
+        # TODO
         elif flight_mode_id == FMEnum.Normal.value:
-            pass
+            # If low battery, go from normal mode --> low battery mode
+            if (
+                self.gom.read_battery_percentage()
+                < ENTER_LOW_BATTERY_MODE_THRESHOLD
+            ):
+                self.parent.replace_flight_mode_by_id(FMEnum.LowBatterySafety)
+
             # TODO do I need to enter electrolysis to prepare for maneuver?
             # do I need to start a maneuver?
             # do I need to run OpNav?
@@ -89,9 +98,10 @@ class FlightMode:
         elif flight_mode_id == FMEnum.Boot.value:
             pass
 
-        elif flight_mode_id == FMEnum.Restart.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+        # don't think this is needed, commenting out for now
+        # elif flight_mode_id == FMEnum.Restart.value:
+        #     if self.task_completed is True:
+        #         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
         elif flight_mode_id == FMEnum.Maneuver.value:
             if self.task_completed is True:
@@ -99,6 +109,11 @@ class FlightMode:
 
         elif flight_mode_id == FMEnum.OpNav.value:
             if self.task_completed is True:
+                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+
+        # TODO this is the opnav mode that's only used in maneuvers
+        elif flight_mode_id == FMEnum.OpNavManeuver.value:
+            if self.completed_task is True:
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
         elif flight_mode_id in no_transition_modes:

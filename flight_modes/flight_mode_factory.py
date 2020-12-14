@@ -24,6 +24,7 @@ FLIGHT_MODE_DICT = {
     FMEnum.SensorMode.value: SensorMode,
     FMEnum.TestMode.value: TestMode,
     FMEnum.CommsMode.value: CommsMode,
+    FMEnum.OpNavManeuver.value: OpNavManeuverMode
 }
 
 

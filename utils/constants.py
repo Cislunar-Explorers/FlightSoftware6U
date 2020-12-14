@@ -79,6 +79,7 @@ class FMEnum(IntEnum):
     SensorMode = 7  # Send command directly to sensor
     TestMode = 8  # Execute specified test
     CommsMode = 9
+    OpNavManeuver = 10
 
 
 @unique

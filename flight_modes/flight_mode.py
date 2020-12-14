@@ -297,6 +297,17 @@ class SafeMode(FlightMode):
         print("Execute safe mode")
 
 
+class OpNavManeuverMode(FlightMode):
+
+    flight_mode_id = FMEnum.OpNavManeuver.value
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def run_mode(self):
+        print("Execute OpNavManeuver mode")
+
+
 class NormalMode(FlightMode):
 
     flight_mode_id = FMEnum.Normal.value

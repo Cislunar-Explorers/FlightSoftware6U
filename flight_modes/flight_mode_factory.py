@@ -8,6 +8,7 @@ from .flight_mode import (
     SensorMode,
     TestMode,
     CommsMode,
+    OpNavManeuverMode
 )
 from .opnav_flightmode import OpNavMode
 from utils.constants import FMEnum

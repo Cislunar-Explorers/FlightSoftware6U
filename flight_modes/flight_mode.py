@@ -17,12 +17,13 @@ from utils.constants import (  # noqa F401
     POSITION_Y,
     POSITION_Z,
     ACCELERATE,
-    INDEX,
+    NAME,
     VALUE,
     AZIMUTH,
     ELEVATION,
     STATE,
-    INTERVAL
+    INTERVAL,
+    DELAY
 )
 
 from utils.log import get_log
@@ -30,11 +31,15 @@ from utils.log import get_log
 from utils.exceptions import UnknownFlightModeException
 from utils.struct import (
     pack_bool,
+    pack_unsigned_short,
     pack_double,
     pack_unsigned_int,
+    pack_str,
     unpack_bool,
+    unpack_unsigned_short,
     unpack_double,
-    unpack_unsigned_int
+    unpack_unsigned_int,
+    unpack_str
 )
 
 from communications.command_definitions import CommandDefinitions
@@ -142,7 +147,7 @@ class FlightMode:
                 bogus = False
                 try:
                     command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
-
+                    logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self.commands.COMMAND_DICT
                     assert command_id in self.commands.COMMAND_DICT[command_fm]
                 except AssertionError:
@@ -354,13 +359,11 @@ class NormalMode(FlightMode):
     command_codecs = {
         NormalCommandEnum.RunOpNav.value: ([], 0),
         NormalCommandEnum.SetDesiredAttitude.value: (
-            [AZIMUTH, ELEVATION],
-            16,
-        ),
+            [AZIMUTH, ELEVATION], 16),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-        NormalCommandEnum.SetParameter.value: ([INDEX, VALUE], 12),
-        NormalCommandEnum.SetElectrolysis.value: ([STATE], 1),
+        NormalCommandEnum.SetParameter.value: ([NAME, VALUE], 12),
+        NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4)
     }
 
@@ -368,10 +371,12 @@ class NormalMode(FlightMode):
         AZIMUTH: (pack_double, unpack_double),
         ELEVATION: (pack_double, unpack_double),
         ACCELERATE: (pack_bool, unpack_bool),
-        INDEX: (pack_unsigned_int, unpack_unsigned_int),
+        NAME: (pack_str, unpack_str),
+        # TODO: can't use strings in current configuration b/c command_codecs requires a fixed number of bytes
         VALUE: (pack_double, unpack_double),
         STATE: (pack_bool, unpack_bool),
-        INTERVAL: (pack_unsigned_int, unpack_unsigned_int)
+        INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
+        DELAY: (pack_unsigned_short, unpack_unsigned_short)
     }
 
     def __init__(self, parent):

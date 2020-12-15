@@ -44,7 +44,7 @@ POSITION_Z = "position_z"
 
 ACCELERATE = "accelerate"
 
-INDEX = "name"
+NAME = "name"
 VALUE = "value"
 
 AZIMUTH = "theta"
@@ -52,6 +52,7 @@ ELEVATION = "phi"
 
 STATE = "state"
 INTERVAL = "interval"
+DELAY = "delay"
 
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000

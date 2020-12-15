@@ -5,7 +5,10 @@ import os
 import time
 from utils.log import get_log
 
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE
+
 logger = get_log()
+
 
 class CommandDefinitions:
     def __init__(self, parent):
@@ -118,8 +121,8 @@ class CommandDefinitions:
     def set_parameter(self, **kwargs):
         """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
         string which we can't pack/unpack """
-        name = kwargs['name']
-        value = kwargs['value']
+        name = kwargs[NAME]
+        value = kwargs[VALUE]
 
         initial_value = getattr(self.parent.constants, name)
         setattr(self.parent.constants, name, value)
@@ -137,7 +140,7 @@ class CommandDefinitions:
             if value >= constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
                 self.parent.logger.error(
                     f"New value for Exit LB thresh must be less than current Enter LB thresh value")
-                assert 0 == 1
+                assert False
             self.set_parameter(name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
         except AssertionError:
             self.parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
@@ -145,7 +148,7 @@ class CommandDefinitions:
     def set_opnav_interval(self, **kwargs):
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
             requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
-        value = kwargs['interval']
+        value = kwargs[INTERVAL]
         try:
             assert value > 1
             self.set_parameter(name="OPNAV_INTERVAL", value=value)
@@ -179,8 +182,8 @@ class CommandDefinitions:
         raise NotImplementedError
 
     def electrolysis(self, **kwargs):
-        state = kwargs['state']
-        delay = kwargs['delay']
+        state = kwargs[STATE]
+        delay = kwargs.get(DELAY, 0)
         assert state is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
@@ -217,11 +220,10 @@ class CommandDefinitions:
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
 
-    # TODO
     def print_parameter(self, **kwargs):
         index = kwargs["index"]
-        value = constants
-        self.parent.logger.info()
+        value = getattr(self.parent.constants, str(index))
+        self.parent.logger.info(f"{index}:{value}")
 
     def reboot_gom(self):
         self.parent.gom.gom.reboot()
@@ -238,8 +240,7 @@ class CommandDefinitions:
 
     def gom_command(self, command_string: str, args: dict):
         """Generalized Gom command - very powerful and possibly dangerous.
-        Make sure you know exactly what you're doing when calling this.
-        Will not work for flight since we dont have any string packers/unpackers"""
+        Make sure you know exactly what you're doing when calling this."""
         method_to_call = getattr(self.parent.gom, command_string)
         try:
             result = method_to_call(**args)
@@ -249,8 +250,7 @@ class CommandDefinitions:
 
     def general_command(self, method_name: str, args: dict):
         """Generalized satellite action command - very powerful and possibly dangerous.
-            Make sure you know exactly what you're doing when calling this.
-            Will not work for flight since we dont have any string packers/unpackers"""
+            Make sure you know exactly what you're doing when calling this."""
 
         method_to_call = getattr(self.parent, method_name)
         try:

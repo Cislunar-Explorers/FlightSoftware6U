@@ -1,39 +1,23 @@
 from communications.commands import CommandHandler
 from utils.log import get_log
+import json
 
 logger = get_log()
 
 # Commands we want to execute for demo: (bootup) split, change FM and "run" opnav, start/stop electrolysis
 ch = CommandHandler()
-commands = [None] * 5
 
-# split
-commands[0] = ch.pack_command(0, 1)
-
-# opnav
-commands[1] = ch.pack_command(2, 1)
-
-# start electrolysis
-commands[2] = ch.pack_command(2, 3, **{"state": True})
-
-# stop electrolysis
-commands[3] = ch.pack_command(2, 3, **{"state": False})
-
-user_in = int(0)
+fm_num = int(0)
 filename = "command_queue.txt"
-while user_in > -1:
-    user_in = int(input("What command would you like to send?\n"
-                        "1: split\n"
-                        "2: opnav\n"
-                        "3: electrolysis start\n"
-                        "4: electrolysis stop\n"
-                        "5: set opnav interval\n"))
-    if user_in > -1:
-        if user_in == 5:
-            interval = int(input("New OpNav interval value (in minutes):"))
-            commands[4] = ch.pack_command(2, 12, **{"interval": interval})
-
-        file = open(filename, "a")
-        file.write(str(commands[user_in - 1].hex()) + "\n")
-        file.close()
-        logger.info(f"Wrote hex bytes {str(commands[user_in - 1].hex())}")
+while fm_num > -1:
+    fm_num = int(input("What flight mode would you like to command in?\n"))
+    if fm_num > -1:
+        command_num = int(input("What command ID would you like to send?\n"))
+        if command_num > -1:
+            kwarg_str = input("Please input any arguments as a json dictionary")
+            kwarg_dict = json.loads(kwarg_str)
+            packed = ch.pack_command(fm_num, command_num, **kwarg_dict)
+            file = open(filename, "a")
+            file.write(str(packed.hex()) + "\n")
+            file.close()
+            logger.info(f"Wrote hex bytes {str(packed.hex())}")

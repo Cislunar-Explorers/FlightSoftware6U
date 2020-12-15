@@ -184,7 +184,7 @@ class CommandDefinitions:
     def electrolysis(self, **kwargs):
         state = kwargs[STATE]
         delay = kwargs.get(DELAY, 0)
-        assert state is bool
+        assert type(state) is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
     def burn(self, **kwargs):

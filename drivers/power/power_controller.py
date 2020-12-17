@@ -460,10 +460,8 @@ class Power:
             delay,
         )
 
-        time.sleep(delay)
-        self.set_single_output("burnwire_2", 1, 0)
-        time.sleep(duration)
-        self.set_single_output("burnwire_2", 0, 0)
+        self.set_single_output("burnwire_2", 1, delay=delay)
+        self.set_single_output("burnwire_2", 0, delay=delay + duration)
 
     def comms(self, transmit):
         if transmit:

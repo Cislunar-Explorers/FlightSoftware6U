@@ -15,7 +15,7 @@ class GyroSensor:
     def get_acceleration(self):
         return self.sensor.acceleration
 
-    def get_gyro(self):
+    def get_gyro(self) -> tuple:
         return self.sensor.gyro
 
 

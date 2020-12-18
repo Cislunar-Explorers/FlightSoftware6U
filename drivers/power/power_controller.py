@@ -126,6 +126,7 @@ class Power:
     # prints housekeeping/config/config2
     def displayAll(self):
         ps.displayHK(self.get_hk_1())
+        ps.displayHk2(self.get_hk_2())
         ps.displayConfig(self.config_get())
         ps.displayConfig2(self.config2_get())
 
@@ -460,8 +461,12 @@ class Power:
             delay,
         )
 
-        self.set_single_output("burnwire_2", 1, delay=delay)
-        self.set_single_output("burnwire_2", 0, delay=delay + duration)
+        time.sleep(delay)
+        self.set_single_output("burnwire_2", 1, 0)
+        time.sleep(duration / 2)
+        self.displayAll()
+        time.sleep(duration / 2)
+        self.set_single_output("burnwire_2", 0, 0)
 
     def comms(self, transmit):
         if transmit:

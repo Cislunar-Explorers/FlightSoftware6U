@@ -5,13 +5,15 @@ from core.attitude import runAttitudeUKF
 import numpy as np
 import traceback
 import pandas as pd
-from FlightSoftware.utils.db import create_sensor_tables_from_path, OpNavCoordinatesModel
-from FlightSoftware.utils.constants import DB_FILE
+from utils.db import create_sensor_tables_from_path, OpNavCoordinatesModel
+from utils.constants import DB_FILE
 from datetime import datetime
 
 """
 Entry point into OpNav. This method calls observe() and process().
 """
+
+
 def start():
     """
     Confirms if estimates were computed successfully and if 
@@ -43,9 +45,9 @@ def start():
     session.add(new_entry)
     session.commit()
     # Check db entries
-    # entries = session.query(OpNavCoordinatesModel).all()
-    # for entry in entries:
-    #     print(entry)
+    entries = session.query(OpNavCoordinatesModel).all()
+    for entry in entries:
+        print(entry)
     return 0
 
 """

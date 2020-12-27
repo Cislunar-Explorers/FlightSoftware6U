@@ -72,7 +72,7 @@ class FMEnum(IntEnum):
     Boot = 0
     Restart = 1
     Normal = 2
-    LowBatterySafety = 3
+    LowBattery = 3
     Safety = 4
     OpNav = 5
     Maneuver = 6

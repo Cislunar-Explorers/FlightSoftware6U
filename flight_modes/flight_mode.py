@@ -58,50 +58,23 @@ class FlightMode:
     def update_state(self):
         flight_mode_id = self.flight_mode_id
 
-        # Burn command queue logic
-        # TODO implment need_to_burn function in ADC driver
-        if self.parent.pressure_sensor.need_to_burn():
-            self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
-            return
+        # # Burn command queue logic
+        # # TODO implment need_to_burn function in ADC driver
+        # if self.parent.pressure_sensor.need_to_burn():
+        #     self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
+        #     return
 
-        # TODO is this staying?
+        # Check if low battery (if yes, switch to low battery)
+        # Override this for low battery mode
+        if self.gom.read_battery_percentage() < ENTER_LOW_BATTERY_MODE_THRESHOLD:
+            self.parent.replace_flight_mode_by_id(FMEnum.LowBattery.value)
+
         # Check if opnav needs to be run
+        # Transfers flight mode --> OpNav mode
         curr_time = datetime.now()
         time_diff = curr_time - self.parent.last_opnav_run
         if time_diff.seconds * 60 > OPNAV_INTERVAL:
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
-
-        # Go from low battery mode --> normal mode
-        elif flight_mode_id == FMEnum.LowBatterySafety.value:
-            if (
-                self.gom.read_battery_percentage()
-                >= EXIT_LOW_BATTERY_MODE_THRESHOLD
-            ):
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
-        elif flight_mode_id == FMEnum.Safety.value:
-            raise NotImplementedError  # TODO
-
-        # TODO
-        elif flight_mode_id == FMEnum.Normal.value:
-            # If low battery, go from normal mode --> low battery mode
-            if (
-                self.gom.read_battery_percentage()
-                < ENTER_LOW_BATTERY_MODE_THRESHOLD
-            ):
-                self.parent.replace_flight_mode_by_id(FMEnum.LowBatterySafety)
-
-            # TODO do I need to enter electrolysis to prepare for maneuver?
-            # do I need to start a maneuver?
-            # do I need to run OpNav?
-
-        elif flight_mode_id == FMEnum.Boot.value:
-            pass
-
-        # don't think this is needed, commenting out for now
-        # elif flight_mode_id == FMEnum.Restart.value:
-        #     if self.task_completed is True:
-        #         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
         elif flight_mode_id == FMEnum.Maneuver.value:
             if self.task_completed is True:
@@ -154,31 +127,20 @@ class FlightMode:
         pass
 
 
-class TestMode(FlightMode):
-
-    flight_mode_id = FMEnum.TestMode.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        raise NotImplementedError
-
-
-class CommsMode(FlightMode):
-
-    flight_mode_id = FMEnum.CommsMode.value
+class LowBatteryMode(FlightMode):
+    flight_mode_id = FMEnum.LowBattery.value
 
     def __init__(self, parent):
         super().__init__(parent)
-        raise NotImplementedError
 
+    def update_state(self):
+        # If battery charged, change back to NormalMode
+        if self.gom.read_battery_percentage() >= EXIT_LOW_BATTERY_MODE_THRESHOLD:
+            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+        # TODO point solar panels directly at the sun
 
-class SensorMode(FlightMode):
-
-    flight_mode_id = FMEnum.SensorMode.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        raise NotImplementedError
+    def run_mode(self):
+        pass
 
 
 # BootUp mode tasks:
@@ -236,18 +198,6 @@ class RestartMode(FlightMode):
     def run_mode(self):
         pass
 
-class LowBatterySafetyMode(FlightMode):
-
-    flight_mode_id = FMEnum.LowBatterySafety.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    # TODO point solar panels directly at the sun
-    # check power supply to see if I can transition back to NormalMode
-    def run_mode(self):
-        pass
-
 
 # Model for FlightModes that require precise timing
 # Pause garbage collection and anything else that could
@@ -284,17 +234,6 @@ class ManeuverMode(PauseBackgroundMode):
         self.moves_towards_goal()
         if self.moves_towards_goal >= self.goal:
             self.task_completed()
-
-
-class SafeMode(FlightMode):
-
-    flight_mode_id = FMEnum.Safety.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def run_mode(self):
-        print("Execute safe mode")
 
 
 class OpNavManeuverMode(FlightMode):

@@ -2,12 +2,12 @@ from .flight_mode import (
     BootUpMode,
     RestartMode,
     NormalMode,
-    LowBatterySafetyMode,
-    SafeMode,
+    LowBatteryMode,
+    #SafeMode,
     ManeuverMode,
-    SensorMode,
-    TestMode,
-    CommsMode,
+    #SensorMode,
+    #TestMode,
+    #CommsMode,
     OpNavManeuverMode
 )
 from .opnav_flightmode import OpNavMode
@@ -18,7 +18,7 @@ FLIGHT_MODE_DICT = {
     FMEnum.Boot.value: BootUpMode,
     FMEnum.Restart.value: RestartMode,
     FMEnum.Normal.value: NormalMode,
-    FMEnum.LowBatterySafety.value: LowBatterySafetyMode,
+    FMEnum.LowBattery.value: LowBatteryMode,
     FMEnum.Safety.value: SafeMode,
     FMEnum.OpNav.value: OpNavMode,
     FMEnum.Maneuver.value: ManeuverMode,

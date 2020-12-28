@@ -6,3 +6,4 @@ SQLalchemy
 adafruit-circuitpython-busdevice
 vcgencmd
 Adafruit-Blinka
+adafruit-circuitpython-bno055

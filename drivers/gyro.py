@@ -3,7 +3,7 @@ import board
 import busio
 import adafruit_bno055
 
-
+# for help check out https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/python-circuitpython
 class GyroSensor:
     def __init__(self):
         self.i2c = busio.I2C(board.SCL, board.SDA)

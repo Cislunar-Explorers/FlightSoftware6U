@@ -7,11 +7,16 @@ from flight_modes.flight_mode import FlightMode
 import os
 import random
 from utils.log import get_log
+from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
 
 logger = get_log()
 
 
 class BootUpMode(FlightMode):
+    flight_mode_id = FMEnum.Boot.value
+    command_codecs = {BootCommandEnum.Split.value: ([], 0)}
+    command_arg_unpackers = {}
+
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -53,6 +58,10 @@ class BootUpMode(FlightMode):
 
 
 class RestartMode(FlightMode):
+    command_codecs = {}
+    command_arg_unpackers = {}
+    flight_mode_id = FMEnum.Restart.value
+
     def __init__(self, parent):
         super().__init__(parent)
 

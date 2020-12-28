@@ -13,6 +13,7 @@ from utils.constants import (  # noqa F401
     FMEnum,
     NormalCommandEnum,
     BootCommandEnum,
+    TestCommandEnum,
     POSITION_X,
     POSITION_Y,
     POSITION_Z,
@@ -71,7 +72,6 @@ class FlightMode:
     def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
-        self.commands = CommandDefinitions(parent)
 
     @classmethod
     def update_state(self):
@@ -148,8 +148,8 @@ class FlightMode:
                 try:
                     command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
                     logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
-                    assert command_fm in self.commands.COMMAND_DICT
-                    assert command_id in self.commands.COMMAND_DICT[command_fm]
+                    assert command_fm in self.parent.command_definitions.COMMAND_DICT
+                    assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
                 except AssertionError:
                     self.parent.logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
                     bogus = True
@@ -159,8 +159,9 @@ class FlightMode:
                     if command_fm != self.flight_mode_id:
                         self.parent.replace_flight_mode_by_id(command_fm)
 
-                    method_to_run = self.commands.COMMAND_DICT[command_fm][command_id]
-                    method_to_run(**command_kwargs)
+                    # locate which method to run:
+                    method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
+                    method_to_run(**command_kwargs)  # run that method
                 finished_commands.append(command)
             # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
             #  exception occurs in the above for loop
@@ -191,17 +192,41 @@ class FlightMode:
             self.parent.logger.error(f"Failed with traceback:\n {tb}")
 
 
-class TestMode(FlightMode):
+# Model for FlightModes that require precise timing
+# Pause garbage collection and anything else that could
+# interrupt critical thread
+class PauseBackgroundMode(FlightMode):
+    def register_commands(self):
+        super().register_commands()
 
+    def run_mode(self):
+        super().run_mode()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def __enter__(self):
+        super().__enter__()
+        gc.disable()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        gc.collect()
+        gc.enable()
+        super().__exit__()
+
+
+class TestMode(PauseBackgroundMode):
     flight_mode_id = FMEnum.TestMode.value
 
     def __init__(self, parent):
         super().__init__(parent)
-        raise NotImplementedError
+
+    command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0)}
+
+    command_arg_unpackers = {}
 
 
 class CommsMode(FlightMode):
-
     flight_mode_id = FMEnum.CommsMode.value
 
     def __init__(self, parent):
@@ -291,29 +316,6 @@ class LowBatterySafetyMode(FlightMode):
     # check power supply to see if I can transition back to NormalMode
     def run_mode(self):
         pass
-
-
-# Model for FlightModes that require precise timing
-# Pause garbage collection and anything else that could
-# interrupt critical thread
-class PauseBackgroundMode(FlightMode):
-    def register_commands(self):
-        super().register_commands()
-
-    def run_mode(self):
-        super().run_mode()
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def __enter__(self):
-        super().__enter__()
-        gc.disable()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        gc.collect()
-        gc.enable()
-        super().__exit__()
 
 
 class ManeuverMode(PauseBackgroundMode):

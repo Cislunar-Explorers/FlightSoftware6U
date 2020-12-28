@@ -6,7 +6,7 @@ import adafruit_bno055
 
 class GyroSensor:
     def __init__(self):
-        self.i2c = i2c = busio.I2C(board.SCL, board.SDA)
+        self.i2c = busio.I2C(board.SCL, board.SDA)
         self.sensor = adafruit_bno055.BNO055_I2C(i2c)
 
     def get_temperature(self):
@@ -81,11 +81,10 @@ def estimate_constant_bias():
 def estimate_white_noise():
     pass
 
-
 # User these lines for UART
 # uart = busio.UART(board.TX, board.RX)
 # sensor = adafruit_bno055.BNO055_UART(uart)
 
 
-if __name__ == "__main__":
-    read_all_sensor_values()
+# if __name__ == "__main__":
+#    read_all_sensor_values()

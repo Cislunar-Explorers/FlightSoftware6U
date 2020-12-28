@@ -21,8 +21,9 @@ from utils.constants import (
 
 import utils.constants
 from utils.db import create_sensor_tables_from_path
-# from communications.comms_driver import CommunicationsSystem
+from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
+from drivers.gyro import GyroSensor
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -64,12 +65,14 @@ class MainSatelliteThread(Thread):
         )
         self.comms.listen()
 
-
     # TODO
+
     def init_sensors(self):
         self.gom = Gomspace()
+        self.gyro = GyroSensor()
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
+
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)

@@ -1,14 +1,10 @@
 from datetime import datetime
 import utils.constants as constants
-from utils.constants import FMEnum
+from utils.constants import FMEnum, NormalCommandEnum
 import os
 import time
-from utils.log import get_log
-
+from threading import Thread
 from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE
-
-logger = get_log()
-
 
 class CommandDefinitions:
     def __init__(self, parent):
@@ -16,9 +12,10 @@ class CommandDefinitions:
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}
         self.normal_commands = {
-            1: self.run_opnav,
-            2: self.change_attitude,
-            3: self.electrolysis,
+            # TODO: use CommandEnums instead of hardcoded values for all commands below
+            NormalCommandEnum.RunOpNav.value: self.run_opnav,
+            NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
+            NormalCommandEnum.SetElectrolysis.value: self.electrolysis,
             5: self.set_parameter,
             6: self.gather_critical_telem,
             7: self.gather_basic_telem,
@@ -112,12 +109,33 @@ class CommandDefinitions:
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
 
     def separation_test(self):
-        pass
+        gyro_threader = Thread(target=self.gyro_thread)
+        gyro_threader.start()
+        self.parent.gom.burnwire2(2)
+        gyro_threader.join()
+
+    def gyro_thread(self):
+        freq = 250  # Hz
+        duration = 4  # sec
+        gyro_data = []
+        self.parent.logger.info("Reading Gyro data (rad/s)")
+        for i in range(int(duration * freq)):
+            gyro_reading = self.parent.gyro.get_gyro()
+            gyro_time = time.time()
+            gyro_list = list(gyro_reading)
+            gyro_list.append(gyro_time)
+            gyro_data.append(gyro_list)
+            time.sleep(1.0 / freq)
+
+        # writes gyro data to gyro_data.txt. Caution, this file will be overwritten with every successive test
+        self.parent.logger.info("Writing gyro data to file")
+        with open('gyro_data.txt', 'w') as filehandle:
+            filehandle.writelines("%s\n" % line for line in gyro_data)
 
     def run_opnav(self):
-        logger.info("Running OpNav Pipeline")
+        self.parent.logger.info("Running OpNav Pipeline")
         time.sleep(10)
-        logger.info("OpNav calculations complete. Resulting attitude is [x, y, z, phi, theta]")
+        self.parent.logger.info("OpNav calculations complete. Resulting attitude is [x, y, z, phi, theta]")
         if self.parent.flight_mode.flight_mode_id == 2:
             self.parent.flight_mode.last_opnav_run = datetime.now()
         # self.parent.run_opnav

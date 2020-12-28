@@ -30,6 +30,7 @@ from flight_modes.restart_reboot import (
 )
 from flight_modes.flight_mode_factory import build_flight_mode
 from communications.commands import CommandHandler
+from communications.command_definitions import CommandDefinitions
 
 FOR_FLIGHT = None
 
@@ -42,6 +43,7 @@ class MainSatelliteThread(Thread):
         self.burn_queue = Queue()
         # self.init_comms()
         self.command_handler = CommandHandler()
+        self.command_definitions = CommandDefinitions(self)
         self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR

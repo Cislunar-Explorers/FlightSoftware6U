@@ -3,3 +3,6 @@ pigpio
 RPi.GPIO
 dotenv
 SQLalchemy
+adafruit-circuitpython-busdevice
+vcgencmd
+Adafruit-Blinka

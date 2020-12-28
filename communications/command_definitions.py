@@ -69,7 +69,9 @@ class CommandDefinitions:
         self.test_commands = {
             2: self.split,
             3: self.run_opnav,
-            6: self.gom_outputs}
+            5: self.separation_test,
+            6: self.gom_outputs
+        }
 
         self.comms_commands = {}
 
@@ -108,6 +110,9 @@ class CommandDefinitions:
         # self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
+
+    def separation_test(self):
+        pass
 
     def run_opnav(self):
         logger.info("Running OpNav Pipeline")
@@ -229,7 +234,7 @@ class CommandDefinitions:
         self.parent.gom.gom.reboot()
 
     def power_cycle(self, **kwargs):
-        passcode = kwargs['passcode']
+        passcode = kwargs.get('passcode', 'bogus')
         self.parent.gom.hard_reset(passcode)
 
     def gom_outputs(self, **kwargs):

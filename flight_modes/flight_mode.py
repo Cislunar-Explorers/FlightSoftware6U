@@ -212,7 +212,7 @@ class PauseBackgroundMode(FlightMode):
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
-        super().__exit__()
+        super().__exit__(exc_type, exc_val, exc_tb)
 
 
 class TestMode(PauseBackgroundMode):
@@ -220,6 +220,9 @@ class TestMode(PauseBackgroundMode):
 
     def __init__(self, parent):
         super().__init__(parent)
+
+    def run_mode(self):
+        pass
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0)}
 

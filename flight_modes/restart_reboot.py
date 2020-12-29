@@ -90,7 +90,7 @@ class RestartMode(FlightMode):
         mux = camera.CameraMux()
         mux.selectCamera(random.choice([1, 2, 3]))
         cam_object = camera.Camera()
-        cam_object.initialize()
+        # cam_object.initialize()
 
         # logger.debug("Taking raw observation to test")
         # cam_object.rawObservation("restart_cam_test.mjpeg")

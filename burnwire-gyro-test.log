@@ -1,0 +1,227 @@
+2020-12-29 16:16:26,734 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:16:27,246 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:16:27,254 [ERROR] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:191] Flight Mode failed with error type <class 'picamera.exc.PiCameraError'> and value Camera is not enabled. Try running 'sudo raspi-config' and ensure that the camera has been enabled.
+2020-12-29 16:16:27,263 [ERROR] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:192] Failed with traceback:
+ <traceback object at 0xb4dfa3c8>
+2020-12-29 16:20:25,953 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:20:26,450 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:20:26,460 [ERROR] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:191] Flight Mode failed with error type <class 'picamera.exc.PiCameraError'> and value Camera is not enabled. Try running 'sudo raspi-config' and ensure that the camera has been enabled.
+2020-12-29 16:20:26,468 [ERROR] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:192] Failed with traceback:
+ <traceback object at 0xb4f6c490>
+2020-12-29 16:26:44,656 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:26:45,148 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:26:45,156 [ERROR] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:191] Flight Mode failed with error type <class 'picamera.exc.PiCameraError'> and value Camera is not enabled. Try running 'sudo raspi-config' and ensure that the camera has been enabled.
+2020-12-29 16:26:45,164 [ERROR] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:192] Failed with traceback:
+ <traceback object at 0xb4dbc030>
+2020-12-29 16:31:15,281 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:15,614 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:20,623 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:20,952 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:25,961 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:26,288 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:31,297 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:31,628 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:36,638 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:37,314 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:42,329 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:43,076 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:48,092 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:48,419 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:53,428 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:53,758 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:31:58,766 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:31:59,175 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:32:04,201 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:150] Received command 8:5 with args {}
+2020-12-29 16:32:04,209 [INFO] [main.py:98] Changed to FM#8
+2020-12-29 16:32:04,226 [INFO] [/home/pi/FlightSoftware/communications/command_definitions.py:119] Reading Gyro data (rad/s)
+2020-12-29 16:32:04,229 [INFO] [/home/pi/FlightSoftware/drivers/power/power_controller.py:457] Turning on burnwire 2 for 2 seconds after a delay of 0 sec
+2020-12-29 16:32:05,266 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:449] [92m***************-HOUSEKEEPING-***************[0m
+2020-12-29 16:32:05,278 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:452] [90mPhoto-voltaic inputs:        [0m1-[91m329mV[0m 2-[91m338mV[0m 3-[91m330mV[0m
+2020-12-29 16:32:05,289 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:455] [90mTotal photo current:         [0m[91m13mA[0m
+2020-12-29 16:32:05,302 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:456] [90mBattery voltage:             [0m[91m7475mV[0m
+2020-12-29 16:32:05,313 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:457] [90mTotal system current:        [0m[91m275mA[0m
+2020-12-29 16:32:05,325 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:466] [90mTemp of boost converters:    [0m1-[91m18degC[0m 2-[91m20degC[0m 3-[91m18degC[0m batt-[91m18degC[0m
+2020-12-29 16:32:05,338 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:472] [90mExternal batt temp:          [0m1-[91m0degC[0m 2-[91m0degC[0m
+2020-12-29 16:32:05,349 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:484] [90mLatchups:                    [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m]
+2020-12-29 16:32:05,361 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:488] [90mCause of last reset:         [0m[91mBrownout or power-on reset[0m
+2020-12-29 16:32:05,371 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:489] [90mNumber of reboots:           [0m[91m49152[0m
+2020-12-29 16:32:05,384 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:490] [90mNumber of software errors:   [0m[91m2[0m
+2020-12-29 16:32:05,396 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:491] [90mPPT mode:                    [0m[91m32[0m
+2020-12-29 16:32:11,755 [INFO] [/home/pi/FlightSoftware/communications/command_definitions.py:129] Writing gyro data to file
+2020-12-29 16:38:28,139 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:38:28,483 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:38:33,492 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:38:33,820 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:38:38,829 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:38:39,156 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:38:44,165 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:38:44,492 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:49:41,469 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:49:42,148 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:49:47,161 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:49:47,839 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:49:52,852 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:49:53,175 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:49:58,184 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:49:58,519 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:50:03,529 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:50:03,857 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:50:08,880 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:150] Received command 8:5 with args {}
+2020-12-29 16:50:08,888 [INFO] [main.py:98] Changed to FM#8
+2020-12-29 16:50:08,898 [INFO] [/home/pi/FlightSoftware/communications/command_definitions.py:119] Reading Gyro data (rad/s)
+2020-12-29 16:50:08,901 [INFO] [/home/pi/FlightSoftware/drivers/power/power_controller.py:457] Turning on burnwire 2 for 2 seconds after a delay of 0 sec
+2020-12-29 16:50:09,941 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:449] [92m***************-HOUSEKEEPING-***************[0m
+2020-12-29 16:50:09,953 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:452] [90mPhoto-voltaic inputs:        [0m1-[91m329mV[0m 2-[91m338mV[0m 3-[91m340mV[0m
+2020-12-29 16:50:09,965 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:455] [90mTotal photo current:         [0m[91m13mA[0m
+2020-12-29 16:50:09,978 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:456] [90mBattery voltage:             [0m[91m7412mV[0m
+2020-12-29 16:50:09,989 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:457] [90mTotal system current:        [0m[91m275mA[0m
+2020-12-29 16:50:10,001 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:466] [90mTemp of boost converters:    [0m1-[91m18degC[0m 2-[91m20degC[0m 3-[91m19degC[0m batt-[91m19degC[0m
+2020-12-29 16:50:10,014 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:472] [90mExternal batt temp:          [0m1-[91m0degC[0m 2-[91m0degC[0m
+2020-12-29 16:50:10,026 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:484] [90mLatchups:                    [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m]
+2020-12-29 16:50:10,038 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:488] [90mCause of last reset:         [0m[91mBrownout or power-on reset[0m
+2020-12-29 16:50:10,051 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:489] [90mNumber of reboots:           [0m[91m49152[0m
+2020-12-29 16:50:10,062 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:490] [90mNumber of software errors:   [0m[91m2[0m
+2020-12-29 16:50:10,074 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:491] [90mPPT mode:                    [0m[91m32[0m
+2020-12-29 16:50:10,120 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:677] 
+Inputs	               |=======|         Outputs            I(mA), LUPs, ttON, ttOFF
+ 1:              +-------------------+   0 (H1-47) --> EN:0 [   0,    0,    0,    0]
+    329 mV ->    |  Voltage          |
+      0 mA ->    |  [1m 7412[0m mV         |   1 (H1-49) --> EN:0 [   1,    0,    0,    0]
+      0 mW ->    |                   |
+                 |  Input            |   2 (H1-51) --> EN:1 [   5,    0,    0,    0]
+ 2:              |     13 mA         |
+    338 mV ->    |     96 mW         |   3 (H1-48) --> EN:0 [   0,    0,    0,    0]
+      0 mA ->    |                   |
+      0 mW ->    |  Output           |   4 (H1-50) --> EN:0 [   0,    0,    0,    0]
+                 |    275 mA         |
+ 3:              |   2038 mW	     |   5 (H1-52) --> EN:0 [   3,    0,    0,    0]
+    340 mV ->    |                   |
+      0 mA ->    |  Mode             |   6         --> EN:0
+      0 mW ->    |  0: [1m[94mInitial[0m      [0m |
+                 +-------------------+   7         --> EN:0
+
+2020-12-29 16:50:10,156 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:680] 
+                 1    2    3    4    5    6
+Temp (degC):    20   19   19    0    0 1795
+
+Boots
+Counts: 213909522
+Last Cause: 2 (I2C WDT reset)
+
+WDTs      i2c   gnd  csp1  csp2
+Count:  4284022784 5505024     0   255
+ Left:   3599   953     5     5
+
+2020-12-29 16:50:10,213 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:531] [92m***************-CONFIG-***************[0m
+2020-12-29 16:50:10,224 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:533] [90mPPT mode:                    [0m[91mFIXED[2][0m
+2020-12-29 16:50:10,238 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:537] [90mBattheater mode:             [0m[91mMANUAL[0][0m
+2020-12-29 16:50:10,249 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:540] [90mBattheater low:              [0m[91m0degC[0m
+2020-12-29 16:50:10,260 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:543] [90mBattheater high:             [0m[91m5degC[0m
+2020-12-29 16:50:10,272 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:557] [90mNominal mode output value:   [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m] 7-[[91m0[0m] 8-[[91m0[0m]
+2020-12-29 16:50:10,284 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:572] [90mSafe mode output value:      [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m] 7-[[91m0[0m] 8-[[91m0[0m]
+2020-12-29 16:50:10,298 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:587] [90mOutput initial on:           [0m1-[[91m0s[0m] 2-[[91m0s[0m] 3-[[91m0s[0m] 4-[[91m0s[0m] 5-[[91m0s[0m] 6-[[91m0s[0m] 7-[[91m0s[0m] 8-[[91m0s[0m]
+2020-12-29 16:50:10,310 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:602] [90mOutput initial off:          [0m1-[[91m0s[0m] 2-[[91m0s[0m] 3-[[91m0s[0m] 4-[[91m0s[0m] 5-[[91m0s[0m] 6-[[91m0s[0m] 7-[[91m0s[0m] 8-[[91m0s[0m]
+2020-12-29 16:50:10,322 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:609] [90mPPT point for boost conv:    [0m1-[91m3700mV[0m 2-[91m3700mV[0m 3-[91m3700mV[0m
+2020-12-29 16:50:10,348 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:616] [92m***************-CONFIG2-***************[0m
+2020-12-29 16:50:10,359 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:618] [90mBatt Max Voltage:            [0m[91m8300mV[0m
+2020-12-29 16:50:10,373 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:621] [90mBatt Safe Voltage:           [0m[91m6700mV[0m
+2020-12-29 16:50:10,384 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:624] [90mBatt Critical Voltage:       [0m[91m6500mV[0m
+2020-12-29 16:50:10,395 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:627] [90mBatt Normal Voltage:         [0m[91m7000mV[0m
+2020-12-29 16:50:16,527 [INFO] [/home/pi/FlightSoftware/communications/command_definitions.py:129] Writing gyro data to file
+2020-12-29 16:50:16,707 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 8
+2020-12-29 16:59:22,887 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:59:23,219 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:59:28,228 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 1
+2020-12-29 16:59:28,557 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 1
+2020-12-29 16:59:33,577 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:150] Received command 8:5 with args {}
+2020-12-29 16:59:33,585 [INFO] [main.py:98] Changed to FM#8
+2020-12-29 16:59:33,595 [INFO] [/home/pi/FlightSoftware/communications/command_definitions.py:119] Reading Gyro data (rad/s)
+2020-12-29 16:59:33,598 [INFO] [/home/pi/FlightSoftware/drivers/power/power_controller.py:457] Turning on burnwire 2 for 2 seconds after a delay of 0 sec
+2020-12-29 16:59:34,647 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:449] [92m***************-HOUSEKEEPING-***************[0m
+2020-12-29 16:59:34,659 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:452] [90mPhoto-voltaic inputs:        [0m1-[91m329mV[0m 2-[91m338mV[0m 3-[91m340mV[0m
+2020-12-29 16:59:34,670 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:455] [90mTotal photo current:         [0m[91m13mA[0m
+2020-12-29 16:59:34,681 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:456] [90mBattery voltage:             [0m[91m7384mV[0m
+2020-12-29 16:59:34,694 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:457] [90mTotal system current:        [0m[91m275mA[0m
+2020-12-29 16:59:34,706 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:466] [90mTemp of boost converters:    [0m1-[91m19degC[0m 2-[91m20degC[0m 3-[91m19degC[0m batt-[91m19degC[0m
+2020-12-29 16:59:34,717 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:472] [90mExternal batt temp:          [0m1-[91m0degC[0m 2-[91m0degC[0m
+2020-12-29 16:59:34,731 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:484] [90mLatchups:                    [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m]
+2020-12-29 16:59:34,742 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:488] [90mCause of last reset:         [0m[91mBrownout or power-on reset[0m
+2020-12-29 16:59:34,753 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:489] [90mNumber of reboots:           [0m[91m49152[0m
+2020-12-29 16:59:34,766 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:490] [90mNumber of software errors:   [0m[91m2[0m
+2020-12-29 16:59:34,777 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:491] [90mPPT mode:                    [0m[91m32[0m
+2020-12-29 16:59:34,820 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:677] 
+Inputs	               |=======|         Outputs            I(mA), LUPs, ttON, ttOFF
+ 1:              +-------------------+   0 (H1-47) --> EN:0 [   0,    0,    0,    0]
+    329 mV ->    |  Voltage          |
+      0 mA ->    |  [1m 7384[0m mV         |   1 (H1-49) --> EN:0 [   1,    0,    0,    0]
+      0 mW ->    |                   |
+                 |  Input            |   2 (H1-51) --> EN:1 [   5,    0,    0,    0]
+ 2:              |     13 mA         |
+    338 mV ->    |     95 mW         |   3 (H1-48) --> EN:0 [   0,    0,    0,    0]
+      0 mA ->    |                   |
+      0 mW ->    |  Output           |   4 (H1-50) --> EN:0 [   0,    0,    0,    0]
+                 |    275 mA         |
+ 3:              |   2030 mW	     |   5 (H1-52) --> EN:0 [   3,    0,    0,    0]
+    340 mV ->    |                   |
+      0 mA ->    |  Mode             |   6         --> EN:0
+      0 mW ->    |  0: [1m[94mInitial[0m      [0m |
+                 +-------------------+   7         --> EN:0
+
+2020-12-29 16:59:34,851 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:680] 
+                 1    2    3    4    5    6
+Temp (degC):    20   19   19    0    0 1795
+
+Boots
+Counts: 213909523
+Last Cause: 2 (I2C WDT reset)
+
+WDTs      i2c   gnd  csp1  csp2
+Count:  4284022784 5505024     0   255
+ Left:   3599   405     5     5
+
+2020-12-29 16:59:34,894 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:531] [92m***************-CONFIG-***************[0m
+2020-12-29 16:59:34,905 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:533] [90mPPT mode:                    [0m[91mFIXED[2][0m
+2020-12-29 16:59:34,918 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:537] [90mBattheater mode:             [0m[91mMANUAL[0][0m
+2020-12-29 16:59:34,930 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:540] [90mBattheater low:              [0m[91m0degC[0m
+2020-12-29 16:59:34,956 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:543] [90mBattheater high:             [0m[91m5degC[0m
+2020-12-29 16:59:34,970 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:557] [90mNominal mode output value:   [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m] 7-[[91m0[0m] 8-[[91m0[0m]
+2020-12-29 16:59:34,982 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:572] [90mSafe mode output value:      [0m1-[[91m0[0m] 2-[[91m0[0m] 3-[[91m0[0m] 4-[[91m0[0m] 5-[[91m0[0m] 6-[[91m0[0m] 7-[[91m0[0m] 8-[[91m0[0m]
+2020-12-29 16:59:34,994 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:587] [90mOutput initial on:           [0m1-[[91m0s[0m] 2-[[91m0s[0m] 3-[[91m0s[0m] 4-[[91m0s[0m] 5-[[91m0s[0m] 6-[[91m0s[0m] 7-[[91m0s[0m] 8-[[91m0s[0m]
+2020-12-29 16:59:35,008 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:602] [90mOutput initial off:          [0m1-[[91m0s[0m] 2-[[91m0s[0m] 3-[[91m0s[0m] 4-[[91m0s[0m] 5-[[91m0s[0m] 6-[[91m0s[0m] 7-[[91m0s[0m] 8-[[91m0s[0m]
+2020-12-29 16:59:35,019 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:609] [90mPPT point for boost conv:    [0m1-[91m3700mV[0m 2-[91m3700mV[0m 3-[91m3700mV[0m
+2020-12-29 16:59:35,043 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:616] [92m***************-CONFIG2-***************[0m
+2020-12-29 16:59:35,053 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:618] [90mBatt Max Voltage:            [0m[91m8300mV[0m
+2020-12-29 16:59:35,066 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:621] [90mBatt Safe Voltage:           [0m[91m6700mV[0m
+2020-12-29 16:59:35,078 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:624] [90mBatt Critical Voltage:       [0m[91m6500mV[0m
+2020-12-29 16:59:35,089 [INFO] [/home/pi/FlightSoftware/drivers/power/power_structs.py:627] [90mBatt Normal Voltage:         [0m[91m7000mV[0m
+2020-12-29 16:59:41,159 [INFO] [/home/pi/FlightSoftware/communications/command_definitions.py:129] Writing gyro data to file
+2020-12-29 16:59:41,340 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 8
+2020-12-29 16:59:41,531 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 8
+2020-12-29 16:59:46,540 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 8
+2020-12-29 16:59:46,726 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 8
+2020-12-29 16:59:51,736 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 8
+2020-12-29 16:59:51,921 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 8
+2020-12-29 16:59:56,930 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 8
+2020-12-29 16:59:57,129 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 8
+2020-12-29 17:00:02,138 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 8
+2020-12-29 17:00:02,316 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 8
+2020-12-29 17:00:07,325 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 8
+2020-12-29 17:00:07,513 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 8
+2020-12-29 17:00:12,531 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:150] Received command 2:0 with args {}
+2020-12-29 17:00:12,538 [INFO] [main.py:98] Changed to FM#2
+2020-12-29 17:00:12,546 [CRITICAL] [/home/pi/FlightSoftware/communications/command_definitions.py:99] Manual FM switch commanded
+2020-12-29 17:00:12,554 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 2
+2020-12-29 17:00:12,572 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:398] In NORMAL flight mode. Minutes until next OpNav run: 59.0783622
+2020-12-29 17:00:12,580 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 2
+2020-12-29 17:00:17,589 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 2
+2020-12-29 17:00:17,605 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:398] In NORMAL flight mode. Minutes until next OpNav run: 58.99447681666667
+2020-12-29 17:00:17,613 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 2
+2020-12-29 17:00:22,622 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 2
+2020-12-29 17:00:22,636 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:398] In NORMAL flight mode. Minutes until next OpNav run: 58.9106365
+2020-12-29 17:00:22,643 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 2
+2020-12-29 17:00:27,653 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 2
+2020-12-29 17:00:27,667 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:398] In NORMAL flight mode. Minutes until next OpNav run: 58.826780183333334
+2020-12-29 17:00:27,675 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 2
+2020-12-29 17:00:32,688 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:185] Starting flight mode 2
+2020-12-29 17:00:32,701 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:398] In NORMAL flight mode. Minutes until next OpNav run: 58.74287003333333
+2020-12-29 17:00:32,710 [INFO] [/home/pi/FlightSoftware/flight_modes/flight_mode.py:189] Finishing flight mode 2

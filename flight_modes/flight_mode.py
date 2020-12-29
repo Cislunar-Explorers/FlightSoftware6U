@@ -359,6 +359,7 @@ class NormalMode(FlightMode):
     flight_mode_id = FMEnum.Normal.value
 
     command_codecs = {
+        NormalCommandEnum.Switch.value: ([], 0),
         NormalCommandEnum.RunOpNav.value: ([], 0),
         NormalCommandEnum.SetDesiredAttitude.value: (
             [AZIMUTH, ELEVATION], 16),

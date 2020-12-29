@@ -1,10 +1,12 @@
 from datetime import datetime
 import utils.constants as constants
-from utils.constants import FMEnum, NormalCommandEnum
+from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum
+from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
 from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE
+
 
 class CommandDefinitions:
     def __init__(self, parent):
@@ -16,39 +18,31 @@ class CommandDefinitions:
             NormalCommandEnum.RunOpNav.value: self.run_opnav,
             NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
             NormalCommandEnum.SetElectrolysis.value: self.electrolysis,
-            5: self.set_parameter,
-            6: self.gather_critical_telem,
-            7: self.gather_basic_telem,
-            8: self.gather_detailed_telem,
-            9: self.verification,
-            11: self.print_parameter,
-            12: self.set_opnav_interval
-        }
-
-        self.electrolysis_commands = {
-            1: self.electrolysis,
-            5: self.set_parameter,
-            6: self.gather_critical_telem,
-            7: self.gather_basic_telem,
-            8: self.gather_detailed_telem
+            NormalCommandEnum.SetParam.value: self.set_parameter,
+            NormalCommandEnum.CritTelem.value: self.gather_critical_telem,
+            NormalCommandEnum.BasicTelem.value: self.gather_basic_telem,
+            NormalCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
+            NormalCommandEnum.Verification.value: self.verification,
+            NormalCommandEnum.GetParam.value: self.print_parameter,
+            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval
         }
 
         self.low_battery_commands = {
-            1: self.return_to_normal,
-            2: self.set_exit_lowbatt_threshold,
-            5: self.set_parameter,
-            6: self.gather_critical_telem,
-            7: self.gather_basic_telem,
-            8: self.gather_detailed_telem,
+            LBSCEnum.ExitLBSafetyMode.value: self.return_to_normal,
+            LBSCEnum.SetExitLBSafetyMode.value: self.set_exit_lowbatt_threshold,
+            LBSCEnum.SetParam.value: self.set_parameter,
+            LBSCEnum.CritTelem.value: self.gather_critical_telem,
+            LBSCEnum.BasicTelem.value: self.gather_basic_telem,
+            LBSCEnum.DetailedTelem.value: self.gather_detailed_telem,
         }
 
         self.safety_commands = {
-            1: self.return_to_normal,
+            SafetyCommandEnum.ExitSafetyMode.value: self.return_to_normal,
             # 2: Not Implemented/need clarification,
-            5: self.set_parameter,
-            6: self.gather_critical_telem,
-            7: self.gather_basic_telem,
-            8: self.gather_detailed_telem
+            SafetyCommandEnum.SetParameter.value: self.set_parameter,
+            SafetyCommandEnum.CritTelem.value: self.gather_critical_telem,
+            SafetyCommandEnum.BasicTelem.value: self.gather_basic_telem,
+            SafetyCommandEnum.DetailedTelem.value: self.gather_detailed_telem
         }
 
         self.opnav_commands = {
@@ -73,15 +67,16 @@ class CommandDefinitions:
         self.comms_commands = {}
 
         self.command_commands = {
-            1: self.set_parameter,
-            2: self.set_system_clock,
-            3: self.reboot_pi,
-            4: self.reboot_gom,
-            5: self.power_cycle,
-            6: self.gom_outputs,
-            7: self.gom_command,
-            8: self.general_command,
-            170: self.cease_comms}
+            CommandCommandEnum.SetParam.value: self.set_parameter,
+            CommandCommandEnum.SetSystemTime.value: self.set_system_clock,
+            CommandCommandEnum.RebootPi.value: self.reboot_pi,
+            CommandCommandEnum.RebootGom.value: self.reboot_gom,
+            CommandCommandEnum.PowerCycle.value: self.power_cycle,
+            CommandCommandEnum.GomPin.value: self.gom_outputs,
+            CommandCommandEnum.GomGeneralCmd.value: self.gom_command,
+            CommandCommandEnum.GeneralCmd.value: self.general_command,
+            CommandCommandEnum.CeaseComms.value: self.cease_comms
+        }
 
         self.COMMAND_DICT = {
             FMEnum.Boot.value: self.bootup_commands,
@@ -97,8 +92,11 @@ class CommandDefinitions:
             FMEnum.Command.value: self.command_commands
         }
 
+        for value in self.COMMAND_DICT.values():
+            value[0] = self.switch  # adds 0 to all of the dict entries in COMMAND_DICT
+
     def switch(self):
-        pass
+        self.parent.logger.critical("Manual FM switch commanded")
 
     def split(self):
         # for demo, delay of 0

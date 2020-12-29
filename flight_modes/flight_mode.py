@@ -364,7 +364,7 @@ class NormalMode(FlightMode):
             [AZIMUTH, ELEVATION], 16),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-        NormalCommandEnum.SetParameter.value: ([NAME, VALUE], 12),
+        NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4)
     }

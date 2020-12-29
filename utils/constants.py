@@ -114,22 +114,14 @@ class NormalCommandEnum(IntEnum):
     # Really not sure what 3 and 4 are supposed to do:
     # SetAccelerate = 3  # arg=true/false
     # SetBreakpoint = 4  # arg=position x, y, z
-    SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
+    SetParam = 5
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
     Verification = 9
+    GetParam = 11
     SetOpnavInterval = 12
 
-
-@unique
-class ElectrolysisCommandEnum(IntEnum):
-    Switch = 0
-    SetElectrolyzer = 1
-    SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
 
 
 @unique
@@ -137,10 +129,10 @@ class LowBatterySafetyCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     ExitLBSafetyMode = 1  # no args, # XXX this is an override command
     SetExitLBSafetyMode = 2  # define battery percentage
-    SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
+    SetParam = 5
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
 
 
 @unique
@@ -149,9 +141,9 @@ class SafetyCommandEnum(IntEnum):
     ExitSafetyMode = 1
     SetExitSafetyMode = 2
     SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
 
 
 @unique

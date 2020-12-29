@@ -1,5 +1,5 @@
 from datetime import datetime
-import utils.constants as constants
+
 from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
@@ -100,7 +100,7 @@ class CommandDefinitions:
 
     def split(self):
         # for demo, delay of 0
-        self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=0)
+        self.parent.gom.burnwire2(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
         # Tell gom to power burnwires in five seconds
         # self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
@@ -158,7 +158,7 @@ class CommandDefinitions:
         value = kwargs['value']
         try:
             assert 0 < value < 1.0 and float(value) is float
-            if value >= constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+            if value >= self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
                 self.parent.logger.error(
                     f"New value for Exit LB thresh must be less than current Enter LB thresh value")
                 assert False
@@ -220,10 +220,10 @@ class CommandDefinitions:
         if delay < 0:
             self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
         else:
-            self.parent.gom.glowplug(constants.GLOWPLUG_DURATION, delay=delay)
+            self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
 
     def return_to_normal(self):
-        self.parent.replace_flight_mode_by_id(constants.FMEnum.Normal.value)
+        self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
     def reboot_pi(self):
         os.system("reboot")

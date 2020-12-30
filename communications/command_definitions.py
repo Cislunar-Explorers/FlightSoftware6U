@@ -199,10 +199,10 @@ class CommandDefinitions:
         raise NotImplementedError
 
     def verification(self):
-        data_block_sequence_num = 0x0000
+        data_block_sequence_num = 0
         team_bytes = team_identifier.to_bytes(4, 'big')
-        num_blocks = 5
-        operating_period_timestamp = 1609296197
+        num_blocks = 78
+        operating_period_timestamp = 1609311600
         operating_period_base_seed = team_identifier ^ operating_period_timestamp
 
         data_transmission_sequence = bytes()
@@ -216,7 +216,7 @@ class CommandDefinitions:
 
             block_seed = operating_period_base_seed ^ data_block_sequence_num
 
-            prn_length = 128 / 4
+            prn_length = 128 // 4
             prn = [None] * prn_length
             prn[0] = block_seed
 

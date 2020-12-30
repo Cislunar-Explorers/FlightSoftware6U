@@ -5,7 +5,7 @@ import adafruit_fxos8700
 import adafruit_fxas21002c
 
 
-class GyroSensor:
+class GyroSensor:  # TODO rename class and file to something more representative
     def __init__(self):
         self.i2c = busio.I2C(board.SCL, board.SDA)
         self.fxos = adafruit_fxos8700.FXOS8700(self.i2c)

@@ -1,4 +1,6 @@
 # Camera mux imports
+# pip3 install adafruit-circuitpython-busdevice vcgencmd Adafruit-Blinka
+
 import board
 import busio
 from digitalio import DigitalInOut, Direction

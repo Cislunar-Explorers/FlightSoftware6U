@@ -1,6 +1,4 @@
-from .flight_mode import (
-    BootUpMode,
-    RestartMode,
+from flight_modes.flight_mode import (
     NormalMode,
     LowBatterySafetyMode,
     SafeMode,
@@ -9,6 +7,8 @@ from .flight_mode import (
     TestMode,
     CommsMode,
 )
+
+from flight_modes.restart_reboot import RestartMode, BootUpMode
 from .opnav_flightmode import OpNavMode
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException

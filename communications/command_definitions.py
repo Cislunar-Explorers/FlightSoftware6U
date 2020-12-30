@@ -5,7 +5,7 @@ from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, a, b, M, team_identifier
 
 
 class CommandDefinitions:
@@ -199,8 +199,14 @@ class CommandDefinitions:
         raise NotImplementedError
 
     def verification(self):
-        # Some verification defined by the NASA Cubequest challenge
-        raise NotImplementedError
+        data_block_sequence_num = 0x0000
+
+        team_bytes = team_identifier.to_bytes(4, 'big')
+        sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
+        timestamp = time.time()
+        seconds_bytes = int(timestamp).to_bytes(4, 'big')
+        ms_bytes = int((timestamp - int(timestamp)) * (10 ** 6)).to_bytes(4, 'big')
+        header = team_bytes + sequence_bytes + seconds_bytes + ms_bytes
 
     def electrolysis(self, **kwargs):
         state = kwargs[STATE]

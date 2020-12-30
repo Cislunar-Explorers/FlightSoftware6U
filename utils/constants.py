@@ -57,6 +57,12 @@ DELAY = "delay"
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
 
+# Random data generation constants:
+a = 1664525
+b = 1013904223
+M = 2 ** 32
+team_identifier = 0xEB901E1E  # TODO: change to our actual identifier
+
 # TODO: validate these values:
 SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second

@@ -200,13 +200,40 @@ class CommandDefinitions:
 
     def verification(self):
         data_block_sequence_num = 0x0000
-
         team_bytes = team_identifier.to_bytes(4, 'big')
-        sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
-        timestamp = time.time()
-        seconds_bytes = int(timestamp).to_bytes(4, 'big')
-        ms_bytes = int((timestamp - int(timestamp)) * (10 ** 6)).to_bytes(4, 'big')
-        header = team_bytes + sequence_bytes + seconds_bytes + ms_bytes
+        num_blocks = 5
+        operating_period_timestamp = 1609296197
+        operating_period_base_seed = team_identifier ^ operating_period_timestamp
+
+        data_transmission_sequence = bytes()
+
+        for x in range(num_blocks):
+            sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
+            timestamp = time.time()
+            seconds_bytes = int(timestamp).to_bytes(4, 'big')
+            ms_bytes = int((timestamp - int(timestamp)) * (10 ** 6)).to_bytes(4, 'big')
+            header = team_bytes + sequence_bytes + seconds_bytes + ms_bytes
+
+            block_seed = operating_period_base_seed ^ data_block_sequence_num
+
+            prn_length = 128 / 4
+            prn = [None] * prn_length
+            prn[0] = block_seed
+
+            for i in range(1, prn_length):
+                xn = (a * prn[i - 1] + b) % M
+                prn[i] = xn
+
+            data_field = bytes()
+            for j in prn:
+                data_field += j.to_bytes(4, 'big')
+
+            data_block = header + data_field
+
+            data_transmission_sequence += data_block
+            data_block_sequence_num += 1
+
+        return data_transmission_sequence
 
     def electrolysis(self, **kwargs):
         state = kwargs[STATE]

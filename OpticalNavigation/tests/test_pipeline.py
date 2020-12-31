@@ -5,7 +5,7 @@ import math
 import os
 from tqdm import tqdm
 
-from core.opnav import process
+from core.opnav import process, start
 from tests.const import CesiumTestCameraParameters
 
 # from core.ukf import runTrajUKF
@@ -20,9 +20,15 @@ def test_RandomData():
     batch = [
         # Attitude adjustment begins
         {
+            # [z1, z2, z3, z4, z5, z6]
+            # z1 = pixel distance E-M
+            # z2 = pixel distance E-S
+            # z3 = pixel distance S-M
+            # z4, z5, z6 = pixel widths of E, M, S
             'cam_meas': np.array([1366.930869,37.69615365,1354.540882,152,6,34]).reshape(6,1),
             'cam_dt': 60,   # seconds since last cam_meas.
             'ephemeris': {
+                # x pos (km), y pos (km), z pos (km), vx (km/s), vy (km/s), vz (km/s) [J2000 ECI]
                 'moon': np.array([-343713.6722,-145772.8313,-27946.53566,0.366284,-0.914878,-0.37493]).reshape(1,6),
                 'sun': np.array([-143591482.3,-41349754.27,2767.572392,8.732749154,-28.5257364,0.001459914]).reshape(1,6)
             },
@@ -200,7 +206,7 @@ def test_RandomData():
         },
     ]
 
-    #
+    # 
     initTrajState = np.random.rand(6,1)
     #
     traj_P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
@@ -234,7 +240,6 @@ def test_RandomData():
     gyroVars = (gyro_sigma, gyro_sample_rate, Q, R)
 
     process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState, initQuaternionState, gyroVars)
-
 
 
 

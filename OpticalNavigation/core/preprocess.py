@@ -1,8 +1,17 @@
 from __future__ import division
 from math import *
 import cv2
+
+def rolling_shutter(img):
+    """
+    Perform rolling shutter correction on frame
+    [img]: frame
+    @returns
+    [new_img]: frame corrected for rolling shutter
+    """
+    pass
  
-def rectilinearToStereographicProjection(img, fov=62.2, fov2=48.8):
+def rect_to_stereo_proj(img, fov=62.2, fov2=48.8):
     """
     Source:     http://lexafrancis.com/rectilinear-to-stereographic-image-converter-python/
 

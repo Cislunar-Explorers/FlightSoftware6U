@@ -30,8 +30,10 @@ from flight_modes.restart_reboot import (
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
+from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
 from communications.command_definitions import CommandDefinitions
+
 
 FOR_FLIGHT = None
 
@@ -50,6 +52,7 @@ class MainSatelliteThread(Thread):
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
         else:
@@ -57,6 +60,7 @@ class MainSatelliteThread(Thread):
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
+        opnav.start()
         self.constants = utils.constants
 
     def init_comms(self):

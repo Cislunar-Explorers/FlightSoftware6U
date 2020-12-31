@@ -33,6 +33,7 @@ def sixhours_timestep(visual_analysis, state_error, part_start, part_end, timest
 
     liveTraj = None
     if visual_analysis == "True":
+        print("Visual Analysis on")
         liveTraj = LiveTrajectoryPlot()
     
     # print(int(trajTruthdf.shape[0]*1 - 1))

@@ -2,6 +2,9 @@ from core.acquisition import startAcquisition, readOmega
 from core.cam_meas import cameraMeasurements
 from core.ukf import runTrajUKF
 from core.attitude import runAttitudeUKF
+from core.sense import select_camera, record_video, record_gyro
+from core.preprocess import rolling_shutter, rect_to_stereo_proj
+from core.find import find
 import numpy as np
 import traceback
 import pandas as pd
@@ -56,17 +59,6 @@ the three cameras onboard and store them on the SD card as video format. It will
 record gyroscope measurements and store them in a table on the SD card.
 """
 def observe():
-    # obtain latest angular velocity (account for bias)
-    # configure camera parameters accordingly
-    # decide on video time
-    # record video from camera 1
-    # record video from camera 2
-    # record video from camera 3
-    # record angular velocity from gyro (N times)
-    # Extract measurements from video frames
-    # Store measurement vector and angular velocity vector in database
-    # Repeat until desired number of camera measurements have been obtained
-    #   Low small angular velocities and cold-gas kick, Att-UKF converges with a few hundered.
     pass
 
 """

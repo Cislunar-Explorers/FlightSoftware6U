@@ -1,6 +1,6 @@
 import pytest
 
-from core.attitude import runAttitudeUKFWithKick
+from core.attitude import runAttitudeUKF
 
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
@@ -103,7 +103,7 @@ def test_attitude_6_hours(visual_analysis):
         count = tempCount
 
     print("START")
-    results = runAttitudeUKFWithKick(cameraDt, (gyro_sigma, gyro_t, Q, R), P0, x0, quat, omegaMeasurements, biasMeasurements, estimatedSatStates, moonEph, sunEph, timeline)
+    results = runAttitudeUKF(cameraDt, (gyro_sigma, gyro_t, Q, R), P0, x0, quat, omegaMeasurements, biasMeasurements, estimatedSatStates, moonEph, sunEph, timeline)
     print("END")
 
     plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz, timeline)

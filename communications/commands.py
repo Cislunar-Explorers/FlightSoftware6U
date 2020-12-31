@@ -9,7 +9,7 @@ from utils.constants import (
     DATA_OFFSET,
 )
 from utils.exceptions import (
-    CommandException,
+    SerializationException,
     CommandPackingException,
     CommandUnpackingException,
 )
@@ -52,7 +52,7 @@ class CommandHandler:
         self.unpackers = dict()
         # Packers and unpackers will always have identical set of keys
         # Enforced in practice
-        self.register_codecs()
+        #self.register_codecs()
 
     # Register packers and unpackers for all possible named arguments to function calls
     # Register the ModeID, ApplicationID, combos that result in certain function parameters
@@ -68,7 +68,7 @@ class CommandHandler:
 
     def register_new_codec(self, arg: str, packer, unpacker):
         if arg in self.packers:
-            raise CommandException(
+            raise SerializationException(
                 "Trying to register a codec for an existing argument"
             )
 
@@ -116,7 +116,7 @@ class CommandHandler:
 
     def register_mode_commands(self, mode: int, application_ids_to_arg_tuples: dict):
         if mode in self.command_dict:
-            raise CommandException(
+            raise SerializationException(
                 f"Trying to register mode {mode} that already exists"
             )
         # Should be a dict of application ids -> tuple (ordered list of arguments, length of arguments)

@@ -43,8 +43,6 @@ class TestCommandHandler:
 
         unpacked_mode, unpacked_app, unpacked_args = ch.unpack_command(command_buffer)
 
-        print('Mode: ' + str(unpacked_mode))
-        print('Application: ' + str(unpacked_app))
         print(unpacked_args)
         assert unpacked_mode == mode_id
         assert unpacked_app == application_id

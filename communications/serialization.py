@@ -122,6 +122,3 @@ class DataHandler:
         # Should be a dict of application ids -> tuple (ordered list of arguments, length of arguments)
         # argument names must be registered separately
         self.data_dict[mode] = application_ids_to_arg_tuples
-
-dh = DataHandler()
-dh.pack_data(0,1,gyro = 726)

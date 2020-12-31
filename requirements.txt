@@ -8,6 +8,7 @@ pandas # testing
 pytest
 tqdm
 sqlalchemy
+Adafruit-Blinka
 # OpNav end
 
 

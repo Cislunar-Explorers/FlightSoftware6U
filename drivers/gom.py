@@ -20,7 +20,6 @@ class Hk(Enum):
 class Gomspace:
     def __init__(self):
         self.gom = pc.Power()
-        # Should we implement a gom "state" variable - i.e. which channel is on or off
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
@@ -29,7 +28,7 @@ class Gomspace:
     def get_health_data(self, level=Hk.DEFAULT.value):
         """Returns a struct containing housekeeping data.
             The level parameter specifies which command gets sent to the P31u and what data you get back.
-            level must be  one of the following: \n
+            level must be either one of the following: \n
             ["default", "eps", "vi", "out", "wdt", "basic", "config", "config2"]\n
             If no argument is provided, returns the same as "default" \n
             Every option returns a different struct, the documentation for which can be found in power_structs.py or in

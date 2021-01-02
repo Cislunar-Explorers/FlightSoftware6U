@@ -27,11 +27,11 @@ import numpy as np
 import math
 import os
 from tqdm import tqdm
-from animations import LiveMultipleTrajectoryPlot
+from OpticalNavigation.simulations.animations import LiveMultipleTrajectoryPlot
 import argparse
-from getManeuvers import extractCheckpoints, getMissionTimeline, createDiscreteAttitudeManeuvers
+from OpticalNavigation.simulations.getManeuvers import extractCheckpoints, getMissionTimeline, createDiscreteAttitudeManeuvers
 from datetime import datetime
-from core.ukf import attitudeMatrix
+from OpticalNavigation.core.ukf import __attitudeMatrix
 
 def isOrthogonal(a, b):
     err = abs((a*b).sum())
@@ -139,7 +139,7 @@ if __name__ == "__main__":
             # Extract VNC quaternions
             q = np.array([vncDf['q1'][index], vncDf['q2'][index],vncDf['q3'][index],vncDf['q4'][index]])
             assert abs(np.linalg.norm(q) - 1) < 1e-3
-            Aq = attitudeMatrix(q)
+            Aq = __attitudeMatrix(q)
             # X axis of spacecraft
             local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
             X_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
@@ -158,7 +158,7 @@ if __name__ == "__main__":
             # Extract body quaternions
             q = np.array([attDf['q1'][index], attDf['q2'][index],attDf['q3'][index],attDf['q4'][index]])
             assert abs(np.linalg.norm(q) - 1) < 1e-3
-            Aq = attitudeMatrix(q)
+            Aq = __attitudeMatrix(q)
             # X axis of spacecraft
             local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
             X_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))

@@ -1,6 +1,9 @@
 from __future__ import division
 from math import *
 import cv2
+import numpy as np
+from core.const import CisLunarCameraParameters
+import time
 
 def rolling_shutter(img):
     """
@@ -9,7 +12,18 @@ def rolling_shutter(img):
     @returns
     [new_img]: frame corrected for rolling shutter
     """
-    pass
+    time.sleep(3)
+    raise NotImplementedError("implement rolling shutter transformation")
+
+def extract_frames(vid_dir):
+    """
+    Extracts frames from video located at path [vid_dir]
+    @returns
+    [frames]: returns list of paths to extracted frames
+    """
+    # return np.zeros((10, int(CisLunarCameraParameters.hPix), int(CisLunarCameraParameters.vPix), 3), dtype=np.float)
+    time.sleep(3)
+    raise NotImplementedError("implement frame extraction")
  
 def rect_to_stereo_proj(img, fov=62.2, fov2=48.8):
     """

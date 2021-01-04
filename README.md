@@ -12,6 +12,15 @@ The Cislunar Explorers are a pair of CubeSats in a 6U configuration that are lau
 ### Flight Software
 The software in this repository will run the satellite's flight computers, with the main loop is defined in the `run` method of `main.py`. Here, each step of the loop is defined by which flight mode the satellite is currently in.
 
+### Documentation
+TBD. 
+
+### Contact Info
+- Software Lead: tmf97@cornell.edu
+- Mission Manager: apz24@cornell.edu
+
+
+## Tips for getting set up for developers:
 ## Set up Virtual Environment
 ```bash
 python3 -m venv ./cislunar-venv

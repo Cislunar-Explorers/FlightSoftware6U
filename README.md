@@ -1,17 +1,37 @@
-# FlightSoftware
-Python flight software for Cislunar Explorers
+# Cislunar Explorers Flight Software
+![Mission Patch](mission_patch.png)
 
-# Set up Virtual Environment
+## About
+
+### Mission
+The Cislunar Explorers are a pair of CubeSats in a 6U configuration that are launching as a secondary payload onboard NASA's Artemis-1 launch. The mission objectives are to:
+- Demonstrate a water electrolysis-based propulsion system
+- Demonstrate an optical attitude and position determination system running on inexpensive COTS hardware
+- Achieve Lunar orbit
+
+### Flight Software
+The software in this repository will run the satellite's flight computers, with the main loop is defined in the `run` method of `main.py`. Here, each step of the loop is defined by which flight mode the satellite is currently in.
+
+### Documentation
+TBD. 
+
+### Contact Info
+- Software Lead: tmf97@cornell.edu
+- Mission Manager: apz24@cornell.edu
+
+
+## Tips for getting set up for developers:
+## Set up Virtual Environment
 ```bash
 python3 -m venv ./cislunar-venv
 ```
 
-# Activate the Virtual Environment
+## Activate the Virtual Environment
 ```bash
 . ./cislunar-venv/bin/activate
 ```
 
-# Install dependencies with requirements files
+## Install dependencies with requirements files
 We split up dependencies into two separate requirements files split up by whether they should only be installed on Raspberry Pi.
 
 ```
@@ -19,7 +39,7 @@ pip install -r requirements.txt
 pip install -r requirements_pi.txt
 ```
 
-# Install dependencies with setup.py
+## Install dependencies with setup.py
 
 After starting the virtual environment, invoke the setup.py file using pip with one of the following options.
 rpi: used for running on the Raspberry Pi
@@ -33,7 +53,7 @@ pip install -e .[rpi-dev]
 This would install the rpi-dev option, which installs all of the potential dependencies.
 
 
-# Adding Dependency Requirements to Build System
+## Adding Dependency Requirements to Build System
 
 For now, we have both the requirements files as well as the setup.py file. We will eventually select only one based on what everyone finds to be the easiest to work with, but in the meantime we will keep both of them up to date.
 

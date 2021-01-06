@@ -1,4 +1,7 @@
 from main import MainSatelliteThread
+import time
+import psutil
+from uptime import uptime
 
 
 class Telemetry:
@@ -24,20 +27,36 @@ class Telemetry:
     def poll_gom(self):
         # polls gom telemetry
 
-        gom_houskeeping_struct_1 = self.parent.gom.get_health_data(level="default")
-        gom_houskeeping_struct_2 = self.parent.gom.get_health_data(level="eps")
-        ...
+        hkparam = self.parent.gom.get_health_data()
+        hkparam_time = time.time()
+        eps_hk = self.parent.gom.get_health_data(level="eps")
+        eps_hk_time = time.time()
+
+        return (hkparam, hkparam_time), (eps_hk, eps_hk_time)
 
     def poll_gyro(self):
-        # poll current angular velocity and/or acceleration
+        rot_data = []
+        n = 50
+        d = 1
+        for i in range(n):
+            rot_data.append(self.parent.gyro.gyroscope)
+            time.sleep(1.0 / n)
+        # Take ~50 measurements over 1 sec and take the average
         pass
 
     def poll_rpi(self):
         # gets pi's temperature, CPU/Ram/disk utilization, and other useful data
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        disk = psutil.disk_usage("/").percent
+        boot_time = psutil.boot_time()
+        up_time = uptime()
+        # temperature =
         pass
 
     def poll_pressure(self):
-        # get's pressure in the fuel chamber
+        # gets pressure in the fuel chamber
+        pressure = self.parent.adc
         pass
 
     def write_telem(self, telem):

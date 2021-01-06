@@ -181,6 +181,7 @@ class TestCommandEnum(IntEnum):
     SetTestMode = 1  # no args
     TriggerBurnWire = 2  # no args
     RunOpNav = 3  # no args
+    ADCTest = 4
     SeparationTest = 5
     GomPin = 6
 

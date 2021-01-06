@@ -80,7 +80,7 @@ class FlightMode:
         flight_mode_id = self.flight_mode_id
 
         # Burn command queue logic
-        # TODO implment need_to_burn function in ADC driver
+        # TODO implment need_to_burn function in adc driver
         if self.parent.pressure_sensor.need_to_burn():
             self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
             return
@@ -224,7 +224,8 @@ class TestMode(PauseBackgroundMode):
     def run_mode(self):
         pass
 
-    command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0)}
+    command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
+                      TestCommandEnum.ADCTest.value: ([], 0)}
 
     command_arg_unpackers = {}
 
@@ -245,75 +246,13 @@ class SensorMode(FlightMode):
         super().__init__(parent)
         raise NotImplementedError
 
-
-# BootUp mode tasks:
-# Sleep for 30 seconds to reach safe distance from Artemis I
-class BootUpMode(FlightMode):
-    flight_mode_id = FMEnum.Boot.value
-    command_codecs = {BootCommandEnum.Split.value: ([], 0)}
-    command_arg_unpackers = {}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.set_started_bootup()
-        print("Booting up...")
-
-    def set_started_bootup(self):
-        # TODO implement logger to actually put logs in this directory
-        os.makedirs(self.parent.log_dir)
-
-    # Sleep for a delay set by BOOTUP_SEPARATION_DELAY if I haven't
-    # If I've already completed the delay, do nothing
-    # Await separation command from ground station
-    def run_mode(self):
-        if not self.delay_completed:
-            sleep(BOOTUP_SEPARATION_DELAY)
-            self.task_completed()
-
-
-class RestartMode(FlightMode):
-
-    def register_commands(cls):
-        pass
-
-    command_codecs = {}
-    command_arg_unpackers = {}
-    flight_mode_id = FMEnum.Restart.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.clear_unnecessary_storage_and_memory()
-        self.check_sensors()
-        self.completed_task()
-        # TODO
-        # trigger restart again if necessary
-        # make note of turning back on and immediately
-        # # downlink restart information
-        # increment counter for consecutive restarts in db
-
-    def clear_unnecessary_storage_and_memory(self):
-        gc.collect()
-        # TODO clean up storage if necessary
-        # pseudocode, if OS = raspian and environment = flight, not test:
-        #   clean up storage and memory
-
-    # TODO ensure sensors are working correctly
-    def check_sensors(self):
-        pass
-
-    # Restart is handled in initialization
-    # Therefore, should get updated to Normal before
-    # ever running
-    def run_mode(self):
-        pass
-
-
 class LowBatterySafetyMode(FlightMode):
 
     flight_mode_id = FMEnum.LowBatterySafety.value
 
     def __init__(self, parent):
         super().__init__(parent)
+        raise NotImplementedError
 
     # TODO point solar panels directly at the sun
     # check power supply to see if I can transition back to NormalMode

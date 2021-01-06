@@ -18,12 +18,8 @@ import busio
 import board
 
 
-# Analog to digital converter
 class ADC:
-    #ads = ADS1115.ADS1115()
-    #i2c = busio.I2C(board.SCL, board.SDA)
-    #gyro = adafruit_fxas21002c.FXAS21002C(i2c)
-
+    """Analog to digital converter"""
     # Polynomial approximation constants for the thermocouple conversion from voltage to temperature.
     T0 = -8.7935962e0
 
@@ -57,7 +53,7 @@ class ADC:
         self.gyro = adafruit_fxas21002c.FXAS21002C(i2c)
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
-    def read_pressure(self):
+    def read_pressure(self):  # psi
         milVolts = self.ads.readADCSingleEnded(channel=0, pga=6144, sps=64)
         pressure = round(milVolts / 5000 * 300, 3)
         return pressure

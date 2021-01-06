@@ -249,8 +249,9 @@ def updateQuaternionEstimate(xhatkp, qhatkm):
 def resetSigmaSeed(xhatkp):
     return numpy.array([[0., 0., 0., xhatkp[3][0], xhatkp[4][0], xhatkp[5][0]]]).T
 
-def UKF(cameradt, totalIntegrationTime, gyroVars, P0, x0, q0, omegas, biases, estimatedSatState, moonEph, sunEph, timeline):
+def UKFMultiple(cameradt, gyroVars, P0, x0, q0, omegas, biases, estimatedSatState, moonEph, sunEph, timeline):
     """
+    NOTE: Assumes gyroSampleCount = 1/gyroSampleRate
     let n = # of camera measurements in batch
     let gyroSampleCount = 1/gyro_sample_rate
     [gyroVars]: (gyro_sigma, gyro_sample_rate, Q, R)
@@ -264,8 +265,6 @@ def UKF(cameradt, totalIntegrationTime, gyroVars, P0, x0, q0, omegas, biases, es
     n = moonEph.shape[0]
     (gyro_sigma, gyro_sample_rate, Q, R) = gyroVars
     gyroSampleCount = int(1/gyro_sample_rate)
-
-    assert (n == int(totalIntegrationTime/cameradt * gyroSampleCount))
 
     Phist = numpy.zeros((int(n/gyroSampleCount), 6, 6))
     qhist = numpy.zeros((int(n/gyroSampleCount), 4, 1))
@@ -321,8 +320,75 @@ def UKF(cameradt, totalIntegrationTime, gyroVars, P0, x0, q0, omegas, biases, es
         
     return Phist, qhist, xhist
 
-def runAttitudeUKFWithKick(cameradt, totalIntegrationTime, gyroVars, P0, x0, quat, omegas, biases, satState, moonEph, sunEph, timeline):
-    # Obtain quats
+def UKFSingle(cameradt, gyroVars, P0, x0, q0, omegas, biases, estimatedSatState, moonEph, sunEph, timeline):
+    """
+    NOTE: Does not make any assumptions about gyroSampleCount
+    let n = # of camera measurements in batch
+    let gyroSampleCount = 1/gyro_sample_rate
+    [gyroVars]: (gyro_sigma, gyro_sample_rate, Q, R)
+    [omegas]: (x, y, z) components of measured angular velocity (n x gyroSampleCount, 3) 
+    [biases]: (bx, by, bz) (Not sure how these are obtained) (n x gyroSampleCount, 3)
+    [estimatedSatState]: trajectory UKF outputs from t = 0 to t = totalIntegrationTime (n x gyroSampleCount, 3)
+    [moonEph]: moon position/vel from ephemeris table (n x gyroSampleCount, 3)
+    [sunEph]: sun position/vel from ephemeris table (n x gyroSampleCount, 3)
+    [timeline]: time segment of omegas and biases readings
+    """
+    # assert(omegas[0].shape[0] == biases.shape[0] == estimatedSatState.shape[0] == moonEph.shape[0] == sunEph.shape[0])
+    n = moonEph.shape[0]
+    (gyro_sigma, gyro_sample_rate, Q, R) = gyroVars
+
+    # Phist = numpy.zeros((int(n/gyroSampleCount), 6, 6))
+    # qhist = numpy.zeros((int(n/gyroSampleCount), 4, 1))
+    # xhist = numpy.zeros((int(n/gyroSampleCount), 6, 1))
+    Phatkp = P0
+    xhatkp = x0
+    qhatkp = q0
+
+    # Calculate position vectors
+    # satPos, moonPos, sunPos = estimatedSatState[i:i+gyroSampleCount,:], moonEph[i:i+gyroSampleCount,:], sunEph[i:i+gyroSampleCount,:]
+    # earthVec, moonVec, sunVec = numpy.zeros((gyroSampleCount, 3)), numpy.zeros((gyroSampleCount, 3)), numpy.zeros((gyroSampleCount, 3))
+    # for g_sample in range(gyroSampleCount):
+        # earthVec[i+g_sample] = (-1*satPos[i+g_sample])/numpy.linalg.norm(satPos[i+g_sample])
+        # moonVec[i+g_sample] = (moonPos[i+g_sample] - satPos[i+g_sample])/numpy.linalg.norm(moonPos[i+g_sample] - satPos[i+g_sample])
+        # sunVec[i+g_sample] = (sunPos[i+g_sample] - satPos[i+g_sample])/numpy.linalg.norm(sunPos[i+g_sample] - satPos[i+g_sample])
+    satPos, moonPos, sunPos = estimatedSatState[0,:], moonEph[0,:], sunEph[0,:]
+    earthVec = (-1*satPos)/numpy.linalg.norm(satPos)
+    moonVec = (moonPos - satPos)/numpy.linalg.norm(moonPos - satPos)
+    sunVec = (sunPos - satPos)/numpy.linalg.norm(sunPos - satPos)
+    time_segment = timeline
+    sigma_points = generateSigmas(xhatkp, Phatkp, Q)
+    err_quats = makeErrorQuaternion(sigma_points)
+    pert_quats = perturbQuaternionEstimate(err_quats, qhatkp)
+    prop_quats = propagateQuaternion(pert_quats, sigma_points, time_segment, gyro_sigma, gyro_sample_rate, omegas, biases, cameradt)
+    qhatkp1m = prop_quats[0]
+    prop_err = propagatedQuaternionError(prop_quats)
+    prop_sigmas = recoverPropSigma(prop_err, sigma_points)
+    x_mean = predictedMean(prop_sigmas)
+    p_mean = predictedCov(prop_sigmas, x_mean, Q)
+    h_list = hFromSigs(prop_quats, earthVec, moonVec, sunVec)
+    z_mean = meanMeasurement(h_list)
+    Pzz_kp1 = Pzz(h_list, z_mean, R)
+    Pxz_kp1 = Pxz(prop_sigmas, x_mean, h_list, z_mean)
+    K = getGain(Pxz_kp1, Pzz_kp1)
+    meas = numpy.concatenate((earthVec, moonVec, sunVec), axis=0).reshape(9, 1)
+    assert(z_mean.shape == meas.shape)
+    xhat_kp1 = updateXhat(x_mean, K, meas, z_mean)
+    Phat_kp1 = updatePhat(p_mean, K, Pzz_kp1)
+    qhat_kp1 = updateQuaternionEstimate(xhat_kp1, qhatkp1m)
+    
+    # Phist[counter] = Phat_kp1
+    # qhist[counter] = qhat_kp1
+    # xhist[counter] = xhat_kp1
+    
+    # Phatkp = Phat_kp1
+    # xhatkp = resetSigmaSeed(xhat_kp1)
+    # qhatkp = qhat_kp1
+        
+    return Phat_kp1, qhat_kp1, xhat_kp1
+
+def runAttitudeUKFWithKick(cameradt, gyroVars, P0, x0, quat, omegas, biases, satState, moonEph, sunEph, timeline, singleIteration=False):
     q0 = quat/numpy.linalg.norm(quat)
-    # Run UKF
-    return UKF(cameradt, totalIntegrationTime, gyroVars, P0, x0, q0, omegas, biases, satState, moonEph, sunEph, timeline)
+    if singleIteration is False:
+        return UKFMultiple(cameradt, gyroVars, P0, x0, q0, omegas, biases, satState, moonEph, sunEph, timeline)
+    else:
+        return UKFSingle(cameradt, gyroVars, P0, x0, q0, omegas, biases, satState, moonEph, sunEph, timeline)

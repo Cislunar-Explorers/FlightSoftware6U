@@ -8,16 +8,17 @@ import os
 # Delay to wait on BootUp
 BOOTUP_SEPARATION_DELAY = 30.0
 
-
 # TODO determine correct values threshold values
 ENTER_LOW_BATTERY_MODE_THRESHOLD = 0.3
 EXIT_LOW_BATTERY_MODE_THRESHOLD = 0.5
-
 
 # Constants defining goal cracking pressures for electrolysis
 LOW_CRACKING_PRESSURE = 10.0
 HIGH_CRACKING_PRESSURE = 20.0
 IDEAL_CRACKING_PRESSURE = 15.0
+
+# OpNav timing interval in minutes
+OPNAV_INTERVAL = 60
 
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
@@ -25,7 +26,6 @@ CISLUNAR_BASE_DIR = os.path.join(
 )
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
-
 
 MODE_SIZE = 1
 ID_SIZE = 1
@@ -37,7 +37,6 @@ ID_OFFSET = 1
 DATA_LEN_OFFSET = 2
 DATA_OFFSET = 4
 
-
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
 POSITION_Y = "position_y"
@@ -45,9 +44,39 @@ POSITION_Z = "position_z"
 
 ACCELERATE = "accelerate"
 
-ATTITUDE_X = "attitude_x"
-ATTITUDE_Y = "attitude_y"
-ATTITUDE_Z = "attitude_z"
+NAME = "name"
+VALUE = "value"
+
+AZIMUTH = "theta"
+ELEVATION = "phi"
+
+STATE = "state"
+INTERVAL = "interval"
+DELAY = "delay"
+
+GOM_VOLTAGE_MAX = 8400  # mV
+GOM_VOLTAGE_MIN = 6000
+
+# TODO: validate these values:
+SPLIT_BURNWIRE_DURATION = 1  # second
+ANTENNAE_BURNWIRE_DURATION = 1  # second
+GLOWPLUG_DURATION = 1  # SECOND
+
+
+@unique
+class ConstantsEnum(IntEnum):
+    GOM_VOLTAGE_MAX = 1
+
+
+# GOMspace Channel designations:
+@unique
+class GomOutputs(IntEnum):
+    comms = 0
+    burnwire_1 = 1
+    burnwire_2 = 2
+    glowplug = 3
+    solenoid = 4
+    electrolyzer = 5
 
 
 @unique
@@ -58,85 +87,120 @@ class FMEnum(IntEnum):
     LowBatterySafety = 3
     Safety = 4
     OpNav = 5
-    Electrolysis = 6
-    Maneuver = 7
-    SensorMode = 8  # Send command directly to sensor
-    TestMode = 9  # Execute specified test
-    CommsMode = 10
+    Maneuver = 6
+    SensorMode = 7  # Send command directly to sensor
+    TestMode = 8  # Execute specified test
+    CommsMode = 9
+    Command = 10
 
 
 @unique
 class BootCommandEnum(IntEnum):
-    Separate = 0
+    Switch = 0  # command for switching flightmode without executing any other commands
+    Split = 1
 
 
 @unique
 class RestartCommandEnum(IntEnum):
-    pass
+    Switch = 0  # command for switching flightmode without executing any other commands
 
 
 @unique
 class NormalCommandEnum(IntEnum):
-    RunOpNav = 0  # no args
-    SetDesiredAttitude = 1  # arg=attitude
-    SetAccelerate = 2  # arg=true/false
-    SetBreakpoint = 3  # arg=position x, y, z
+    Switch = 0  # command for switching flightmode without executing any other commands
+    RunOpNav = 1  # no args
+    SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
+    SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
+    # Really not sure what 3 and 4 are supposed to do:
+    # SetAccelerate = 3  # arg=true/false
+    # SetBreakpoint = 4  # arg=position x, y, z
+    SetParam = 5
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
+    Verification = 9
+    GetParam = 11
+    SetOpnavInterval = 12
+
 
 
 @unique
 class LowBatterySafetyCommandEnum(IntEnum):
-    ExitLBSafetyMode = 0  # no args, # XXX this is an override command
-    SetExitLBSafetyMode = 1  # define battery percentage
+    Switch = 0  # command for switching flightmode without executing any other commands
+    ExitLBSafetyMode = 1  # no args, # XXX this is an override command
+    SetExitLBSafetyMode = 2  # define battery percentage
+    SetParam = 5
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
 
 
 @unique
 class SafetyCommandEnum(IntEnum):
-    ExitSafetyMode = 0
-    SetExitSafetyMode = 1
+    Switch = 0  # command for switching flightmode without executing any other commands
+    ExitSafetyMode = 1
+    SetExitSafetyMode = 2
+    SetParameter = 5
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
 
 
 @unique
 class OpNavCommandEnum(IntEnum):
-    RunOpNav = 0  # no args
-    SetInterval = 1  # arg=interval in minutes packed as an int
-
-
-@unique
-class ElectrolysisCommandEnum(IntEnum):
-    SetLowCrackingPressure = 0
-    SetIdealCrackingPressure = 1
-    SetHighCrackingPressure = 2
-    RunElectrolysis = 3
-    TurnOffElectrolysis = 4
+    Switch = 0  # command for switching flightmode without executing any other commands
+    RunOpNav = 1  # no args
+    SetInterval = 2  # arg=interval in minutes packed as an int
 
 
 @unique
 class ManeuverCommandEnum(IntEnum):
-    RunOpNav = 0  # no args
-    SetDesiredAttitude = 1  # arg=attitude
-    SetAccelerate = 2  # arg=true/false
-    SetBreakpoint = 3  # arg=?
+    Switch = 0  # command for switching flightmode without executing any other commands
+    RunOpNav = 1  # no args
+    SetDesiredAttitude = 2  # arg=attitude
+    SetAccelerate = 3  # arg=true/false
+    SetBreakpoint = 4  # arg=?
+    SetBurnTime = 9  # 1 arg: time at which thruster fires
 
 
 @unique
 class SensorsCommandEnum(IntEnum):
-    Thermocouple = 0
-    PressureTransducer = 1
-    Gomspace = 2
-    CameraMux = 3
-    Gyro = 4
-    RTC = 5
-    AX5043 = 6
+    Switch = 0  # command for switching flightmode without executing any other commands
+    Thermocouple = 1
+    PressureTransducer = 2
+    Gomspace = 3
+    CameraMux = 4
+    Gyro = 5
+    RTC = 6
+    AX5043 = 7
 
 
 @unique
 class TestCommandEnum(IntEnum):
-    SetTestMode = 0  # no args
-    TriggerBurnWire = 1  # no args
-    RunOpNav = 2  # no args
+    Switch = 0  # command for switching flightmode without executing any other commands
+    SetTestMode = 1  # no args
+    TriggerBurnWire = 2  # no args
+    RunOpNav = 3  # no args
+    SeparationTest = 5
+    GomPin = 6
 
 
 @unique
 class CommsCommandEnum(IntEnum):
+    Switch = 0  # command for switching flightmode without executing any other commands
     DownlinkFullDataPacket = 4  # no args
     SetDataPacket = 5  # arg=data packet id
+
+
+@unique
+class CommandCommandEnum(IntEnum):
+    Switch = 0  # command for switching flightmode without executing any other commands
+    SetParam = 1  # 2 args: key and value of parameter to be changed
+    SetSystemTime = 2  # 1 arg: UTC(?) time that the system clock should be set to
+    RebootPi = 3
+    RebootGom = 4
+    PowerCycle = 5
+    GomPin = 6  # 1 arg: which gom pin to toggle
+    GomGeneralCmd = 7
+    GeneralCmd = 8
+    CeaseComms = 170

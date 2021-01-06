@@ -1,12 +1,14 @@
-from OpticalNavigation.core.find import find, round_up_to_odd
+from OpticalNavigation.core.find import find, round_up_to_odd, create_circular_mask
 from OpticalNavigation.tests.test_find import calculateErrors
 import cv2
 import os
 import glob
+import pandas as pd
 import numpy as np
 import copy
 import pandas as pd
 import itertools 
+import argparse
 from tqdm import tqdm
 from random import randint, random, uniform
 import time
@@ -227,6 +229,7 @@ class ImageConfiguration:
         [beta]: bias (brightness), float
         """
         self.earth = cropImage(name, x, y, s)
+        self.earthMask = create_circular_mask(self.earth.shape[0], self.earth.shape[1], center = np.array([pos[0], pos[1]]), radius=np.array([size]))
         self.earthScale = size/s
         self.earthRotation = rotation
         self.earthBlur = blur
@@ -235,6 +238,7 @@ class ImageConfiguration:
 
     def addMoon(self, name, x, y, s, pos, size, rotation, blur, alpha, beta):
         self.moon = cropImage(name, x, y, s)
+        self.moonMask = create_circular_mask(self.moon.shape[0], self.moon.shape[1], center = np.array([pos[0], pos[1]]), radius=np.array([size]))
         self.moonScale = size/s
         self.moonRotation = rotation
         self.moonBlur = blur
@@ -249,43 +253,44 @@ class ImageConfiguration:
         self.sunCircle = [pos[0], pos[1], s]
         self.sunAB = [alpha,beta]
 
-    def applyTransformations(self, circle, body, ab, rotation, blur):
+    def applyTransformations(self, circle, body, mask, ab, rotation, blur):
         dim = (circle[2]*2, circle[2]*2)
         resized = cv2.resize(body, dim, interpolation = cv2.INTER_AREA)
-        # Described in Section 3.1.2 of the book Computer Vision: Algorithms and Applications by Richard Szeliski
-        ratios = resized / 255
-        ratios *= ab[1]
-        resized = np.clip(resized*ab[0] + ratios, a_min = 0, a_max = 255)
+        if mask is None:
+            resized = np.clip(resized*ab[0] + ab[1], a_min = 0, a_max = 255)
+        else:
+            mask = create_circular_mask(resized.shape[0], resized.shape[1], center=np.array([circle[0], circle[1]]), radius=np.array([circle[2]]))
+            resized[mask] = np.clip(resized[mask]*ab[0] + ab[1], a_min = 0, a_max = 255)
         rotated = rotate(resized, rotation)
         if blur is not None:
             gausBlur = cv2.GaussianBlur(rotated, (blur,blur),0)   
             return gausBlur
         return rotated
 
-    def drawStars(self, image, countIntensity):
-        self.stars = np.zeros((image.shape[0], image.shape[1]))
-        (r,c, d) = image.shape
-        for i in range(int(500*countIntensity)):
-            pos = randint(0, r - 1), randint(0, c - 1)
-            color = randint(200,255)
-            self.stars[pos[0], pos[1]] = color
-            image[pos[0], pos[1], 0] = color
-            image[pos[0], pos[1], 1] = color
-            image[pos[0], pos[1], 2] = color
-        return image
+    # def drawStars(self, image, countIntensity):
+    #     self.stars = np.zeros((image.shape[0], image.shape[1]))
+    #     (r,c, d) = image.shape
+    #     for i in range(int(500*countIntensity)):
+    #         pos = randint(0, r - 1), randint(0, c - 1)
+    #         color = randint(200,255)
+    #         self.stars[pos[0], pos[1]] = color
+    #         image[pos[0], pos[1], 0] = color
+    #         image[pos[0], pos[1], 1] = color
+    #         image[pos[0], pos[1], 2] = color
+    #     return image
 
-    def draw(self, image, _left, _right, _top, _bottom, noiseIntensity, countIntensity, drawCircles=False, applyBlurs=True):
-        self.left = _left
-        self.right = _right
-        self.top = _top
-        self.bottom = _bottom
+    def draw(self, image, _left, _right, _top, _bottom, noise, drawCircles=False, applyBlurs=True):
+        # self.left = _left
+        # self.right = _right
+        # self.top = _top
+        # self.bottom = _bottom
 
         self.xCoord, self.yCoord, self.radPixels = None, None, None
 
-        image[_top:_bottom, _left:_right, :] = self.drawStars(image[_top:_bottom, _left:_right, :], countIntensity)
+        # image[_top:_bottom, _left:_right, :] = self.drawStars(image[_top:_bottom, _left:_right, :], countIntensity)
 
         if self.earth is not None:
-            e = self.applyTransformations(self.earthCircle, self.earth, self.earthAB, self.earthRotation, self.earthBlur)
+            e = self.applyTransformations(self.earthCircle, self.earth, self.earthMask, self.earthAB, self.earthRotation, self.earthBlur)
             left = int(self.earthCircle[1]-self.earthCircle[2])
             right = int(self.earthCircle[1]+self.earthCircle[2])
             top = int(self.earthCircle[0]-self.earthCircle[2])
@@ -296,7 +301,7 @@ class ImageConfiguration:
             self.radPixels = self.earthCircle[2]
             
         if self.moon is not None:
-            m = self.applyTransformations(self.moonCircle, self.moon, self.moonAB, self.moonRotation, self.moonBlur)
+            m = self.applyTransformations(self.moonCircle, self.moon, self.moonMask, self.moonAB, self.moonRotation, self.moonBlur)
             left = int(self.moonCircle[1]-self.moonCircle[2])
             right = int(self.moonCircle[1]+self.moonCircle[2])
             top = int(self.moonCircle[0]-self.moonCircle[2])
@@ -306,13 +311,12 @@ class ImageConfiguration:
             self.yCoord = (top+bottom)/2
             self.radPixels = self.moonCircle[2]
         # add noise
-        self.noise = np.array([randint(0,int(40*noiseIntensity)) for i in range(image.shape[0] * image.shape[1] * 3)],dtype=np.uint8).reshape(image.shape[0], image.shape[1], 3)
-        self.noiseIntensity = noiseIntensity
-        image = image + np.clip(self.noise, a_min = 0, a_max = 255)
+        # self.noise = np.array([randint(0,no)*2-40 for i in range(image.shape[0] * image.shape[1] * 3)],dtype=np.uint8).reshape(image.shape[0], image.shape[1], 3)
+        # self.noise = np.random.normal(0, noiseIntensity, size=(image.shape[0], image.shape[1], 3))
 
         if self.sun is not None:
             sunC = self.sunCircle[2] * self.sunScale
-            s = self.applyTransformations([self.sunCircle[0], self.sunCircle[1], sunC], self.sun, self.sunAB, self.sunRotation, self.sunBlur)
+            s = self.applyTransformations([self.sunCircle[0], self.sunCircle[1], sunC], self.sun, None, self.sunAB, self.sunRotation, self.sunBlur)
             left = int(self.sunCircle[1]-sunC)
             right = int(self.sunCircle[1]+sunC)
             top = int(self.sunCircle[0]-sunC)
@@ -322,10 +326,14 @@ class ImageConfiguration:
             self.yCoord = (top+bottom)/2
             self.radPixels = self.sunCircle[2]
 
+        self.noise = noise
+        image = np.clip(image + self.noise, a_min = 0, a_max = 255)
+        image = image.astype(np.uint8)
+
         # Apply small blur to entire image
         a = max(_bottom-_top, _right-_left)
         if applyBlurs:
-            image = cv2.GaussianBlur(image, (round_up_to_odd(a/75),round_up_to_odd(a/75)),0)   
+            image = cv2.GaussianBlur(image, (round_up_to_odd(5),round_up_to_odd(5)),0)   
         if drawCircles and self.earth is not None:
             cv2.circle(image, (self.earthCircle[0], self.earthCircle[1]), self.earthCircle[2], (255, 0, 0), 2)
             
@@ -335,74 +343,101 @@ class ImageConfiguration:
         if drawCircles and self.sun is not None:
             cv2.circle(image, (self.sunCircle[0], self.sunCircle[1]), self.sunCircle[2], (255, 255, 0), 2)
 
-        image = image[_top:_bottom, _left:_right, :]
+        # print(f'Before: {image.shape}')
+        # image = image[_top:_bottom, _left:_right, :]
+        # print(f'After: {image.shape}')
+        # print(_top,_bottom, _left,_right,)
        
         return image, self.xCoord, self.yCoord, self.radPixels
 
-def singular(objects, df, bodyType, radiuses):
-    for name in objects:
+def singular(objects, df, bodyType, radiuses, runFind=True):
+    resultsdf = pd.DataFrame({'name':[], 'true':[], 'false':[], 'centerErr':[], 'radiusErr':[]})
+
+    resultsdf.to_csv(f'D:\\OpNav\\data\\DetectorDatasetGenerator\\{bodyType}_results.csv', index=False)
+    count = 0
+    for name in tqdm(objects, desc='Object'):
         print(name)
 
-        h,w = 1640,1232
+        w,h = 1640,1232
 
         row = df.loc[df['Name'] == name]
 
         configurations = []
 
-        for radius in tqdm(radiuses):
-            xs = np.arange(radius,min(h,w)-radius*2, 400)
-            ys = np.arange(radius,min(h,w)-radius*2, 400)
-            #noiseIntensities = np.arange(0, 1, 0.34)
-            noiseIntensities = np.arange(0.5, 1, 0.24)
-            countIntensities = np.arange(0, 0.5, 0.4)
-            # noiseIntensities = np.array([0])
-            countIntensities = np.array([0])
-            rotations = np.array([0])
-            contrasts = np.array([1])
-            brightnesses = np.array([0])
-            blurs = np.array([1])
-            if bodyType is not 'Sun':
-                # rotations = np.arange(0, 91, 90)
-                contrasts = np.arange(0.7, 1, 0.1)
-                brightnesses = np.arange(-30, 31, 20)
-                # blurs = np.arange(1, round_up_to_odd(int(radius/5)), 4)
-            configurations.extend([[radius, i, j, k, l, m, n, o, p] 
-                            for i in tqdm(list(xs))  
+        noiseSigmas = np.round(np.arange(0,15,2),0)[::-1] # 5
+        noises = np.zeros((h,w,noiseSigmas.shape[0],3))
+        rotations = np.array([0])
+        filename = os.path.join('C:\\github\\FlightSoftware\\OpticalNavigation\\experiments', f'GaussianNoises.npy')
+        blurs = np.array([1])
+        contrasts = np.round(np.arange(0.5, 3.1, 0.5),1) # 6
+        brightnesses = np.arange(-50, 51, 20) # 7
+
+        # For generating noise
+        # with open(filename, 'wb') as f:
+        #     for i, sigma in enumerate(noiseSigmas):
+        #         print(sigma)
+        #         a = np.random.normal(0, sigma, size=(h, w, 3))
+        #         print(f'{np.min(a), np.max(a)}')
+        #         cv2.imshow(f'Noise with sigma={sigma}', a)
+        #         cv2.waitKey(1000)
+        #         cv2.destroyAllWindows()
+        #         np.save(f, a)
+
+        # exit()
+            
+        # For loading saved noises
+        with open(filename, 'rb') as f:
+            for i, sigma in enumerate(noiseSigmas):
+                noises[:,:,i,:] = np.load(f)
+                print(f'{np.min(noises[:,:,i,:]), np.max(noises[:,:,i,:])}')
+                # cv2.imshow(f'Noise with sigma={sigma}', noises[:,:,i,:])
+                # cv2.waitKey(1000)
+                # cv2.destroyAllWindows()
+
+        for radius in radiuses:
+            #xs = np.arange(radius,min(h,w)-radius*2, 400)
+            #ys = np.arange(radius,min(h,w)-radius*2, 400)
+            xs = np.array([int(h/2)-radius])
+            ys = np.array([int(w/2)-radius])
+            configurations.extend([[radius, i, j, k, l, m, n, p] 
+                            for i in list(xs)  
                             for j in list(ys) 
                             for k in list(rotations)
                             for l in list(blurs)
                             for m in list(contrasts)
-                            for n in list(noiseIntensities)
-                            for o in list(countIntensities)
+                            for n in list(np.arange(noiseSigmas.shape[0]))
                             for p in list(brightnesses)])
         
         print(len(configurations))
-        # configurations = [[5,5, 5,0,1, 0.7, 0.68, 0, 10]]
-        for conf in configurations:
-            config = ImageConfiguration()
-            radius, x, y, rotation, blur, contrast, noiseIntensity, countIntensity, brightness = conf[0], conf[1], conf[2], conf[3], conf[4], conf[5], conf[6], conf[7], conf[8]
-            print(f'Radius: {radius}/x,y: {x,y}/rot: {rotation}/blur: {blur}/contrast: {contrast}/noise: {noiseIntensity}/star count: {countIntensity}/brightness: {brightness}')
-            # x = np.clip(x + randint(-100,100), a_min = 0, a_max = h-radius)
-            # y = np.clip(y + randint(-100,100), a_min = 0, a_max = w-radius)
+        for conf in tqdm(configurations, desc='Configuration'):
+            radius, x, y, rotation, blur, contrast, noiseSigmaIndex, brightness = conf[0], conf[1], conf[2], conf[3], conf[4], conf[5], conf[6], conf[7]
+            noiseSigma = noiseSigmas[noiseSigmaIndex]
+            tqdm.write(f'Radius: {radius}/x,y: {x,y}/rotation: {rotation}/contrast: {contrast}/noise sigma: {noiseSigma}/brightness: {brightness}')
+
             pos = [x,y]
+
+            imgName = f'{count}_{bodyType}_{radius}_{x}_{y}_{contrast}_{noiseSigma}_{brightness}_{os.path.basename(name)}'
+
+            config = ImageConfiguration()
             if bodyType == 'Earth':
                 config.addEarth(name, row['X'], row['Y'], row['S'], pos=pos, size=radius, rotation=rotation, blur=blur, alpha=contrast, beta=brightness)
             elif bodyType == 'Moon':
                 config.addMoon(name, row['X'], row['Y'], row['S'], pos=pos, size=radius, rotation=rotation, blur=blur, alpha=contrast, beta=brightness)
             else:
                 config.addSun(name, row['X'], row['Y'], row['S'], pos=pos, size=radius, rotation=rotation, blur=blur, alpha=contrast, beta=brightness)
-           
+        
             canvas = np.zeros((h, w, 3), np.uint8)
 
-            img, xCoord, yCoord, radPixels = config.draw(canvas, _left = 0, _right = h, _top = 0, _bottom = w, noiseIntensity=noiseIntensity, countIntensity=countIntensity, applyBlurs=False, drawCircles=False)
+            img, xCoord, yCoord, radPixels = config.draw(canvas, _left = 0, _right = h, _top = 0, _bottom = w, noise=noises[:,:,noiseSigmaIndex,:], applyBlurs=False, drawCircles=False)
+
             startTime = time.time()
-            sunCircle, earthCircle, moonCircle, imgCircles = find(img, visualize=True)      
-            print(f'{sunCircle}, {earthCircle}, {moonCircle}')      
-            print(f'Elapsed time: {time.time()-startTime} seconds.')
-            # cv2.imshow('Result', imgCircles)
-            # cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # img = cv2.imread(os.path.join('D:\\OpNav\\data\\DetectorDatasetGenerator\\SmallSat20', imgName))
+
             
+            sunCircle, earthCircle, moonCircle, imgCircles = find(img, visualize=False)      
+            # tqdm.write(f'{sunCircle}, {earthCircle}, {moonCircle}')      
+            tqdm.write(f'Elapsed time: {time.time()-startTime} seconds.')
+
             incorrect = False
             if bodyType == 'Earth' and earthCircle is None:
                 incorrect = True
@@ -410,33 +445,86 @@ def singular(objects, df, bodyType, radiuses):
                 incorrect = True
             if bodyType == 'Sun' and sunCircle is None:
                 incorrect = True
-            # if incorrect:
-            #     cv2.imshow('Incorrect detection', imgCircles)
-            #     cv2.waitKey(0)
 
             if bodyType == 'Earth' and not incorrect:
-                print(earthCircle, [yCoord, xCoord, radPixels])
+                # tqdm.write(f'{earthCircle, [yCoord, xCoord, radPixels]}')
                 centerDistance, radiusDistance = calculateErrors(earthCircle, [yCoord, xCoord, radPixels])
             if bodyType == 'Moon' and not incorrect:
-                print(moonCircle, [yCoord, xCoord, radPixels])
+                # tqdm.write(f'{moonCircle, [yCoord, xCoord, radPixels]}')
                 centerDistance, radiusDistance = calculateErrors(moonCircle, [yCoord, xCoord, radPixels])
             if bodyType == 'Sun' and not incorrect:
-                print(sunCircle, [yCoord, xCoord, radPixels])
+                # tqdm.write(f'{sunCircle, [yCoord, xCoord, radPixels]}')
                 centerDistance, radiusDistance = calculateErrors(sunCircle, [yCoord, xCoord, radPixels])
-            
+
+            # False positive
+            if incorrect:
+                nextFalse = 1
+                nextTrue = 0
+                centerErr = -1
+                radiusErr = -1
+            # True positive
             if not incorrect:
-                print(f'center error: {centerDistance}, radius error: {radiusDistance}')
+                tqdm.write(f'center error: {centerDistance}, radius error: {radiusDistance}')
+                nextTrue = 1
+                nextFalse = 0
+                centerErr = (np.round(centerDistance, 1))
+                radiusErr = (np.round(radiusDistance,1))
             if incorrect or centerDistance > 20:
                 if incorrect:
-                    print("Incorrect")
-                    filename = f'Incorrect_{radius}_{x}_{y}_{rotation}_{blur}_{contrast}_{noiseIntensity}_{countIntensity}_{brightness}_{os.path.basename(name)}'
+                    tqdm.write("Incorrect")
+                    filename = f'Incorrect_{radius}_{x}_{y}_{rotation}_{blur}_{contrast}_{noiseSigma}_{brightness}_{os.path.basename(name)}'
                 elif centerDistance > 20:
-                    print(f'Too off center: {centerDistance}')
-                    filename = f'{round(centerDistance),2}_{round(radiusDistance,2)}_{radius}_{x}_{y}_{rotation}_{blur}_{contrast}_{noiseIntensity}_{countIntensity}_{brightness}_{os.path.basename(name)}'
-                cv2.imwrite(os.path.join('C:\\github\\FlightSoftware\\OpticalNavigation\\experiments', filename),img)
-                print("Saved image")
+                    tqdm.write(f'Too off center: {centerDistance}')
+                    filename = f'{round(centerDistance),2}_{round(radiusDistance,2)}_{radius}_{x}_{y}_{rotation}_{blur}_{contrast}_{noiseSigma}_{brightness}_{os.path.basename(name)}'
 
-def generateImages():
+            count += 1
+            
+            # data dump
+            # resultsdf = pd.read_csv(f'D:\\OpNav\\data\\DetectorDatasetGenerator\\{bodyType}_results.csv')
+            d = {'name':imgName, 'true':nextTrue, 'false':nextFalse, 'centerErr':centerErr, 'radiusErr':radiusErr}
+            resultsdf = resultsdf.append([d],ignore_index = True)
+            # resultsdf['name'].append(nextName)
+            resultsdf.to_csv(f'D:\\OpNav\\data\\DetectorDatasetGenerator\\{bodyType}_results.csv', index=False)
+            cv2.imwrite(os.path.join('D:\\OpNav\\data\\DetectorDatasetGenerator\\SmallSat20', imgName), img)
+            del img, imgCircles
+
+def three(earthPath, moonPath, sunPath):
+    w,h = 1640,1232
+    df = pd.read_csv(METADATA_CSV)
+    noiseSigmas = np.round(np.arange(0,15,2),0)[::-1] # 5
+    noises = np.zeros((h,w,noiseSigmas.shape[0],3))
+    rotations = np.array([0])
+    filename = os.path.join('C:\\github\\FlightSoftware\\OpticalNavigation\\experiments', f'GaussianNoises.npy')
+    blurs = np.array([1])
+    contrasts = np.round(np.arange(0.5, 3.1, 0.5),1) # 6
+    brightnesses = np.arange(-50, 51, 20) # 7
+    
+    # radius, x, y, rotation, blur, contrast, noiseSigmaIndex, brightness = conf[0], conf[1], conf[2], conf[3], conf[4], conf[5], conf[6], conf[7]
+    # earth conf
+    earthConf = [30, 900, 1000,  0, 1, 1, 0]
+    # moon conf
+    moonConf = [5, 300, 300, 0, 1, 1, 0]
+    # sun conf
+    sunConf = [100, 1200, 600, 0, 1, 1, 0]
+    config = ImageConfiguration()
+    earthRow = df.loc[df['Name'] == earthPath]
+    moonRow = df.loc[df['Name'] == moonPath]
+    sunRow = df.loc[df['Name'] == sunPath]
+
+    config.addEarth(earthPath, earthRow['X'], earthRow['Y'], earthRow['S'], pos=earthConf[1:3], size=earthConf[0], rotation=earthConf[3], blur=earthConf[4], alpha=earthConf[5], beta=earthConf[6])
+    config.addMoon(moonPath, moonRow['X'], moonRow['Y'], moonRow['S'], pos=moonConf[1:3], size=moonConf[0], rotation=moonConf[3], blur=moonConf[4], alpha=moonConf[5], beta=moonConf[6])
+    # config.addSun(sunPath, sunRow['X'], sunRow['Y'], sunRow['S'], pos=sunConf[1:3], size=sunConf[0], rotation=sunConf[3], blur=sunConf[4], alpha=sunConf[5], beta=sunConf[6])
+
+    canvas = np.zeros((h, w, 3), np.uint8)
+
+    img, xCoord, yCoord, radPixels = config.draw(canvas, _left = 0, _right = h, _top = 0, _bottom = w, noise=noises[:,:, noiseSigmas.shape[0]-1,:], applyBlurs=True, drawCircles=False)
+
+    cv2.imshow('All three', img)
+    cv2.waitKey(0)
+    cv2.imwrite('C:\\github\\FlightSoftware\\OpticalNavigation\\experiments\\Image.jpg', img)
+
+
+def generateSingleImages(bodyType):
     """
     Generates images with randomness. Each image represents
     a random configuration of the following variables:
@@ -490,12 +578,25 @@ def generateImages():
     earths = templates['Earth-Crescent'] + templates['Earth-Half'] + templates['Earth-Ellipse'] + templates['Earth-Full']
     moons = templates['Moon-Crescent'] + templates['Moon-Half'] + templates['Moon-Ellipse'] + templates['Moon-Full']
     suns = templates['Sun']
-    #singular(suns[::-1], df, bodyType='Sun', radiuses=[50, 100])
-    singular(moons, df, bodyType='Moon', radiuses=[5, 25, 100, 200])
-    # singular(earths, df, bodyType='Earth', radiuses=[10,20,40,60,80])
+    if bodyType == 'sun':
+        singular(suns, df, bodyType='Sun', radiuses=[25])
+    elif bodyType == 'moon':
+        singular(moons, df, bodyType='Moon', radiuses=[5,200])
+    elif bodyType == 'earth':
+        singular(earths, df, bodyType='Earth', radiuses=[30,60])
+    else:
+        print(f'Illegal body type: {bodyType}')
     
 
 if __name__ == "__main__":
-    generateImages()   
-
-
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-b", "--body", help = "Which body (earth,moon,sun)")
+    ap.add_argument("-c", "--conf", help = "Which configuration to generate (single, three)")
+    args = vars(ap.parse_args())
+    
+    if str(args['conf']) == 'single':
+        generateSingleImages(args['body'])   
+    elif str(args['conf']) == 'three':
+        three(earthPath=os.path.join('D:\\OpNav\\data\\DetectorDatasetGenerator\\Earth\\Crescent\\crescentearthmoon.jpg'),
+              moonPath=os.path.join('D:\\OpNav\\data\\DetectorDatasetGenerator\\Moon\\Crescent\\steve-donna-o-meara-waxing-crescent-moon-showing-mare-crisium-large-dark-sea-on-the-right_a-G-6110078-4990703.jpg'),
+              sunPath=os.path.join('D:\\OpNav\\data\\DetectorDatasetGenerator\\Sun\\36497504031_24c6270d62_b_v2.png'))

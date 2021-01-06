@@ -5,7 +5,7 @@ import argparse
 import copy
 import math
 
-EARTH_HSV_BOUNDARIES = [([90,30,1], [160,250,250])]
+EARTH_HSV_BOUNDARIES = [([80,30,1], [160,254,254])]
 MOON_HSV_BOUNDARIES = [([0,0,1], [179, 255, 254])]
 
 def sharpen(true_image, kernel_size=3):
@@ -63,7 +63,6 @@ def findEarth(image):
     """
     boundaries = EARTH_HSV_BOUNDARIES
     original_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    original_hsv[:, :, 1:2] = np.max(original_hsv[:,:,1:2])
 
     output = None
     earthRemoved = None
@@ -84,12 +83,12 @@ def findEarth(image):
     gray_blurred = cv2.GaussianBlur(gray, (11,11), 0)  
     
     black_mask = np.clip( (gray_blurred + gray_blurred/255 * 200).astype('uint8') , a_min = 0, a_max=255)
+
     scale = 1
     (c, r) = np.shape(black_mask)
     rows = int(np.round(r * scale))
     cols = int(np.round(c * scale))
     original_median_blurred = cv2.medianBlur(black_mask, round_up_to_odd(700 / 500))
-
 
     circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=30, minRadius=10, maxRadius=0)
     return circles, earthRemoved
@@ -117,6 +116,9 @@ def findMoon(image):
 
     gray = cv2.cvtColor(cv2.cvtColor(output, cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY)
     gray_blurred = cv2.GaussianBlur(gray, (11,11), 0)
+    
+    # cv2.imshow('Blur', cv2.pyrDown(gray_blurred))
+    # cv2.waitKey(0)
 
     # Increase brightness
     black_mask = np.clip( (gray_blurred + gray_blurred/255 * 10).astype('uint8') , a_min = 0, a_max=255)
@@ -127,11 +129,40 @@ def findMoon(image):
     circles = cv2.HoughCircles(original_median_blurred, cv2.HOUGH_GRADIENT, 2, 50, param1=80, param2=15, minRadius=1, maxRadius=0)
     return circles
 
+def contains_blue(img):
+    """https://stackoverflow.com/questions/51324202/check-if-an-image-contains-blue-pixels"""
+    # Convert the image to HSV colour space
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # Define a range for blue color
+    (hsv_l,hsv_h) = EARTH_HSV_BOUNDARIES[0]
+    hsv_l = np.array(hsv_l, dtype = "uint8")
+    hsv_h = np.array(hsv_h, dtype = "uint8")
+    # Find blue pixels in the image
+    #
+    # cv2.inRange will create a mask (binary array) where the 1 values
+    # are blue pixels and 0 values are any other colour out of the blue
+    # range defined by hsv_l and hsv_h
+    return cv2.inRange(hsv, hsv_l, hsv_h).any()
+
+# https://stackoverflow.com/questions/44865023/how-can-i-create-a-circular-mask-for-a-numpy-array
+def create_circular_mask(h, w, center=None, radius=None):
+
+    if center is None: # use the middle of the image
+        center = (int(w/2), int(h/2))
+    if radius is None: # use the smallest distance between the center and image walls
+        radius = min(center[0], center[1], w-center[0], h-center[1])
+
+    Y, X = np.ogrid[:h, :w]
+    dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
+
+    mask = dist_from_center <= radius
+    return mask
 
 # H: 0-179, S: 0-255, V: 0-255
 def find(true_image, visualize=False):
     original_with_circles = copy.copy(true_image)
-    (a, b, c) = np.shape(true_image)
+    orig_copy = copy.copy(true_image)
+    (origH, origW, origC) = true_image.shape
     
     earthCircle = None
     moonCircle = None
@@ -152,15 +183,13 @@ def find(true_image, visualize=False):
     
     # Upsample x8
     denoise = cv2.medianBlur(sunRemoved, round_up_to_odd(1))
+
     true_image, upsampleFactor = (cv2.pyrUp(cv2.pyrUp(denoise))), 2*2
     sharpened_im = sharpen(true_image, kernel_size=3)
     (a, b, c) = np.shape(sharpened_im)
 
-    image = copy.copy(sharpened_im)
-
     #We detect Earth next simply because The Moon is the most challenging, and we want eliminate as many possibilites
-    sunRemovedCopy = copy.copy(image)
-    circles, earthRemoved = findEarth(image)
+    circles, earthRemoved = findEarth(sharpened_im)
     if circles is not None:   
         circles = circles[0][:][:]
         earthCircle = circles[0]
@@ -178,11 +207,16 @@ def find(true_image, visualize=False):
         moonCircle[2] = int(moonCircle[2]/upsampleFactor)
         # Reject collisions between Earth and Moon or Sun and Moon
         if (earthCircle is not None and math.sqrt((moonCircle[0]-earthCircle[0])**2 + (moonCircle[1]-earthCircle[1])**2) < moonCircle[2] + earthCircle[2]):
-            if moonCircle[2] < earthCircle[2]:
-                print("Collision, rejecting Moon")
+            searchSpace = [int((moonCircle[0]+earthCircle[0])/2), int((moonCircle[1]+earthCircle[1])/2), int(max(moonCircle[2], earthCircle[2]))]
+            top = max(0, searchSpace[1]-searchSpace[2])
+            bottom = min(origH, searchSpace[1]+searchSpace[2])
+            left = max(0, searchSpace[0]-searchSpace[2])
+            right = min(origW, searchSpace[0]+searchSpace[2])  
+            if moonCircle[2] < earthCircle[2] or contains_blue(orig_copy[top:bottom, left:right]):
+                # print("Collision, rejecting Moon")
                 moonCircle = None
             else:
-                print("Collision, rejecting Earth")
+                # print("Collision, rejecting Earth")
                 earthCircle = None
 
     if visualize:

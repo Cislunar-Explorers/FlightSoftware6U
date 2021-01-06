@@ -4,6 +4,10 @@
 * Position, velocity and attitude control
 * Timed image acquisition using gyro
 
+## Compiling all modules
+
+In the OpticalNavigation directory, run `pip install -e .`
+
 ## Unit Tests
 
 * Run `pytest -s <FILENAME>::<TEST FUNCTION NAME>` to run a specific test.

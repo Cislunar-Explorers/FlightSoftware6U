@@ -1,15 +1,14 @@
-from .flight_mode import (
-    BootUpMode,
-    RestartMode,
+from flight_modes.flight_mode import (
     NormalMode,
     LowBatterySafetyMode,
     SafeMode,
-    ElectrolysisMode,
     ManeuverMode,
     SensorMode,
     TestMode,
     CommsMode,
 )
+
+from flight_modes.restart_reboot import RestartMode, BootUpMode
 from .opnav_flightmode import OpNavMode
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException
@@ -21,7 +20,6 @@ FLIGHT_MODE_DICT = {
     FMEnum.LowBatterySafety.value: LowBatterySafetyMode,
     FMEnum.Safety.value: SafeMode,
     FMEnum.OpNav.value: OpNavMode,
-    FMEnum.Electrolysis.value: ElectrolysisMode,
     FMEnum.Maneuver.value: ManeuverMode,
     FMEnum.SensorMode.value: SensorMode,
     FMEnum.TestMode.value: TestMode,

@@ -61,3 +61,19 @@ def pack_double(buf, off, val):
 def unpack_double(buf, off):
     val = struct.unpack_from(">d", buf, off)[0]
     return 8, val
+
+
+MAXSTRINGLEN = 2 ** 16 - 5  # TODO: No idea if this value is correct
+
+
+def pack_str(buf, off, s):
+    assert len(s) <= MAXSTRINGLEN, "trying to pack too long of a string"
+    sbytes = bytes(s, "utf-8")
+    struct.pack_into(">H%ds" % (len(s),), buf, off, len(s), sbytes)
+    return 2 + len(s)
+
+
+def unpack_str(buf, off):
+    slen = struct.unpack_from(">H", buf, off)[0]
+    sbytes = buf[off + 2: off + 2 + slen]
+    return 2 + slen, str(sbytes, "utf-8")

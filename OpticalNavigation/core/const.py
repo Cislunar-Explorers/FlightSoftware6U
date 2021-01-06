@@ -53,12 +53,7 @@ class InvalidBodyNameForLoadProperties(Exception):
     def __str__(self):
         return '\"{}\" should be one of (\"{}\",\"{}\",\"{}\"). Was: \"{}\"'.format("name", "earth", "moon", "sun", self.name)
 
-# Position Dynamics
-MAIN_THRUST_ACCELERATION = 9.81 # m/s^2
-
 # Attitude
-# TODO: Stochastic accelerations not used in attitude UKF
-# _sigma_acc = 0.                          # stochastic accelerations
 
 # Control local error quaternion vector of generalized Rodrigues parameters
 _a=1

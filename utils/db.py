@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.types import Float, DateTime
+from sqlalchemy.types import Float, DateTime, Boolean
 
 
 create_session = sessionmaker()
@@ -97,6 +97,17 @@ class OpNavCoordinatesModel(SQLAlchemyTableBase):
             f"attitude=({self.attitude_x}, {self.attitude_y}, "
             f"{self.attitude_z}))>"
         )
+
+
+class RebootsModel(SQLAlchemyTableBase):
+    __tablename__ = "Reboots"
+
+    id = Column(Integer, primary_key=True)
+    is_bootup = Column(Boolean)
+    reboot_at = Column(DateTime)
+
+    def __repr__(self):
+        return f"<RebootsModel(is boot up?={self.is_bootup}, "f"reboot_at={str(self.reboot_at)})>"
 
 
 def create_sensor_tables(engine):

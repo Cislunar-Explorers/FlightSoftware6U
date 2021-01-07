@@ -73,11 +73,19 @@ class FlightMode:
         self.parent = parent
         self.task_completed = False
 
-    @classmethod
     def update_state(self):
         # currently a mess and needs revisiting. Formal logic for switching FMs has not been defined/documented.
         # Please do so!
         flight_mode_id = self.flight_mode_id
+
+        if flight_mode_id in no_transition_modes:
+            return
+
+        # everything in update_state below this comment should be implemented in their respective flight mode
+
+        if self.parent.tlm.gom.percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+            self.parent.replace_flight_mode_by_id(FMEnum.LowBatterySafety.value)
+            return
 
         # Burn command queue logic
         # TODO implment need_to_burn function in ADC driver

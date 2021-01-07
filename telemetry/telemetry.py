@@ -42,6 +42,7 @@ class GyroSensor(SynchronousSensor):
     def poll_smoothed(self):
         raise NotImplementedError  # TODO Need to add data smoothing
 
+
 class PressureSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
@@ -103,7 +104,6 @@ class Telemetry(SynchronousSensor):
         for sensor in self.sensors:
             sensor.poll()
 
-
     def poll_gyro(self):
         rot_data = []
         n = 50
@@ -114,12 +114,11 @@ class Telemetry(SynchronousSensor):
         # Take ~50 measurements over 1 sec and take the average
         pass
 
-
     def write_telem(self, telem):
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>
         # functions above, or a list of all of them.
-        pass
+        raise NotImplementedError
 
     def query_telem(self):
         # querys telemetry from database
-        pass
+        raise NotImplementedError

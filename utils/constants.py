@@ -44,9 +44,15 @@ POSITION_Z = "position_z"
 
 ACCELERATE = "accelerate"
 
-ATTITUDE_X = "attitude_x"
-ATTITUDE_Y = "attitude_y"
-ATTITUDE_Z = "attitude_z"
+NAME = "name"
+VALUE = "value"
+
+AZIMUTH = "theta"
+ELEVATION = "phi"
+
+STATE = "state"
+INTERVAL = "interval"
+DELAY = "delay"
 
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
@@ -57,16 +63,13 @@ ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
 
 
-class GomOutputs(IntEnum):
-    comms = 0
-    burnwire_1 = 1
-    burnwire_2 = 2
-    glowplug = 3
-    solenoid = 4
-    electrolyzer = 5
+@unique
+class ConstantsEnum(IntEnum):
+    GOM_VOLTAGE_MAX = 1
 
 
 # GOMspace Channel designations:
+@unique
 class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
@@ -74,10 +77,6 @@ class GomOutputs(IntEnum):
     glowplug = 3
     solenoid = 4
     electrolyzer = 5
-
-
-GOM_VOLTAGE_MAX = 8400
-GOM_VOLTAGE_MIN = 6000
 
 
 @unique
@@ -111,24 +110,18 @@ class NormalCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     RunOpNav = 1  # no args
     SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
-    ## Really not sure what 3 and 4 are supposed to do:
+    SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
+    # Really not sure what 3 and 4 are supposed to do:
     # SetAccelerate = 3  # arg=true/false
     # SetBreakpoint = 4  # arg=position x, y, z
-    SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
+    SetParam = 5
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
     Verification = 9
+    GetParam = 11
+    SetOpnavInterval = 12
 
-
-@unique
-class ElectrolysisCommandEnum(IntEnum):
-    Switch = 0
-    SetElectrolyzer = 1
-    SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
 
 
 @unique
@@ -136,10 +129,10 @@ class LowBatterySafetyCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     ExitLBSafetyMode = 1  # no args, # XXX this is an override command
     SetExitLBSafetyMode = 2  # define battery percentage
-    SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
+    SetParam = 5
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
 
 
 @unique
@@ -148,9 +141,9 @@ class SafetyCommandEnum(IntEnum):
     ExitSafetyMode = 1
     SetExitSafetyMode = 2
     SetParameter = 5
-    GatherCritialTelem = 6
-    GatherBasicTelem = 7
-    GatherDetailedTelem = 8
+    CritTelem = 6
+    BasicTelem = 7
+    DetailedTelem = 8
 
 
 @unique
@@ -188,6 +181,7 @@ class TestCommandEnum(IntEnum):
     SetTestMode = 1  # no args
     TriggerBurnWire = 2  # no args
     RunOpNav = 3  # no args
+    SeparationTest = 5
     GomPin = 6
 
 

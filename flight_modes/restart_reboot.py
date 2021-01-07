@@ -1,69 +1,52 @@
 import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, LOG_DIR
+from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY
 import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
 import random
 from utils.log import get_log
+from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
 
 logger = get_log()
 
-# another thing to test:
-# bash rc file
-# append it
-# having bootup run immediately
-# ~/.bashrc
-# idk ask toby
-
 
 class BootUpMode(FlightMode):
+    flight_mode_id = FMEnum.Boot.value
+    command_codecs = {BootCommandEnum.Split.value: ([], 0)}
+    command_arg_unpackers = {}
+
     def __init__(self, parent):
         super().__init__(parent)
 
+        logger.debug("Boot up beginning...")
+        logger.debug("Time when sleep starts: " + str(datetime.now()))
+        time.sleep(BOOTUP_SEPARATION_DELAY)
+        logger.debug("Time when sleep stops: " + str(datetime.now()))
 
-        logger.info("Boot up beginning...")
-        logger.info("Time when sleep starts: " + str(datetime.now()))
-        #time.sleep(BOOTUP_SEPARATION_DELAY)
-        time.sleep(5)
-        logger.info("Time when sleep stops: " + str(datetime.now()))
-
-        logger.info("Creating DB session...")
+        logger.debug("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
-        # create the directory on the pi, this way next time a Restart is called
-        # os.mkdir(LOG_DIR)
-
-        logger.info("Logging info to DB...")
+        logger.debug("Logging info to DB...")
         self.log()
-        self.selected = None
 
-        # deploy antennae
-        #logger.info("Beginning burn wire...")
-        #parent.gom.burnwire1(5)
+        # TODO deploy antennae
+        # logger.info("Beginning burn wire...")
+        # parent.gom.burnwire1(5)
 
     def run_mode(self):
         # initialize the cameras, select a camera
         # TODO is this done right?
-        logger.info("Creating camera mux...")
+        logger.debug("Creating camera mux...")
         mux = camera.CameraMux()
-        logger.info("Is camera detected? " + str(mux.detect()))
-        if mux.detect():
-            logger.info("Cam detected")
-            self.selected = True
-            mux.selectCamera(random.choice([1, 3, 4]))
-        else:
-            logger.info("Cam not detected...")
-            self.selected = False
-            logger.info("Restarting...")
+        logger.debug("Selecting a camera...")
+        # select camera before reboot so that we will detect cam on reboot
+        mux.selectCamera(random.choice([1, 2, 3]))
+        logger.debug("Transferring to RestartMode")
+        os.system("sudo reboot")
 
-            # TODO make it so that main runs
-            # this will restart the Pi
-            os.system("sudo reboot")
-
-    # will add info about the boot up to the db
     def log(self):
         is_bootup = True
         reboot_at = datetime.now()
@@ -71,27 +54,26 @@ class BootUpMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.info("Log to DB complete...")
-
-    def init_spin(self):
-        pass
+        logger.debug("Log to DB complete...")
 
 
 class RestartMode(FlightMode):
+    command_codecs = {}
+    command_arg_unpackers = {}
+    flight_mode_id = FMEnum.Restart.value
+
     def __init__(self, parent):
         super().__init__(parent)
 
-        logger.info("Restarting...")
-        logger.info("Creating DB session...")
+        logger.debug("Restarting...")
+        logger.debug("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
         # add info about restart to database
-        logger.info("Logging to DB...")
+        logger.debug("Logging to DB...")
         self.log()
 
-    # this should add to the RebootsModel
-    # will add info about the bootup to the db
     def log(self):
         is_bootup = False
         reboot_at = datetime.now()
@@ -99,17 +81,22 @@ class RestartMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.info("Logging to DB complete...")
+        logger.debug("Logging to DB complete...")
 
+    # TODO implement error handling for if camera not detected
     def run_mode(self):
         # initialize the cameras, select a random camera
-        logger.info("Selecting a camera")
-        cam = random.choice([1, 3, 4])
+        logger.debug("Selecting a camera")
         mux = camera.CameraMux()
-        mux.selectCamera(cam)
+        mux.selectCamera(random.choice([1, 2, 3]))
         cam_object = camera.Camera()
-        cam_object.initialize()
-        self.session.query("is_bootup").all()
-        self.session.query("reboot_at").all()
-        #logger.info("Camera detected? " + str(mux.detect()))
-        cam_object.rawObservation("restart_cam_test.mjpeg")
+        # cam_object.initialize()
+
+        # logger.debug("Taking raw observation to test")
+        # cam_object.rawObservation("restart_cam_test.mjpeg")
+
+        """how to see the DB...
+        boots = self.session.query(RebootsModel).all()
+        for boot in boots:
+            print(boot)"""
+

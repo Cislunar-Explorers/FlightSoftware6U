@@ -1,113 +1,188 @@
-from main import MainSatelliteThread
 from datetime import datetime
-import utils.constants as constants
+
+from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum
+from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
+from threading import Thread
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE
 
 
 class CommandDefinitions:
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         self.parent = parent
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}
-        self.normal_commands = {1: self.run_opnav,
-                                2: self.change_attitude,
-                                5: self.set_parameter,
-                                6: self.gather_critical_telem,
-                                7: self.gather_basic_telem,
-                                8: self.gather_detailed_telem,
-                                9: self.verification
-                                }
+        self.normal_commands = {
+            # TODO: use CommandEnums instead of hardcoded values for all commands below
+            NormalCommandEnum.RunOpNav.value: self.run_opnav,
+            NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
+            NormalCommandEnum.SetElectrolysis.value: self.electrolysis,
+            NormalCommandEnum.SetParam.value: self.set_parameter,
+            NormalCommandEnum.CritTelem.value: self.gather_critical_telem,
+            NormalCommandEnum.BasicTelem.value: self.gather_basic_telem,
+            NormalCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
+            NormalCommandEnum.Verification.value: self.verification,
+            NormalCommandEnum.GetParam.value: self.print_parameter,
+            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval
+        }
 
-        self.electrolysis_commands = {1: self.electrolysis,
-                                      5: self.set_parameter,
-                                      6: self.gather_critical_telem,
-                                      7: self.gather_basic_telem,
-                                      8: self.gather_detailed_telem
-                                      }
+        self.low_battery_commands = {
+            LBSCEnum.ExitLBSafetyMode.value: self.return_to_normal,
+            LBSCEnum.SetExitLBSafetyMode.value: self.set_exit_lowbatt_threshold,
+            LBSCEnum.SetParam.value: self.set_parameter,
+            LBSCEnum.CritTelem.value: self.gather_critical_telem,
+            LBSCEnum.BasicTelem.value: self.gather_basic_telem,
+            LBSCEnum.DetailedTelem.value: self.gather_detailed_telem,
+        }
 
-        self.low_battery_commands = {1: self.return_to_normal,
-                                     2: self.set_exit_lowbatt_threshold,
-                                     5: self.set_parameter,
-                                     6: self.gather_critical_telem,
-                                     7: self.gather_basic_telem,
-                                     8: self.gather_detailed_telem,
-                                     }
+        self.safety_commands = {
+            SafetyCommandEnum.ExitSafetyMode.value: self.return_to_normal,
+            # 2: Not Implemented/need clarification,
+            SafetyCommandEnum.SetParameter.value: self.set_parameter,
+            SafetyCommandEnum.CritTelem.value: self.gather_critical_telem,
+            SafetyCommandEnum.BasicTelem.value: self.gather_basic_telem,
+            SafetyCommandEnum.DetailedTelem.value: self.gather_detailed_telem
+        }
 
-        self.safety_commands = {1: self.return_to_normal,
-                                # 2: Not Implemented/need clarification,
-                                5: self.set_parameter,
-                                6: self.gather_critical_telem,
-                                7: self.gather_basic_telem,
-                                8: self.gather_detailed_telem
-                                }
+        self.opnav_commands = {
+            1: self.run_opnav,
+            2: self.set_opnav_interval
+        }
 
-        self.opnav_commands = {1: self.run_opnav,
-                               2: self.set_opnav_interval
-                               }
-
-        self.maneuver_commands = {1: self.run_opnav,
-                                  2: self.change_attitude,
-                                  9: self.burn}
+        self.maneuver_commands = {
+            1: self.run_opnav,
+            2: self.change_attitude,
+            9: self.burn}
 
         self.sensor_commands = {}
 
-        self.test_commands = {2: self.split,
-                              3: self.run_opnav,
-                              6: self.gom_outputs}
+        self.test_commands = {
+            2: self.split,
+            3: self.run_opnav,
+            5: self.separation_test,
+            6: self.gom_outputs
+        }
 
         self.comms_commands = {}
 
-        self.command_commands = {1: self.set_parameter,
-                                 2: self.set_system_clock,
-                                 3: self.reboot_pi,
-                                 4: self.reboot_gom,
-                                 5: self.power_cycle,
-                                 6: self.gom_outputs,
-                                 7: self.gom_command,
-                                 8: self.general_command,
-                                 170: self.cease_comms}
-
-        self.COMMAND_DICT = {
-            0: self.bootup_commands,
-            1: self.restart_commands,
-            2: self.normal_commands,
-            3: self.low_battery_commands,
-            4: self.safety_commands,
-            5: self.opnav_commands,
-            6: self.maneuver_commands,
-            7: self.sensor_commands,
-            8: self.test_commands,
-            9: self.comms_commands,
-            10: self.command_commands
+        self.command_commands = {
+            CommandCommandEnum.SetParam.value: self.set_parameter,
+            CommandCommandEnum.SetSystemTime.value: self.set_system_clock,
+            CommandCommandEnum.RebootPi.value: self.reboot_pi,
+            CommandCommandEnum.RebootGom.value: self.reboot_gom,
+            CommandCommandEnum.PowerCycle.value: self.power_cycle,
+            CommandCommandEnum.GomPin.value: self.gom_outputs,
+            CommandCommandEnum.GomGeneralCmd.value: self.gom_command,
+            CommandCommandEnum.GeneralCmd.value: self.general_command,
+            CommandCommandEnum.CeaseComms.value: self.cease_comms
         }
 
+        self.COMMAND_DICT = {
+            FMEnum.Boot.value: self.bootup_commands,
+            FMEnum.Restart.value: self.restart_commands,
+            FMEnum.Normal.value: self.normal_commands,
+            FMEnum.LowBatterySafety.value: self.low_battery_commands,
+            FMEnum.Safety.value: self.safety_commands,
+            FMEnum.OpNav.value: self.opnav_commands,
+            FMEnum.Maneuver.value: self.maneuver_commands,
+            FMEnum.SensorMode.value: self.sensor_commands,
+            FMEnum.TestMode.value: self.test_commands,
+            FMEnum.CommsMode: self.comms_commands,
+            FMEnum.Command.value: self.command_commands
+        }
+
+        for value in self.COMMAND_DICT.values():
+            value[0] = self.switch  # adds 0 to all of the dict entries in COMMAND_DICT
+
+    def switch(self):
+        self.parent.logger.critical("Manual FM switch commanded")
+
     def split(self):
-        # read gyro rate data before split
-        self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION)
+        # for demo, delay of 0
+        self.parent.gom.burnwire2(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
+        # Tell gom to power burnwires in five seconds
+        # self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
+        # start reading gyro info
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
 
-    def run_opnav(self):
-        # self.parent.run_opnav
-        raise NotImplementedError
+    def separation_test(self):
+        gyro_threader = Thread(target=self.gyro_thread)
+        gyro_threader.start()
+        self.parent.gom.burnwire2(2)
+        gyro_threader.join()
 
-    def set_parameter(self, obj, name, value):
-        initial_value = getattr(obj, name)
-        setattr(obj, name, value)
-        changed_value = getattr(obj, name)
+    def gyro_thread(self):
+        freq = 250  # Hz
+        duration = 4  # sec
+        gyro_data = []
+        self.parent.logger.info("Reading Gyro data (rad/s)")
+        for i in range(int(duration * freq)):
+            gyro_reading = self.parent.gyro.get_gyro()
+            gyro_time = time.time()
+            gyro_list = list(gyro_reading)
+            gyro_list.append(gyro_time)
+            gyro_data.append(gyro_list)
+            time.sleep(1.0 / freq)
+
+        # writes gyro data to gyro_data.txt. Caution, this file will be overwritten with every successive test
+        self.parent.logger.info("Writing gyro data to file")
+        with open('gyro_data.txt', 'w') as filehandle:
+            filehandle.writelines("%s\n" % line for line in gyro_data)
+
+    def run_opnav(self):
+        self.parent.logger.info("Running OpNav Pipeline")
+        time.sleep(10)
+        self.parent.logger.info("OpNav calculations complete. Resulting attitude is [x, y, z, phi, theta]")
+        if self.parent.flight_mode.flight_mode_id == 2:
+            self.parent.flight_mode.last_opnav_run = datetime.now()
+        # self.parent.run_opnav
+        # raise NotImplementedError
+
+    def set_parameter(self, **kwargs):
+        """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
+        string which we can't pack/unpack """
+        name = kwargs[NAME]
+        value = kwargs[VALUE]
+
+        initial_value = getattr(self.parent.constants, name)
+        setattr(self.parent.constants, name, value)
+        changed_value = getattr(self.parent.constants, name)
         self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
 
         # TODO: implement "saving" and reading of parameters to a text file
 
-    def set_exit_lowbatt_threshold(self, value):
-        assert 0 < value < 1.0
-        self.set_parameter(constants, "EXIT_LOW_BATTERY_MODE_THRESHOLD", value)
+    def set_exit_lowbatt_threshold(self, **kwargs):
+        """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
+        requires one kwarg and does some basic sanity checks on the passed value"""
+        value = kwargs['value']
+        try:
+            assert 0 < value < 1.0 and float(value) is float
+            if value >= self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+                self.parent.logger.error(
+                    f"New value for Exit LB thresh must be less than current Enter LB thresh value")
+                assert False
+            self.set_parameter(name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
+        except AssertionError:
+            self.parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
 
-    def set_opnav_interval(self, value):
-        assert value > 0
-        self.set_parameter(constants, "OPNAV_INTERVAL", value)
+    def set_opnav_interval(self, **kwargs):
+        """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
+            requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
+        value = kwargs[INTERVAL]
+        try:
+            assert value > 1
+            self.set_parameter(name="OPNAV_INTERVAL", value=value)
+        except AssertionError:
+            self.parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
-    def change_attitude(self, theta, phi):
+    def change_attitude(self, **kwargs):
+        azimuth = kwargs['theta']
+        elevation = kwargs['phi']
+
+        # current_theta = telemetry.latest.theta
+        # current_phi = telemetry.latest.phi
+
         raise NotImplementedError
 
     def gather_critical_telem(self):
@@ -127,22 +202,28 @@ class CommandDefinitions:
         # Some verification defined by the NASA Cubequest challenge
         raise NotImplementedError
 
-    def electrolysis(self, state: bool, delay: int):
+    def electrolysis(self, **kwargs):
+        state = kwargs[STATE]
+        delay = kwargs.get(DELAY, 0)
+        assert type(state) is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
-    def burn(self, time, absolute: bool):
+    def burn(self, **kwargs):
+        time_burn = kwargs['time']
+        absolute = kwargs['absolute']
+
         if absolute:  # i.e. if we want to burn at a specific absolute time
-            delay = time - datetime.now()
+            delay = time_burn - datetime.now()
         else:  # if we want to burn exactly x seconds from receiving the command
             delay = time
 
-        delay = max(0, delay)  # makes sure we don't have negative delays
-        self.parent.gom.glowplug(constants.GLOWPLUG_DURATION, delay=delay)
-        # TODO: need to make gom commands asynchronous (currently they make the whole satellite sleep for the delay
-        #  instead of using the gom's delay option)
+        if delay < 0:
+            self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
+        else:
+            self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
 
     def return_to_normal(self):
-        self.parent.replace_flight_mode_by_id(constants.FMEnum.Normal.value)
+        self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
     def reboot_pi(self):
         os.system("reboot")
@@ -154,37 +235,47 @@ class CommandDefinitions:
         # definitely should implement some sort of password and double verification to prevent accidental triggering
         raise NotImplementedError
 
-    def set_system_clock(self, unix_epoch):
+    def set_system_clock(self, **kwargs):  # Needs validation (talk to Viraj)
         # need to validate this works, and need to integrate updating RTC
+        unix_epoch = kwargs['epoch']
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
+
+    def print_parameter(self, **kwargs):
+        index = kwargs["index"]
+        value = getattr(self.parent.constants, str(index))
+        self.parent.logger.info(f"{index}:{value}")
 
     def reboot_gom(self):
         self.parent.gom.gom.reboot()
 
-    def power_cycle(self, passcode):
-        self.parent.gom.hard_reset(bool(passcode))
+    def power_cycle(self, **kwargs):
+        passcode = kwargs.get('passcode', 'bogus')
+        self.parent.gom.hard_reset(passcode)
 
-    def gom_outputs(self, output_channel, state, delay):
+    def gom_outputs(self, **kwargs):
+        output_channel = kwargs['output_channel']
+        state = kwargs.get('state', 0)  # if 'state' is not found in kwargs, assume we want it to turn off
+        delay = kwargs.get('delay', 0)  # if 'delay' is not found in kwargs, assume we want it immediately
         self.parent.gom.set_output(output_channel, state, delay=delay)
 
-    def gom_command(self, command_string: str, args: tuple):
+    def gom_command(self, command_string: str, args: dict):
         """Generalized Gom command - very powerful and possibly dangerous.
         Make sure you know exactly what you're doing when calling this."""
-
         method_to_call = getattr(self.parent.gom, command_string)
         try:
-            result = method_to_call(*args)
+            result = method_to_call(**args)
             return result
         except TypeError:
             self.parent.logger.error(f"Incorrect args: {args} for gom method {command_string}")
 
-    def general_command(self, method_name: str, args: tuple):
+    def general_command(self, method_name: str, args: dict):
         """Generalized satellite action command - very powerful and possibly dangerous.
             Make sure you know exactly what you're doing when calling this."""
+
         method_to_call = getattr(self.parent, method_name)
         try:
-            result = method_to_call(*args)
+            result = method_to_call(**args)
             return result
         except TypeError:
-            self.parent.logger.error(f"Incorrect args: {args} for gom method {method_name}")
+            self.parent.logger.error(f"Incorrect arguments: {args} for method {method_name}")

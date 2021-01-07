@@ -1,5 +1,12 @@
 from setuptools import setup, find_packages
 
+# Directions:
+# Some modules can only be installed on Raspberry Pi while others can be installed on any system
+# In order to get around this, we use the extras_requires argument to setup in order to specify
+# at the command line what version of our requirements we want to install.
+# Documentation for each option is noted in the definition of EXTRAS below.
+# In order to install one of the options, start the virtual environment and run the following command:
+# pip install -e .[option]
 
 AUTHOR = "Dr. Kyle Doyle PhD"
 NAME = "CislunarExplorers"
@@ -23,6 +30,9 @@ PI_INSTALL_REQUIRES = [
     "picamera",
     "pigpio",
     "RPi.GPIO",
+    "board",
+    "busio",
+    "adafruit-circuitpython-bno055",
 ]
 
 DEV_REQUIRES = [

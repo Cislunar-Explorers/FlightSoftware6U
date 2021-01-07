@@ -245,5 +245,6 @@ def simulateCesiumFixedViewpoints():
 ##############################
 
 if __name__ == "__main__":
-    simulateCesiumFixedViewpoints()
+    #simulateCesiumFixedViewpoints()
+    simulateSyntheticAttitudeData()
 

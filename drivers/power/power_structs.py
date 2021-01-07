@@ -489,7 +489,7 @@ def displayHK(hk):
     gom_logger.info(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
     gom_logger.info(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
     gom_logger.info(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
-    #gom_logger.info(
+    # gom_logger.info(
     #    GR("Channel output:              ")
     #    + "%s"
     #    % R(

@@ -1,10 +1,57 @@
 from core.acquisition import startAcquisition, readOmega
 from core.cam_meas import cameraMeasurements
-from core.ukf import runPosVelUKF
-from core.attitude import runAttitudeUKFWithKick
+from core.ukf import runTrajUKF
+from core.attitude import runAttitudeUKF
+from core.sense import select_camera, record_video, record_gyro
+from core.preprocess import rolling_shutter, rect_to_stereo_proj
+from core.find import find
 import numpy as np
 import traceback
 import pandas as pd
+from utils.db import create_sensor_tables_from_path, OpNavCoordinatesModel
+from utils.constants import DB_FILE
+from datetime import datetime
+
+"""
+Entry point into OpNav. This method calls observe() and process().
+"""
+
+
+def start():
+    """
+    Confirms if estimates were computed successfully and if 
+    they were added tp the appropriate databases.
+    Return:
+    opnav_exit_status: 0 (success), ...
+    """
+    create_session = create_sensor_tables_from_path(DB_FILE)
+    session = create_session()
+    new_entry = OpNavCoordinatesModel(
+        time_retrieved=datetime.now(),
+        velocity_x=0.,
+        velocity_y=0.,
+        velocity_z=0.,
+        position_x=0.,
+        position_y=0.,
+        position_z=0.,
+        attitude_q1=0.,
+        attitude_q2=0.,
+        attitude_q3=0.,
+        attitude_q4=0.,
+        attitude_rod1=0.,
+        attitude_rod2=0.,
+        attitude_rod3=0.,
+        attitude_b1=0.,
+        attitude_b2=0.,
+        attitude_b3=0.
+    )
+    session.add(new_entry)
+    session.commit()
+    # Check db entries
+    entries = session.query(OpNavCoordinatesModel).all()
+    for entry in entries:
+        print(entry)
+    return 0
 
 """
 Begin OpNav acquisition and storing process. The system will record videos from
@@ -12,17 +59,6 @@ the three cameras onboard and store them on the SD card as video format. It will
 record gyroscope measurements and store them in a table on the SD card.
 """
 def observe():
-    # obtain latest angular velocity (account for bias)
-    # configure camera parameters accordingly
-    # decide on video time
-    # record video from camera 1
-    # record video from camera 2
-    # record video from camera 3
-    # record angular velocity from gyro (N times)
-    # Extract measurements from video frames
-    # Store measurement vector and angular velocity vector in database
-    # Repeat until desired number of camera measurements have been obtained
-    #   Low small angular velocities and cold-gas kick, Att-UKF converges with a few hundered.
     pass
 
 """
@@ -43,7 +79,7 @@ def process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState
     [cameraParams]: data camera parameters
     [att_P]: (6,6) np matrix representing att UKF covariance matrix 
     [initAttitudeState]: (6,1) np array initial attitude State
-    [initQuaterionState]: (6,1) np array initial quaternion state (could be a guess)
+    [initQuaterionState]: (4,1) np array initial quaternion state (could be a guess)
     [gyroVars]: (gyro_sigma, gyro_sample_rate, Q, R) where
                 [gyro_sigma]: float
                 [gyro_sample_rate]: average sample time elapsed between each gyro measurement (seconds)
@@ -71,7 +107,7 @@ def process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState
             # # X axis of spacecraft
             # local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
             # X_A = np.dot(Aq,local_vector[:3].T.reshape(3,1))
-        trajState, traj_P, traj_K = runPosVelUKF(b['ephemeris']['moon'], 
+        trajState, traj_P, traj_K = runTrajUKF(b['ephemeris']['moon'], 
                                        b['ephemeris']['sun'], 
                                        b['cam_meas'], 
                                        trajState,
@@ -115,7 +151,7 @@ def process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState
             timeline[i] = prevTime
 
 
-        att_P, quat, attState = runAttitudeUKFWithKick(b['cam_dt'], 
+        att_P, quat, attState = runAttitudeUKF(b['cam_dt'], 
                                                        gyroVars, 
                                                        att_P, 
                                                        attState, 

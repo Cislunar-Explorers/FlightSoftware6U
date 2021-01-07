@@ -1,25 +1,7 @@
 import numpy as np
 import math
 from core.const import CisLunarCameraParameters
-
-# How wrong our dynamics model is? e.g. how off in variance will we be due
-# to solar radiation pressure, galactic particles, and bad gravity model? 
-# Units: (km^2)
-Q = np.diag(np.array([1, 1, 1, 1e-5, 1e-6, 1e-5], dtype=np.float))
-Sv = np.linalg.cholesky(Q)
-# How bad are our sensors? 
-# Units: (pixels^2), 
-PIXEL_ERROR = 1
-R = np.diag(np.array([1, 1, 1, 1, 1, 1], dtype=np.float)) * PIXEL_ERROR
-alpha = 10e-4
-beta = 2
-
-ue = 3.986e14
-um = 4.904e12
-us = 1.327e20
-re = 6378 * 1000  
-rm = 1737 * 1000
-rs = 695505 * 1000
+from core.const import TrajUKFConstants as Const
 
 def length(M):
     """
@@ -60,7 +42,7 @@ def G(rec, rem, rcm, rcs, res, thrust):
     """
     [thrust] is 3D acceleration vector.
     """
-    return -ue * ( rec/(np.linalg.norm(rec)**3) ) + um * ( (rem-rec)/((rcm.dot(rcm.T))**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + us * ( (res-rec)/((rcs.dot(rcs.T))**(3/2)) - res/(np.linalg.norm(res)**3) ) + thrust
+    return -Const.ue * ( rec/(np.linalg.norm(rec)**3) ) + Const.um * ( (rem-rec)/((rcm.dot(rcm.T))**(3/2)) - rem/(np.linalg.norm(rem)**3) ) + Const.us * ( (res-rec)/((rcs.dot(rcs.T))**(3/2)) - res/(np.linalg.norm(res)**3) ) + thrust
 
 def attitudeMatrix(quaternion):
     q1, q2, q3, q4 = quaternion
@@ -78,7 +60,8 @@ def dynamics_model(state, dt, moonEph, sunEph, main_thrust_info):
     [main_thrust_info]: dictionary containing: 
         [kick_orientation]: (4x1) quaterion representing kick acceleration 
                             (None) if no kick occured
-        [acc_mag]: float main thrust acceleration
+        [acceleration_magnitude]: float main thrust acceleration
+        [kick_duration]: float main thrust fire duration
     Ephemeris is in km, km/s 
     Returns:
     Output is also in km
@@ -101,12 +84,13 @@ def dynamics_model(state, dt, moonEph, sunEph, main_thrust_info):
         local_vector = np.array([1, 0, 0, 0]) # last 0 is padding
         net_acceleration_thrust = (np.dot(Aq,local_vector[:3].T.reshape(3,1)) * acc_mag).reshape(1,3)
     
+    # Inlined RK4
     n1 = G(position, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     net_acceleration_thrust = np.zeros((1,3))
     n2 = G(position+dt*n1/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     n3 = G(position+dt*n2/2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     n4 = G(position+n3*dt, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
-    velocity = rec_dot + (1.0/6.0)*(n1 + 2*n2 + 2*n3 + n4)*dt
+    velocity = rec_dot + (1.0/6.0)*(n1 + 2*n2 + 2*n3 + n4)*dt # TODO: main thrust fire delta time
 
     return np.concatenate((position, velocity), axis=None) / 1000
 
@@ -143,16 +127,17 @@ def measModel(traj, moonEph, sunEph, const):
     num3 = dmx*(dsx-x) + dmy*(dsy-y) + dsz*(dmz-z) - z*dmz - x*dsx - y*dsy + p_c2;
 
     # Pixel Separation Between Bodies 
-    z1 = const * math.acos(num1/(p_c*p_cm))       # E to M
-    z2 = const * math.acos(num2/(p_c*p_cs))       # E to S
-    z3 = const * math.acos(num3/(p_cm*p_cs))      # M to S
+    z1 = math.acos(num1/(p_c*p_cm))       # E to M
+    z2 = math.acos(num2/(p_c*p_cs))       # E to S
+    z3 = math.acos(num3/(p_cm*p_cs))      # M to S
 
     # Pixel Diameter of Bodies
-    z4 = 2*const * math.atan(re/p_c)               # E
-    z5 = 2*const * math.atan(rm/p_cm)              # M 
-    z6 = 2*const * math.atan(rs/p_cs)              # S
+    z4 = 2 * math.atan(Const.re/p_c)               # E
+    z5 = 2 * math.atan(Const.rm/p_cm)              # M 
+    z6 = 2 * math.atan(Const.rs/p_cs)              # S
 
-    return np.array([z1, z2, z3, z4, z5, z6]).T
+    # Note: multiply measurement vector by "const" to convert from angles to pixels
+    return np.array([z1, z2, z3, z4, z5, z6]).T * const
 
 def getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight):
     """
@@ -212,40 +197,56 @@ def newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements, R, initState, dynamic
         K = Pxz.dot(np.linalg.pinv(Pzz))
     else:
         K = np.zeros((6,6)); # To test dynamics Model
+
     xNew = xMean + K.dot(measurements - zMean) 
     pNew = Pxx - K.dot(R.dot(K.T))
     return xNew, pNew, K
 
-def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, main_thrust_info=None, dynamicsOnly=False):
+def runTrajUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, main_thrust_info=None, dynamicsOnly=False):
     """
     Propogates dynamics model with instantaneous impulse from the main thruster.
     Due to the processing delays of the system and the short impulse duration, 
     the thrust is modeled as an instantenous acceleration on the spacecraft. 
     [moonEph]: Moon ephemeris vector (1,6)
+        Format: [x pos (km), y pos (km), z pos (km), vx (km/s), vy (km/s), vz (km/s)] (J2000 ECI)
     [sunEph]: Sun ephemeris vector (1,6)
+        Format: [x pos (km), y pos (km), z pos (km), vx (km/s), vy (km/s), vz (km/s)] (J2000 ECI)
     [measurements]: measurement vector (6x1)
+        Format: [z1, z2, z3, z4, z5, z6]
+            z1 = pixel distance E-M
+            z2 = pixel distance E-S
+            z3 = pixel distance S-M
+            z4, z5, z6 = pixel widths of E, M, S
     [initEstimate]: state vector from previous execution (or start state) (6x1)
+        Format: [x pos (km), y pos (km), z pos (km), vx (km/s), vy (km/s), vz (km/s)] (J2000 ECI)
     [dt]: time elapsed since last execution (seconds)
     [P]: initial covariance matrix for state estimate
-    [main_thrust_info]: Dictionary representing main thrust data (4x1 quaternion 'kick_orientation', float 'acceleration_magnitude')
+    [main_thrust_info]: Dictionary representing main thrust data (4x1 quaternion 'kick_orientation', float 'acceleration_magnitude', float 'kick_duration')
     [dynamicsOnly]: trust the dynamics model over measurements (helpful for testing)
     Returns:
     [xNew, pNew, K]: (6x1) new state vector, (6x6) new state covariance estimate, kalman gain
     """
+    #measurements[3] = 0
+    #measurements[4] = 0
+    #measurements[5] = 0
+
     nx = length(P)
-    nv = length(Q)
-    k = 3-nx;
-    lmbda = alpha**2*(nx+k)-nx # tunable
+    nv = length(Const.Q)
+    k = 3-nx
+    lmbda = Const.alpha**2*(nx+k)-nx # tunable
     constant = np.sqrt(nx+nv+lmbda)
     centerWeight = lmbda/(nx+nv+lmbda)
     otherWeight = 1/(2*(nx+nv+lmbda))
 
     const = cameraParams.hPix/(cameraParams.hFov*np.pi/180) # camera constant: PixelWidth/FOV  [pixels/radians]
 
+    # TODO: Remove test pixel to angle conversion
+    # measurements /= const
+
     Sx = np.linalg.cholesky(P)
 
     # Generate Sigma Points
-    sigmas, noise = makeSigmas(initState, Sx, Sv, nx, nv, constant)
+    sigmas, noise = makeSigmas(initState, Sx, Const.Sv, nx, nv, constant)
 
     # Propogate Sigma Points
     propSigmas = np.zeros_like(sigmas) # Initialize
@@ -259,18 +260,15 @@ def runPosVelUKF(moonEph, sunEph, measurements, initState, dt, P, cameraParams, 
     # Sigma measurements are the expected measurements calculated from
     # running the propagated sigma points through measurement model
     for j in range(length(sigmas)):
-        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),R).T, moonEph, sunEph, const)
-
+        sigmaMeasurements[:,j] = measModel(propSigmas[:,j] + np.random.multivariate_normal(np.zeros((6,)),Const.R).T, moonEph, sunEph, const)
+        
     # a priori estimates
     xMean, zMean = getMeans(propSigmas, sigmaMeasurements, centerWeight, otherWeight)
 
     # Calculates the covariances as weighted sums
-    Pxx, Pxz, Pzz = findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, alpha, beta, R)
-    # print(Pxx)
-    # print(Pxz)
-    # print(Pzz)
+    Pxx, Pxz, Pzz = findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, Const.alpha, Const.beta, Const.R)
 
     # a posteriori estimates
-    xNew, pNew, K =  newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),R).reshape(6,1), R, initState, dynamicsOnly=dynamicsOnly)
+    xNew, pNew, K =  newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements + np.random.multivariate_normal(np.zeros((6)),Const.R).reshape(6,1), Const.R, initState, dynamicsOnly=dynamicsOnly)
     return xNew, pNew, K
 

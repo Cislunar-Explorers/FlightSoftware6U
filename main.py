@@ -15,18 +15,24 @@ from utils.constants import (
     DB_FILE,
     LOW_CRACKING_PRESSURE,
     HIGH_CRACKING_PRESSURE,
-    IDEAL_CRACKING_PRESSURE
-)
+    IDEAL_CRACKING_PRESSURE,
+    FMEnum
+)  # TODO: optimize this import
+
+import utils.constants
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
-from drivers.dummy_sensors import PressureSensor
+from drivers.gyro import GyroSensor
+# from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
+from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
+from communications.command_definitions import CommandDefinitions
 
 
 FOR_FLIGHT = None
@@ -38,14 +44,15 @@ class MainSatelliteThread(Thread):
         self.command_queue = Queue()
         self.commands_to_execute = []
         self.burn_queue = Queue()
-        self.init_comms()
+        # self.init_comms()
         self.command_handler = CommandHandler()
-        self.commands_dictionary = command_definitions(self)
-        # self.init_sensors()
+        self.command_definitions = CommandDefinitions(self)
+        self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
         else:
@@ -53,6 +60,8 @@ class MainSatelliteThread(Thread):
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
+        opnav.start()
+        self.constants = utils.constants
 
     def init_comms(self):
         self.comms = CommunicationsSystem(
@@ -60,12 +69,14 @@ class MainSatelliteThread(Thread):
         )
         self.comms.listen()
 
-
     # TODO
+
     def init_sensors(self):
         self.gom = Gomspace()
-        self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
-                                                # in pressure_sensor (to be made) can access burn queue"""
+        self.gyro = GyroSensor()
+        # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
+        # in pressure_sensor (to be made) can access burn queue"""
+
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)
@@ -83,12 +94,12 @@ class MainSatelliteThread(Thread):
         else:
             self.gom.set_electrolysis(False)
 
-
     def replace_flight_mode_by_id(self, new_flight_mode_id):
-        self.flight_mode = build_flight_mode(self, new_flight_mode_id)
+        self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
 
     def replace_flight_mode(self, new_flight_mode):
         self.flight_mode = new_flight_mode
+        self.logger.info(f"Changed to FM#{self.flight_mode.flight_mode_id}")
 
     def update_state(self):
         self.flight_mode.update_state()
@@ -104,11 +115,22 @@ class MainSatelliteThread(Thread):
     # Execute received commands
     def execute_commands(self):
         assert (
-            len(self.commands_to_execute) == 0
+                len(self.commands_to_execute) == 0
         ), "Didn't finish executing previous commands"
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
         self.flight_mode.execute_commands()
+
+    def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
+        # check if file exists
+        if os.path.isfile(filename):
+            text_file = open(filename, "r")
+            for hex_line in text_file:
+                self.command_queue.put(bytes.fromhex(hex_line))
+
+            text_file.close()
+            # delete file
+            os.remove(filename)
 
     # Run the current flight mode
     # TODO ensure comms thread halts during realtime ops
@@ -121,8 +143,9 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
-                self.poll_inputs()
-                self.update_state()
+                # self.poll_inputs()
+                # self.update_state()
+                self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:
@@ -139,4 +162,4 @@ if __name__ == "__main__":
     load_dotenv()
     FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
     main = MainSatelliteThread()
-    main.run_mode()
+    main.run()

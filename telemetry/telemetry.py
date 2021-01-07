@@ -2,6 +2,80 @@ from main import MainSatelliteThread
 import time
 import psutil
 from uptime import uptime
+from drivers.sensor import SynchronousSensor
+
+
+class GomSensor(SynchronousSensor):
+    def __init__(self, parent: MainSatelliteThread):
+        super().__init__(parent)
+        self.hk = None  # HouseKeeping data: eps_hk_t struct
+        self.hkparam = None  # hkparam_t struct
+        self.percent = float()
+
+    def poll(self):
+        super().poll()
+        self.hk = self.parent.gom.get_health_data(level="eps")
+        self.hkparam = self.parent.gom.get_health_data()
+        self.percent = self.parent.gom.read_battery_percentage()
+
+
+class GyroSensor(SynchronousSensor):
+    def __init__(self, parent: MainSatelliteThread):
+        super().__init__(parent)
+        self.x = float()
+        self.y = float()
+        self.z = float()
+
+        self.xmag = float()
+        self.ymag = float()
+        self.zmag = float()
+
+        self.xacc = float()
+        self.yacc = float()
+        self.zacc = float()
+
+    def poll(self):
+        super().poll()
+        self.x, self.y, self.z = self.parent.gyro.gyroscope
+        raise NotImplementedError("Need to add IMU and MAG measurements")
+
+
+class PressureSensor(SynchronousSensor):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.p = float()  # pressure, psi
+
+    def poll(self):
+        super().poll()
+        self.p = self.parent.adc
+
+
+class ThermocoupleSensor(SynchronousSensor):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.t = float()  # Fuel tank temperature, deg C
+
+    def poll(self):
+        super().poll()
+        self.t = self.parent.adc
+
+
+class PiSensor(SynchronousSensor):
+    def __init__(self, parent: MainSatelliteThread):
+        super().__init__(parent)
+        self.cpu = float()
+        self.ram = float()
+        self.disk = float()
+        self.boot_time = float()
+        self.up_time = float()
+
+    def poll(self):
+        super().poll()
+        self.cpu = psutil.cpu_percent()
+        self.ram = psutil.virtual_memory().percent
+        self.disk = psutil.disk_usage("/").percent
+        self.boot_time = psutil.boot_time()
+        self.up_time = uptime()
 
 
 class Telemetry:
@@ -10,29 +84,22 @@ class Telemetry:
         # So almost all calls to sensors will be made through self.parent.<insert sensor stuff here>
         self.parent = parent
 
-        # self.latest stores the latest telemetry gathered. So another piece of software can get the most recent
-        # known telem
-        self.latest = {"gom": None,
-                       "gyro": None,
-                       "pressure": None,
-                       "rpi": None}
+        self.gom = GomSensor(parent)
+        self.gyr = GyroSensor(parent)
+        self.prs = PressureSensor(parent)
+        self.thm = ThermocoupleSensor(parent)
+        self.rpi = PiSensor(parent)
+
+        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi]
 
         # initialize databases here if not init'd already
 
     def poll_telem(self):
-        # polls every sensor for the latest telemetry and stores a state variable (self.latest) that can be accessed
+        # polls every sensor for the latest telemetry that can be accessed
         # by the rest of the software.
-        pass
+        for sensor in self.sensors:
+            sensor.poll()
 
-    def poll_gom(self):
-        # polls gom telemetry
-
-        hkparam = self.parent.gom.get_health_data()
-        hkparam_time = time.time()
-        eps_hk = self.parent.gom.get_health_data(level="eps")
-        eps_hk_time = time.time()
-
-        return (hkparam, hkparam_time), (eps_hk, eps_hk_time)
 
     def poll_gyro(self):
         rot_data = []
@@ -44,20 +111,6 @@ class Telemetry:
         # Take ~50 measurements over 1 sec and take the average
         pass
 
-    def poll_rpi(self):
-        # gets pi's temperature, CPU/Ram/disk utilization, and other useful data
-        cpu = psutil.cpu_percent()
-        ram = psutil.virtual_memory().percent
-        disk = psutil.disk_usage("/").percent
-        boot_time = psutil.boot_time()
-        up_time = uptime()
-        # temperature =
-        pass
-
-    def poll_pressure(self):
-        # gets pressure in the fuel chamber
-        pressure = self.parent.adc
-        pass
 
     def write_telem(self, telem):
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>

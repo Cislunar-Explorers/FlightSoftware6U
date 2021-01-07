@@ -47,7 +47,7 @@ class ADC:
     Q1T = -1.3948675e-3
     Q2T = -6.7976627e-5
 
-    def __init__(self, ads, i2c, gyro):
+    def __init__(self):
         self.ads = ADS1115.ADS1115()
         i2c = busio.I2C(board.SCL, board.SDA)
         self.gyro = adafruit_fxas21002c.FXAS21002C(i2c)

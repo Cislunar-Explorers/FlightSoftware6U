@@ -33,6 +33,7 @@ from flight_modes.flight_mode_factory import build_flight_mode
 from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
 from communications.command_definitions import CommandDefinitions
+from telemetry.telemetry import Telemetry
 
 
 FOR_FLIGHT = None
@@ -47,11 +48,17 @@ class MainSatelliteThread(Thread):
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.command_definitions = CommandDefinitions(self)
-        self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+
+        # Sensor Driver Initialization
+        self.gom = Gomspace()
+        self.gyro = GyroSensor()
+
+        # Telemetry
+        self.tlm = Telemetry(self)
 
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
@@ -71,12 +78,6 @@ class MainSatelliteThread(Thread):
 
     # TODO
 
-    def init_sensors(self):
-        self.gom = Gomspace()
-        self.gyro = GyroSensor()
-        # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
-        # in pressure_sensor (to be made) can access burn queue"""
-
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)
@@ -84,15 +85,8 @@ class MainSatelliteThread(Thread):
     def attach_sigint_handler(self):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
-    # TODO (major: implement telemetry)
     def poll_inputs(self):
-        # Switch on/off electrolyzer
-        curr_pressure = self.pressure_sensor.read_pressure()
-        if curr_pressure < IDEAL_CRACKING_PRESSURE:
-            if not self.gom.is_electrolyzing():
-                self.gom.set_electrolysis(True)
-        else:
-            self.gom.set_electrolysis(False)
+        self.tlm.poll()
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -143,7 +137,7 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
-                # self.poll_inputs()
+                self.poll_inputs()
                 # self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately

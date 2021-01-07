@@ -1,4 +1,3 @@
-from main import MainSatelliteThread
 import time
 import psutil
 from uptime import uptime
@@ -6,7 +5,7 @@ from drivers.sensor import SynchronousSensor
 
 
 class GomSensor(SynchronousSensor):
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         super().__init__(parent)
         self.hk = None  # HouseKeeping data: eps_hk_t struct
         self.hkparam = None  # hkparam_t struct
@@ -20,13 +19,13 @@ class GomSensor(SynchronousSensor):
 
 
 class GyroSensor(SynchronousSensor):
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         super().__init__(parent)
         self.xrot = float()  # rad/s
         self.yrot = float()
         self.zrot = float()
 
-        self.xmag = float()  # nanoTesla
+        self.xmag = float()  # microTesla
         self.ymag = float()
         self.zmag = float()
 
@@ -36,9 +35,12 @@ class GyroSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.xrot, self.yrot, self.zrot = self.parent.gyro.gyroscope
-        raise NotImplementedError("Need to add IMU and MAG measurements and data smoothing")
+        self.xrot, self.yrot, self.zrot = self.parent.gyro.get_gyro()
+        self.xmag, self.ymag, self.zmag = self.parent.gyro.get_mag()
+        self.xacc, self.yacc, self.zacc = self.parent.gyro.get_acceleration()
 
+    def poll_smoothed(self):
+        raise NotImplementedError  # TODO Need to add data smoothing
 
 class PressureSensor(SynchronousSensor):
     def __init__(self, parent):
@@ -61,28 +63,28 @@ class ThermocoupleSensor(SynchronousSensor):
 
 
 class PiSensor(SynchronousSensor):
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         super().__init__(parent)
-        self.cpu = float()
-        self.ram = float()
-        self.disk = float()
+        self.cpu = int()
+        self.ram = int()
+        self.disk = int()
         self.boot_time = float()
-        self.up_time = float()
+        self.up_time = int()
 
     def poll(self):
         super().poll()
-        self.cpu = psutil.cpu_percent()
-        self.ram = psutil.virtual_memory().percent
-        self.disk = psutil.disk_usage("/").percent
+        self.cpu = int(psutil.cpu_percent())
+        self.ram = int(psutil.virtual_memory().percent)
+        self.disk = int(psutil.disk_usage("/").percent)
         self.boot_time = psutil.boot_time()
-        self.up_time = uptime()
+        self.up_time = int(uptime())
 
 
-class Telemetry:
-    def __init__(self, parent: MainSatelliteThread):
+class Telemetry(SynchronousSensor):
+    def __init__(self, parent):
         # The purpose of the parent object is to ensure that only one object is defined for each sensor/component
         # So almost all calls to sensors will be made through self.parent.<insert sensor stuff here>
-        self.parent = parent
+        super().__init__(parent)
 
         self.gom = GomSensor(parent)
         self.gyr = GyroSensor(parent)
@@ -94,9 +96,10 @@ class Telemetry:
 
         # initialize databases here if not init'd already
 
-    def poll_telem(self):
+    def poll(self):
         # polls every sensor for the latest telemetry that can be accessed
         # by the rest of the software.
+        super().poll()
         for sensor in self.sensors:
             sensor.poll()
 

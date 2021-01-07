@@ -22,42 +22,42 @@ class GomSensor(SynchronousSensor):
 class GyroSensor(SynchronousSensor):
     def __init__(self, parent: MainSatelliteThread):
         super().__init__(parent)
-        self.x = float()
-        self.y = float()
-        self.z = float()
+        self.xrot = float()  # rad/s
+        self.yrot = float()
+        self.zrot = float()
 
-        self.xmag = float()
+        self.xmag = float()  # nanoTesla
         self.ymag = float()
         self.zmag = float()
 
-        self.xacc = float()
+        self.xacc = float()  # m/s^2
         self.yacc = float()
         self.zacc = float()
 
     def poll(self):
         super().poll()
-        self.x, self.y, self.z = self.parent.gyro.gyroscope
-        raise NotImplementedError("Need to add IMU and MAG measurements")
+        self.xrot, self.yrot, self.zrot = self.parent.gyro.gyroscope
+        raise NotImplementedError("Need to add IMU and MAG measurements and data smoothing")
 
 
 class PressureSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.p = float()  # pressure, psi
+        self.pressure = float()  # pressure, psi
 
     def poll(self):
         super().poll()
-        self.p = self.parent.adc
+        self.pressure = self.parent.adc
 
 
 class ThermocoupleSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.t = float()  # Fuel tank temperature, deg C
+        self.temperature = float()  # Fuel tank temperature, deg C
 
     def poll(self):
         super().poll()
-        self.t = self.parent.adc
+        self.temperature = self.parent.adc
 
 
 class PiSensor(SynchronousSensor):

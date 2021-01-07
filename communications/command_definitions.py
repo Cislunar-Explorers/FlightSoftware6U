@@ -1,5 +1,5 @@
 from datetime import datetime
-from main import MainSatelliteThread
+
 from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
@@ -9,7 +9,7 @@ from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE
 
 
 class CommandDefinitions:
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         self.parent = parent
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}

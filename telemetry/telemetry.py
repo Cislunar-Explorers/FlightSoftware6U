@@ -73,7 +73,7 @@ class PressureSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.pressure = self.parent.adc
+        self.pressure = self.parent.adc.read_pressure()
 
 
 class PressureError(SensorError):
@@ -87,7 +87,7 @@ class ThermocoupleSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.temperature = self.parent.adc
+        self.temperature = self.parent.adc.read_temperature()
 
 
 class ThermocoupleError(SensorError):
@@ -155,19 +155,19 @@ class Telemetry(SynchronousSensor):
 
         if any(i > self.parent.constants.MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
             self.parent.logger.error("Gyro not functioning properly")
-            raise GyroError
+            raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
         if self.prs.pressure < 0 or self.prs.pressure > 2000:
             self.parent.logger.error("Pressure sensor not functioning properly")
-            raise PressureError
+            raise PressureError(f"Unreasonable pressure: {self.prs.pressure}")
 
         if self.thm.temperature < -200 or self.thm.temperature > 200:
             self.parent.logger.error("Thermocouple not functioning properly")
-            raise ThermocoupleError
+            raise ThermocoupleError(f"Unreasonable fuel tank temperature: {self.thm.temperature}")
 
         if self.gom.percent < 0 or self.gom.percent > 1.5:
             self.parent.logger.error("Gom HK not functioning properly")
-            raise GomSensorError
+            raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
 
         if any(i < 0 for i in self.rpi.all()):
             self.parent.logger.error("RPi sensors not functioning properly")

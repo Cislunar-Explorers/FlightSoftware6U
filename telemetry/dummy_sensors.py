@@ -1,5 +1,5 @@
 from utils.constants import HIGH_CRACKING_PRESSURE
-from drivers.sensor import SynchronousSensor
+from telemetry.sensor import SynchronousSensor
 
 
 class DummySynchronousSensor(SynchronousSensor):

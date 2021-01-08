@@ -1,7 +1,7 @@
 import time
 import psutil
 from uptime import uptime
-from drivers.sensor import SynchronousSensor, SensorError
+from telemetry.sensor import SynchronousSensor, SensorError
 import numpy as np
 
 

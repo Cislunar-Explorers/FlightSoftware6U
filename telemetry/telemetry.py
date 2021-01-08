@@ -1,7 +1,13 @@
 import time
 import psutil
 from uptime import uptime
-from drivers.sensor import SynchronousSensor
+from drivers.sensor import SynchronousSensor, SensorError
+import numpy as np
+
+
+def moving_average(x, w):
+    """x: 1-D data, w: number of samples to average over."""
+    return np.convolve(x, np.ones(w), 'valid') / w
 
 
 class GomSensor(SynchronousSensor):
@@ -18,29 +24,46 @@ class GomSensor(SynchronousSensor):
         self.percent = self.parent.gom.read_battery_percentage()
 
 
+class GomSensorError(SensorError):
+    pass
+
+
 class GyroSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.xrot = float()  # rad/s
-        self.yrot = float()
-        self.zrot = float()
-
-        self.xmag = float()  # microTesla
-        self.ymag = float()
-        self.zmag = float()
-
-        self.xacc = float()  # m/s^2
-        self.yacc = float()
-        self.zacc = float()
+        self.rot = (float(), float(), float())  # rad/s
+        self.mag = (float(), float(), float())  # microTesla
+        self.acc = (float(), float(), float())  # m/s^2
 
     def poll(self):
         super().poll()
-        self.xrot, self.yrot, self.zrot = self.parent.gyro.get_gyro()
-        self.xmag, self.ymag, self.zmag = self.parent.gyro.get_mag()
-        self.xacc, self.yacc, self.zacc = self.parent.gyro.get_acceleration()
+        self.rot = self.parent.gyro.get_gyro()
+        self.mag = self.parent.gyro.get_mag()
+        self.acc = self.parent.gyro.get_acceleration()
 
-    def poll_smoothed(self):
-        raise NotImplementedError  # TODO Need to add data smoothing
+    def poll_smoothed(self, freq=10, duration=3, samples=5):
+        # poll and smooth gyro data
+
+        n_data = freq * duration
+        data = [] * n_data
+        for i in range(n_data):
+            data[i] = self.parent.gyro.get_gyro()
+            time.sleep(1.0 / freq)
+
+        data = np.asarray(data)
+
+        smoothed = np.empty(3)
+
+        # smooth data using convolution
+        smoothed[0] = moving_average(data.T[0], samples)
+        smoothed[1] = moving_average(data.T[1], samples)
+        smoothed[2] = moving_average(data.T[2], samples)
+
+        return smoothed
+
+
+class GyroError(SensorError):
+    pass
 
 
 class PressureSensor(SynchronousSensor):
@@ -53,6 +76,10 @@ class PressureSensor(SynchronousSensor):
         self.pressure = self.parent.adc
 
 
+class PressureError(SensorError):
+    pass
+
+
 class ThermocoupleSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
@@ -61,6 +88,10 @@ class ThermocoupleSensor(SynchronousSensor):
     def poll(self):
         super().poll()
         self.temperature = self.parent.adc
+
+
+class ThermocoupleError(SensorError):
+    pass
 
 
 class PiSensor(SynchronousSensor):
@@ -79,6 +110,17 @@ class PiSensor(SynchronousSensor):
         self.disk = int(psutil.disk_usage("/").percent)
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
+
+    def all(self):
+        return (self.cpu,
+                self.ram,
+                self.disk,
+                self.boot_time,
+                self.up_time)
+
+
+class PiSensorError(SensorError):
+    pass
 
 
 class Telemetry(SynchronousSensor):
@@ -104,15 +146,32 @@ class Telemetry(SynchronousSensor):
         for sensor in self.sensors:
             sensor.poll()
 
-    def poll_gyro(self):
-        rot_data = []
-        n = 50
-        d = 1
-        for i in range(n):
-            rot_data.append(self.parent.gyro.gyroscope)
-            time.sleep(1.0 / n)
-        # Take ~50 measurements over 1 sec and take the average
-        pass
+    def sensor_check(self):
+        """Makes sure that the values returned by the sensors are reasonable"""
+
+        # if data is over an hour old, poll new data
+        if (time.time() - self.poll_time) > 3600:
+            self.poll()
+
+        if any(i > self.parent.constants.MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
+            self.parent.logger.error("Gyro not functioning properly")
+            raise GyroError
+
+        if self.prs.pressure < 0 or self.prs.pressure > 2000:
+            self.parent.logger.error("Pressure sensor not functioning properly")
+            raise PressureError
+
+        if self.thm.temperature < -200 or self.thm.temperature > 200:
+            self.parent.logger.error("Thermocouple not functioning properly")
+            raise ThermocoupleError
+
+        if self.gom.percent < 0 or self.gom.percent > 1.5:
+            self.parent.logger.error("Gom HK not functioning properly")
+            raise GomSensorError
+
+        if any(i < 0 for i in self.rpi.all()):
+            self.parent.logger.error("RPi sensors not functioning properly")
+            raise PiSensorError
 
     def write_telem(self, telem):
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>

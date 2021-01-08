@@ -62,6 +62,8 @@ SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
 
+MAX_GYRO_RATE = 250  # degrees/sec
+
 
 @unique
 class ConstantsEnum(IntEnum):

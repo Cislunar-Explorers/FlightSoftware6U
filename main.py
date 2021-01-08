@@ -24,6 +24,7 @@ from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
 from drivers.gyro import GyroSensor
+from drivers.ADCDriver import ADC
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -48,14 +49,11 @@ class MainSatelliteThread(Thread):
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.command_definitions = CommandDefinitions(self)
+        self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
-
-        # Sensor Driver Initialization
-        self.gom = Gomspace()
-        self.gyro = GyroSensor()
 
         # Telemetry
         self.tlm = Telemetry(self)
@@ -77,6 +75,13 @@ class MainSatelliteThread(Thread):
         self.comms.listen()
 
     # TODO
+
+    def init_sensors(self):
+        self.gom = Gomspace()
+        self.gyro = GyroSensor()
+        self.adc = ADC()
+        # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
+        # in pressure_sensor (to be made) can access burn queue"""
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

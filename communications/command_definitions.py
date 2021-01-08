@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum
+from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
@@ -60,7 +60,8 @@ class CommandDefinitions:
         self.test_commands = {
             2: self.split,
             3: self.run_opnav,
-            5: self.separation_test,
+            TestCommandEnum.ADCTest.value: self.adc_test,
+            TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs
         }
 
@@ -105,6 +106,19 @@ class CommandDefinitions:
         # self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
+
+    def adc_test(self):
+        # tests integration of ADC into the rest of the FSW
+        self.parent.logger.info("Cold junction temperature for gyro sensor in Celsius:")
+        self.parent.logger.info(self.parent.adc.get_gyro_temp())
+
+        self.parent.logger.info(f"Pressure: {self.parent.adc.read_pressure()} psi")
+        self.parent.logger.info(f"Temperature: {self.parent.adc.read_temperature()} deg C")
+
+        self.parent.logger.info("Conversion sanity check: 25.6 degrees")
+        self.parent.logger.info(self.parent.adc.convert_volt_to_temp(self.parent.adc.convert_temp_to_volt(25.6)))
+        self.parent.logger.info("Conversion sanity check: 2.023 mV")
+        self.parent.logger.info(self.parent.adc.convert_temp_to_volt(self.parent.adc.convert_volt_to_temp(2.023)))
 
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)

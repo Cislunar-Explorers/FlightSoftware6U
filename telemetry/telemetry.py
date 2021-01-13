@@ -3,6 +3,7 @@ import psutil
 from uptime import uptime
 from telemetry.sensor import SynchronousSensor, SensorError
 import numpy as np
+from drivers.power.power_structs import eps_hk_t, hkparam_t
 
 
 def moving_average(x, w):
@@ -13,15 +14,17 @@ def moving_average(x, w):
 class GomSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.hk = None  # HouseKeeping data: eps_hk_t struct
-        self.hkparam = None  # hkparam_t struct
+        self.hk = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
+        self.hkparam = hkparam_t()  # hkparam_t struct
         self.percent = float()
 
     def poll(self):
         super().poll()
         self.hk = self.parent.gom.get_health_data(level="eps")
         self.hkparam = self.parent.gom.get_health_data()
-        self.percent = self.parent.gom.read_battery_percentage()
+        battery_voltage = self.hk.vbatt  # mV
+        self.percent = (battery_voltage - self.parent.constants.GOM_VOLTAGE_MIN) / \
+                       (self.parent.constants.GOM_VOLTAGE_MAX - self.parent.constants.GOM_VOLTAGE_MIN)
 
 
 class GomSensorError(SensorError):
@@ -34,12 +37,14 @@ class GyroSensor(SynchronousSensor):
         self.rot = (float(), float(), float())  # rad/s
         self.mag = (float(), float(), float())  # microTesla
         self.acc = (float(), float(), float())  # m/s^2
+        self.tmp = float()  # deg C
 
     def poll(self):
         super().poll()
         self.rot = self.parent.gyro.get_gyro()
         self.mag = self.parent.gyro.get_mag()
         self.acc = self.parent.gyro.get_acceleration()
+        self.tmp = self.parent.gyro.get_temp()
 
     def poll_smoothed(self, freq=10, duration=3, samples=5):
         # poll and smooth gyro data
@@ -83,11 +88,11 @@ class PressureError(SensorError):
 class ThermocoupleSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.temperature = float()  # Fuel tank temperature, deg C
+        self.tmp = float()  # Fuel tank temperature, deg C
 
     def poll(self):
         super().poll()
-        self.temperature = self.parent.adc.read_temperature()
+        self.tmp = self.parent.adc.read_temperature()
 
 
 class ThermocoupleError(SensorError):
@@ -102,6 +107,7 @@ class PiSensor(SynchronousSensor):
         self.disk = int()
         self.boot_time = float()
         self.up_time = int()
+        self.tmp = float()
 
     def poll(self):
         super().poll()
@@ -110,6 +116,7 @@ class PiSensor(SynchronousSensor):
         self.disk = int(psutil.disk_usage("/").percent)
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
+        self.tmp = 0  # TODO
 
     def all(self):
         return (self.cpu,
@@ -123,6 +130,33 @@ class PiSensorError(SensorError):
     pass
 
 
+class RtcSensor(SynchronousSensor):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.rtc_time = float()
+
+    def poll(self):
+        raise NotImplementedError
+
+
+class RtcError(SensorError):
+    pass
+
+
+class NotPollableError(SensorError):
+    pass
+
+
+class OpNavSensor(SynchronousSensor):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.quat = tuple() * 4
+        self.pos = tuple() * 3
+
+    def poll(self):
+        pass  # TODO: Opnav interface
+
+
 class Telemetry(SynchronousSensor):
     def __init__(self, parent):
         # The purpose of the parent object is to ensure that only one object is defined for each sensor/component
@@ -134,8 +168,10 @@ class Telemetry(SynchronousSensor):
         self.prs = PressureSensor(parent)
         self.thm = ThermocoupleSensor(parent)
         self.rpi = PiSensor(parent)
+        self.rtc = RtcSensor(parent)
+        self.opn = OpNavSensor(parent)
 
-        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi]
+        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc, self.opn]
 
         # initialize databases here if not init'd already
 
@@ -161,9 +197,9 @@ class Telemetry(SynchronousSensor):
             self.parent.logger.error("Pressure sensor not functioning properly")
             raise PressureError(f"Unreasonable pressure: {self.prs.pressure}")
 
-        if self.thm.temperature < -200 or self.thm.temperature > 200:
+        if self.thm.tmp < -200 or self.thm.tmp > 200:
             self.parent.logger.error("Thermocouple not functioning properly")
-            raise ThermocoupleError(f"Unreasonable fuel tank temperature: {self.thm.temperature}")
+            raise ThermocoupleError(f"Unreasonable fuel tank temperature: {self.thm.tmp}")
 
         if self.gom.percent < 0 or self.gom.percent > 1.5:
             self.parent.logger.error("Gom HK not functioning properly")
@@ -172,6 +208,34 @@ class Telemetry(SynchronousSensor):
         if any(i < 0 for i in self.rpi.all()):
             self.parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
+
+    def standard_packet(self):
+        if (time.time() - self.poll_time) > 60 * 60:
+            self.poll()
+
+        return (self.rtc.rtc_time,
+                self.opn.pos[0],
+                self.opn.pos[1],
+                self.opn.pos[2],
+                self.opn.quat[0],
+                self.opn.quat[1],
+                self.opn.quat[2],
+                self.opn.quat[3],
+                self.gom.hk.temp[0],
+                self.gom.hk.temp[1],
+                self.gom.hk.temp[2],
+                self.gom.hk.temp[3],
+                self.gyr.tmp,
+                self.thm.tmp,
+                self.gom.hk.curin[0],
+                self.gom.hk.curin[1],
+                self.gom.hk.curin[2],
+                self.gom.hk.vboost[0],
+                self.gom.hk.vboost[1],
+                self.gom.hk.vboost[2],
+                self.gom.hk.cursys,
+                self.gom.hk.vbatt,
+                self.prs.pressure)
 
     def write_telem(self, telem):
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>

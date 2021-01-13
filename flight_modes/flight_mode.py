@@ -1,5 +1,5 @@
 import gc
-from time import sleep
+from time import sleep, time
 from datetime import datetime
 import os
 
@@ -59,6 +59,7 @@ no_transition_modes = [
 
 logger = get_log()
 
+
 class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
     command_codecs = {}
@@ -79,13 +80,22 @@ class FlightMode:
         flight_mode_id = self.flight_mode_id
 
         if flight_mode_id in no_transition_modes:
-            return
+            return flight_mode_id
+
+        # if battery is low, go to low battery mode
+        if self.parent.tlm.gom.percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.LowBatterySafety.value)
+            return self.parent.constants.FMEnum.LowBatterySafety.value
+
+        # if there is no current coming into the batteries, go to low battery mode
+        if sum(self.parent.tlm.gom.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
+                and self.parent.tlm.gom.percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD:
+            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.LowBatterySafety.value)
+            return self.parent.constants.FMEnum.LowBatterySafety.value
+
+        return 0  # returns 0 if the logic here does not make any FM changes
 
         # everything in update_state below this comment should be implemented in their respective flight mode
-
-        if self.parent.tlm.gom.percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
-            self.parent.replace_flight_mode_by_id(FMEnum.LowBatterySafety.value)
-            return
 
         # Burn command queue logic
         # TODO implment need_to_burn function in adc driver
@@ -176,8 +186,8 @@ class FlightMode:
             for finished_command in finished_commands:
                 self.parent.commands_to_execute.remove(finished_command)
 
-    def read_sensors(self):
-        pass
+    def poll_inputs(self):
+        self.parent.tlm.poll()
 
     def completed_task(self):
         self.task_completed = True
@@ -229,6 +239,9 @@ class TestMode(PauseBackgroundMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def update_state(self):
+        pass  # this is intentional - we don't want the FM to update if we are testing something
+
     def run_mode(self):
         pass
 
@@ -247,15 +260,17 @@ class CommsMode(FlightMode):
 
 
 class SensorMode(FlightMode):
-
     flight_mode_id = FMEnum.SensorMode.value
 
     def __init__(self, parent):
         super().__init__(parent)
         raise NotImplementedError
 
-class LowBatterySafetyMode(FlightMode):
+    def update_state(self):
+        pass  # intentional: we don't want to update FM when testing sensors
 
+
+class LowBatterySafetyMode(FlightMode):
     flight_mode_id = FMEnum.LowBatterySafety.value
 
     def __init__(self, parent):
@@ -263,9 +278,24 @@ class LowBatterySafetyMode(FlightMode):
         raise NotImplementedError
 
     # TODO point solar panels directly at the sun
-    # check power supply to see if I can transition back to NormalMode
+
     def run_mode(self):
-        pass
+        sleep(self.parent.constants.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
+        raise NotImplementedError
+
+    def update_state(self):
+        # check power supply to see if I can transition back to NormalMode
+        if self.parent.tlm.gom.percent > self.parent.constants.EXIT_LOW_BATTERY_MODE_THRESHOLD:
+            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.Normal.value)
+
+        if sum(self.parent.tlm.gom.hk.curin) > self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT:
+            # If we do have some power coming in (i.e. we are not eclipsed by the moon/earth), reorient to face sun
+            raise NotImplementedError
+
+    def __enter__(self):
+        super().__enter__()
+        self.parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
+        self.parent.gom.pc.set_GPIO_low()
 
 
 class ManeuverMode(PauseBackgroundMode):
@@ -298,7 +328,7 @@ class SafeMode(FlightMode):
         super().__init__(parent)
 
     def run_mode(self):
-        print("Execute safe mode")
+        logger.info("Execute safe mode")
 
 
 class NormalMode(FlightMode):
@@ -334,12 +364,51 @@ class NormalMode(FlightMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.last_opnav_run = self.parent.last_opnav_run
+
+    def update_state(self):
+        super_fm = super().update_state()
+
+        if super_fm != 0:
+            return
+
+        # if tank pressure is low, start electrolyzing
+        if self.parent.tlm.prs.pressure < self.parent.constants.LOW_CRACKING_PRESSURE:
+            self.parent.gom.set_electrolysis(True)
+
+        # if tank pressure is high, stop electrolyzing
+        if self.parent.tlm.prs.pressure >= self.parent.constants.IDEAL_CRACKING_PRESSURE:
+            self.parent.gom.set_electrolysis(False)
+
+        # if OpNav hasn't been called in a while, call it.
+        if (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL:
+            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.OpNav.value)
+            return
+
+        if not (self.parent.communications_queue.empty()):
+            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.CommsMode.value)
+            return
 
     def run_mode(self):
-        time_since_last_run = datetime.now() - self.last_opnav_run
-        minutes_since_last_run = time_since_last_run.total_seconds() / 60.0
-        minutes_until_next_run = self.parent.constants.OPNAV_INTERVAL - minutes_since_last_run
-        if minutes_until_next_run < 0:
-            CommandDefinitions(self.parent).run_opnav()
-        logger.info(f"In NORMAL flight mode. Minutes until next OpNav run: {minutes_until_next_run}")
+        logger.info(f"In NORMAL flight mode")
+
+
+class CommandMode(PauseBackgroundMode):
+    """Command Mode: a Flight Mode that listens for and runs commands and nothing else."""
+
+    flight_mode_id = FMEnum.Command.value
+
+    command_codecs = {}
+
+    command_arg_unpackers = {}
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def update_state(self):
+        pass  # intentional
+
+    def run_mode(self):
+        pass  # intentional
+
+    def poll_inputs(self):
+        pass  # only check the comms queue

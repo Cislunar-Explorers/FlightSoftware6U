@@ -20,6 +20,9 @@ class GyroSensor:  # TODO rename class and file to something more representative
     def get_mag(self) -> tuple:
         return self.fxos.magnetometer  # microTeslas
 
+    def get_temp(self) -> float:
+        return self.fxas._read_u8(0x12)
+
 
 # Test to estimate the constant bias for the gyroscopic measurements
 def estimate_constant_bias():

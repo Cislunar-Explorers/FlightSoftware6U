@@ -475,6 +475,11 @@ class Power:
     def comms_amplifier(self, on):
         self.set_single_output("comms", int(on), 0)
 
+    @staticmethod
+    def set_GPIO_low():
+        GPIO.output(OUT_PI_COMMS, GPIO.LOW)
+        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)
+
     # Legacy stuff, may or may not be useful
 
     # def adjust_string(self, string, length):

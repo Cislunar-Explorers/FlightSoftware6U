@@ -44,6 +44,7 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         self.command_queue = Queue()
+        self.communications_queue = Queue()
         self.commands_to_execute = []
         self.burn_queue = Queue()
         # self.init_comms()
@@ -91,7 +92,8 @@ class MainSatelliteThread(Thread):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def poll_inputs(self):
-        self.tlm.poll()
+        # self.tlm.poll()
+        self.flight_mode.poll_inputs()
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -148,6 +150,7 @@ class MainSatelliteThread(Thread):
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:
+            self.replace_flight_mode_by_id(self.constants.FMEnum.Safety.value)
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:
                 self.run()

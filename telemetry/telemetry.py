@@ -17,6 +17,7 @@ class GomSensor(SynchronousSensor):
         self.hk = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
         self.hkparam = hkparam_t()  # hkparam_t struct
         self.percent = float()
+        self.is_electrolyzing = bool()
 
     def poll(self):
         super().poll()
@@ -25,6 +26,7 @@ class GomSensor(SynchronousSensor):
         battery_voltage = self.hk.vbatt  # mV
         self.percent = (battery_voltage - self.parent.constants.GOM_VOLTAGE_MIN) / \
                        (self.parent.constants.GOM_VOLTAGE_MAX - self.parent.constants.GOM_VOLTAGE_MIN)
+        self.is_electrolyzing = bool(self.hk.output[self.parent.constants.GomOutputs.electrolyzer.value])
 
 
 class GomSensorError(SensorError):

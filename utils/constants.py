@@ -24,6 +24,9 @@ LOW_CRACKING_PRESSURE = 10.0
 HIGH_CRACKING_PRESSURE = 20.0
 IDEAL_CRACKING_PRESSURE = 15.0
 
+# Set behaviour of electrolysis:
+WANT_TO_ELECTROLYZE = True
+
 # OpNav timing interval in minutes
 OPNAV_INTERVAL = 60
 
@@ -78,6 +81,7 @@ class ConstantsEnum(IntEnum):
 
 
 # GOMspace Channel designations:
+# TODO: re-evaluate and double check before flight for each satellite half
 @unique
 class GomOutputs(IntEnum):
     comms = 0

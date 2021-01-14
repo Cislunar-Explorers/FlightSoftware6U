@@ -103,7 +103,11 @@ class MainSatelliteThread(Thread):
         self.logger.info(f"Changed to FM#{self.flight_mode.flight_mode_id}")
 
     def update_state(self):
-        self.flight_mode.update_state()
+        fm_to_update_to = self.flight_mode.update_state()
+
+        # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
+        if fm_to_update_to != 0 and fm_to_update_to != self.flight_mode.flight_mode_id:
+            self.replace_flight_mode_by_id(self.flight_mode.update_state())
 
     def clear_command_queue(self):
         while not self.command_queue.empty():

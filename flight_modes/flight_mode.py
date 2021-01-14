@@ -74,7 +74,9 @@ class FlightMode:
         self.parent = parent
         self.task_completed = False
 
-    def update_state(self):
+    def update_state(self) -> int:
+        """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
+        update_state to update our flight mode """
         # currently a mess and needs revisiting. Formal logic for switching FMs has not been defined/documented.
         # Please do so!
         flight_mode_id = self.flight_mode_id
@@ -84,13 +86,11 @@ class FlightMode:
 
         # if battery is low, go to low battery mode
         if self.parent.tlm.gom.percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
-            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.LowBatterySafety.value)
             return self.parent.constants.FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
         if sum(self.parent.tlm.gom.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
                 and self.parent.tlm.gom.percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD:
-            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.LowBatterySafety.value)
             return self.parent.constants.FMEnum.LowBatterySafety.value
 
         return 0  # returns 0 if the logic here does not make any FM changes
@@ -369,24 +369,44 @@ class NormalMode(FlightMode):
         super_fm = super().update_state()
 
         if super_fm != 0:
-            return
+            return super_fm
 
-        # if tank pressure is low, start electrolyzing
-        if self.parent.tlm.prs.pressure < self.parent.constants.LOW_CRACKING_PRESSURE:
-            self.parent.gom.set_electrolysis(True)
+        time_for_opnav = (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL
+        need_to_electrolyze = self.parent.tlm.prs.pressure < self.parent.constants.IDEAL_CRACKING_PRESSURE
+        currently_electrolyzing = self.parent.tlm.gom.is_electrolyzing
+        seconds_to_electrolyze = 60  # TODO: actual calculation involving current pressure
 
-        # if tank pressure is high, stop electrolyzing
-        if self.parent.tlm.prs.pressure >= self.parent.constants.IDEAL_CRACKING_PRESSURE:
+        # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
+        need_to_electrolyze = need_to_electrolyze and self.parent.constants.WANT_TO_ELECTROLYZE
+
+        # There's probably some super-optimized branchless way of implementing this logic, but oh well:
+
+        # if currently electrolyzing and over pressure, stop electrolyzing
+        if currently_electrolyzing and not need_to_electrolyze:
             self.parent.gom.set_electrolysis(False)
 
-        # if OpNav hasn't been called in a while, call it.
-        if (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL:
-            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.OpNav.value)
-            return
+        if currently_electrolyzing and need_to_electrolyze:
+            pass  # we are already in the state we want to be in
 
+        # if below pressure and not electrolyzing, start electrolyzing
+        if not currently_electrolyzing and need_to_electrolyze:
+            self.parent.gom.set_electrolysis(True)
+
+        if not currently_electrolyzing and not need_to_electrolyze:
+            pass  # we are already in the state we want to be in
+
+        # note: at this point, the variable "need_to_electrolyze" is equivalent to the new state of the electrolyzer
+
+        if time_for_opnav:
+            if need_to_electrolyze:
+                # If it's time for opnav to run BUT we are below ideal pressure: turn off electrolysis after a delay
+                self.parent.gom.set_electrolysis(False, delay=seconds_to_electrolyze)
+
+            return self.parent.constants.FMEnum.OpNav.value
+
+        # if we have data to downlink, change to comms mode
         if not (self.parent.communications_queue.empty()):
-            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.CommsMode.value)
-            return
+            return self.parent.constants.FMEnum.CommsMode.value
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")

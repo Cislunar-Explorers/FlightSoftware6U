@@ -190,6 +190,7 @@ class FlightMode:
                 self.parent.commands_to_execute.remove(finished_command)
 
     def poll_inputs(self):
+        self.parent.gom.tick_wdt()
         self.parent.tlm.poll()
 
     def completed_task(self):

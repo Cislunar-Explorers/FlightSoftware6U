@@ -81,6 +81,9 @@ class FlightMode:
         # Please do so!
         flight_mode_id = self.flight_mode_id
 
+        if self.task_completed and not self.parent.FMQueue.empty():
+            return self.parent.FMQueue.get()
+
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
@@ -425,10 +428,10 @@ class CommandMode(PauseBackgroundMode):
         super().__init__(parent)
 
     def update_state(self):
-        pass  # intentional
+        return 0  # intentional
 
     def run_mode(self):
         pass  # intentional
 
     def poll_inputs(self):
-        pass  # only check the comms queue
+        raise NotImplementedError  # only check the comms queue

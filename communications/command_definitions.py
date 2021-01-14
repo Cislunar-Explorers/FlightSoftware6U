@@ -31,13 +31,15 @@ def verification():
         block_seed = operating_period_base_seed ^ data_block_sequence_num  # xor previous with data block sequence num
 
         prn_length = 128 // 4
-        prn = [int()] * prn_length  # preallocate memory for storing prn data
+        prn = [int()] * (prn_length + 1)  # preallocate memory for storing prn data
         prn[0] = block_seed  # x0 is the block seed
 
-        for i in range(1, prn_length):
+        for i in range(1, prn_length + 1):
             # algorithm defined in sec 4.4.2 of CommsProc rev 4
             xn = (a * prn[i - 1] + b) % 2 ** 32  # and with 32-bit 2**32 instead of mod
             prn[i] = xn
+
+        prn.pop(0)  # get rid of the first value in the PRN
 
         data_field = bytes()
         for j in prn:

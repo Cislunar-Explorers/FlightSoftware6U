@@ -69,32 +69,18 @@ class FlightMode:
         if self.gom.read_battery_percentage() < ENTER_LOW_BATTERY_MODE_THRESHOLD:
             self.parent.replace_flight_mode_by_id(FMEnum.LowBattery.value)
 
-        # Check if opnav needs to be run
-        # Transfers flight mode --> OpNav mode
-        curr_time = datetime.now()
-        time_diff = curr_time - self.parent.last_opnav_run
-        if time_diff.seconds * 60 > OPNAV_INTERVAL:
-            self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
-
-        elif flight_mode_id == FMEnum.Maneuver.value:
+        if flight_mode_id == FMEnum.Maneuver.value:
             if self.task_completed is True:
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
         elif flight_mode_id == FMEnum.OpNav.value:
             if self.task_completed is True:
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
         # TODO this is the opnav mode that's only used in maneuvers
         elif flight_mode_id == FMEnum.OpNavManeuver.value:
             if self.completed_task is True:
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
-        elif flight_mode_id in no_transition_modes:
-            pass
-
         else:
             raise UnknownFlightModeException(flight_mode_id)
-
 
     def register_commands(cls):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
@@ -250,26 +236,34 @@ class OpNavManeuverMode(FlightMode):
 class NormalMode(FlightMode):
 
     flight_mode_id = FMEnum.Normal.value
-
-    command_codecs = {
-        NormalCommandEnum.RunOpNav.value: ([], 0),
-        NormalCommandEnum.SetDesiredAttitude.value: (
-            [ATTITUDE_X, ATTITUDE_Y, ATTITUDE_Z],
-            24,
-        ),
-        NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
-        # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-    }
-
-    command_arg_unpackers = {
-        ATTITUDE_X: (pack_double, unpack_double),
-        ATTITUDE_Y: (pack_double, unpack_double),
-        ATTITUDE_Z: (pack_double, unpack_double),
-        ACCELERATE: (pack_bool, unpack_bool),
-    }
+    #
+    # command_codecs = {
+    #     NormalCommandEnum.RunOpNav.value: ([], 0),
+    #     NormalCommandEnum.SetDesiredAttitude.value: (
+    #         [ATTITUDE_X, ATTITUDE_Y, ATTITUDE_Z],
+    #         24,
+    #     ),
+    #     NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
+    #     # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
+    # }
+    #
+    # command_arg_unpackers = {
+    #     ATTITUDE_X: (pack_double, unpack_double),
+    #     ATTITUDE_Y: (pack_double, unpack_double),
+    #     ATTITUDE_Z: (pack_double, unpack_double),
+    #     ACCELERATE: (pack_bool, unpack_bool),
+    # }
 
     def __init__(self, parent):
         super().__init__(parent)
 
     def run_mode(self):
         print("Execute normal mode")
+        # Check if opnav needs to be run
+        # Transfers flight mode --> OpNav mode
+        curr_time = datetime.now()
+        time_diff = curr_time - self.parent.last_opnav_run
+        if time_diff.seconds * 60 > OPNAV_INTERVAL:
+            self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
+
+

@@ -35,19 +35,19 @@ class Gomspace:
             the GomSpace NanoPower P31u manual"""
 
         hk_dict = {
-            Hk.DEFAULT.value: self.gom.get_hk_1(),
-            Hk.EPS.value: self.gom.get_hk_2(),
-            Hk.VI.value: self.gom.get_hk_2_vi(),
-            Hk.OUT.value: self.gom.get_hk_out(),
-            Hk.WDT.value: self.gom.get_hk_wdt(),
-            Hk.BASIC.value: self.gom.get_hk_2_basic(),
-            Hk.CONFIG.value: self.gom.config_get(),
-            Hk.CONFIG2.value: self.gom.config2_get(),
+            Hk.DEFAULT.value: self.gom.get_hk_1,
+            Hk.EPS.value: self.gom.get_hk_2,
+            Hk.VI.value: self.gom.get_hk_2_vi,
+            Hk.OUT.value: self.gom.get_hk_out,
+            Hk.WDT.value: self.gom.get_hk_wdt,
+            Hk.BASIC.value: self.gom.get_hk_2_basic,
+            Hk.CONFIG.value: self.gom.config_get,
+            Hk.CONFIG2.value: self.gom.config2_get,
         }
 
         try:
             logger.debug("Getting health data %s from get_health_data" % level)
-            return hk_dict[level.lower()]
+            return hk_dict[level.lower()]()
         except KeyError:
             logger.warning(
                 "Invalid argument in get_health_data. Getting default health data"

@@ -88,12 +88,15 @@ class FlightMode:
             return flight_mode_id
 
         # if battery is low, go to low battery mode
-        if self.parent.tlm.gom.percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+        batt_percent = self.parent.tlm.gom.percent
+        if (batt_percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
+                and not self.parent.constants.IGNORE_LOW_BATTERY:
             return self.parent.constants.FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
         if sum(self.parent.tlm.gom.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
-                and self.parent.tlm.gom.percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD:
+                and batt_percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD \
+                and not self.parent.constants.IGNORE_LOW_BATTERY:
             return self.parent.constants.FMEnum.LowBatterySafety.value
 
         return 0  # returns 0 if the logic here does not make any FM changes

@@ -19,6 +19,8 @@ EXIT_ECLIPSE_MODE_THRESHOLD = 0.75
 
 ENTER_ECLIPSE_MODE_CURRENT = 50  # mA
 
+IGNORE_LOW_BATTERY = False
+
 # Constants defining goal cracking pressures for electrolysis
 LOW_CRACKING_PRESSURE = 10.0
 HIGH_CRACKING_PRESSURE = 20.0

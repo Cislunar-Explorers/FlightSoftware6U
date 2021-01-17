@@ -52,7 +52,7 @@ class DataHandler:
         self.unpackers = dict()
         # Packers and unpackers will always have identical set of keys
         # Enforced in practice
-        self.register_codecs()
+        #self.register_codecs()
 
     # Register packers and unpackers for all possible named arguments to function calls
     # Register the ModeID, ApplicationID, combos that result in certain function parameters

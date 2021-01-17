@@ -11,9 +11,6 @@ driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 mgr = Manager(driver)
 
 mgr.rx_enabled = True
-mgr.tx_enabled = True
-
-mgr.inbox.put(bytearray([0xCA, 0xFA, 0xBA, 0xBE]))
 
 cycles = 0
 while True:
@@ -27,8 +24,15 @@ while True:
         logging.error('Radio manager faulted')
         mgr.reset_requested = True
 
+    # Print any messages received
+    while not mgr.outbox.empty():
+        m = mgr.outbox.get()
+        print(m)
+
     cycles += 1
-    if cycles >= 10: break
+    # After 30s, break for clean shutdown
+    # (TODO: use interrupt handler to ensure clean shutdown when killed)
+    if cycles >= 30: break
     time.sleep(1)
 
 mgr.tx_enabled = False

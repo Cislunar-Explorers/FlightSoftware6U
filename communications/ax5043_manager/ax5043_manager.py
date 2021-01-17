@@ -14,6 +14,7 @@ class Manager:
         # TODO: metrics
         self.state = Manager.Initializing(self)
 
+        # TODO: try-except?
         self.state.enter()
 
     def transition(self, new_state):
@@ -71,6 +72,22 @@ class Manager:
                                    % (dt, timeout, reg, mask, target, val))
         return val
 
+    def post(self):
+        rev = self.driver.read(Reg.SILICONREVISION)
+        if rev != 0x51:
+            logging.error('Expected rev 0x51, but got %02X' % rev)
+            return False
+        s = self.driver.read(Reg.SCRATCH)
+        if s != 0xC5:
+            logging.error('Expected initial scratch to be 0xC5, but got %02X' % s)
+            return False
+        self.driver.execute({Reg.SCRATCH: 0x3A})
+        s = self.driver.read(Reg.SCRATCH)
+        if s != 0x3A:
+            logging.error('Expected scratch to be set to 0x3A, but got %02X' % s)
+            return False
+        return True
+
     class State:
         def __init__(self, mgr):
             assert mgr is not None
@@ -87,10 +104,13 @@ class Manager:
         def enter(self):
             logging.info('Initializing')
             self.mgr.driver.reset()
-            self.mgr.driver.execute(setup_cmds)
-            self.mgr.driver.execute(datarate_cmds)
+            if not self.mgr.post():
+                raise RuntimeError('POST failed')
+            logging.info('POST passed')
 
         def dispatch(self):
+            self.mgr.driver.execute(setup_cmds)
+            self.mgr.driver.execute(datarate_cmds)
             self.mgr.transition(Manager.Autoranging(self.mgr))
 
     class Autoranging(State):
@@ -180,7 +200,8 @@ class Manager:
             # Sync word (undocumented command to write 0xCCAACCAA)
             drv.write_fifo(bytearray([0xA1, 0x18, 0xCC, 0xAA, 0xCC, 0xAA]))
             # Data (no framing, full packet)
-            drv.write_fifo_data(self.msg)
+            # First byte must be length of message (including itself)
+            drv.write_fifo_data(bytearray([len(self.msg) + 1]) + self.msg)
             # Wait until crystal oscillator is running
             self.mgr.poll(Reg.XTALSTATUS, Bits.XTAL_RUN)
             # Commit FIFO
@@ -249,7 +270,7 @@ class Manager:
                     try:
                         (chunk, self.data) = Chunk.from_bytes(self.data)
                     except Exception as e:
-                        log.error(e)
+                        logging.error(e)
                         self.bad_fifo = True
                         self.mgr.transition(Manager.Receiving(self.mgr))
                         return
@@ -258,7 +279,13 @@ class Manager:
                     if isinstance(chunk, DataChunk): 
                         # TODO: multipart
                         logging.info('Received %d bytes', len(chunk.data))
-                        self.mgr.outbox.put(chunk.data)
+                        assert len(chunk.data) > 0
+                        # First byte is packet length (including itself)
+                        if chunk.data[0] == len(chunk.data):
+                            self.mgr.outbox.put(chunk.data[1:])
+                        else:
+                            logging.error('First byte (%d) does not match length (%d)', chunk.data[0], len(chunk.data))
+                            # TODO: What next?
                     elif chunk is None:
                         # TODO: abort if not making progress
                         break

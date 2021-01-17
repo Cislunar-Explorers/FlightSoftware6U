@@ -1,6 +1,6 @@
 from struct import error as StructError
 
-from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
+#from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
 from utils.constants import (
     MIN_COMMAND_SIZE,
     MODE_OFFSET,

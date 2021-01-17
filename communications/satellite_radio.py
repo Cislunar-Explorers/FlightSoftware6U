@@ -35,29 +35,38 @@ def receiveSignal(mgr: Manager):
 
 def transmitData(mgr:Manager, signal:bytearray):
    
-   #Radio board setup
-   logging.basicConfig(level=logging.DEBUG)
+    #Radio board setup
+    logging.basicConfig(level=logging.DEBUG)
 
-   #Allow radio to transmit
-   mgr.tx_enabled = True
+    #Allow radio to transmit
+    mgr.tx_enabled = True
 
-   #Put signal in the radio inbox
-   mgr.inbox.put(signal)
+    #Put signal in the radio inbox
+    mgr.inbox.put(signal)
 
-   logging.debug('Transmitting')
+    cycles = 0
 
-   #Send signal
-   mgr.dispatch()
+    while True:
+        logging.debug('Start of control cycle')
 
-   # Health monitoring
-   if mgr.is_faulted():
-      logging.error('Radio manager faulted')
-      mgr.reset_requested = True
+        # Dispatch components
+        mgr.dispatch()
 
-   #Back to idle
-   mgr.tx_enabled = False
-   mgr.rx_enabled = False
-   mgr.dispatch()
+        # Health monitoring
+        if mgr.is_faulted():
+            logging.error('Radio manager faulted')
+            mgr.reset_requested = True
+
+        cycles += 1
+        # After 10s, break for clean shutdown
+        # (TODO: use interrupt handler to ensure clean shutdown when killed,
+        # or monitor transmitting state and exit when complete)
+        if cycles >= 5: break
+        time.sleep(1)
+
+    mgr.tx_enabled = False
+    mgr.rx_enabled = False
+    mgr.dispatch()
 
 #Registers the downlink data in the DataHandler
 def registerDownlink(dh: DataHandler, mode_id, data_id, **kwargs):

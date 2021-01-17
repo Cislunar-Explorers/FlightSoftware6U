@@ -1,5 +1,5 @@
 #Packing Imports
-from serialization import DataHandler
+from communications.serialization import DataHandler
 import utils.struct as us
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException, SerializationException
@@ -8,11 +8,11 @@ from sys import maxsize, float_info
 #Transimission Imports
 import logging
 import time
-#import board
+import board
 import busio
 from adafruit_bus_device.spi_device import SPIDevice
-from ax5043_manager.ax5043_driver import Ax5043
-from ax5043_manager.ax5043_manager import Manager
+from communications.ax5043_manager.ax5043_driver import Ax5043
+from communications.ax5043_manager.ax5043_manager import Manager
 
 #Gets the signal from the radio board and returns it in a usable format
 def receiveSignal(mgr: Manager):

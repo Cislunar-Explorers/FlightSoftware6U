@@ -281,8 +281,6 @@ class LowBatterySafetyMode(FlightMode):
         super().__init__(parent)
         raise NotImplementedError
 
-    # TODO point solar panels directly at the sun
-
     def run_mode(self):
         sleep(self.parent.constants.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         raise NotImplementedError

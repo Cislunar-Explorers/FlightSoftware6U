@@ -32,20 +32,16 @@ class BootUpMode(FlightMode):
         logger.debug("Logging info to DB...")
         self.log()
 
-        # TODO deploy antennae
-        # logger.info("Beginning burn wire...")
-        # parent.gom.burnwire1(5)
+        # deploy antennae
+        logger.info("Beginning burn wire...")
+        parent.gom.burnwire1(5)
 
     def run_mode(self):
-        # initialize the cameras, select a camera
-        # TODO is this done right?
-        logger.debug("Creating camera mux...")
-        mux = camera.CameraMux()
-        logger.debug("Selecting a camera...")
-        # select camera before reboot so that we will detect cam on reboot
-        mux.selectCamera(random.choice([1, 2, 3]))
-        logger.debug("Transferring to RestartMode")
-        os.system("sudo reboot")
+        logger.debug("run_mode running (nothing happens)")
+        pass
+
+        # logger.debug("Transferring to RestartMode")
+        # os.system("sudo reboot")
 
     def log(self):
         is_bootup = True
@@ -55,6 +51,10 @@ class BootUpMode(FlightMode):
         self.session.add(new_bootup)
         self.session.commit()
         logger.debug("Log to DB complete...")
+
+    def update_state(self) -> int:
+        logger.debug("updating state... will now transfer to restart")
+        return 1  # restart mode
 
 
 class RestartMode(FlightMode):
@@ -85,12 +85,8 @@ class RestartMode(FlightMode):
 
     # TODO implement error handling for if camera not detected
     def run_mode(self):
-        # initialize the cameras, select a random camera
-        logger.debug("Selecting a camera")
-        mux = camera.CameraMux()
-        mux.selectCamera(random.choice([1, 2, 3]))
-        cam_object = camera.Camera()
-        # cam_object.initialize()
+        logger.debug("run_mode running (nothing happens)")
+        pass
 
         # logger.debug("Taking raw observation to test")
         # cam_object.rawObservation("restart_cam_test.mjpeg")
@@ -99,4 +95,8 @@ class RestartMode(FlightMode):
         boots = self.session.query(RebootsModel).all()
         for boot in boots:
             print(boot)"""
+
+    def update_state(self) -> int:
+        logger.debug("updating state... will now transfer to normal")
+        return 2  # restart mode
 

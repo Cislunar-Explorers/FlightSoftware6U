@@ -5,7 +5,10 @@ from time import sleep
 from datetime import datetime
 from queue import Queue
 import signal
+import random
 from utils.log import get_log
+
+logger = get_log()
 
 from dotenv import load_dotenv
 
@@ -84,6 +87,13 @@ class MainSatelliteThread(Thread):
         self.adc = ADC(self.gyro)
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
+
+        # initialize the cameras, select a camera
+        logger.debug("Creating camera mux...")
+        mux = camera.CameraMux()
+        logger.debug("Selecting a camera...")
+        # select camera before reboot so that we will detect cam on reboot
+        mux.selectCamera(random.choice([1, 2, 3]))
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

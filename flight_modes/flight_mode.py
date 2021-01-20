@@ -373,7 +373,8 @@ class NormalMode(FlightMode):
         if super_fm != 0:
             return super_fm
 
-        time_for_opnav = (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL
+        # TODO keep this
+        # time_for_opnav = (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL
 
         # TODO DELETE THIS
         time_for_opnav = True

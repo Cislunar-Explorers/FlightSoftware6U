@@ -5,20 +5,24 @@ from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, a, b, M, team_identifier
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, a, b, M, team_identifier
 
 
-def verification():
+def verification(**kwargs):
+    """CQC Comms Verification
+    For more info see https://cornell.app.box.com/file/766365097328
+    Assuming a data rate of 50 bits/second, 30 minutes of data transmission gives 78 data blocks"""
+    num_blocks = kwargs.get(NUM_BLOCKS)
+
     data_block_sequence_num = 0
     team_bytes = team_identifier.to_bytes(4, 'big')
-    num_blocks = 78
     data_transmission_sequence = bytes()
 
     for x in range(num_blocks):
         # header calculation:
         sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
         # get current time
-        timestamp = time.time()  # confirm whether each block has different timestamp, confirm with Ellaine, assume for each block
+        timestamp = time.time()  # each block has its own timestamp
         # extract seconds and milliseconds from timestamp:
         seconds_int = int(timestamp)
         seconds_bytes = seconds_int.to_bytes(4, 'big')
@@ -30,7 +34,7 @@ def verification():
         operating_period_base_seed = team_identifier ^ seconds_int  # team identifier xor with timestamp seconds
         block_seed = operating_period_base_seed ^ data_block_sequence_num  # xor previous with data block sequence num
 
-        prn_length = 128 // 4
+        prn_length = 128 // 4  # integer division
         prn = [int()] * (prn_length + 1)  # preallocate memory for storing prn data
         prn[0] = block_seed  # x0 is the block seed
 
@@ -48,10 +52,10 @@ def verification():
 
         data_block = header + data_field
 
-        data_transmission_sequence += data_block
+        data_transmission_sequence += data_block  # concatenate data block into transmission sequence
         data_block_sequence_num += 1
 
-    return data_transmission_sequence.hex()  # instead of returning, add to comms queue
+    return data_transmission_sequence.hex()  # TODO instead of returning, add to comms queue
 
 
 class CommandDefinitions:

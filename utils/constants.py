@@ -54,6 +54,8 @@ STATE = "state"
 INTERVAL = "interval"
 DELAY = "delay"
 
+NUM_BLOCKS = "num_blocks"
+
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
 

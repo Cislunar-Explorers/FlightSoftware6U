@@ -158,9 +158,10 @@ class MainSatelliteThread(Thread):
     def run(self):
         try:
             while True:
-                sleep(5)  # TODO remove when flight modes execute real tasks
+                # sleep(5)  # TODO remove when flight modes execute real tasks
+                logger.info("flight mode: " + repr(self.flight_mode))
                 self.poll_inputs()
-                # self.update_state()
+                self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

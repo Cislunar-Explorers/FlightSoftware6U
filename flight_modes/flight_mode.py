@@ -374,6 +374,10 @@ class NormalMode(FlightMode):
             return super_fm
 
         time_for_opnav = (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL
+
+        # TODO DELETE THIS
+        time_for_opnav = True
+
         need_to_electrolyze = self.parent.tlm.prs.pressure < self.parent.constants.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self.parent.tlm.gom.is_electrolyzing
         seconds_to_electrolyze = 60  # TODO: actual calculation involving current pressure
@@ -399,11 +403,15 @@ class NormalMode(FlightMode):
 
         # note: at this point, the variable "need_to_electrolyze" is equivalent to the new state of the electrolyzer
 
+        logger.info("Time for opnav?" + str(time_for_opnav))
+        logger.info("Need to electrolyze?" + str(need_to_electrolyze))
+
         if time_for_opnav:
             if need_to_electrolyze:
                 # If it's time for opnav to run BUT we are below ideal pressure: turn off electrolysis after a delay
                 self.parent.gom.set_electrolysis(False, delay=seconds_to_electrolyze)
 
+            logger.info("TIME TO GO TO OPNAV")
             return self.parent.constants.FMEnum.OpNav.value
 
         # if we have data to downlink, change to comms mode
@@ -434,3 +442,24 @@ class CommandMode(PauseBackgroundMode):
 
     def poll_inputs(self):
         raise NotImplementedError  # only check the comms queue
+
+
+class OpNavMode(FlightMode):
+    flight_mode_id = FMEnum.OpNav.value
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.task_completed = False
+
+    def run_mode(self):
+        logger.info("This is where opnav runs")
+        logger.info("Nothing happening rn")
+        logger.info("Setting 'task_completed' to True")
+        self.task_completed = True
+
+    def update_state(self) -> int:
+        if self.task_completed:
+            logger.info("Transition back to normal mode")
+            return self.parent.constants.FMEnum.Normal.value
+
+

@@ -36,10 +36,11 @@ def verification():
 
         for i in range(1, prn_length + 1):
             # algorithm defined in sec 4.4.2 of CommsProc rev 4
-            xn = (a * prn[i - 1] + b) % 2 ** 32  # and with 32-bit 2**32 instead of mod
+            xn = (a * prn[i - 1] + b) % 2 ** 32
+            # if the mod operator above causes issues, anding with 32-bit 2**32 should do the trick
             prn[i] = xn
 
-        prn.pop(0)  # get rid of the first value in the PRN
+        prn.pop(0)  # get rid of the first value in the PRN, x0 is not included in PRN
 
         data_field = bytes()
         for j in prn:

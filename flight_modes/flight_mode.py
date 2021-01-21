@@ -457,9 +457,15 @@ class OpNavMode(FlightMode):
         logger.info("This is where opnav runs")
         logger.info("Nothing happening rn")
         logger.info("Setting 'task_completed' to True")
+
         self.task_completed = True
 
     def update_state(self) -> int:
+        super_fm = super().update_state()
+
+        if super_fm != 0:
+            return super_fm
+
         if self.task_completed:
             logger.info("Transition back to normal mode")
             return self.parent.constants.FMEnum.Normal.value

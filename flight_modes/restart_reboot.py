@@ -38,9 +38,6 @@ class BootUpMode(FlightMode):
         parent.gom.burnwire1(5)
 
     def run_mode(self):
-        logger.info("run_mode running (nothing happens)")
-        pass
-
         logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
 
@@ -56,7 +53,7 @@ class BootUpMode(FlightMode):
     def update_state(self) -> int:
         logger.info("updating state... doesnt do nothin")
         # os.system("sudo reboot")
-        #return 1  # restart mode
+        return 0  # restart mode
 
 
 class RestartMode(FlightMode):

@@ -260,6 +260,7 @@ def UKFMultiple(cameradt, gyroVars, P0, x0, q0, omegas, biases, estimatedSatStat
     [estimatedSatState]: trajectory UKF outputs from t = 0 to t = totalIntegrationTime (n x gyroSampleCount, 3)
     [moonEph]: moon position/vel from ephemeris table (n x gyroSampleCount, 3)
     [sunEph]: sun position/vel from ephemeris table (n x gyroSampleCount, 3)
+    See runAttitudeUKF() for remaining parameters and return type info.
     """
     # assert(omegas[0].shape[0] == biases.shape[0] == estimatedSatState.shape[0] == moonEph.shape[0] == sunEph.shape[0])
     n = moonEph.shape[0]
@@ -332,6 +333,7 @@ def UKFSingle(cameradt, gyroVars, P0, x0, q0, omegas, biases, estimatedSatState,
     [moonEph]: moon position/vel from ephemeris table (n x gyroSampleCount, 3)
     [sunEph]: sun position/vel from ephemeris table (n x gyroSampleCount, 3)
     [timeline]: time segment of omegas and biases readings
+    See runAttitudeUKF() for remaining parameters and return type info.
     """
     # assert(omegas[0].shape[0] == biases.shape[0] == estimatedSatState.shape[0] == moonEph.shape[0] == sunEph.shape[0])
     n = moonEph.shape[0]
@@ -386,7 +388,34 @@ def UKFSingle(cameradt, gyroVars, P0, x0, q0, omegas, biases, estimatedSatState,
         
     return Phat_kp1, qhat_kp1, xhat_kp1
 
-def runAttitudeUKFWithKick(cameradt, gyroVars, P0, x0, quat, omegas, biases, satState, moonEph, sunEph, timeline, singleIteration=False):
+def runAttitudeUKF(cameradt, gyroVars, P0, x0, quat, omegas, biases, satState, moonEph, sunEph, timeline, singleIteration=False):
+    """
+    Runs the attitude UKF and produces attitude estimates in the form of:
+        1) attitde error state (Rodriguez Parameters) + bias (size 6x1)
+        2) quaternion attitude state (size 4x1)
+    See "notes/Full Attitude UKF.html" for detailed explaination and theoritical background on this UKF.
+    [cameradt]: time since last camera run
+    [gyroVars]: (gyro_sigma, gyro_sample_rate, Q, R) where
+                [gyro_sigma]: float
+                [gyro_sample_rate]: average sample time elapsed between each gyro measurement (seconds)
+                [Q]: (6,6) np matrix
+                [R]: (6,6) np matrix
+    [P0]: initial covariance matrix for state estimate
+    [x0]: (6,1) np array initial attitude State
+    [quat]: (4x1) quaternion state (if this first iteration, this can be random as it is derived from [x0])
+    [omegas]: (x, y, z) components of measured angular velocity (n x gyroSampleCount, 3) 
+    [biases]: (bx, by, bz) (Not sure how these are obtained) (n x gyroSampleCount, 3)
+    [estimatedSatState]: trajectory UKF outputs from t = 0 to t = totalIntegrationTime (n x gyroSampleCount, 3)
+    [moonEph]: moon position/vel from ephemeris table (n x gyroSampleCount, 3)
+    [sunEph]: sun position/vel from ephemeris table (n x gyroSampleCount, 3)
+    [timeline]: time segment of omegas and biases readings
+    [singleIteration]: [True] run single iteration [False] run batch iteration 
+    returns:
+    [Phat_kp1]: new covariance matrix for state estimate (6x6)
+    [qhat_kp1]: estimated quaternion state (4x1)
+    [xhat_kp1]: estimated attitude error state (6x1)
+    If [singleIteration] was set to False, then estimates computed at the final interation of the batch are returned.
+    """
     q0 = quat/numpy.linalg.norm(quat)
     if singleIteration is False:
         return UKFMultiple(cameradt, gyroVars, P0, x0, q0, omegas, biases, satState, moonEph, sunEph, timeline)

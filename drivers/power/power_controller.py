@@ -67,10 +67,6 @@ OUT_HEATER = 6
 OUT_SWITCH = 7
 
 
-#    heater       = OUT_HEATER
-#    switch       = OUT_SWITCH
-
-
 # Outputs on board:
 #
 #       H1
@@ -81,9 +77,9 @@ OUT_SWITCH = 7
 #     '-----'
 #
 
-# pi outputs
-OUT_PI_COMMS = 11  # GPIO 17
-OUT_PI_SOLENOID_ENABLE = 40  # GPIO 21
+# GPIO outputs
+OUT_PI_COMMS = 17  # Physical pin 11
+OUT_PI_SOLENOID_ENABLE = 21  # Physical pin 40
 
 
 class PowerException(Exception):
@@ -114,7 +110,7 @@ class Power:
         self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
         # initialize pi outputs
-        GPIO.setmode(GPIO.BOARD)
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
         GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
         GPIO.output(OUT_PI_COMMS, GPIO.LOW)
@@ -126,6 +122,7 @@ class Power:
     # prints housekeeping/config/config2
     def displayAll(self):
         ps.displayHK(self.get_hk_1())
+        ps.displayHk2(self.get_hk_2())
         ps.displayConfig(self.config_get())
         ps.displayConfig2(self.config2_get())
 
@@ -336,7 +333,7 @@ class Power:
     # including cycling permanent 5V and 3.3V and battery outputs.
     # Not tested- issue running through HITL server
     def hard_reset(self, are_you_sure=False):
-        if are_you_sure:
+        if are_you_sure is True:
             ps.gom_logger.info("Hard reset Passcode correct: Performing hard reset")
             ps.gom_logger.critical("Cycling permanent 5V and 3.3V and battery outputs")
             self.write(CMD_HARD_RESET, [])
@@ -390,8 +387,8 @@ class Power:
         ps.gom_logger.debug("Setting GPIO channel %i HIGH", output)
         GPIO.output(output, GPIO.HIGH)
         time.sleep(duration * 0.001)
-        ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
         GPIO.output(output, GPIO.LOW)
+        ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
 
     # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
@@ -454,7 +451,7 @@ class Power:
     # turns both burnwire 2 on for [duration] seconds, with a
     # delay of [delay] seconds.
     def burnwire2(self, duration, delay=0):
-        ps.gom_logger.debug(
+        ps.gom_logger.info(
             "Turning on burnwire 2 for %s seconds after a delay of %s sec",
             duration,
             delay,
@@ -462,7 +459,9 @@ class Power:
 
         time.sleep(delay)
         self.set_single_output("burnwire_2", 1, 0)
-        time.sleep(duration)
+        time.sleep(duration / 2)
+        self.displayAll()
+        time.sleep(duration / 2)
         self.set_single_output("burnwire_2", 0, 0)
 
     def comms(self, transmit):

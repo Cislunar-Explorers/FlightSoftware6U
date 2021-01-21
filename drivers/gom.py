@@ -20,7 +20,6 @@ class Hk(Enum):
 class Gomspace:
     def __init__(self):
         self.gom = pc.Power()
-        # Should we implement a gom "state" variable - i.e. which channel is on or off
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
@@ -29,26 +28,26 @@ class Gomspace:
     def get_health_data(self, level=Hk.DEFAULT.value):
         """Returns a struct containing housekeeping data.
             The level parameter specifies which command gets sent to the P31u and what data you get back.
-            level must be  one of the following: \n
+            level must be either one of the following: \n
             ["default", "eps", "vi", "out", "wdt", "basic", "config", "config2"]\n
             If no argument is provided, returns the same as "default" \n
             Every option returns a different struct, the documentation for which can be found in power_structs.py or in
             the GomSpace NanoPower P31u manual"""
 
         hk_dict = {
-            Hk.DEFAULT.value: self.gom.get_hk_1(),
-            Hk.EPS.value: self.gom.get_hk_2(),
-            Hk.VI.value: self.gom.get_hk_2_vi(),
-            Hk.OUT.value: self.gom.get_hk_out(),
-            Hk.WDT.value: self.gom.get_hk_wdt(),
-            Hk.BASIC.value: self.gom.get_hk_2_basic(),
-            Hk.CONFIG.value: self.gom.config_get(),
-            Hk.CONFIG2.value: self.gom.config2_get(),
+            Hk.DEFAULT.value: self.gom.get_hk_1,
+            Hk.EPS.value: self.gom.get_hk_2,
+            Hk.VI.value: self.gom.get_hk_2_vi,
+            Hk.OUT.value: self.gom.get_hk_out,
+            Hk.WDT.value: self.gom.get_hk_wdt,
+            Hk.BASIC.value: self.gom.get_hk_2_basic,
+            Hk.CONFIG.value: self.gom.config_get,
+            Hk.CONFIG2.value: self.gom.config2_get,
         }
 
         try:
             logger.debug("Getting health data %s from get_health_data" % level)
-            return hk_dict[level.lower()]
+            return hk_dict[level.lower()]()
         except KeyError:
             logger.warning(
                 "Invalid argument in get_health_data. Getting default health data"

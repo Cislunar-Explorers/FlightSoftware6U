@@ -1,5 +1,5 @@
 import os
-import numpy
+import numpy as np
 
 # The system will wait for the expected time elapsed 
 # for the spacecraft to face the angle that is 45 degrees
@@ -66,9 +66,29 @@ NX = 6.                                 # number of states
 #BETA = 2.                               # optimal for Gaussian distribution
 #KAPPA = -3.                             # chosen such that KAPPA+NX=3
 LAM = 0#ALPHA**2. * (KAPPA + NX) - NX     # depends on other variables
-P0 = numpy.array([[1.e-1, 0., 0., 0., 0., 0.],
+P0 = np.array([[1.e-1, 0., 0., 0., 0., 0.],
                   [0., 1.e-1, 0., 0., 0., 0.],
                   [0., 0., 1.e-1, 0., 0., 0.],
                   [0., 0., 0., 9.7e-10, 0., 0.],
                   [0., 0., 0., 0., 9.7e-10, 0.],
                   [0., 0., 0., 0., 0., 9.7e-10]]) * 10.
+
+class TrajUKFConstants:
+    # How wrong our dynamics model is? e.g. how off in variance will we be due
+    # to solar radiation pressure, galactic particles, and bad gravity model? 
+    # Units: (km^2)
+    Q = np.diag(np.array([1, 1, 1, 1e-5, 1e-6, 1e-5], dtype=np.float))
+    Sv = np.linalg.cholesky(Q)
+    # How bad are our sensors? 
+    # Units: (pixels^2), 
+    PIXEL_ERROR = 1
+    R = np.diag(np.array([1, 1, 1, 1, 1, 1], dtype=np.float)) * PIXEL_ERROR
+    alpha = 10e-4
+    beta = 2
+
+    ue = 3.986e14
+    um = 4.904e12
+    us = 1.327e20
+    re = 6378 * 1000  
+    rm = 1737 * 1000
+    rs = 695505 * 1000

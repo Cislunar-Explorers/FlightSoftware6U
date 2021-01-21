@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.types import Float, DateTime
+from sqlalchemy.types import Float, DateTime, Boolean
 
 
 create_session = sessionmaker()
@@ -65,16 +65,24 @@ class OpNavCoordinatesModel(SQLAlchemyTableBase):
     position_x = Column(Float)
     position_y = Column(Float)
     position_z = Column(Float)
-    attitude_x = Column(Float)
-    attitude_y = Column(Float)
-    attitude_z = Column(Float)
-
+    attitude_q1 = Column(Float)
+    attitude_q2 = Column(Float)
+    attitude_q3 = Column(Float)
+    attitude_q4 = Column(Float)
+    attitude_rod1 = Column(Float)
+    attitude_rod2 = Column(Float)
+    attitude_rod3 = Column(Float)
+    attitude_b1 = Column(Float)
+    attitude_b2 = Column(Float)
+    attitude_b3 = Column(Float)
+    
     @staticmethod
     def from_tuples(opnav_tuple, time):
-        position, velocity, attitude = opnav_tuple
+        position, velocity, attitude_quat, attitude_rod_bias = opnav_tuple
         velocity_x, velocity_y, velocity_z = velocity
         position_x, position_y, position_z = position
-        attitude_x, attitude_y, attitude_z = attitude
+        attitude_q1, attitude_q2, attitude_q3, attitude_q4 = attitude_quat
+        attitude_rod1, attitude_rod2, attitude_rod3, attitude_b1, attitude_b2, attitude_b3 = attitude_rod_bias
         return OpNavCoordinatesModel(
             time_retrieved=time,
             velocity_x=velocity_x,
@@ -83,9 +91,16 @@ class OpNavCoordinatesModel(SQLAlchemyTableBase):
             position_x=position_x,
             position_y=position_y,
             position_z=position_z,
-            attitude_x=attitude_x,
-            attitude_y=attitude_y,
-            attitude_z=attitude_z,
+            attitude_q1=attitude_q1,
+            attitude_q2=attitude_q2,
+            attitude_q3=attitude_q3,
+            attitude_q4=attitude_q4,
+            attitude_rod1=attitude_rod1,
+            attitude_rod2=attitude_rod2,
+            attitude_rod3=attitude_rod3,
+            attitude_b1=attitude_b1,
+            attitude_b2=attitude_b2,
+            attitude_b3=attitude_b3
         )
 
     def __repr__(self):
@@ -94,9 +109,23 @@ class OpNavCoordinatesModel(SQLAlchemyTableBase):
             f", velocity=({self.velocity_x}, {self.velocity_y}, "
             f"{self.velocity_z}) position=({self.position_x}, "
             f"{self.position_y}, {self.position_z}), "
-            f"attitude=({self.attitude_x}, {self.attitude_y}, "
-            f"{self.attitude_z}))>"
+            f"attitude=({self.attitude_q1}, {self.attitude_q2}, "
+            f"attitude=({self.attitude_q3}, {self.attitude_q4}, "
+            f"attitude=({self.attitude_rod1}, {self.attitude_rod2}, "
+            f"attitude=({self.attitude_rod3}, {self.attitude_b1}, "
+            f"attitude=({self.attitude_b2}, {self.attitude_b3}))>"
         )
+
+
+class RebootsModel(SQLAlchemyTableBase):
+    __tablename__ = "Reboots"
+
+    id = Column(Integer, primary_key=True)
+    is_bootup = Column(Boolean)
+    reboot_at = Column(DateTime)
+
+    def __repr__(self):
+        return f"<RebootsModel(is boot up?={self.is_bootup}, "f"reboot_at={str(self.reboot_at)})>"
 
 
 def create_sensor_tables(engine):

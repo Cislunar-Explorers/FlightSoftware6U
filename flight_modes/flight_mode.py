@@ -92,7 +92,7 @@ class FlightMode:
             return self.parent.constants.FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
-        if sum(self.parent.tlm.gom.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
+        if sum(self.parent.tlm.gom.hk.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
                 and self.parent.tlm.gom.percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD:
             return self.parent.constants.FMEnum.LowBatterySafety.value
 

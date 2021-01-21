@@ -453,6 +453,7 @@ class OpNavMode(FlightMode):
         self.task_completed = False
 
     def run_mode(self):
+        sleep(5)
         logger.info("This is where opnav runs")
         logger.info("Nothing happening rn")
         logger.info("Setting 'task_completed' to True")

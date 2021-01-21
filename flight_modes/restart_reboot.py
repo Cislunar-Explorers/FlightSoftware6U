@@ -40,8 +40,8 @@ class BootUpMode(FlightMode):
         logger.debug("run_mode running (nothing happens)")
         pass
 
-        # logger.debug("Transferring to RestartMode")
-        # os.system("sudo reboot")
+        logger.debug("Transferring to RestartMode via sudo reboot")
+        os.system("sudo reboot")
 
     def log(self):
         is_bootup = True
@@ -53,8 +53,9 @@ class BootUpMode(FlightMode):
         logger.debug("Log to DB complete...")
 
     def update_state(self) -> int:
-        logger.debug("updating state... will now transfer to restart")
-        return 1  # restart mode
+        logger.debug("updating state... doesnt do nothin")
+        # os.system("sudo reboot")
+        #return 1  # restart mode
 
 
 class RestartMode(FlightMode):

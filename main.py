@@ -90,10 +90,10 @@ class MainSatelliteThread(Thread):
         # in pressure_sensor (to be made) can access burn queue"""
 
         # initialize the cameras, select a camera
-        logger.debug("Creating camera mux...")
+        logger.info("Creating camera mux...")
         self.mux = camera.CameraMux()
         self.camera = camera.Camera()
-        logger.debug("Selecting a camera...")
+        logger.info("Selecting a camera...")
         # select camera before reboot so that we will detect cam on reboot
         self.mux.selectCamera(random.choice([1, 2, 3]))
 

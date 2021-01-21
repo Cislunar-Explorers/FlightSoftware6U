@@ -20,16 +20,16 @@ class BootUpMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-        logger.debug("Boot up beginning...")
-        logger.debug("Time when sleep starts: " + str(datetime.now()))
+        logger.info("Boot up beginning...")
+        logger.info("Time when sleep starts: " + str(datetime.now()))
         time.sleep(BOOTUP_SEPARATION_DELAY)
-        logger.debug("Time when sleep stops: " + str(datetime.now()))
+        logger.info("Time when sleep stops: " + str(datetime.now()))
 
-        logger.debug("Creating DB session...")
+        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
-        logger.debug("Logging info to DB...")
+        logger.info("Logging info to DB...")
         self.log()
 
         # deploy antennae
@@ -37,10 +37,10 @@ class BootUpMode(FlightMode):
         parent.gom.burnwire1(5)
 
     def run_mode(self):
-        logger.debug("run_mode running (nothing happens)")
+        logger.info("run_mode running (nothing happens)")
         pass
 
-        logger.debug("Transferring to RestartMode via sudo reboot")
+        logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
 
     def log(self):
@@ -50,10 +50,10 @@ class BootUpMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.debug("Log to DB complete...")
+        logger.info("Log to DB complete...")
 
     def update_state(self) -> int:
-        logger.debug("updating state... doesnt do nothin")
+        logger.info("updating state... doesnt do nothin")
         # os.system("sudo reboot")
         #return 1  # restart mode
 
@@ -66,8 +66,8 @@ class RestartMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-        logger.debug("Restarting...")
-        logger.debug("Creating DB session...")
+        logger.info("Restarting...")
+        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
@@ -82,11 +82,11 @@ class RestartMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.debug("Logging to DB complete...")
+        logger.info("Logging to DB complete...")
 
     # TODO implement error handling for if camera not detected
     def run_mode(self):
-        logger.debug("run_mode running (nothing happens)")
+        logger.info("run_mode running (nothing happens)")
         pass
 
         # logger.debug("Taking raw observation to test")
@@ -98,6 +98,6 @@ class RestartMode(FlightMode):
             print(boot)"""
 
     def update_state(self) -> int:
-        logger.debug("updating state... will now transfer to normal")
+        logger.info("updating state... will now transfer to normal")
         return 2  # restart mode
 

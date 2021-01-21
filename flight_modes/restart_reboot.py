@@ -78,7 +78,7 @@ class RestartMode(FlightMode):
 
     def log(self):
         is_bootup = False
-        reboot_at = psutil.boot_time()
+        reboot_at = datetime.fromtimestamp(psutil.boot_time())
         new_bootup = RebootsModel(is_bootup=is_bootup,
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)

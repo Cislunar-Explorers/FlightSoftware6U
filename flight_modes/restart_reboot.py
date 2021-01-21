@@ -8,6 +8,7 @@ import os
 import random
 from utils.log import get_log
 from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
+import psutil
 
 logger = get_log()
 

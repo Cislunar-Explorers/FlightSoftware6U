@@ -36,6 +36,8 @@ while True:
         cycleNumber += 1
         time.sleep(1)
 
+time.sleep(5)
+
 #Multiply numbers received by 2 and then send them back
 downlinkData = dh.pack_data(1,2,number1 = dataDict['number1'] * 2,number2= dataDict['number2'] * 2)
 

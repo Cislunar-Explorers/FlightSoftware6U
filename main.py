@@ -7,6 +7,7 @@ from queue import Queue
 import signal
 import random
 from utils.log import get_log
+import OpticalNavigation.core.camera as camera
 
 logger = get_log()
 

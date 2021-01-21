@@ -264,7 +264,7 @@ class OpNavCameraMeasurementModel(SQLAlchemyTableBase):
             ang_ms=z3,
             e_dia=z4,
             m_dia=z5,
-            s_dia=z5,
+            s_dia=z6,
         )
 
     def __repr__(self):

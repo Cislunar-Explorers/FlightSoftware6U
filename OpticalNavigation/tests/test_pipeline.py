@@ -326,7 +326,7 @@ def test_RandomData():
     #
     gyroVars = (gyro_sigma, gyro_sample_rate, Q, R)
 
-    process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState, initQuaternionState, gyroVars)
+    opnav.process(batch, initTrajState, traj_P, cameraParams, att_P, initAttitudeState, initQuaternionState, gyroVars)
 
 
 

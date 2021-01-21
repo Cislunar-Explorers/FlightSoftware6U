@@ -2,16 +2,17 @@
 Processing ephemeris tables and converting them into a usuable format.
 """
 
+from typing import List
 import pytest
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import math
 import os
 from tqdm import tqdm
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy import integrate
 from numpy.linalg import pinv
-import numpy as np
 # import matplotlib.pyplot as plt
 
 from OpticalNavigation.simulations.animations import LiveTrajectoryPlot
@@ -23,7 +24,7 @@ from OpticalNavigation.tests.const import TEST_C1_DISCRETIZED_meas, TEST_C1_DISC
 
 from OpticalNavigation.tests.const import SPACECRAFT_I_B, DAMPER_C, DAMPER_I_D, INTEGRATION_TIMESTEP, TORQUE_THRUSTER
 
-from OpticalNavigation.core.const import AttitudeUKFConstants
+from OpticalNavigation.core.const import AttitudeEstimateOutput, AttitudeUKFConstants
 
 _a = AttitudeUKFConstants._a
 _f = AttitudeUKFConstants._f
@@ -212,7 +213,7 @@ def generateSyntheticData(quat, cameradt, kickTime, duration, omega_init, bias_i
     
     return q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz
 
-def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz, timeline):
+def plotResults(results: List[AttitudeEstimateOutput], q1, q2, q3, q4, biasx, biasy, biasz, timeline):
     """
     Plot results from attitude.UKF()
     [results]: Output from attitude.UKF()
@@ -227,7 +228,14 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz, timeline):
     tbias1, tbias2, tbias3 = [], [], []
     truerod1, truerod2, truerod3 = [], [], []
     attitude_error = []
-    (Phist, qhist, xhist) = results
+    # (Phist, qhist, xhist) = results
+    Phist = []
+    qhist = []
+    xhist = []
+    for estimate in results:
+        Phist.append(estimate.new_P.data)
+        qhist.append(estimate.new_quat.data.reshape(4,1))
+        xhist.append(estimate.new_state.data.reshape(6,1))
     for i in range(len(qhist)): # quat
         t = timeline[i]
         truequaternion = np.array([[q1(t), q2(t), q3(t), q4(t)]]).T
@@ -269,63 +277,63 @@ def plotResults(results, q1, q2, q3, q4, biasx, biasy, biasz, timeline):
         b2.extend([i[4][0]])
         b3.extend([i[5][0]])
 
-    # plt.plot(quat1[90:200], 'r-', label='$q_{1}$')
-    # plt.plot(true1[90:200], 'r:', label='$q^{True}_{1}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Estimated and True Quaternions')
-    # plt.xlabel('Seconds')
-    # plt.show()
+    plt.plot(quat1, 'r-', label='$q_{1}$')
+    plt.plot(true1, 'r:', label='$q^{True}_{1}$')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.title('Estimated and True Quaternions')
+    plt.xlabel('Seconds')
+    plt.show()
     
-    # plt.plot(quat2[90:200], 'g-', label='$q_{2}$')
-    # plt.plot(true2[90:200], 'g:', label='$q^{True}_{2}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Estimated and True Quaternions')
-    # plt.xlabel('Seconds')
-    # plt.show()
+    plt.plot(quat2, 'g-', label='$q_{2}$')
+    plt.plot(true2, 'g:', label='$q^{True}_{2}$')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.title('Estimated and True Quaternions')
+    plt.xlabel('Seconds')
+    plt.show()
     
-    # plt.plot(quat3[90:200], 'b-', label='$q_{3}$')
-    # plt.plot(true3[90:200], 'b:', label='$q^{True}_{3}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Estimated and True Quaternions')
-    # plt.xlabel('Seconds')
-    # plt.show()
+    plt.plot(quat3, 'b-', label='$q_{3}$')
+    plt.plot(true3, 'b:', label='$q^{True}_{3}$')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.title('Estimated and True Quaternions')
+    plt.xlabel('Seconds')
+    plt.show()
         
-    # plt.plot(quat4[90:200], 'y-', label='$q_{4}$')
-    # plt.plot(true4[90:200], 'y:', label='$q^{True}_{4}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Estimated and True Quaternions')
-    # plt.xlabel('Seconds')
-    # plt.show()
+    plt.plot(quat4, 'y-', label='$q_{4}$')
+    plt.plot(true4, 'y:', label='$q^{True}_{4}$')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.title('Estimated and True Quaternions')
+    plt.xlabel('Seconds')
+    plt.show()
     
-    # plt.plot(b1, 'r-', label='$b_{1}$')
-    # plt.plot(b2, 'g-', label='$b_{2}$')
-    # plt.plot(b3, 'b-', label='$b_{3}$')
-    # plt.plot(tbias1,'r:', label='$b_{1}^{True}$')
-    # plt.plot(tbias2,'g:', label='$b_{2}^{True}$')
-    # plt.plot(tbias3,'b:', label='$b_{3}^{True}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Estimated and True Gyro Bias')
-    # plt.xlabel('Seconds')
-    # plt.show()
+    plt.plot(b1, 'r-', label='$b_{1}$')
+    plt.plot(b2, 'g-', label='$b_{2}$')
+    plt.plot(b3, 'b-', label='$b_{3}$')
+    plt.plot(tbias1,'r:', label='$b_{1}^{True}$')
+    plt.plot(tbias2,'g:', label='$b_{2}^{True}$')
+    plt.plot(tbias3,'b:', label='$b_{3}^{True}$')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.title('Estimated and True Gyro Bias')
+    plt.xlabel('Seconds')
+    plt.show()
     
-    # plt.plot(x1, 'r-', label='$rod_{1}$')
-    # plt.plot(x2, 'g-', label='$rod_{2}$')
-    # plt.plot(x3, 'b-', label='$rod_{3}$')
-    # plt.plot(truerod1,'r:', label='$rod_{1}^{True}$')
-    # plt.plot(truerod2,'g:', label='$rod_{2}^{True}$')
-    # plt.plot(truerod3,'b:', label='$rod_{3}^{True}$')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.title('Estimated and True Rodrigues Parameters')
-    # plt.xlabel('Seconds')
-    # plt.ylim([-0.1,0.1])
-    # plt.show()
+    plt.plot(x1, 'r-', label='$rod_{1}$')
+    plt.plot(x2, 'g-', label='$rod_{2}$')
+    plt.plot(x3, 'b-', label='$rod_{3}$')
+    plt.plot(truerod1,'r:', label='$rod_{1}^{True}$')
+    plt.plot(truerod2,'g:', label='$rod_{2}^{True}$')
+    plt.plot(truerod3,'b:', label='$rod_{3}^{True}$')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.title('Estimated and True Rodrigues Parameters')
+    plt.xlabel('Seconds')
+    plt.ylim([-0.1,0.1])
+    plt.show()
     
-    # plt.plot(trace, label='Trace of $P_k$')
-    # plt.title('Trace of Covariance Matrix')
-    # plt.xlabel('$k$')
-    # plt.yscale('log')
-    # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    # plt.show()
+    plt.plot(trace, label='Trace of $P_k$')
+    plt.title('Trace of Covariance Matrix')
+    plt.xlabel('$k$')
+    plt.yscale('log')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.show()
     
     # plt.plot(np.array(b1) - np.array(tbias1), 'r-', label='$b_{1}^{error}$')
     # plt.plot(np.array(b2) - np.array(tbias2), 'g-', label='$b_{2}^{error}$')

@@ -1,7 +1,6 @@
-from OpticalNavigation.core.const import CameraMeasurementVector, CovarianceMatrix, EphemerisVector, MainThrustInfo, Matrix6x6, QuaternionVector, TrajUKFConstants, TrajectoryEstimateOutput, TrajectoryStateVector, CamaraParameters
+from OpticalNavigation.core.const import CameraMeasurementVector, CovarianceMatrix, EphemerisVector, MainThrustInfo, Matrix6x6, TrajUKFConstants, TrajectoryEstimateOutput, TrajectoryStateVector, CameraParameters
 import numpy as np
 import math
-from OpticalNavigation.core.const import CisLunarCameraParameters
 from OpticalNavigation.core.const import TrajUKFConstants as Const
 
 def __length(M):
@@ -205,7 +204,7 @@ def __newEstimate(xMean:np.ndarray, zMean:np.ndarray, Pxx:np.ndarray,
     return TrajectoryEstimateOutput(new_state=TrajectoryStateVector.from_numpy_array(state=xNew), new_P=CovarianceMatrix(matrix=pNew), K=Matrix6x6(matrix=K))
 
 def runTrajUKF(moonEph: EphemerisVector, sunEph: EphemerisVector, measurements:CameraMeasurementVector, 
-            initState:TrajectoryStateVector, dt:np.float, P:CovarianceMatrix, cameraParams:CamaraParameters, 
+            initState:TrajectoryStateVector, dt:np.float, P:CovarianceMatrix, cameraParams:CameraParameters, 
             main_thrust_info:MainThrustInfo=None, dynamicsOnly:bool=False) -> TrajectoryEstimateOutput:
     """
     Propogates dynamics model with instantaneous impulse from the main thruster.
@@ -234,6 +233,12 @@ def runTrajUKF(moonEph: EphemerisVector, sunEph: EphemerisVector, measurements:C
     #measurements[3] = 0
     #measurements[4] = 0
     #measurements[5] = 0
+    # print(f'moonEph: {moonEph.data}')
+    # print(f'sunEph: {sunEph.data}')
+    # print(f'measurements: {measurements.data}')
+    # print(f'initState: {initState.data}')
+    # print(f'dt: {dt}')
+    # print(f'P: {P.data}')
     if measurements is None:
         measurements = CameraMeasurementVector(0, 0, 0, 0, 0, 0)
     moonEph.data = moonEph.data.reshape(1,6)

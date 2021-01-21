@@ -19,7 +19,7 @@ def extract_frames(vid_dir):
     """
     Extracts frames from video located at path [vid_dir]
     @returns
-    [frames]: returns numpy matrix of video frames of shape (# of frames, width, height, channels)
+    [frames]: returns list of paths to extracted frames
     """
     # return np.zeros((10, int(CisLunarCameraParameters.hPix), int(CisLunarCameraParameters.vPix), 3), dtype=np.float)
     time.sleep(3)

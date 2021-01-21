@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 import math
 import os
-from animations import LiveMultipleAttitudePlot, Live2DPlot
-from sim import isOrthogonal, attitudeMatrix 
-from tests.gen_opnav_data import generateSyntheticData
+from OpticalNavigation.simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
+from OpticalNavigation.simulations.sim import isOrthogonal 
+from OpticalNavigation.tests.gen_opnav_data import generateSyntheticData
+from OpticalNavigation.core.ukf import __attitudeMatrix
 import argparse
 
 ### FOR CAMERA ORIENTATION ###
@@ -88,7 +89,7 @@ def simulateSyntheticAttitudeData():
         # Extract quaternions
         q = np.array([float(q1(t)), float(q2(t)), float(q3(t)), float(q4(t))])
         assert abs(np.linalg.norm(q) - 1) < 1e-3
-        Aq = attitudeMatrix(q)
+        Aq = __attitudeMatrix(q)
 
         # X axis of spacecraft
         local_vector = np.array([1, 0, 0, 0]) # last 0 is padding

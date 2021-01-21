@@ -24,7 +24,7 @@ ACQUISITION_COMPENSATION_ROTATION = 360 # degrees
 # 315 degrees from start to take the first photo.
 ACQUISITION_START_ANGLE = 315 # degrees
 
-class CamaraParameters:
+class CameraParameters:
     """
     Contains camera specifications
     """
@@ -42,7 +42,7 @@ class CamaraParameters:
         self.dcam13 = -angular_separation_cam1_cam3
         self.dcam23 = -angular_separation_cam2_cam3
 
-CisLunarCameraParameters = CamaraParameters(62.2, 48.8, 1685, 813, 60, -60, -120)
+CisLunarCameraParameters = CameraParameters(62.2, 48.8, 1685, 813, 60, -60, -120)
 
 class CameraAcquisionDirectoryNotFound(Exception):
     def __init__(self, camLoc):

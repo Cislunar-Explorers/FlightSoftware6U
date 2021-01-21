@@ -1,8 +1,8 @@
-from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajectoryStateVector
+from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
 from utils.constants import OPNAV_INTERVAL
 from OpticalNavigation.core.acquisition import startAcquisition, readOmega
 from OpticalNavigation.core.cam_meas import cameraMeasurements
-from OpticalNavigation.core.ukf import runTrajUKF
+import OpticalNavigation.core.ukf as traj_ukf
 import OpticalNavigation.core.attitude as attitude
 from OpticalNavigation.core.sense import select_camera, record_video, record_gyro
 from OpticalNavigation.core.preprocess import rolling_shutter, rect_to_stereo_proj, extract_frames
@@ -14,7 +14,7 @@ import pandas as pd
 from FlightSoftware.utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
 from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel
 from FlightSoftware.utils.constants import DB_FILE
-from datetime import datetime
+from datetime import datetime, timedelta
 import math
 from sqlalchemy import desc
 from sqlalchemy.orm import session
@@ -75,7 +75,7 @@ def __closest(session: session.Session, ts, model):
     closest ephemeris entry
     """
     # find the closest events which are greater/less than the timestamp
-    gt_event = session.query(model).filter(model.time_retrieved > ts).order_by(model.time_retrieved.asc()).first()
+    gt_event = session.query(model).filter(model.time_retrieved >= ts).order_by(model.time_retrieved.asc()).first()
     lt_event = session.query(model).filter(model.time_retrieved < ts).order_by(model.time_retrieved.desc()).first()
 
     # find diff between events and the ts, if no event found default to infintiy
@@ -100,7 +100,7 @@ def __calculate_cam_measurements(body1:np.ndarray, body2:np.ndarray) -> np.float
     return 2 * math.asin(d_em/2)
 ################################
 
-def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()) -> OPNAV_EXIT_STATUS:
+def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars(), camera_params:CameraParameters=CisLunarCameraParameters) -> OPNAV_EXIT_STATUS:
     """
     Entry point into OpNav System.
     [sql_path]: path to .sqlite file with the SQL prefix
@@ -115,18 +115,21 @@ def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()
     create_session = create_sensor_tables_from_path(sql_path)
     session = create_session()
     assert len(session.query(OpNavTrajectoryStateModel).all()) >= 1 and len(session.query(OpNavAttitudeStateModel).all()) >= 1
-    propulsion_exit_status = __process_propulsion_events(session)
-    print(f'propulsion processing result: {propulsion_exit_status}')
-    # TODO: Handle propulsion processing failure
 
+    propulsion_exit_status = __process_propulsion_events(session)
+    if propulsion_exit_status is not OPNAV_EXIT_STATUS.SUCCESS:
+        print(f'propulsion processing result: {propulsion_exit_status}')
+        # TODO: Handle propulsion processing failure
+        return propulsion_exit_status
+        
     for run in range(num_runs):
-        print(f'propagation event: {run+1}/{num_runs}')
         # process propagation step
-        print(f'----------PROPAGATION EVENT----------')
         __observe(session, gyro_count)
-        propagation_exit_status = __process_propagation(session, gyro_vars)
-        print(f'propagation processing result: {propagation_exit_status}')
-        print(f'-------------------------------------')
+        propagation_exit_status = __process_propagation(session, gyro_vars, camera_params)
+        # TODO: Handle exit status
+        if propagation_exit_status is not OPNAV_EXIT_STATUS.SUCCESS:
+            print(f'propagation processing result: {propagation_exit_status}')
+            return propagation_exit_status
 
     return OPNAV_EXIT_STATUS.SUCCESS
 
@@ -228,7 +231,7 @@ def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EX
     if ephemeris_entry is None:
         return OPNAV_EXIT_STATUS.NO_EPHEMERIS_ENTRY_FOUND
 
-    print(f'\nusing stored state: \n\t{init_traj_entry} \n\t{init_att_entry} \n\t{ephemeris_entry}\n')
+    # print(f'\nusing stored state: \n\t{init_traj_entry} \n\t{init_att_entry} \n\t{ephemeris_entry}\n')
     
     quat = QuaternionVector(q1=init_att_entry.q1, q2=init_att_entry.q2, q3=init_att_entry.q3, q4=init_att_entry.q4)
     main_thrust_info = MainThrustInfo(kick_orientation=quat, acceleration_magnitude=propulsion_entry.acceleration)
@@ -242,9 +245,9 @@ def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EX
 
     traj_state = TrajectoryStateVector(x_pos=init_traj_entry.position_x, y_pos=init_traj_entry.position_y, 
                                     z_pos=init_traj_entry.position_z, x_vel=init_traj_entry.velocity_x, 
-                                    y_vel=init_traj_entry.velocity_z, z_vel=init_traj_entry.velocity_z)
+                                    y_vel=init_traj_entry.velocity_y, z_vel=init_traj_entry.velocity_z)
     P = __get_covariance_matrix_from_state(init_traj_entry)
-    new_est = runTrajUKF(moon_eph, sun_eph, None, traj_state, dt, P, CisLunarCameraParameters, main_thrust_info, dynamicsOnly=True) 
+    new_est = traj_ukf.runTrajUKF(moon_eph, sun_eph, None, traj_state, dt, P, CisLunarCameraParameters, main_thrust_info, dynamicsOnly=True) 
     # TODO: Figure out how to utilize Kalman Gain (K)
     # update db with new values
     pos = new_est.new_state.get_position_data()
@@ -254,10 +257,11 @@ def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EX
             position=(pos[0], pos[1], pos[2]), velocity=(vel[0], vel[1], vel[2]), P=new_est.new_P.data, time=propulsion_entry.time_end)
     ]
     session.bulk_save_objects(entries)
+    session.commit()
     # TODO: Check for any failures and return fail status
     return OPNAV_EXIT_STATUS.SUCCESS
     
-def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_EXIT_STATUS:
+def __process_propagation(session:session.Session, gyro_vars:GyroVars, camera_params:CameraParameters) -> OPNAV_EXIT_STATUS:
     """
     Process propagation event. This event does not handle propulsions, so dynamicsModel is set to False in the traj ukf.
     The trajectory UKF and attitude UKF extend satellite's previous position, velocity, attitude (Rodriguez Params and
@@ -288,10 +292,9 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
     ephemeris_entry = __closest(session, cam_meas_entry.time_retrieved, OpNavEphemerisModel)
     if ephemeris_entry is None:
         return OPNAV_EXIT_STATUS.NO_EPHEMERIS_ENTRY_FOUND
-
     assert cam_meas_entry.time_retrieved >= init_traj_entry.time_retrieved
 
-    print(f'\nusing stored state: \n\t{init_traj_entry} \n\t{init_att_entry} \n\t{cam_meas_entry} \n\t{gyro_meas_entries} \n\t{ephemeris_entry}\n')
+    # print(f'\nusing stored state: \n\t{init_traj_entry} \n\t{init_att_entry} \n\t{cam_meas_entry} \n\t{gyro_meas_entries} \n\t{ephemeris_entry}\n')
 
     quat = QuaternionVector(q1=init_att_entry.q1, q2=init_att_entry.q2, q3=init_att_entry.q3, q4=init_att_entry.q4)
     att_state = AttitudeStateVector(rod_param1=init_att_entry.r1, rod_param2=init_att_entry.r2, 
@@ -300,7 +303,6 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
     prev_state_time = init_traj_entry.time_retrieved
     new_state_time = cam_meas_entry.time_retrieved
     cam_dt = (new_state_time-prev_state_time).total_seconds()
-    print(prev_state_time, new_state_time)
     sun_eph = EphemerisVector(x_pos=ephemeris_entry.sun_x, y_pos=ephemeris_entry.sun_y, 
                             z_pos=ephemeris_entry.sun_z, x_vel=ephemeris_entry.sun_vx, 
                             y_vel=ephemeris_entry.sun_vy, z_vel=ephemeris_entry.sun_vz)
@@ -310,11 +312,11 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
     cam_meas = CameraMeasurementVector(ang_em=cam_meas_entry.ang_em, ang_es=cam_meas_entry.ang_es, ang_ms=cam_meas_entry.ang_ms, e_dia=cam_meas_entry.e_dia, m_dia=cam_meas_entry.m_dia, s_dia=cam_meas_entry.s_dia)
     traj_state = TrajectoryStateVector(x_pos=init_traj_entry.position_x, y_pos=init_traj_entry.position_y, 
                                     z_pos=init_traj_entry.position_z, x_vel=init_traj_entry.velocity_x, 
-                                    y_vel=init_traj_entry.velocity_z, z_vel=init_traj_entry.velocity_z)
+                                    y_vel=init_traj_entry.velocity_y, z_vel=init_traj_entry.velocity_z)
 
     traj_P = __get_covariance_matrix_from_state(init_traj_entry)
     att_P = __get_covariance_matrix_from_state(init_att_entry)
-    new_est = runTrajUKF(moon_eph, sun_eph, cam_meas, traj_state, cam_dt, traj_P, CisLunarCameraParameters, None, dynamicsOnly=False) 
+    new_est = traj_ukf.runTrajUKF(moon_eph, sun_eph, cam_meas, traj_state, cam_dt, traj_P, camera_params, None, dynamicsOnly=False) 
 
     pos = new_est.new_state.get_position_data()
     vel = new_est.new_state.get_velocity_data()
@@ -324,10 +326,8 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
     ]
     # prepare data for attitude ukf
     actual_gyro_count = len(gyro_meas_entries)
-    print(actual_gyro_count)
 
     omegas = np.zeros((actual_gyro_count,3))
-    biases = np.zeros((actual_gyro_count,3))
     estimatedSatState = np.zeros((actual_gyro_count,3))
     moonPos = np.zeros((actual_gyro_count,3))
     sunPos = np.zeros((actual_gyro_count,3))
@@ -341,9 +341,6 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
         omegas[i][0] = gyro_entry.omegax
         omegas[i][1] = gyro_entry.omegay
         omegas[i][2] = gyro_entry.omegaz
-        biases[i][0] = init_att_entry.b1
-        biases[i][1] = init_att_entry.b2
-        biases[i][2] = init_att_entry.b3
         estimatedSatState[i][0] = tempSatState[0]
         estimatedSatState[i][1] = tempSatState[1]
         estimatedSatState[i][2] = tempSatState[2]
@@ -354,8 +351,10 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
         sunPos[i][1] = tempSunState[1]
         sunPos[i][2] = tempSunState[2]
         if i > 0:
-            timeline[i] = (gyro_entry.time_retrieved-gyro_meas_entries[i-1].time_retrieved).total_seconds() # num seconds elapsed since first gyro measurement
-    timeline[0] = sum(timeline)/(actual_gyro_count-1.)
+            timeline[i] = (gyro_entry.time_retrieved-gyro_meas_entries[i-1].time_retrieved).total_seconds() # num seconds elapsed since previous gyro measurement
+    
+    # Attitude ukf expects gyro sample rate. Since the rate isn't fixed, we pass in the average time elapsed between each measurement for the first measurement.
+    timeline[0] = sum(timeline)/(actual_gyro_count-1.) 
     gyroVars = (gyro_vars.gyro_sigma, gyro_vars.gyro_sample_rate, gyro_vars.get_Q_matrix(), gyro_vars.get_R_matrix())
     newAttOut = attitude.runAttitudeUKF(cam_dt, 
                                     gyroVars, 
@@ -363,7 +362,6 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
                                     att_state, 
                                     quat, 
                                     omegas, 
-                                    biases, 
                                     estimatedSatState, 
                                     moonPos, 
                                     sunPos, 
@@ -379,5 +377,6 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars) -> OPNAV_
             P=newAttOut.new_P.data, time=gyro_meas_entries[-1].time_retrieved) # new attitude state time set to last gyro measurement time
     ])
     session.bulk_save_objects(entries)
+    session.commit()
     # TODO: Check for any failures and return fail status
     return OPNAV_EXIT_STATUS.SUCCESS

@@ -44,7 +44,7 @@ def getGyroMeasurement(j, gyro_noise_sigma, ws, bs):
     """
     # omegax, omegay, omegaz = ws[0], ws[1], ws[2]
     # biasx, biasy, biasz = bs[0], bs[1], bs[2]
-    return ws[j].reshape(3,1) + bs[j].reshape(3,1) + np.random.randn(3,1)*gyro_noise_sigma
+    return (ws[j].data.reshape(3,1)) + (bs.reshape(3,1)) + np.random.randn(3,1)*gyro_noise_sigma
 
 def updateOmega(j, biasEst, gyro_sigma, ws, bs):
     return getGyroMeasurement(j, gyro_sigma, ws, bs) - biasEst
@@ -257,7 +257,7 @@ def resetSigmaSeed(xhatkp):
 
 def UKFSingle(cameradt:np.float, gyroVars:GyroVars, P0:np.ndarray, 
             x0:np.ndarray, q0:np.ndarray, omegas, 
-            biases, estimatedSatState, moonEph:np.ndarray, 
+            estimatedSatState, moonEph:np.ndarray, 
             sunEph:np.ndarray, timeline:List[np.float]) -> AttitudeEstimateOutput:
     """
     NOTE: Does not make any assumptions about gyroSampleCount
@@ -265,7 +265,6 @@ def UKFSingle(cameradt:np.float, gyroVars:GyroVars, P0:np.ndarray,
     let gyroSampleCount = 1/gyro_sample_rate
     [gyroVars]: (gyro_sigma, gyro_sample_rate, Q, R)
     [omegas]: (x, y, z) components of measured angular velocity (n x gyroSampleCount, 3) 
-    [biases]: (bx, by, bz) (Not sure how these are obtained) (n x gyroSampleCount, 3)
     [estimatedSatState]: trajectory UKF outputs from t = 0 to t = totalIntegrationTime (n x gyroSampleCount, 3)
     [moonEph]: moon position/vel from ephemeris table (n x gyroSampleCount, 3)
     [sunEph]: sun position/vel from ephemeris table (n x gyroSampleCount, 3)
@@ -297,7 +296,7 @@ def UKFSingle(cameradt:np.float, gyroVars:GyroVars, P0:np.ndarray,
     sigma_points = generateSigmas(xhatkp, Phatkp, Q)
     err_quats = makeErrorQuaternion(sigma_points)
     pert_quats = perturbQuaternionEstimate(err_quats, qhatkp)
-    prop_quats = propagateQuaternion(pert_quats, sigma_points, timeline, gyro_sigma, gyro_sample_rate, omegas, biases, cameradt)
+    prop_quats = propagateQuaternion(pert_quats, sigma_points, timeline, gyro_sigma, gyro_sample_rate, omegas, x0[3:], cameradt)
     qhatkp1m = prop_quats[0]
     prop_err = propagatedQuaternionError(prop_quats)
     prop_sigmas = recoverPropSigma(prop_err, sigma_points)
@@ -328,7 +327,7 @@ def UKFSingle(cameradt:np.float, gyroVars:GyroVars, P0:np.ndarray,
 
 def runAttitudeUKF(cameradt:np.float, gyroVars:GyroVars, P0:CovarianceMatrix, 
                 x0:AttitudeStateVector, quat:QuaternionVector, omegas:List[GyroMeasurementVector], 
-                biases, satState, moonEph:np.ndarray, 
+                satState, moonEph:np.ndarray, 
                 sunEph:np.ndarray, timeline:List[np.float], singleIteration=False) -> AttitudeEstimateOutput:
     """
     Runs the attitude UKF and produces attitude estimates in the form of:
@@ -345,7 +344,6 @@ def runAttitudeUKF(cameradt:np.float, gyroVars:GyroVars, P0:CovarianceMatrix,
     [x0]: (6,1) np array initial attitude State
     [quat]: (4x1) quaternion state (if this first iteration, this can be random as it is derived from [x0])
     [omegas]: (x, y, z) components of measured angular velocity (n x gyroSampleCount, 3) 
-    [biases]: (bx, by, bz) (Not sure how these are obtained) (n x gyroSampleCount, 3)
     [estimatedSatState]: trajectory UKF outputs from t = 0 to t = totalIntegrationTime (n x gyroSampleCount, 3)
     [moonEph]: moon position/vel from ephemeris table (n x gyroSampleCount, 3)
     [sunEph]: sun position/vel from ephemeris table (n x gyroSampleCount, 3)
@@ -364,8 +362,7 @@ def runAttitudeUKF(cameradt:np.float, gyroVars:GyroVars, P0:CovarianceMatrix,
     # assert P0.shape == (6,6)
     # assert x0.shape == (6,1)
     # assert quat.shape == (4,1)
-    print(f'-----------REAL-----------')
     quat.data = quat.data/np.linalg.norm(quat.data)
     # if singleIteration is False:
     #     return UKFMultiple(cameradt, gyroVars, P0, x0, q0, omegas, biases, satState, moonEph, sunEph, timeline)
-    return UKFSingle(cameradt, gyroVars, P0.data.reshape(6,6), x0.data.reshape(6,1), quat.data.reshape(4,1), omegas, biases, satState, moonEph, sunEph, timeline)
+    return UKFSingle(cameradt, gyroVars, P0.data.reshape(6,6), x0.data.reshape(6,1), quat.data.reshape(4,1), omegas, satState, moonEph, sunEph, timeline)

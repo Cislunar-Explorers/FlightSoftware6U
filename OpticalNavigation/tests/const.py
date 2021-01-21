@@ -1,30 +1,23 @@
+from OpticalNavigation.core.const import CameraParameters
 import os
 import numpy as np
 import pytest
 
-class MatlabTestCameraParameters:
-    # Camera constants
-    # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
-    hFov = 62.2
-    vFov = 48.8
-    hPix = 3280
-    vPix = 813
-    #Angular Separation Between Cameras (degrees)
-    dcam12 = 60
-    dcam13 = -60
-    dcam23 = -120
+# class MatlabTestCameraParameters:
+#     # Camera constants
+#     # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
+#     hFov = 62.2
+#     vFov = 48.8
+#     hPix = 3280
+#     vPix = 813
+#     #Angular Separation Between Cameras (degrees)
+#     dcam12 = 60
+#     dcam13 = -60
+#     dcam23 = -120
 
-class CesiumTestCameraParameters:
-    # Camera constants
-    # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
-    hFov = 62.2
-    vFov = 48.8
-    hPix = 640
-    vPix = 480
-    #Angular Separation Between Cameras (degrees)
-    dcam12 = -60 # Cam 2 looks down
-    dcam13 = 60 # Cam 3 looks up
-    dcam23 = 120
+MatlabTestCameraParameters = CameraParameters(62.2, 48.8, 3280, 813, 60, -60, -120)
+
+CesiumTestCameraParameters = CameraParameters(62.2, 48.8, 640, 480, -60, 60, 120) # Cam 2 looks down, Cam 3 looks up
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -57,10 +50,16 @@ TEST_6HOURS_moonEph = os.path.join(TEST_6HOURS, 'ephemeris', 'moon_eph.csv')
 TEST_6HOURS_sunEph = os.path.join(TEST_6HOURS, 'ephemeris', 'sun_eph.csv')
 TEST_6HOURS_traj = os.path.join(TEST_6HOURS, 'trajectory', 'trajectory.csv')
 
-POS_ERROR = 1000 # can be off by 1000 km
-VEL_ERROR = 1 # can be off by 1 km/s
+TEST_CISLUNAR = os.path.join(TEST_DATA_DIR, 'CislunarFullTraj_60secs')
+TEST_CISLUNAR_meas = os.path.join(TEST_CISLUNAR, 'measurements', 'meas.csv')
+TEST_CISLUNAR_moonEph = os.path.join(TEST_CISLUNAR, 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
+TEST_CISLUNAR_sunEph = os.path.join(TEST_CISLUNAR, 'ephemeris', '1min_stk_active_sampled_sun_eph.csv')
+TEST_CISLUNAR_traj = os.path.join(TEST_CISLUNAR, 'trajectory', '1min_stk_active_sampled_traj.csv')
 
-POS_ERROR_6HOURS = 1000
+POS_ERROR = 1000 # position estimate can differ by 1000 km
+VEL_ERROR = 1 # velocity estimate can differ by 1 km/s
+
+POS_ERROR_6HOURS = 2500
 VEL_ERROR_6HOURS = 5
 
 EARTH_CENTER_ERROR = 20

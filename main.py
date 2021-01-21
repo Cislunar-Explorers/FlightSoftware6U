@@ -91,10 +91,11 @@ class MainSatelliteThread(Thread):
 
         # initialize the cameras, select a camera
         logger.debug("Creating camera mux...")
-        mux = camera.CameraMux()
+        self.mux = camera.CameraMux()
+        self.camera = camera
         logger.debug("Selecting a camera...")
         # select camera before reboot so that we will detect cam on reboot
-        mux.selectCamera(random.choice([1, 2, 3]))
+        self.mux.selectCamera(random.choice([1, 2, 3]))
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

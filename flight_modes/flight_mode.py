@@ -367,6 +367,10 @@ class NormalMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+        cam = self.parent.camera
+        logger.info("taking pic")
+        cam.rawObservation("restart_cam_test.mjpeg")
+
     def update_state(self):
         super_fm = super().update_state()
 

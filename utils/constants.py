@@ -54,8 +54,16 @@ STATE = "state"
 INTERVAL = "interval"
 DELAY = "delay"
 
+NUM_BLOCKS = "num_blocks"
+
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
+
+# Random data generation constants:
+a = 1664525
+b = 1013904223
+M = 2 ** 32
+team_identifier = 0xEB902D2D  # Team 2
 
 # TODO: validate these values:
 SPLIT_BURNWIRE_DURATION = 1  # second

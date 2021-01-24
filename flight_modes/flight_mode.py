@@ -64,11 +64,13 @@ class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
     command_codecs = {}
     sensordata_codecs = {}
+    downlink_codecs = {}
 
     # Map argument names to (packer,unpacker) tuples
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
     command_arg_unpackers = {}
     sensordata_arg_unpackers = {}
+    downlink_arg_unpackers = {}
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
@@ -228,9 +230,18 @@ class TestMode(PauseBackgroundMode):
         pass
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
-                      TestCommandEnum.ADCTest.value: ([], 0)}
+                      TestCommandEnum.ADCTest.value: ([], 0),
+                      TestCommandEnum.CommsDriver.value:([],0)}
 
     command_arg_unpackers = {}
+
+    downlink_codecs = {TestCommandEnum.CommsDriver.value:(['gyro','mag','acc'],24)}
+
+    downlink_arg_unpackers = {
+        'gyro': (pack_double, unpack_double),
+        'mag': (pack_double, unpack_double),
+        'acc': (pack_double, unpack_double),
+        }
 
 
 class CommsMode(FlightMode):
@@ -327,6 +338,10 @@ class NormalMode(FlightMode):
         DELAY: (pack_unsigned_short, unpack_unsigned_short),
         NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short)
     }
+
+    downlink_codecs = {}
+
+    downlink_arg_unpackers = {}
 
     def __init__(self, parent):
         super().__init__(parent)

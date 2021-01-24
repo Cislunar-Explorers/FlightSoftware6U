@@ -6,6 +6,7 @@ from datetime import datetime
 from queue import Queue
 import signal
 from utils.log import get_log
+from communications.satellite_radio import Radio
 
 from dotenv import load_dotenv
 
@@ -33,6 +34,7 @@ from flight_modes.restart_reboot import (
 from flight_modes.flight_mode_factory import build_flight_mode
 from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
+from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 
 
@@ -42,11 +44,14 @@ FOR_FLIGHT = None
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
+        
+        self.radio = Radio()
         self.command_queue = Queue()
         self.commands_to_execute = []
         self.burn_queue = Queue()
         # self.init_comms()
         self.command_handler = CommandHandler()
+        self.downlink_handler = DownlinkHandler()
         self.command_definitions = CommandDefinitions(self)
         self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
@@ -147,7 +152,13 @@ class MainSatelliteThread(Thread):
                 sleep(5)  # TODO remove when flight modes execute real tasks
                 # self.poll_inputs()
                 # self.update_state()
-                self.read_command_queue_from_file()
+                newCommand = self.radio.receiveSignal()
+                if newCommand is not None:
+                    try:
+                        self.command_queue.put(self.command_handler.unpack_command(newCommand))
+                    except:
+                        print('Invalid Command Received')
+                #self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:

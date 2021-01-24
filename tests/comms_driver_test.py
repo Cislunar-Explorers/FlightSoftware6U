@@ -32,8 +32,7 @@ while True:
     time.sleep(1)
 time.sleep(5)
 #Bogus command testing
-ch.register_new_command(0,3,alex=4)
-bogusCommand = ch.pack_command(0,3,alex=4)
+bogusCommand = b'\x09\x14\x03\x00'
 groundstation.transmit(bogusCommand)
 print('Bogus Command Transmitted')
 

@@ -66,7 +66,7 @@ class MainSatelliteThread(Thread):
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
-        opnav.start()
+        #opnav.start()
         self.constants = utils.constants
 
     def init_comms(self):

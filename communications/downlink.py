@@ -160,8 +160,3 @@ class DownlinkHandler:
 
         except:
             raise SerializationException()
-
-dh = DownlinkHandler()
-buf = dh.pack_downlink(8,7,gyro=4,mag=5,acc=7)
-data= dh.unpack_downlink(buf)[2]
-print('Gyro: ' + str(data['gyro']) + ', Mag: ' + str(data['mag']) + ', Acc: ' + str(data['acc']))

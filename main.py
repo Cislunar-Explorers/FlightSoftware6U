@@ -155,6 +155,7 @@ class MainSatelliteThread(Thread):
                 newCommand = self.radio.receiveSignal()
                 if newCommand is not None:
                     print('Received')
+                    print(newCommand)
                     try:
                         self.command_queue.put(self.command_handler.unpack_command(newCommand))
                     except:

@@ -1,6 +1,7 @@
 from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
+import time
 
 #Setup
 ch = CommandHandler()
@@ -26,6 +27,9 @@ while True:
         data= dh.unpack_downlink(downlink)[2]
         print('Gyro: ' + str(data['gyro']) + ', Mag: ' + str(data['mag']) + ', Acc: ' + str(data['acc']))
         break
+
+    cycle+=1
+    time.sleep(1)
 
 #Bogus command testing
 ch.register_new_command(0,3,alex=4)

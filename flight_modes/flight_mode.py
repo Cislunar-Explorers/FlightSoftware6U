@@ -41,7 +41,9 @@ from utils.struct import (
     unpack_unsigned_short,
     unpack_double,
     unpack_unsigned_int,
-    unpack_str
+    unpack_str,
+    pack_float,
+    unpack_float
 )
 
 from communications.command_definitions import CommandDefinitions
@@ -235,12 +237,12 @@ class TestMode(PauseBackgroundMode):
 
     command_arg_unpackers = {}
 
-    downlink_codecs = {TestCommandEnum.CommsDriver.value:(['gyro','mag','acc'],24)}
+    downlink_codecs = {TestCommandEnum.CommsDriver.value:(['gyro1','gyro2','gyro3'],12)}
 
     downlink_arg_unpackers = {
-        'gyro': (pack_double, unpack_double),
-        'mag': (pack_double, unpack_double),
-        'acc': (pack_double, unpack_double),
+        'gyro1': (pack_float, unpack_float),
+        'gyro2': (pack_float, unpack_float),
+        'gyro3': (pack_float, unpack_float),
         }
 
 

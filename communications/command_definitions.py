@@ -344,10 +344,8 @@ class CommandDefinitions:
     def comms_driver_test(self):
 
         gyro = self.parent.gyro.get_gyro()
-        mag = self.parent.gyro.get_mag()
-        acc = self.parent.gyro.get_acceleration()
 
         fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value, 
-        TestCommandEnum.CommsDriver.value, gyro = gyro, mag = mag, acc = acc)
+        TestCommandEnum.CommsDriver.value, gyro1 = gyro[0], gyro2 = gyro[1], gyro3=gyro[2])
 
         self.parent.radio.transmit(fx_data)

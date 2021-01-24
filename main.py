@@ -159,6 +159,8 @@ class MainSatelliteThread(Thread):
                         self.command_queue.put(self.command_handler.unpack_command(newCommand))
                     except:
                         print('Invalid Command Received')
+                else:
+                    print('Not Received')
                 #self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

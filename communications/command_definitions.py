@@ -348,4 +348,5 @@ class CommandDefinitions:
         fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value, 
         TestCommandEnum.CommsDriver.value, gyro1 = gyro[0], gyro2 = gyro[1], gyro3=gyro[2])
 
+        time.sleep(5)
         self.parent.radio.transmit(fx_data)

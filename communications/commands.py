@@ -160,3 +160,8 @@ class CommandHandler:
 
         except:
             raise SerializationException()
+
+ch = CommandHandler()
+gmaCommand = ch.pack_command(8,7)
+print(gmaCommand)
+print(ch.unpack_command(gmaCommand))

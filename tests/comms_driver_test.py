@@ -35,18 +35,3 @@ time.sleep(5)
 bogusCommand = b'\x09\x14\x03\x00'
 groundstation.transmit(bogusCommand)
 print('Bogus Command Transmitted')
-
-#Listen for response
-print('Receiving...')
-cycle = 1
-
-while True:
-    print('Receiving Cycle: ' + str(cycle))
-    
-    downlink = groundstation.receiveSignal()
-    
-    if downlink is not None:
-        print('Downlink Received:')
-        data= dh.unpack_downlink(downlink)[2]
-        print(data)
-        break

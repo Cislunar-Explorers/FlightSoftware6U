@@ -155,6 +155,7 @@ class MainSatelliteThread(Thread):
                 newCommand = self.radio.receiveSignal()
                 if newCommand is not None:
                     try:
+                        self.command_handler.unpack_command(newCommand) #Only for error checking
                         self.command_queue.put(bytes(newCommand))
                     except:
                         print('Invalid Command Received')

@@ -37,7 +37,7 @@ def pack_command_bytes(mode: int, command_id: int, data: bytes):
 def unpack_command_bytes(data: bytes):
     mode = data[MODE_OFFSET]
     command_id = data[ID_OFFSET]
-    print(data)
+    print('Data: ' +  str(data))
     data_len = unpack_unsigned_short(data, DATA_LEN_OFFSET)[1]
     if data_len + DATA_OFFSET != len(data):
         raise CommandUnpackingException(

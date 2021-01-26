@@ -107,7 +107,7 @@ class CommandHandler:
             func_args, buffer_size = self.command_dict[mode][command_id]
         except:
             raise CommandUnpackingException(
-                f'Unknown command received. Mode: {mode}, Command ID: {command_id}'
+                'Unknown command received.'
             )
         if (buffer_size + DATA_OFFSET) != len(data):
             raise CommandUnpackingException(
@@ -161,8 +161,3 @@ class CommandHandler:
 
         except:
             raise SerializationException()
-
-ch = CommandHandler()
-gmaCommand = ch.pack_command(8,7)
-print(gmaCommand)
-print(ch.unpack_command(gmaCommand))

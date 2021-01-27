@@ -21,6 +21,7 @@ class BootUpMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def run_mode(self):
         logger.info("Boot up beginning...")
         logger.info("Time when sleep starts: " + str(datetime.now()))
         time.sleep(BOOTUP_SEPARATION_DELAY)
@@ -37,7 +38,6 @@ class BootUpMode(FlightMode):
         logger.info("Beginning burn wire...")
         parent.gom.burnwire1(5)
 
-    def run_mode(self):
         logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
 
@@ -52,8 +52,7 @@ class BootUpMode(FlightMode):
 
     def update_state(self) -> int:
         logger.info("updating state... doesnt do nothin")
-        # os.system("sudo reboot")
-        return 0  # restart mode
+        return 0
 
 
 class RestartMode(FlightMode):
@@ -97,5 +96,5 @@ class RestartMode(FlightMode):
 
     def update_state(self) -> int:
         logger.info("updating state... will now transfer to normal")
-        return 2  # restart mode
+        return 2
 

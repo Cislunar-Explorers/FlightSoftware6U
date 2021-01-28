@@ -1,4 +1,5 @@
-import time
+from time import time, sleep
+from os import popen
 import psutil
 from uptime import uptime
 from telemetry.sensor import SynchronousSensor
@@ -52,7 +53,7 @@ class GyroSensor(SynchronousSensor):
         data = [] * n_data
         for i in range(n_data):
             data[i] = self.parent.gyro.get_gyro()
-            time.sleep(1.0 / freq)
+            sleep(1.0 / freq)
 
         data = np.asarray(data)
 
@@ -103,7 +104,7 @@ class PiSensor(SynchronousSensor):
         self.disk = int(psutil.disk_usage("/").percent)
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
-        self.tmp = 0  # TODO
+        self.tmp = float(popen("vcgencmd measure_temp").readline().strip()[5:-2])
 
     def all(self):
         return (self.cpu,
@@ -161,7 +162,7 @@ class Telemetry(SynchronousSensor):
         """Makes sure that the values returned by the sensors are reasonable"""
 
         # if data is over an hour old, poll new data
-        if (time.time() - self.poll_time) > 3600:
+        if (time() - self.poll_time) > 3600:
             self.poll()
 
         if any(i > self.parent.constants.MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
@@ -185,7 +186,7 @@ class Telemetry(SynchronousSensor):
             raise PiSensorError
 
     def standard_packet(self):
-        if (time.time() - self.poll_time) > 60 * 60:  # if the latest data is over an hour old, poll new data
+        if (time() - self.poll_time) > 60 * 60:  # if the latest data is over an hour old, poll new data
             self.poll()
 
         return (self.rtc.rtc_time,

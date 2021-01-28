@@ -6,6 +6,7 @@ from telemetry.sensor import SynchronousSensor
 import numpy as np
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
+from utils.db import GyroModel
 
 
 def moving_average(x, w):
@@ -65,6 +66,17 @@ class GyroSensor(SynchronousSensor):
         smoothed[2] = moving_average(data.T[2], samples)
 
         return smoothed
+
+    def write(self):
+        gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
+        gyro_model = GyroModel.from_tuple(gyro_tuple)
+
+        try:
+            session = self.parent.create_session()
+            session.add(gyro_model)
+            session.commit()
+        finally:
+            session.close()
 
 
 class PressureSensor(SynchronousSensor):

@@ -128,6 +128,53 @@ class RebootsModel(SQLAlchemyTableBase):
         return f"<RebootsModel(is boot up?={self.is_bootup}, "f"reboot_at={str(self.reboot_at)})>"
 
 
+class GyroModel(SQLAlchemyTableBase):
+    __tablename__ = "9DoF"
+
+    id = Column(Integer, primary_key=True)
+    time_polled = Column(DateTime)
+    gyr_x = Column(Float)
+    gyr_y = Column(Float)
+    gyr_z = Column(Float)
+    acc_x = Column(Float)
+    acc_y = Column(Float)
+    acc_z = Column(Float)
+    mag_x = Column(Float)
+    mag_y = Column(Float)
+    mag_z = Column(Float)
+    temperature = Column(Float)
+
+    @staticmethod
+    def from_tuple(gyro_tuple: tuple):
+        gyro_data, acc_data, mag_data, temperature, time = gyro_tuple
+        gx, gy, gz = gyro_data
+        ax, ay, az = acc_data
+        bx, by, bz = mag_data
+        return GyroModel(
+            time_polled=time,
+            gyr_x=gx,
+            gyr_y=gy,
+            gyr_z=gz,
+            acc_x=ax,
+            acc_y=ay,
+            acc_z=az,
+            mag_x=bx,
+            mag_y=by,
+            mag_z=bz,
+            temperature=temperature
+        )
+
+    def __repr__(self):
+        return (
+            f"<GyroModel(Name={self.name}"
+            f"gyro=({self.gyr_x}, {self.gyr_y}, {self.gyr_z}),"
+            f"acc =({self.acc_x}, {self.acc_y}, {self.acc_z}), "
+            f"mag =({self.mag_x}, {self.mag_y}, {self.mag_z}),"
+            f"temp=({self.temperature})"
+            f"time=({self.time_polled}))>"
+        )
+
+
 def create_sensor_tables(engine):
     SQLAlchemyTableBase.metadata.create_all(engine)
     create_session.configure(bind=engine)

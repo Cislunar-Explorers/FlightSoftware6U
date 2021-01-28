@@ -1,7 +1,6 @@
 import os
 import sys
 from threading import Thread
-from time import sleep
 from datetime import datetime
 from queue import Queue
 import signal
@@ -45,6 +44,7 @@ logger = get_log()
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
+        logger.info("Initializing...")
         self.command_queue = Queue()
         self.communications_queue = Queue()
         self.FMQueue = Queue()

@@ -266,6 +266,28 @@ class CommsMode(FlightMode):
         raise NotImplementedError
 
 
+class OpNavMode(FlightMode):
+    """dummy FM for now"""
+
+    def __init__(self, parent):
+        super().__init__(self, parent)
+
+    def run_mode(self):
+        from core.opnav import start
+        start()
+
+    def update_state(self) -> int:
+        super_fm = super().update_state()
+        if super_fm != 0:
+            return super_fm
+
+        # check if opnav db has been updated, then set self.task_completed true
+        if self.task_completed:
+            return FMEnum.Normal.value
+
+        return 0
+
+
 class SensorMode(FlightMode):
     flight_mode_id = FMEnum.SensorMode.value
 
@@ -274,7 +296,7 @@ class SensorMode(FlightMode):
         raise NotImplementedError
 
     def update_state(self):
-        pass  # intentional: we don't want to update FM when testing sensors
+        return 0  # intentional: we don't want to update FM when testing sensors
 
 
 class LowBatterySafetyMode(FlightMode):

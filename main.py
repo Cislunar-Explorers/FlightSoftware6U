@@ -9,8 +9,6 @@ import random
 from utils.log import get_log
 import OpticalNavigation.core.camera as camera
 
-logger = get_log()
-
 from dotenv import load_dotenv
 
 from utils.constants import (
@@ -35,13 +33,13 @@ from flight_modes.restart_reboot import (
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
-from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 
-
 FOR_FLIGHT = None
+
+logger = get_log()
 
 
 class MainSatelliteThread(Thread):
@@ -55,7 +53,7 @@ class MainSatelliteThread(Thread):
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.command_definitions = CommandDefinitions(self)
-        self.init_sensors()
+        self._init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
@@ -71,7 +69,6 @@ class MainSatelliteThread(Thread):
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
-        opnav.start()
         self.constants = utils.constants
 
     def init_comms(self):
@@ -82,7 +79,7 @@ class MainSatelliteThread(Thread):
 
     # TODO
 
-    def init_sensors(self):
+    def _init_sensors(self):
         self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC(self.gyro)

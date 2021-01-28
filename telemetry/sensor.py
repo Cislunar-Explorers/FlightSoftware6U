@@ -14,7 +14,7 @@ class SynchronousSensor:
     # Initialize sensor
     def __init__(self, parent):
         self.parent = parent
-        self.poll_time = -1
+        self.poll_time = -1.0
 
     # poll should poll the sensor and update all of the sensors fields
     def poll(self):
@@ -31,7 +31,3 @@ class AsynchronousSensor(Thread):
 
     def run(self):
         pass
-
-
-class SensorError(Exception):
-    pass

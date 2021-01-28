@@ -1,9 +1,10 @@
 import time
 import psutil
 from uptime import uptime
-from telemetry.sensor import SynchronousSensor, SensorError
+from telemetry.sensor import SynchronousSensor
 import numpy as np
 from drivers.power.power_structs import eps_hk_t, hkparam_t
+from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
 
 
 def moving_average(x, w):
@@ -27,10 +28,6 @@ class GomSensor(SynchronousSensor):
         self.percent = (battery_voltage - self.parent.constants.GOM_VOLTAGE_MIN) / \
                        (self.parent.constants.GOM_VOLTAGE_MAX - self.parent.constants.GOM_VOLTAGE_MIN)
         self.is_electrolyzing = bool(self.hk.output[self.parent.constants.GomOutputs.electrolyzer.value])
-
-
-class GomSensorError(SensorError):
-    pass
 
 
 class GyroSensor(SynchronousSensor):
@@ -69,10 +66,6 @@ class GyroSensor(SynchronousSensor):
         return smoothed
 
 
-class GyroError(SensorError):
-    pass
-
-
 class PressureSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
@@ -81,10 +74,6 @@ class PressureSensor(SynchronousSensor):
     def poll(self):
         super().poll()
         self.pressure = self.parent.adc.read_pressure()
-
-
-class PressureError(SensorError):
-    pass
 
 
 class ThermocoupleSensor(SynchronousSensor):
@@ -97,16 +86,12 @@ class ThermocoupleSensor(SynchronousSensor):
         self.tmp = self.parent.adc.read_temperature()
 
 
-class ThermocoupleError(SensorError):
-    pass
-
-
 class PiSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.cpu = int()
-        self.ram = int()
-        self.disk = int()
+        self.cpu = int()  # can be packed as short
+        self.ram = int()  # can be packed as short
+        self.disk = int()  # can be packed as short
         self.boot_time = float()
         self.up_time = int()
         self.tmp = float()
@@ -128,10 +113,6 @@ class PiSensor(SynchronousSensor):
                 self.up_time)
 
 
-class PiSensorError(SensorError):
-    pass
-
-
 class RtcSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
@@ -139,14 +120,6 @@ class RtcSensor(SynchronousSensor):
 
     def poll(self):
         raise NotImplementedError
-
-
-class RtcError(SensorError):
-    pass
-
-
-class NotPollableError(SensorError):
-    pass
 
 
 class OpNavSensor(SynchronousSensor):
@@ -212,7 +185,7 @@ class Telemetry(SynchronousSensor):
             raise PiSensorError
 
     def standard_packet(self):
-        if (time.time() - self.poll_time) > 60 * 60:
+        if (time.time() - self.poll_time) > 60 * 60:  # if the latest data is over an hour old, poll new data
             self.poll()
 
         return (self.rtc.rtc_time,

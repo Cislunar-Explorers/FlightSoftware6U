@@ -19,3 +19,32 @@ class CommandPackingException(CommandException):
 
 class CommandUnpackingException(CommandException):
     """Raise when an exception occurs while unpacking a command"""
+
+
+class SensorError(CislunarException):
+    """Raise when exception occurs with a malfunctioning sensor"""
+    pass
+
+
+class GomSensorError(SensorError):
+    pass
+
+
+class GyroError(SensorError):
+    pass
+
+
+class PressureError(SensorError):
+    pass
+
+
+class ThermocoupleError(SensorError):
+    pass
+
+
+class PiSensorError(SensorError):
+    pass
+
+
+class RtcError(SensorError):
+    pass

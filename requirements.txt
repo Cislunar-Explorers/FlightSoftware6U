@@ -9,6 +9,7 @@ pytest
 tqdm
 sqlalchemy
 Adafruit-Blinka
+psutil
 # OpNav end
 
 

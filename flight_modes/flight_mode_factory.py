@@ -6,10 +6,10 @@ from flight_modes.flight_mode import (
     SensorMode,
     TestMode,
     CommsMode,
+    OpNavMode
 )
 
 from flight_modes.restart_reboot import RestartMode, BootUpMode
-from .opnav_flightmode import OpNavMode
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException
 

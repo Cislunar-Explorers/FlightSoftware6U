@@ -2,12 +2,13 @@ import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
 from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY
-import OpticalNavigation.core.camera as camera
+# import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
 import random
 from utils.log import get_log
 from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
+import psutil
 
 logger = get_log()
 
@@ -20,41 +21,38 @@ class BootUpMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-        logger.debug("Boot up beginning...")
-        logger.debug("Time when sleep starts: " + str(datetime.now()))
+    def run_mode(self):
+        logger.info("Boot up beginning...")
+        logger.info("Time when sleep starts: " + str(datetime.now()))
         time.sleep(BOOTUP_SEPARATION_DELAY)
-        logger.debug("Time when sleep stops: " + str(datetime.now()))
+        logger.info("Time when sleep stops: " + str(datetime.now()))
 
-        logger.debug("Creating DB session...")
+        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
-        logger.debug("Logging info to DB...")
+        logger.info("Logging info to DB...")
         self.log()
 
-        # TODO deploy antennae
-        # logger.info("Beginning burn wire...")
-        # parent.gom.burnwire1(5)
+        # deploy antennae
+        logger.info("Beginning burn wire...")
+        parent.gom.burnwire1(5)
 
-    def run_mode(self):
-        # initialize the cameras, select a camera
-        # TODO is this done right?
-        logger.debug("Creating camera mux...")
-        mux = camera.CameraMux()
-        logger.debug("Selecting a camera...")
-        # select camera before reboot so that we will detect cam on reboot
-        mux.selectCamera(random.choice([1, 2, 3]))
-        logger.debug("Transferring to RestartMode")
+        logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
 
     def log(self):
         is_bootup = True
-        reboot_at = datetime.now()
+        reboot_at = datetime.fromtimestamp(psutil.boot_time())
         new_bootup = RebootsModel(is_bootup=is_bootup,
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.debug("Log to DB complete...")
+        logger.info("Log to DB complete...")
+
+    def update_state(self) -> int:
+        logger.info("updating state... doesnt do nothin")
+        return 0
 
 
 class RestartMode(FlightMode):
@@ -65,8 +63,8 @@ class RestartMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-        logger.debug("Restarting...")
-        logger.debug("Creating DB session...")
+        logger.info("Restarting...")
+        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
@@ -76,21 +74,17 @@ class RestartMode(FlightMode):
 
     def log(self):
         is_bootup = False
-        reboot_at = datetime.now()
+        reboot_at = datetime.fromtimestamp(psutil.boot_time())
         new_bootup = RebootsModel(is_bootup=is_bootup,
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.debug("Logging to DB complete...")
+        logger.info("Logging to DB complete...")
 
     # TODO implement error handling for if camera not detected
     def run_mode(self):
-        # initialize the cameras, select a random camera
-        logger.debug("Selecting a camera")
-        mux = camera.CameraMux()
-        mux.selectCamera(random.choice([1, 2, 3]))
-        cam_object = camera.Camera()
-        # cam_object.initialize()
+        logger.info("run_mode running (nothing happens)")
+        pass
 
         # logger.debug("Taking raw observation to test")
         # cam_object.rawObservation("restart_cam_test.mjpeg")
@@ -99,4 +93,8 @@ class RestartMode(FlightMode):
         boots = self.session.query(RebootsModel).all()
         for boot in boots:
             print(boot)"""
+
+    def update_state(self) -> int:
+        logger.info("updating state... will now transfer to normal")
+        return 2
 

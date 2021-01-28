@@ -6,7 +6,8 @@ import os
 # Create method to set constants based on purpose of run
 
 # Delay to wait on BootUp
-BOOTUP_SEPARATION_DELAY = 30.0
+# TODO change back to 30.0
+BOOTUP_SEPARATION_DELAY = 5.0
 
 # TODO determine correct values threshold values
 ENTER_LOW_BATTERY_MODE_THRESHOLD = 0.3
@@ -17,7 +18,8 @@ LOW_BATT_MODE_SLEEP = 10  # seconds
 ENTER_ECLIPSE_MODE_THRESHOLD = 0.5
 EXIT_ECLIPSE_MODE_THRESHOLD = 0.75
 
-ENTER_ECLIPSE_MODE_CURRENT = 50  # mA
+# TODO change back to 50
+ENTER_ECLIPSE_MODE_CURRENT = -50  # mA
 
 IGNORE_LOW_BATTERY = False
 

@@ -5,7 +5,11 @@ from time import sleep
 from datetime import datetime
 from queue import Queue
 import signal
+import random
 from utils.log import get_log
+import OpticalNavigation.core.camera as camera
+
+logger = get_log()
 
 from dotenv import load_dotenv
 
@@ -85,6 +89,14 @@ class MainSatelliteThread(Thread):
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
 
+        # initialize the cameras, select a camera
+        logger.info("Creating camera mux...")
+        self.mux = camera.CameraMux()
+        self.camera = camera.Camera()
+        logger.info("Selecting a camera...")
+        # select camera before reboot so that we will detect cam on reboot
+        self.mux.selectCamera(random.choice([1, 2, 3]))
+
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)
@@ -148,9 +160,10 @@ class MainSatelliteThread(Thread):
     def run(self):
         try:
             while True:
-                sleep(5)  # TODO remove when flight modes execute real tasks
+                # sleep(5)  # TODO remove when flight modes execute real tasks
+                logger.info("flight mode: " + repr(self.flight_mode))
                 self.poll_inputs()
-                # self.update_state()
+                self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

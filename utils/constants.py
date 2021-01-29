@@ -78,6 +78,8 @@ GLOWPLUG_DURATION = 1  # SECOND
 
 MAX_GYRO_RATE = 250  # degrees/sec
 
+NO_FM_CHANGE = -1
+
 
 @unique
 class ConstantsEnum(IntEnum):

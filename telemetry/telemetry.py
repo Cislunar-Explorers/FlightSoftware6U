@@ -60,7 +60,7 @@ class GyroSensor(SynchronousSensor):
 
         smoothed = np.empty(3)
 
-        # smooth data using convolution
+        # smooth data using convolution 
         smoothed[0] = moving_average(data.T[0], samples)
         smoothed[1] = moving_average(data.T[1], samples)
         smoothed[2] = moving_average(data.T[2], samples)
@@ -107,7 +107,8 @@ class PiSensor(SynchronousSensor):
         self.disk = int()  # can be packed as short
         self.boot_time = float()
         self.up_time = int()
-        self.tmp = float()
+        self.tmp = float()  # can be packed as a short
+        self.all = tuple()
 
     def poll(self):
         super().poll()
@@ -117,13 +118,13 @@ class PiSensor(SynchronousSensor):
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
         self.tmp = float(popen("vcgencmd measure_temp").readline().strip()[5:-2])
-
-    def all(self):
-        return (self.cpu,
-                self.ram,
-                self.disk,
-                self.boot_time,
-                self.up_time)
+        self.all = (self.cpu,
+                    self.ram,
+                    self.disk,
+                    self.boot_time,
+                    self.up_time,
+                    self.tmp,
+                    self.poll_time)
 
 
 class RtcSensor(SynchronousSensor):

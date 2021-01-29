@@ -38,8 +38,16 @@ class PressureModel(SQLAlchemyTableBase):
     pressure = Column(Float)
 
     def __repr__(self):
-        return f"<PressureModel(pressure={self.pressure}, "
-        f"taken_at={str(self.measurement_taken)})>"
+        return (f"<PressureModel(pressure={self.pressure}, "
+                f"taken_at={str(self.measurement_taken)})>")
+
+
+class ThermocoupleModel(SQLAlchemyTableBase):
+    __tablename__ = "thermocouple"
+
+    id = Column(Integer, primary_key=True)
+    measurement_taken = Column(DateTime)
+    pressure = Column(Float)
 
 
 class RTCModel(SQLAlchemyTableBase):
@@ -166,12 +174,54 @@ class GyroModel(SQLAlchemyTableBase):
 
     def __repr__(self):
         return (
-            f"<GyroModel(Name={self.name}"
-            f"gyro=({self.gyr_x}, {self.gyr_y}, {self.gyr_z}),"
-            f"acc =({self.acc_x}, {self.acc_y}, {self.acc_z}), "
-            f"mag =({self.mag_x}, {self.mag_y}, {self.mag_z}),"
-            f"temp=({self.temperature})"
-            f"time=({self.time_polled}))>"
+            f"<GyroModel("
+            f"gyr=({self.gyr_x}, {self.gyr_y}, {self.gyr_z}),"
+            f"acc=({self.acc_x}, {self.acc_y}, {self.acc_z}), "
+            f"mag=({self.mag_x}, {self.mag_y}, {self.mag_z}),"
+            f"temp={self.temperature}"
+            f"time={self.time_polled})>"
+        )
+
+
+class RPiModel(SQLAlchemyTableBase):
+    __tablename__ = "RPi"
+
+    id = Column(Integer, primary_key=True)
+    time_polled = Column(DateTime)
+    cpu = Column(Integer)
+    ram = Column(Integer)
+    dsk = Column(Integer)
+    tmp = Column(Integer)
+    boot = Column(Float)
+    uptime = Column(Float)
+
+    @staticmethod
+    def from_tuple(rpi_tuple: tuple):
+        cpu, ram, dsk, boot_time, uptime, temp, poll_time = rpi_tuple
+        temp = int(temp * 10)
+        # we save 2 bytes of downlink by converting the rpi temperature to an int (which is then packed as a short
+        # during transmission), but we don't lose any accuracy. On the GS we will need to divide the temperature by 10
+
+        return RPiModel(
+            time_polled=poll_time,
+            cpu=cpu,
+            ram=ram,
+            dsk=dsk,
+            boot=boot_time,
+            uptime=uptime,
+            tmp=temp
+        )
+
+    def __repr__(self):
+        return (
+            f"<RPiModel("
+            f"cpu={self.cpu}, "
+            f"ram={self.ram}, "
+            f"dsk={self.dsk}, "
+            f"temp={self.tmp}, "
+            f"boot time={self.boot_time}, "
+            f"uptime={self.uptime}, "
+            f"poll time={self.time_polled})>"
         )
 
 

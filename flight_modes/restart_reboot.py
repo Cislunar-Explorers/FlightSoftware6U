@@ -36,7 +36,7 @@ class BootUpMode(FlightMode):
 
         # deploy antennae
         logger.info("Beginning burn wire...")
-        parent.gom.burnwire1(5)
+        self.parent.gom.burnwire1(5)
 
         logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")

@@ -24,7 +24,8 @@ from utils.constants import (  # noqa F401
     ELEVATION,
     STATE,
     INTERVAL,
-    DELAY
+    DELAY,
+    NO_FM_CHANGE
 )
 
 from utils.log import get_log
@@ -91,17 +92,18 @@ class FlightMode:
         batt_percent = self.parent.tlm.gom.percent
         if (batt_percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
                 and not self.parent.constants.IGNORE_LOW_BATTERY:
-            return self.parent.constants.FMEnum.LowBatterySafety.value
+            return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
         if sum(self.parent.tlm.gom.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
                 and batt_percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not self.parent.constants.IGNORE_LOW_BATTERY:
-            return self.parent.constants.FMEnum.LowBatterySafety.value
+            return FMEnum.LowBatterySafety.value
 
-        return 0  # returns 0 if the logic here does not make any FM changes
+        return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
         # everything in update_state below this comment should be implemented in their respective flight mode
+        # The logic defined below isn't necessarily incorrect - it's just in an outdated format
 
         # Burn command queue logic
         # TODO implment need_to_burn function in adc driver
@@ -268,6 +270,7 @@ class CommsMode(FlightMode):
 
 class OpNavMode(FlightMode):
     """dummy FM for now"""
+    flight_mode_id = FMEnum.OpNav.value
 
     def __init__(self, parent):
         super().__init__(self, parent)
@@ -278,14 +281,14 @@ class OpNavMode(FlightMode):
 
     def update_state(self) -> int:
         super_fm = super().update_state()
-        if super_fm != 0:
+        if super_fm != NO_FM_CHANGE:
             return super_fm
 
         # check if opnav db has been updated, then set self.task_completed true
         if self.task_completed:
             return FMEnum.Normal.value
 
-        return 0
+        return NO_FM_CHANGE
 
 
 class SensorMode(FlightMode):
@@ -397,7 +400,7 @@ class NormalMode(FlightMode):
     def update_state(self):
         super_fm = super().update_state()
 
-        if super_fm != 0:
+        if super_fm != NO_FM_CHANGE:
             return super_fm
 
         time_for_opnav = (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL
@@ -431,11 +434,11 @@ class NormalMode(FlightMode):
                 # If it's time for opnav to run BUT we are below ideal pressure: turn off electrolysis after a delay
                 self.parent.gom.set_electrolysis(False, delay=seconds_to_electrolyze)
 
-            return self.parent.constants.FMEnum.OpNav.value
+            return FMEnum.OpNav.value
 
         # if we have data to downlink, change to comms mode
         if not (self.parent.communications_queue.empty()):
-            return self.parent.constants.FMEnum.CommsMode.value
+            return FMEnum.CommsMode.value
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
@@ -454,7 +457,7 @@ class CommandMode(PauseBackgroundMode):
         super().__init__(parent)
 
     def update_state(self):
-        return 0  # intentional
+        return NO_FM_CHANGE  # intentional
 
     def run_mode(self):
         pass  # intentional

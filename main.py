@@ -14,10 +14,7 @@ from utils.constants import (
     LOG_DIR,
     CISLUNAR_BASE_DIR,
     DB_FILE,
-    LOW_CRACKING_PRESSURE,
-    HIGH_CRACKING_PRESSURE,
-    IDEAL_CRACKING_PRESSURE,
-    FMEnum
+    NO_FM_CHANGE
 )  # TODO: optimize this import
 
 import utils.constants
@@ -116,7 +113,7 @@ class MainSatelliteThread(Thread):
         fm_to_update_to = self.flight_mode.update_state()
 
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
-        if fm_to_update_to != 0 and fm_to_update_to != self.flight_mode.flight_mode_id:
+        if fm_to_update_to != NO_FM_CHANGE and fm_to_update_to != self.flight_mode.flight_mode_id:
             self.replace_flight_mode_by_id(self.flight_mode.update_state())
 
     def clear_command_queue(self):

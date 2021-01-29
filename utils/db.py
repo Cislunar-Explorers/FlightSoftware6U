@@ -225,6 +225,61 @@ class RPiModel(SQLAlchemyTableBase):
         )
 
 
+class GomModel(SQLAlchemyTableBase):
+    __tablename__ = "Gom"
+
+    id = Column(Integer, primary_key=True)
+    time_polled = Column(DateTime)
+    vboost1 = Column(Integer)
+    vboost2 = Column(Integer)
+    vboost3 = Column(Integer)
+    vbatt = Column(Integer)
+    curin1 = Column(Integer)
+    curin2 = Column(Integer)
+    curin3 = Column(Integer)
+    cursun = Column(Integer)
+    cursys = Column(Integer)
+    reserved1 = Column(Integer)
+    curout1 = Column(Integer)
+    curout2 = Column(Integer)
+    curout3 = Column(Integer)
+    curout4 = Column(Integer)
+    curout5 = Column(Integer)
+    curout6 = Column(Integer)
+    outputs = Column(Integer)
+    latchup1 = Column(Integer)
+    latchup2 = Column(Integer)
+    latchup3 = Column(Integer)
+    latchup4 = Column(Integer)
+    latchup5 = Column(Integer)
+    latchup6 = Column(Integer)
+    wdt_i2c_time_left = Column(Integer)
+    wdt_gnd_time_left = Column(Integer)
+    num_wdt_i2c = Column(Integer)
+    num_wdt_gnd = Column(Integer)
+    counter_boot = Column(Integer)
+    bootcause = Column(Integer)
+    battmode = Column(Integer)
+    temp1 = Column(Integer)
+    temp2 = Column(Integer)
+    temp3 = Column(Integer)
+    temp4 = Column(Integer)
+
+    @staticmethod
+    def from_struct(eps_hk, poll_time):
+        return GomModel(
+            time_polled=poll_time,
+            # TODO
+        )
+
+    def __repr__(self):
+        return (f""
+                f""
+                f""
+                f"")
+        # TODO
+
+
 def create_sensor_tables(engine):
     SQLAlchemyTableBase.metadata.create_all(engine)
     create_session.configure(bind=engine)

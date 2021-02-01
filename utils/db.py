@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import Float, DateTime, Boolean
+from drivers.power.power_structs import eps_hk_t
 
 
 create_session = sessionmaker()
@@ -227,7 +228,7 @@ class RPiModel(SQLAlchemyTableBase):
 
 class GomModel(SQLAlchemyTableBase):
     __tablename__ = "Gom"
-
+    # See drivers/power/power_structs.py line #115 for reference
     id = Column(Integer, primary_key=True)
     time_polled = Column(DateTime)
     vboost1 = Column(Integer)
@@ -255,8 +256,8 @@ class GomModel(SQLAlchemyTableBase):
     latchup6 = Column(Integer)
     wdt_i2c_time_left = Column(Integer)
     wdt_gnd_time_left = Column(Integer)
-    num_wdt_i2c = Column(Integer)
-    num_wdt_gnd = Column(Integer)
+    counter_wdt_i2c = Column(Integer)
+    counter_wdt_gnd = Column(Integer)
     counter_boot = Column(Integer)
     bootcause = Column(Integer)
     battmode = Column(Integer)
@@ -264,12 +265,49 @@ class GomModel(SQLAlchemyTableBase):
     temp2 = Column(Integer)
     temp3 = Column(Integer)
     temp4 = Column(Integer)
+    pptmode = Column(Integer)
+    reserved2 = Column(Integer)
 
     @staticmethod
-    def from_struct(eps_hk, poll_time):
+    def from_struct(eps_hk: eps_hk_t, poll_time):
         return GomModel(
             time_polled=poll_time,
-            # TODO
+            vboost1=eps_hk.vboost[0],
+            vboost2=eps_hk.vboost[1],
+            vboost3=eps_hk.vboost[2],
+            vbatt=eps_hk.vbatt,
+            curin1=eps_hk.curin[0],
+            curin2=eps_hk.curin[1],
+            curin3=eps_hk.curin[2],
+            cursun=eps_hk.cursun,
+            cursys=eps_hk.cursys,
+            reserved1=eps_hk.reserved1,
+            curout1=eps_hk.curout[0],
+            curout2=eps_hk.curout[1],
+            curout3=eps_hk.curout[2],
+            curout4=eps_hk.curout[3],
+            curout5=eps_hk.curout[4],
+            curout6=eps_hk.curout[5],
+            outputs=int(str(eps_hk.output).replace(',', '').replace(' ', '')[1:-1], 2),
+            latchup1=eps_hk.latchup[0],
+            latchup2=eps_hk.latchup[1],
+            latchup3=eps_hk.latchup[2],
+            latchup4=eps_hk.latchup[3],
+            latchup5=eps_hk.latchup[4],
+            latchup6=eps_hk.latchup[5],
+            wdt_i2c_time_left=eps_hk.wdt_i2c_time_left,
+            wdt_gnd_time_left=eps_hk.wdt_gnd_time_left,
+            counter_wdt_i2c=eps_hk.counter_wdt_i2c,
+            counter_wdt_gnd=eps_hk.counter_wdt_gnd,
+            counter_boot=eps_hk.counter_boot,
+            temp1=eps_hk.temp[0],
+            temp2=eps_hk.temp[1],
+            temp3=eps_hk.temp[2],
+            temp4=eps_hk.temp[3],
+            bootcause=eps_hk.bootcause,
+            battmode=eps_hk.battmode,
+            pptmode=eps_hk.pptmode,
+            reserved2=eps_hk.reserved2
         )
 
     def __repr__(self):

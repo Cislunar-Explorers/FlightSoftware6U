@@ -1,21 +1,27 @@
 import numpy as np
 import time
+from OpticalNavigation.core.camera import Camera, CameraMux
 
 def select_camera(id):
     """
     Selects camera for recording video
     [id]: id of camera
     """
-    time.sleep(3)
-    raise NotImplementedError("implement camera selection")
+    #time.sleep(3)
+    #raise NotImplementedError("implement camera selection")
+    mux = CameraMux()
+    mux.selectCamera(id)
 
-def record_video(exposure):
+def record_video(filename, exposure):
     """
     Records video from selected camera
     [exposure]: exposure level for camera
     """
-    time.sleep(3)
-    raise NotImplementedError("implement record_video")
+    #time.sleep(3)
+    #raise NotImplementedError("implement record_video")
+    cam = Camera()
+    filename_timestamp = cam.rawObservation(filename, shutterspeed = exposure)
+    return filename_timestamp
 
 def record_gyro(count):
     """
@@ -26,5 +32,6 @@ def record_gyro(count):
         Format: shape (count, 3) where each row: (omegax, omegay, omegaz)
         TODO: Obtain correct units for ang vel
     """
+    # TODO: coordinate with Toby on integrating gyro from telemetry file into this
     time.sleep(3)
     raise NotImplementedError("implement record_gyro")

@@ -142,34 +142,106 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     # 1. select camera
     # 2. record camera measurements
     # 3. record gyro measurements
-    select_camera(id=0)
-    record_video(exposure=0)
-    select_camera(id=1)
-    record_video(exposure=0)
-    select_camera(id=2)
-    record_video(exposure=0)
-    
-    frames0 = extract_frames(vid_dir=None)
-    frames1 = extract_frames(vid_dir=None)
-    frames2 = extract_frames(vid_dir=None)
-    frames = np.append(np.append(frames0, frames1, axis=0), frames2, axis=0)
-    for f in range(frames.shape[0]):
-        frames[f, ...] = rect_to_stereo_proj(rolling_shutter(frames[f, ...]))
-    circles_samples = np.zeros((frames.shape[0], 3, 4), dtype=np.float) # For each frame and body, record circle centers and sizes
-    for f in range(frames.shape[0]):
-        imageDetectionCircles = find(frames[f, ...])
-        earth_detection_array = imageDetectionCircles.get_earth_detection()
-        moon_detection_array = imageDetectionCircles.get_moon_detection()
-        sun_detection_array = imageDetectionCircles.get_sun_detection()
-        if earth_detection_array is not None:
-            circles_samples[f, 0, ...] = earth_detection_array
-        if moon_detection_array is not None:
-            circles_samples[f, 1, ...] = moon_detection_array
-        if sun_detection_array is not None:
-            circles_samples[f, 2, ...] = sun_detection_array
+    recordings = []
+    for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
+        select_camera(id = i)
+        filename_timestamp1 = record_video(f"cam{i}_expLow.mjpeg", exposure=0)
+        filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", exposure=1)
+        recordings.append(filename_timestamp1)
+        recordings.append(filename_timestamp2)
+    #select_camera(id=1)
+    #record_video(exposure=0)
+    #select_camera(id=2)
+    #record_video(exposure=0)
+    #select_camera(id=3)
+    #record_video(exposure=0)
+    # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
+    frames0 = extract_frames(vid_dir=None, timestamp = recordings[0][1])
+    frames1 = extract_frames(vid_dir=None, timestamp = recordings[1][1])
+    frames2 = extract_frames(vid_dir=None, timestamp = recordings[2][1])
+    frames3 = extract_frames(vid_dir=None, timestamp = recordings[3][1])
+    frames4 = extract_frames(vid_dir=None, timestamp = recordings[4][1])
+    frames5 = extract_frames(vid_dir=None, timestamp = recordings[5][1])
+    #frames = np.append(np.append(frames0, frames1, axis=0), frames2, axis=0)
+    frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
+    #for f in range(frames.shape[0]):
+    for f in frames:
+        #frames[f, ...] = rect_to_stereo_proj(rolling_shutter(frames[f, ...]))
+        preprocess(f, f) # TODO: Determine which preprocess algorithm we are using / works
+    #Decide not to use circle_sameples, keep arrays separate
+    #circles_samples = np.zeros((frames.shape[0], 3, 4), dtype=np.float) # For each frame and body, record circle centers and sizes
+    #for f in range(frames.shape[0]):
+
+    #These arrays take the form: [[frame0 x,y,z,diameter], [frame1 x,y,z,diameter], ...]
+    earthDetectionArray = np.zeros((len(frames), 1, 4), dtype = np.float)
+    moonDetectionArray = np.zeros((len(frames), 1, 4), dtype = np.float)
+    sunDetectionArray = np.zeros((len(frames), 1, 4), dtype = np.float)
+    for f in range(len(frames)):
+        #imageDetectionCircles = find(frames[f, ...])
+        # TODO: add None check?
+        imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
+        earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
+        moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
+        sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
+        #if earth_detection_array is not None:
+        #    circles_samples[f, 0, ...] = earth_detection_array
+        #if moon_detection_array is not None:
+        #    circles_samples[f, 1, ...] = moon_detection_array
+        #if sun_detection_array is not None:
+        #    circles_samples[f, 2, ...] = sun_detection_array
     
     ######
-    # TODO: Select best circle for each body from sample 
+    # TODO: How to handle None results?
+
+    # best___Tuple is tuple of best distance and associated filename
+
+    # Find the distance to center
+    earthCenterDistances = []
+    for e in range(earthDetectionArray.shape[0]):
+        dist = math.sqrt(e[0] ** 2 + e[1] ** 2)
+        earthCenterDistances.append(dist)
+    earthDistFileVec = list(zip(frames, earthCenterDistances, earthDetectionArray.flatten()))
+    bestEarthTuple = min(earthDistFileVec, key=lambda x:x[1])
+
+    moonCenterDistances = []
+    for m in range(moonDetectionArray.shape[0]):
+        dist = math.sqrt(m[0] ** 2 + m[1] ** 2)
+        moonCenterDistances.append(dist)
+    moonDistFileVec = list(zip(frames, moonCenterDistances, moonDetectionArray.flatten()))
+    bestMoonTuple = min(moonDistFileVec, key=lambda x: x[1])
+
+    sunCenterDistances = []
+    for s in range(sunDetectionArray.shape[0]):
+        dist = math.sqrt(s[0] ** 2 + s[1] ** 2)
+        sunCenterDistances.append(dist)
+    sunDistFileVec = list(zip(frames, sunCenterDistances, sunDetectionArray.flatten()))
+    bestSunTuple = min(sunDistFileVec, key=lambda x: x[1])
+
+    # We now have the best result for earth, moon and sun; time to rotate vectors
+
+    # Camera to body rotation matrices
+    cam1Rotation = np.array([0, 1, 0, 0.5, 0, -1 * math.sqrt(3) / 2, -1 * math.sqrt(3) / 2, 0, -1 / 2]).reshape(3, 3)
+    cam2Rotation = np.array([0, 1, 0, 0.5, 0, math.sqrt(3) / 2, math.sqrt(3) / 2, 0, -1 / 2]).reshape(3, 3)
+    cam3Rotation = np.array([math.sqrt(2) / 2, math.sqrt(2) / 2, 0, math.sqrt(2) / 2, -1 * math.sqrt(2) / 2, 0, 0, 0, 1]).reshape(3, 3)
+
+    gyro_meas = record_gyro(count=gyro_count)
+    for g in range(gyro_meas.shape[0]):
+        omega = gyro_meas[g, ...]
+        new_entry = OpNavGyroMeasurementModel(
+            time_retrieved=datetime.now(),
+            omegax=omega[0],
+            omegay=omega[1],
+            omegaz=omega[2]
+        )
+        session.add(new_entry)
+    # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
+    avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
+    # TODO: how to correlate timestamp with global time
+    rotation = avgGyroY *  """time"""
+
+    timeStartRotation = np.array([math.cos(rotation), 0,  math.sin(rotation), 0, 1, 0, -1 * math.sin(rotation), 0, math.cos(rotation)]).reshape(3, 3)
+
+    # TODO: add coordinate rotations
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(0, 0, 0, 0)
     bestDetectedCircles.set_moon_detection(0, 0, 0, 0)
@@ -192,18 +264,7 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
         time=datetime.now(),
     )
     session.add(new_entry)
-    session.commit()    
-
-    gyro_meas = record_gyro(count=gyro_count)
-    for g in range(gyro_meas.shape[0]):
-        omega = gyro_meas[g, ...]
-        new_entry = OpNavGyroMeasurementModel(
-            time_retrieved=datetime.now(),
-            omegax=omega[0],
-            omegay=omega[1],
-            omegaz=omega[2]
-        )
-        session.add(new_entry)
+    session.commit()
     
     session.commit()    
 

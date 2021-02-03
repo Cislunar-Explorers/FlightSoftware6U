@@ -56,6 +56,7 @@ class CameraMux:
         else:
             assert False
 
+    #Not Used
     def detect(self):
         vcgm = Vcgencmd()
         status = vcgm.get_camera()
@@ -86,7 +87,7 @@ class Camera:
 
         # Full resolution
         with PiCamera(resolution=(3280, 2464),
-                      framerate=15,
+                      framerate=frame_rate,
                       sensor_mode=2,
                       clock_mode='raw') as camera:
             # Set fixed white balance
@@ -115,7 +116,7 @@ class Camera:
             lastTimestamp = camera.timestamp
             lastIndex = -1
             # Loop over expected frames
-            for n in range(2 * frame_rate):
+            for n in range(2 * frame_rate): # 2 seconds
                 f = camera.frame
                 # If no new frame yet, sleep for half a frame
                 while f is None or f.index == lastIndex or f.frame_type == PiVideoFrameType.sps_header:
@@ -124,4 +125,5 @@ class Camera:
                 lastIndex = f.index
                 lastTimestamp = f.timestamp
             camera.stop_recording()
-            return {filename: lastTimestamp}
+            # Timestamp is in microseconds
+            return (filename, lastTimestamp)

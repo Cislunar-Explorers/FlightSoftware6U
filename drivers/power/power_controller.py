@@ -16,6 +16,7 @@ import drivers.power.power_structs as ps
 import RPi.GPIO as GPIO
 import time
 from utils.constants import GomOutputs
+from utils.exceptions import PowerException, PowerInputError, PowerReadError
 
 
 # power device address
@@ -81,19 +82,6 @@ OUT_SWITCH = 7
 OUT_PI_COMMS = 17  # Physical pin 11
 OUT_PI_SOLENOID_ENABLE = 21  # Physical pin 40
 
-
-class PowerException(Exception):
-    pass
-
-
-class PowerInputError(PowerException):
-    pass
-
-
-class PowerReadError(PowerException):
-    pass
-
-
 _ = ps._
 
 
@@ -140,7 +128,6 @@ class Power:
         (x, r) = self._pi.i2c_read_device(self._dev, num_bytes + 2)
         ps.gom_logger.debug("Read %s, and %s from device", x, r)
         if r[1] != 0:
-            # TODO: ask Aaron whether we want to raise an exception, or just log an error for cases like these:
             ps.gom_logger.error("Command %i failed with error code %i", r[0], r[1])
             raise PowerReadError(
                 "Read Error: Command %i failed with error code %i" % (r[0], r[1])

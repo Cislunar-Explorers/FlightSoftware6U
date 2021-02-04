@@ -48,3 +48,15 @@ class PiSensorError(SensorError):
 
 class RtcError(SensorError):
     pass
+
+
+class PowerException(CislunarException):
+    pass
+
+
+class PowerInputError(PowerException):
+    pass
+
+
+class PowerReadError(PowerException):
+    pass

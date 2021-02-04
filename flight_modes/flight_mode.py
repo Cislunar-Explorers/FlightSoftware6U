@@ -299,7 +299,7 @@ class SensorMode(FlightMode):
         raise NotImplementedError
 
     def update_state(self):
-        return 0  # intentional: we don't want to update FM when testing sensors
+        return NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
 
 
 class LowBatterySafetyMode(FlightMode):
@@ -457,6 +457,7 @@ class CommandMode(PauseBackgroundMode):
         super().__init__(parent)
 
     def update_state(self):
+        # DO NOT TICK THE WDT
         return NO_FM_CHANGE  # intentional
 
     def run_mode(self):

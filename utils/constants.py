@@ -1,9 +1,15 @@
 from enum import IntEnum, unique
 import os
-
+import hashlib
 
 # TODO
 # Create method to set constants based on purpose of run
+
+#Verification Key Parameters
+MAC_LENGTH = 4
+MAC_DATA = b'Hello'
+MAC_KEY = b'World'
+MAC = hashlib.blake2s(MAC_DATA,digest_size=MAC_LENGTH,key=MAC_KEY).digest()
 
 # Delay to wait on BootUp
 BOOTUP_SEPARATION_DELAY = 30.0
@@ -29,13 +35,16 @@ DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 
 MODE_SIZE = 1
 ID_SIZE = 1
+COUNTER_SIZE = 3
 DATA_LEN_SIZE = 2
-MIN_COMMAND_SIZE = MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
+MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE 
 
-MODE_OFFSET = 0
-ID_OFFSET = 1
-DATA_LEN_OFFSET = 2
-DATA_OFFSET = 4
+MAC_OFFSET = 0
+COUNTER_OFFSET = 0 + MAC_LENGTH
+MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
+ID_OFFSET = 1+ COUNTER_SIZE + MAC_LENGTH
+DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
+DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -69,7 +78,6 @@ team_identifier = 0xEB902D2D  # Team 2
 SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
-
 
 @unique
 class ConstantsEnum(IntEnum):
@@ -193,6 +201,7 @@ class TestCommandEnum(IntEnum):
     SeparationTest = 5
     GomPin = 6
     CommsDriver = 7
+    PiShutdown = 11
 
 
 @unique

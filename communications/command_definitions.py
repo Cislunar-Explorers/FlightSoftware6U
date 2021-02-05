@@ -113,7 +113,8 @@ class CommandDefinitions:
             TestCommandEnum.ADCTest.value: self.adc_test,
             TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs,
-            7: self.comms_driver_test
+            7: self.comms_driver_test,
+            TestCommandEnum.PiShutdown.value: self.pi_shutdown
         }
 
         self.comms_commands = {}
@@ -350,3 +351,6 @@ class CommandDefinitions:
 
         time.sleep(5)
         self.parent.radio.transmit(fx_data)
+
+    def pi_shutdown(self):
+        os.system('sudo poweroff')

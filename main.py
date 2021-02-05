@@ -17,7 +17,8 @@ from utils.constants import (
     LOW_CRACKING_PRESSURE,
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
-    FMEnum
+    FMEnum,
+    MAC
 )  # TODO: optimize this import
 
 import utils.constants
@@ -52,6 +53,7 @@ class MainSatelliteThread(Thread):
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
+        self.command_counter = 0
         self.command_definitions = CommandDefinitions(self)
         self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
@@ -155,8 +157,17 @@ class MainSatelliteThread(Thread):
                 newCommand = self.radio.receiveSignal()
                 if newCommand is not None:
                     try:
-                        self.command_handler.unpack_command(newCommand) #Only for error checking
-                        self.command_queue.put(bytes(newCommand))
+                        unpackedCommand = self.command_handler.unpack_command(newCommand)
+                        
+                        if unpackedCommand[0] == MAC:
+                            if unpackedCommand[1] == self.command_counter + 1:
+                                self.command_queue.put(bytes(newCommand))
+                                command_counter+=1
+                            else:
+                                print('Command with Invalid Counter Received')
+                        else:
+                            print('Unauthenticated Command Received')
+
                     except:
                         print('Invalid Command Received')
                 else:

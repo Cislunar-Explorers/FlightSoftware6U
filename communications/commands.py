@@ -9,6 +9,11 @@ from utils.constants import (
     ID_OFFSET,
     DATA_LEN_OFFSET,
     DATA_OFFSET,
+    MAC_OFFSET,
+    MAC_LENGTH,
+    MAC,
+    COUNTER_OFFSET,
+    COUNTER_SIZE
 )
 from utils.exceptions import (
     SerializationException,
@@ -18,6 +23,7 @@ from utils.exceptions import (
 from utils.struct import (
     pack_unsigned_short,
     unpack_unsigned_short,
+    pack_unsigned_int
 )
 
 
@@ -25,19 +31,21 @@ def calc_command_size(data: bytes):
     return MIN_COMMAND_SIZE + len(data)
 
 
-def pack_command_bytes(mode: int, command_id: int, data: bytes):
+def pack_command_bytes(counter: int, mode: int, command_id: int, data: bytes):
     buf = bytearray(calc_command_size(data))
-    buf[MODE_OFFSET] = mode
-    buf[ID_OFFSET] = command_id
-    pack_unsigned_short(buf, DATA_LEN_OFFSET, len(data))
-    buf[DATA_OFFSET:] = data
-    return bytes(buf)
+    buf[COUNTER_OFFSET - MAC_LENGTH: COUNTER_OFFSET - MAC_LENGTH + COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE,'big')
+    buf[MODE_OFFSET - MAC_LENGTH] = mode
+    buf[ID_OFFSET- MAC_LENGTH] = command_id
+    pack_unsigned_short(buf, DATA_LEN_OFFSET- MAC_LENGTH, len(data))
+    buf[DATA_OFFSET- MAC_LENGTH:] = data
+    return MAC + bytes(buf)
 
 
 def unpack_command_bytes(data: bytes):
+    mac = data[:MAC_LENGTH]
+    counter = int.from_bytes(data[COUNTER_OFFSET:COUNTER_OFFSET + COUNTER_SIZE],'big')
     mode = data[MODE_OFFSET]
     command_id = data[ID_OFFSET]
-    print('Data: ' +  str(data))
     data_len = unpack_unsigned_short(data, DATA_LEN_OFFSET)[1]
     if data_len + DATA_OFFSET != len(data):
         raise CommandUnpackingException(
@@ -45,7 +53,7 @@ def unpack_command_bytes(data: bytes):
             f"{data_len + DATA_OFFSET} for command with Mode: {mode}"
             f"CommandID: {command_id}"
         )
-    return mode, command_id, data[DATA_OFFSET:]
+    return mac, counter, mode, command_id, data[DATA_OFFSET:]
 
 
 class CommandHandler:
@@ -77,7 +85,7 @@ class CommandHandler:
         self.packers[arg] = packer
         self.unpackers[arg] = unpacker
 
-    def pack_command(self, mode: int, command_id: int, **kwargs) -> bytes:
+    def pack_command(self, counter:int, mode: int, command_id: int, **kwargs) -> bytes:
         func_args, buffer_size = self.command_dict[mode][command_id]
         data_buffer = bytearray(buffer_size)
         offset = 0
@@ -85,7 +93,7 @@ class CommandHandler:
             for arg in func_args:
                 off = self.packers[arg](data_buffer, offset, kwargs[arg])
                 offset += off
-            return pack_command_bytes(mode, command_id, data_buffer)
+            return pack_command_bytes(counter, mode, command_id, data_buffer)
         except StructError as exc:
             raise CommandPackingException(str(exc))
         except KeyError as exc:
@@ -103,7 +111,7 @@ class CommandHandler:
     def unpack_command(self, data: bytes):
         
         try:
-            mode, command_id, arg_data = unpack_command_bytes(data)
+            mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
             func_args, buffer_size = self.command_dict[mode][command_id]
         except:
             raise CommandUnpackingException(
@@ -120,7 +128,7 @@ class CommandHandler:
             off, value = self.unpackers[arg](arg_data, offset)
             kwargs[arg] = value
             offset += off
-        return mode, command_id, kwargs
+        return mac, counter, mode, command_id, kwargs
     
     def register_commands(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
@@ -161,3 +169,7 @@ class CommandHandler:
 
         except:
             raise SerializationException()
+
+ch = CommandHandler()
+buf=ch.pack_command(257,2,3,state=4,delay=5)
+print(ch.unpack_command(buf))

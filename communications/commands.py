@@ -169,7 +169,3 @@ class CommandHandler:
 
         except:
             raise SerializationException()
-
-ch = CommandHandler()
-buf=ch.pack_command(257,2,3,state=4,delay=5)
-print(ch.unpack_command(buf))

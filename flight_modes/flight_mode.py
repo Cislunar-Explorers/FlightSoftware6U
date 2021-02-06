@@ -233,7 +233,9 @@ class TestMode(PauseBackgroundMode):
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
                       TestCommandEnum.ADCTest.value: ([], 0),
-                      TestCommandEnum.CommsDriver.value:([],0)}
+                      TestCommandEnum.CommsDriver.value:([],0),
+                      TestCommandEnum.PiShutdown.value:([],0)
+                      }
 
     command_arg_unpackers = {}
 

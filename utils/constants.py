@@ -7,7 +7,7 @@ import hashlib
 
 #Verification Key Parameters
 MAC_LENGTH = 4
-MAC_DATA = b'Alex'
+MAC_DATA = b'Hello'
 MAC_KEY = b'World'
 MAC = hashlib.blake2s(MAC_DATA,digest_size=MAC_LENGTH,key=MAC_KEY).digest()
 

@@ -12,9 +12,9 @@ groundstation = Radio()
 #groundstation.transmit(badCounterCommand)
 
 #Invalid MAC
-invalidMAC = ch.pack_command(1,8,7)
-groundstation.transmit(invalidMAC)
+#invalidMAC = ch.pack_command(1,8,7)
+#groundstation.transmit(invalidMAC)
 
 #Shutdown via command
-#shutdown = ch.pack_command(1,8,11)
-#groundstation.transmit(shutdown)
+shutdown = ch.pack_command(1,8,11)
+groundstation.transmit(shutdown)

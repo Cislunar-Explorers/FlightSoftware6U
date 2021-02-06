@@ -10,3 +10,11 @@ groundstation = Radio()
 #Invalid counter
 badCounterCommand = ch.pack_command(1,8,7)
 groundstation.transmit(badCounterCommand)
+
+#Invalid MAC
+#invalidMAC = ch.pack_command(1,8,7)
+#groundstation.transmit(badCounterCommand)
+
+#Shutdown via command
+#shutdown = ch.pack_command(1,8,11)
+#groundstation.transmit(shutdown)

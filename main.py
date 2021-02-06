@@ -164,7 +164,8 @@ class MainSatelliteThread(Thread):
                                 self.command_queue.put(bytes(newCommand))
                                 command_counter+=1
                             else:
-                                print('Command with Invalid Counter Received')
+                                print('Command with Invalid Counter Received. '
+                                + 'Counter: ' + str(unpackedCommand[1]))
                         else:
                             print('Unauthenticated Command Received')
 

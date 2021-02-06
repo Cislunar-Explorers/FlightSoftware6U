@@ -8,7 +8,7 @@ ch = CommandHandler()
 groundstation = Radio()
 
 #Invalid counter
-badCounterCommand = ch.pack_command(1,8,7)
+badCounterCommand = ch.pack_command(2,8,7)
 groundstation.transmit(badCounterCommand)
 
 #Invalid MAC

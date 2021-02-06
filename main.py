@@ -162,7 +162,7 @@ class MainSatelliteThread(Thread):
                         if unpackedCommand[0] == MAC:
                             if unpackedCommand[1] == self.command_counter + 1:
                                 self.command_queue.put(bytes(newCommand))
-                                command_counter+=1
+                                self.command_counter+=1
                             else:
                                 print('Command with Invalid Counter Received. '
                                 + 'Counter: ' + str(unpackedCommand[1]))

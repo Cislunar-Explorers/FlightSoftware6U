@@ -1,4 +1,5 @@
 from datetime import datetime
+from subprocess import call
 
 from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
@@ -353,4 +354,5 @@ class CommandDefinitions:
         self.parent.radio.transmit(fx_data)
 
     def pi_shutdown(self):
-        os.system('sudo poweroff')
+        call("sudo shutdown -h now", shell=True)
+        #os.system('sudo poweroff')

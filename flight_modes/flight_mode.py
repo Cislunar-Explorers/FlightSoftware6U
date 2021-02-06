@@ -153,7 +153,7 @@ class FlightMode:
 
                 bogus = False
                 try:
-                    command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
+                    mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
                     logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]

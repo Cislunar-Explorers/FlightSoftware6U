@@ -36,7 +36,7 @@ class BootUpMode(FlightMode):
 
         # deploy antennae
         logger.info("Beginning burn wire...")
-        self.parent.gom.burnwire1(5)
+        parent.gom.burnwire1(5)
 
         logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
@@ -97,4 +97,3 @@ class RestartMode(FlightMode):
     def update_state(self) -> int:
         logger.info("updating state... will now transfer to normal")
         return 2
-

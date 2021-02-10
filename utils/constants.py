@@ -11,6 +11,9 @@ MAC_DATA = b'Hello'
 MAC_KEY = b'World'
 MAC = hashlib.blake2s(MAC_DATA,digest_size=MAC_LENGTH,key=MAC_KEY).digest()
 
+#Delay between successive downlinks in seconds
+DOWNLINK_BUFFER_TIME = 3
+
 # Delay to wait on BootUp
 BOOTUP_SEPARATION_DELAY = 30.0
 
@@ -67,6 +70,28 @@ NUM_BLOCKS = "num_blocks"
 
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
+
+#Keyword argument definitions for downlink
+RTC_TIME = "rtc_time"
+ATT_1 = "attitude_1"
+ATT_2 = "attitude_2"
+ATT_3 = "attitude_3"
+ATT_4 = "attitude_4"
+HK_TEMP_1 = "hk_temp_1"
+HK_TEMP_2 = "hk_temp_2"
+HK_TEMP_3 = "hk_temp_3"
+HK_TEMP_4 = "hk_temp_4"
+GYRO_TEMP = "gyro_temp"
+THERMOCOUPLER_TEMP = "thermo_temp"
+CURRENT_IN_1 = "curin_1"
+CURRENT_IN_2 = "curin_2"
+CURRENT_IN_3 = "curin_3"
+VBOOST_1 = "vboost_1"
+VBOOST_2 = "vboost_2"
+VBOOST_3 = "vboost_3"
+SYSTEM_CURRENT = "cursys"
+BATTERY_VOLTAGE = "vbatt"
+PROP_TANK_PRESSURE = "prs_pressure"
 
 # Random data generation constants:
 a = 1664525

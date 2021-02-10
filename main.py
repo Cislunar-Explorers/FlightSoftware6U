@@ -18,7 +18,8 @@ from utils.constants import (
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
     FMEnum,
-    MAC
+    MAC,
+    DOWNLINK_BUFFER_TIME
 )  # TODO: optimize this import
 
 import utils.constants
@@ -37,6 +38,7 @@ from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
+from telemetry.telemetry import Telemetry
 
 
 FOR_FLIGHT = None
@@ -48,12 +50,16 @@ class MainSatelliteThread(Thread):
         
         self.radio = Radio()
         self.command_queue = Queue()
+        self.downlink_queue = Queue()
         self.commands_to_execute = []
+        self.downlinks_to_execute = []
+        self.telemetry = Telemetry(self)
         self.burn_queue = Queue()
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
         self.command_counter = 0
+        self.downlink_counteer = 0
         self.command_definitions = CommandDefinitions(self)
         self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
@@ -129,6 +135,11 @@ class MainSatelliteThread(Thread):
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
         self.flight_mode.execute_commands()
+
+    def execute_downlinks(self):
+        while not self.downlink_queue.empty():
+            self.radio.transmit(self.downlink_queue.get())
+            time.sleep(DOWNLINK_BUFFER)_TIME)
 
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         # check if file exists

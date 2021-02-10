@@ -134,19 +134,6 @@ class FlightMode:
         elif flight_mode_id == FMEnum.Safety.value:
             raise NotImplementedError  # TODO
 
-        elif flight_mode_id == FMEnum.Normal.value:
-            pass
-            # TODO do I need to enter electrolysis to prepare for maneuver?
-            # do I need to start a maneuver?
-            # do I need to run OpNav?
-
-        elif flight_mode_id == FMEnum.Boot.value:
-            pass
-
-        elif flight_mode_id == FMEnum.Restart.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
         elif flight_mode_id == FMEnum.Maneuver.value:
             if self.task_completed is True:
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)

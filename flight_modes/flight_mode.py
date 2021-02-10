@@ -100,6 +100,12 @@ class FlightMode:
                 and not self.parent.constants.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
+        if not self.parent.maneuver_queue.empty():
+            return FMEnum.Maneuver.value
+
+        if not self.parent.communications_queue.empty():
+            return FMEnum.CommsMode.value
+
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
         # everything in update_state below this comment should be implemented in their respective flight mode
@@ -331,25 +337,36 @@ class LowBatterySafetyMode(FlightMode):
 
 
 class ManeuverMode(PauseBackgroundMode):
+    # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
+    command_codecs = {}
+
+    # Map argument names to (packer,unpacker) tuples
+    # This tells CommandHandler how to serialize the arguments for commands to this flight mode
+    command_arg_unpackers = {}
+
     flight_mode_id = FMEnum.Maneuver.value
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.goal = 10
-        self.moves_towards_goal = 0
-
-    def set_goal(self, goal: int):
-        self.goal = 10
-
-    def execute_maneuver_towards_goal(self):
-        self.moves_towards_goal += 1
+        # self.goal = 10
+        # self.moves_towards_goal = 0
+    #
+    # def set_goal(self, goal: int):
+    #     self.goal = 10
+    #
+    # def execute_maneuver_towards_goal(self):
+    #     self.moves_towards_goal += 1
 
     # TODO implement actual maneuver execution
     # check if exit condition has completed
     def run_mode(self):
-        self.moves_towards_goal()
-        if self.moves_towards_goal >= self.goal:
-            self.task_completed()
+        pass
+        # using the parameters passed through, do the glowplug gom command
+        # also orient correctly, should be super easy
+
+        # self.moves_towards_goal()
+        # if self.moves_towards_goal >= self.goal:
+        #     self.task_completed()
 
 
 class SafeMode(FlightMode):

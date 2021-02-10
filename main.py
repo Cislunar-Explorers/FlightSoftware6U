@@ -46,7 +46,7 @@ class MainSatelliteThread(Thread):
         self.communications_queue = Queue()
         self.FMQueue = Queue()
         self.commands_to_execute = []
-        self.burn_queue = Queue()
+        self.maneuver_queue = Queue()  # maneuver queue
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.command_definitions = CommandDefinitions(self)

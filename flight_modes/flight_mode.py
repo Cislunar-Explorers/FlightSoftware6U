@@ -79,7 +79,6 @@ class FlightMode:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode """
         # currently a mess and needs revisiting. Formal logic for switching FMs has not been defined/documented.
-        # Please do so!
         flight_mode_id = self.flight_mode_id
 
         if self.task_completed and not self.parent.FMQueue.empty():
@@ -100,9 +99,11 @@ class FlightMode:
                 and not self.parent.constants.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
+        # go to maneuver mode
         if not self.parent.maneuver_queue.empty():
             return FMEnum.Maneuver.value
 
+        # go to comms mode
         if not self.parent.communications_queue.empty():
             return FMEnum.CommsMode.value
 

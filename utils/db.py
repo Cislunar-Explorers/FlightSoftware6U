@@ -141,7 +141,7 @@ class GyroModel(SQLAlchemyTableBase):
     __tablename__ = "9DoF"
 
     id = Column(Integer, primary_key=True)
-    time_polled = Column(DateTime)
+    time_polled = Column(Float)
     gyr_x = Column(Float)
     gyr_y = Column(Float)
     gyr_z = Column(Float)

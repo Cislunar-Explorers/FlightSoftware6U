@@ -1,6 +1,9 @@
 from enum import IntEnum, unique
 import os
 
+# unit conversions
+
+DEG2RAD = 3.14159265359 / 180
 
 # TODO
 # Create method to set constants based on purpose of run

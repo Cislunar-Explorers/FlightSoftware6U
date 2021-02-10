@@ -141,9 +141,10 @@ class OpNavSensor(SynchronousSensor):
         super().__init__(parent)
         self.quat = tuple() * 4
         self.pos = tuple() * 3
+        self.acq_time = float()
 
     def poll(self):
-        pass  # TODO: Opnav interface
+        raise NotImplementedError  # TODO: Opnav interface
 
 
 class Telemetry(SynchronousSensor):

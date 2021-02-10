@@ -1,7 +1,11 @@
 import gc
 from time import sleep, time
 from datetime import datetime
+from quaternion.quaternion_time_series import integrate_angular_velocity
 import os
+import numpy as np
+from astropy.coordinates import spherical_to_cartesian
+from main import MainSatelliteThread
 
 from utils.constants import (  # noqa F401
     LOW_CRACKING_PRESSURE,
@@ -25,7 +29,8 @@ from utils.constants import (  # noqa F401
     STATE,
     INTERVAL,
     DELAY,
-    NO_FM_CHANGE
+    NO_FM_CHANGE,
+    DEG2RAD
 )
 
 from utils.log import get_log
@@ -71,7 +76,7 @@ class FlightMode:
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
-    def __init__(self, parent):
+    def __init__(self, parent: MainSatelliteThread):
         self.parent = parent
         self.task_completed = False
 
@@ -331,18 +336,71 @@ class LowBatterySafetyMode(FlightMode):
 
 
 class ManeuverMode(PauseBackgroundMode):
+    """The Flight mode for attitude adjustment of a Cislunar Explorer"""
+
     flight_mode_id = FMEnum.Maneuver.value
+    command_codecs = {}
+    command_arg_unpackers = {}
 
     def __init__(self, parent):
         super().__init__(parent)
         self.goal = 10
         self.moves_towards_goal = 0
+        # Since we can't control the magnitude of our spin vector, we only car about the two angles (is spherical
+        # coordinates) that define the direction of our spin vector, which saves us some up/downlink space.
+        self.current_spin_dir = tuple() * 2
+        self.target_spin_dir = tuple() * 2
+        self.latest_opnav_quat = tuple() * 4
+        self.latest_opnav_time = int()
 
     def set_goal(self, goal: int):
         self.goal = 10
 
     def execute_maneuver_towards_goal(self):
         self.moves_towards_goal += 1
+
+    def dead_reckoning(self):
+        """Attempts to determine the current attitude of the spacecraft by integrating the gyros (prone to error) from
+        the last opnav run. Returns a quaternion of the estimated attitude"""
+        # get latest opnav location and gyro data
+        self.parent.tlm.opn.poll()
+        self.latest_opnav_quat = self.parent.tlm.opn.quat
+        self.latest_opnav_time = self.parent.tlm.opn.acq_time
+        self.parent.tlm.gyr.poll()
+        self.parent.tlm.gyr.write()
+
+        # query gyro data between self.latests_opnav_time and time.now(), needs to include
+        gyro_data = np.array([tuple() * 4])
+        gyro_times, gyroxs, gyroys, gyrozs = gyro_data
+
+        # integration for dead reckoning to get estimate of current attitude
+        # warning: will be inaccurate
+        t, R = integrate_angular_velocity((gyro_times, (gyroxs, gyroys, gyrozs) * DEG2RAD),
+                                          self.latest_opnav_time, time(), R0=self.latest_opnav_quat)
+
+        latest_orientation_estimate = (t[-1], R[-1])
+
+        return latest_orientation_estimate
+
+    def calculate_firing_location(self, cur_spin_axis: tuple, desired_spin_axis: tuple):
+        """Calculates the optimal vector along which to fire the ACS thruster, cur_spin_axis and desired_spin_axis are
+        2-tuples of floats of the elevation (from the equator) and azimuth of the spin vectors in a spherical ECI frame.
+        This function returns the optimal pointing location of the cislunar explorer while firing"""
+
+        cur_spin_vector = spherical_to_cartesian(1, *cur_spin_axis)
+        desired_spin_vector = spherical_to_cartesian(1, *desired_spin_axis)
+
+        firing_vector_ECI = np.cross(cur_spin_vector, desired_spin_vector)
+
+        gyroz = self.parent.tlm.gyr.rot(2)
+
+        firing_vector_ECI *= gyroz / abs(gyroz)  # multiply by sign of z rotation rate to avoid sign error
+        # firing_vector_ECI is the vector along which the vector from the CoM of the spacecraft to the ACS nozzle
+        # shall fire around
+
+        r_ACS_B = (0.08, -0.19, 0)  # Estimate for vector between CoM and ACS nozzle in body-frame (in meters)
+
+        # Convert firing_vector_ECI to orientation of spacecraft in ECI using r_ACS_B
 
     # TODO implement actual maneuver execution
     # check if exit condition has completed

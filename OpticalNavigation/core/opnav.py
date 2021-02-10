@@ -142,9 +142,12 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     # 1. select camera
     # 2. record camera measurements
     # 3. record gyro measurements
+    startTime = datetime.now()
     recordings = []
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
+        # TODO: figure out exposure parameters
+        # TODO: make parameters like framerate, recording time, exposure configurable through registry
         filename_timestamp1 = record_video(f"cam{i}_expLow.mjpeg", exposure=0)
         filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", exposure=1)
         recordings.append(filename_timestamp1)
@@ -172,10 +175,10 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     #circles_samples = np.zeros((frames.shape[0], 3, 4), dtype=np.float) # For each frame and body, record circle centers and sizes
     #for f in range(frames.shape[0]):
 
-    #These arrays take the form: [[frame0 x,y,z,diameter], [frame1 x,y,z,diameter], ...]
-    earthDetectionArray = np.zeros((len(frames), 1, 4), dtype = np.float)
-    moonDetectionArray = np.zeros((len(frames), 1, 4), dtype = np.float)
-    sunDetectionArray = np.zeros((len(frames), 1, 4), dtype = np.float)
+    #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
+    earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
+    moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
+    sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     for f in range(len(frames)):
         #imageDetectionCircles = find(frames[f, ...])
         # TODO: add None check?
@@ -200,22 +203,22 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     for e in range(earthDetectionArray.shape[0]):
         dist = math.sqrt(e[0] ** 2 + e[1] ** 2)
         earthCenterDistances.append(dist)
-    earthDistFileVec = list(zip(frames, earthCenterDistances, earthDetectionArray.flatten()))
-    bestEarthTuple = min(earthDistFileVec, key=lambda x:x[1])
+    earthFileDistVec = list(zip(frames, earthCenterDistances, earthDetectionArray))
+    bestEarthTuple = min(earthFileDistVec, key=lambda x:x[1])
 
     moonCenterDistances = []
     for m in range(moonDetectionArray.shape[0]):
         dist = math.sqrt(m[0] ** 2 + m[1] ** 2)
         moonCenterDistances.append(dist)
-    moonDistFileVec = list(zip(frames, moonCenterDistances, moonDetectionArray.flatten()))
-    bestMoonTuple = min(moonDistFileVec, key=lambda x: x[1])
+    moonFileDistVec = list(zip(frames, moonCenterDistances, moonDetectionArray))
+    bestMoonTuple = min(moonFileDistVec, key=lambda x: x[1])
 
     sunCenterDistances = []
     for s in range(sunDetectionArray.shape[0]):
         dist = math.sqrt(s[0] ** 2 + s[1] ** 2)
         sunCenterDistances.append(dist)
-    sunDistFileVec = list(zip(frames, sunCenterDistances, sunDetectionArray.flatten()))
-    bestSunTuple = min(sunDistFileVec, key=lambda x: x[1])
+    sunFileDistVec = list(zip(frames, sunCenterDistances, sunDetectionArray))
+    bestSunTuple = min(sunFileDistVec, key=lambda x: x[1])
 
     # We now have the best result for earth, moon and sun; time to rotate vectors
 
@@ -223,6 +226,20 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     cam1Rotation = np.array([0, 1, 0, 0.5, 0, -1 * math.sqrt(3) / 2, -1 * math.sqrt(3) / 2, 0, -1 / 2]).reshape(3, 3)
     cam2Rotation = np.array([0, 1, 0, 0.5, 0, math.sqrt(3) / 2, math.sqrt(3) / 2, 0, -1 / 2]).reshape(3, 3)
     cam3Rotation = np.array([math.sqrt(2) / 2, math.sqrt(2) / 2, 0, math.sqrt(2) / 2, -1 * math.sqrt(2) / 2, 0, 0, 0, 1]).reshape(3, 3)
+
+
+    for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
+        coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
+        if data[0] == 1:# is cam1 --> regex check
+            coordArray = cam1Rotation.dot(coordArray)
+        elif data[0] == 2:# is cam2 --> regex check
+            coordArray = cam2Rotation.dot(coordArray)
+        elif  data[0] == 3:# is cam3 --> regex check
+            coordArray = cam3Rotation.dot(coordArray)
+        data[2][0] = coordArray[0]
+        data[2][1] = coordArray[1]
+        data[2][2] = coordArray[2]
+
 
     gyro_meas = record_gyro(count=gyro_count)
     for g in range(gyro_meas.shape[0]):
@@ -237,18 +254,25 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
     avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
     # TODO: how to correlate timestamp with global time
-    rotation = avgGyroY *  """time"""
+    rotation = avgGyroY *  """time of frame - time zero"""
 
-    timeStartRotation = np.array([math.cos(rotation), 0,  math.sin(rotation), 0, 1, 0, -1 * math.sin(rotation), 0, math.cos(rotation)]).reshape(3, 3)
+    tZeroRotation = np.array([math.cos(rotation), 0,  math.sin(rotation), 0, 1, 0, -1 * math.sin(rotation), 0, math.cos(rotation)]).reshape(3, 3)
 
-    # TODO: add coordinate rotations
+    for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
+        coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
+        coordArray = tZeroRotation.dot(coordArray)
+        data[2][0] = coordArray[0]
+        data[2][1] = coordArray[1]
+        data[2][2] = coordArray[2]
+
     bestDetectedCircles = ImageDetectionCircles()
-    bestDetectedCircles.set_earth_detection(0, 0, 0, 0)
-    bestDetectedCircles.set_moon_detection(0, 0, 0, 0)
-    bestDetectedCircles.set_sun_detection(0, 0, 0, 0)
-    best_e = (0, 0, 0, 0)
-    best_m = (0, 0, 0, 0)
-    best_s = (0, 0, 0, 0)
+    bestDetectedCircles.set_earth_detection(bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2], bestEarthTuple[2][3])
+    bestDetectedCircles.set_moon_detection(bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2], bestMoonTuple[2][3])
+    bestDetectedCircles.set_sun_detection(bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2], bestSunTuple[2][3])
+    # As tuples
+    best_e = (bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2], bestEarthTuple[2][3])
+    best_m = (bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2], bestMoonTuple[2][3])
+    best_s = (bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2], bestSunTuple[2][3])
     ######
 
     # Calculate angular separation

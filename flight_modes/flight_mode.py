@@ -362,6 +362,10 @@ class ManeuverMode(PauseBackgroundMode):
     def run_mode(self):
         pass
         # using the parameters passed through, do the glowplug gom command
+        # delay = time to burn - current time
+        # duration is the duration of the burn
+        self.gom.glowplug(duration, delay)
+        #glowplug(self, duration, delay=0):
         # also orient correctly, should be super easy
 
         # self.moves_towards_goal()

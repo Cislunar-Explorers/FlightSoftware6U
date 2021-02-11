@@ -140,6 +140,8 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
+    WhenReorient = 13  # when we want to schedule a reorientation maneuver
+                       # 2 args, unix time stamp and spin axis vector (2 floats)
 
 
 

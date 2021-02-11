@@ -14,6 +14,7 @@ from utils.constants import (  # noqa F401
     NormalCommandEnum,
     BootCommandEnum,
     TestCommandEnum,
+    ManeuverCommandEnum,
     POSITION_X,
     POSITION_Y,
     POSITION_Z,
@@ -25,7 +26,8 @@ from utils.constants import (  # noqa F401
     STATE,
     INTERVAL,
     DELAY,
-    NO_FM_CHANGE
+    NO_FM_CHANGE,
+    GLOWPLUG_DURATION
 )
 
 from utils.log import get_log
@@ -74,6 +76,7 @@ class FlightMode:
     def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
+        self.burn_time = None
 
     def update_state(self) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
@@ -101,7 +104,11 @@ class FlightMode:
 
         # go to maneuver mode
         if not self.parent.maneuver_queue.empty():
-            return FMEnum.Maneuver.value
+            # TODO assign the time command to this var
+            self.burn_time = None
+            # should I use time() or self.parent.tlm.opn.poll_time()?
+            if self.burn_time - time() < (60.0*30):
+                return FMEnum.Maneuver.value
 
         # go to comms mode
         if not self.parent.communications_queue.empty():
@@ -279,7 +286,7 @@ class OpNavMode(FlightMode):
             return super_fm
 
         # check if opnav db has been updated, then set self.task_completed true
-        if self.task_completed:
+        if self.task_completed is True:
             return FMEnum.Normal.value
 
         return NO_FM_CHANGE
@@ -336,29 +343,21 @@ class ManeuverMode(PauseBackgroundMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # self.goal = 10
-        # self.moves_towards_goal = 0
-    #
-    # def set_goal(self, goal: int):
-    #     self.goal = 10
-    #
-    # def execute_maneuver_towards_goal(self):
-    #     self.moves_towards_goal += 1
+
+    def update_state(self) -> int:
+        if self.task_completed is True:
+            return FMEnum.Normal.value
+        return NO_FM_CHANGE
 
     # TODO implement actual maneuver execution
     # check if exit condition has completed
     def run_mode(self):
-        pass
-        # using the parameters passed through, do the glowplug gom command
-        # delay = time to burn - current time
-        # duration is the duration of the burn
-        self.gom.glowplug(duration, delay)
-        #glowplug(self, duration, delay=0):
-        # also orient correctly, should be super easy
-
-        # self.moves_towards_goal()
-        # if self.moves_towards_goal >= self.goal:
-        #     self.task_completed()
+        # sleeping for 5 fewer seconds than the delay for safety
+        self.sleep = self.burn_time - time() - 5
+        # TODO vector = do the same ^^
+        sleep(self.sleep)
+        self.gom.glowplug(GLOWPLUG_DURATION)
+        self.task_completed = True
 
 
 class SafeMode(FlightMode):

@@ -349,8 +349,6 @@ class ManeuverMode(PauseBackgroundMode):
             return FMEnum.Normal.value
         return NO_FM_CHANGE
 
-    # TODO implement actual maneuver execution
-    # check if exit condition has completed
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
         self.sleep = self.burn_time - time() - 5

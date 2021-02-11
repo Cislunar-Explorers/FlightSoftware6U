@@ -45,7 +45,6 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         
-        self.radio = Radio()
         self.command_queue = Queue()
         self.commands_to_execute = []
         self.burn_queue = Queue()
@@ -81,6 +80,7 @@ class MainSatelliteThread(Thread):
         self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC()
+        self.radio = Radio()
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
 
@@ -100,6 +100,16 @@ class MainSatelliteThread(Thread):
                 self.gom.set_electrolysis(True)
         else:
             self.gom.set_electrolysis(False)
+
+        newCommand = self.radio.receiveSignal()
+        if newCommand is not None:
+            try:
+                self.command_handler.unpack_command(newCommand) #Only for error checking
+                self.command_queue.put(bytes(newCommand))
+            except:
+                print('Invalid Command Received')
+        else:
+            print('Not Received')
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -152,15 +162,6 @@ class MainSatelliteThread(Thread):
                 sleep(5)  # TODO remove when flight modes execute real tasks
                 # self.poll_inputs()
                 # self.update_state()
-                newCommand = self.radio.receiveSignal()
-                if newCommand is not None:
-                    try:
-                        self.command_handler.unpack_command(newCommand) #Only for error checking
-                        self.command_queue.put(bytes(newCommand))
-                    except:
-                        print('Invalid Command Received')
-                else:
-                    print('Not Received')
                 #self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

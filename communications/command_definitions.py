@@ -184,8 +184,12 @@ class CommandDefinitions:
         self.parent.logger.info("Reading Gyro data (rad/s)")
         for i in range(int(duration * freq)):
             gyro_reading = self.parent.gyro.get_gyro()
+            mag_reading = self.parent.gyro.get_mag()
+            acc_reading = self.parent.gyro.get_acceleration()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
+            gyro_list.append(list(mag_reading))
+            gyro_list.append(list(acc_reading))
             gyro_list.append(gyro_time)
             gyro_data.append(gyro_list)
             time.sleep(1.0 / freq)

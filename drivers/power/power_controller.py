@@ -464,6 +464,18 @@ class Power:
         time.sleep(duration / 2)
         self.set_single_output("burnwire_2", 0, 0)
 
+        # turns both burnwire 2 on for [duration] seconds, with a
+        # delay of [delay] seconds.
+
+    def burnwire2_async(self, duration: int, delay=0):
+        ps.gom_logger.info(
+            "Turning on burnwire 2 for %s seconds after a delay of %s sec",
+            duration,
+            delay,
+        )
+        self.set_single_output("burnwire_2", 1, delay)
+        self.set_single_output("burnwire_2", 0, delay + duration)
+
     def comms(self, transmit):
         if transmit:
             GPIO.output(OUT_PI_COMMS, GPIO.HIGH)

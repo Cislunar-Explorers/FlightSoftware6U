@@ -93,14 +93,6 @@ class MainSatelliteThread(Thread):
 
     # TODO (major: implement telemetry)
     def poll_inputs(self):
-        # Switch on/off electrolyzer
-        curr_pressure = self.pressure_sensor.read_pressure()
-        if curr_pressure < IDEAL_CRACKING_PRESSURE:
-            if not self.gom.is_electrolyzing():
-                self.gom.set_electrolysis(True)
-        else:
-            self.gom.set_electrolysis(False)
-
         newCommand = self.radio.receiveSignal()
         if newCommand is not None:
             try:
@@ -160,9 +152,9 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
-                # self.poll_inputs()
+                self.poll_inputs()
                 # self.update_state()
-                #self.read_command_queue_from_file()
+                # self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:

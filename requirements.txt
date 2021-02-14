@@ -12,4 +12,6 @@ Adafruit-Blinka
 psutil
 # OpNav end
 numpy-quaternion
+astropy
+numba
 

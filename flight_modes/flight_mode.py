@@ -6,7 +6,6 @@ from quaternion.numpy_quaternion import quaternion
 import os
 import numpy as np
 from astropy.coordinates import spherical_to_cartesian
-from main import MainSatelliteThread
 from typing import Tuple
 
 from utils.constants import (  # noqa F401
@@ -78,7 +77,7 @@ class FlightMode:
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
 

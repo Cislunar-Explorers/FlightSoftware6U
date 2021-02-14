@@ -472,7 +472,6 @@ class CommandMode(PauseBackgroundMode):
 
 
 class ReorientMode(FlightMode):
-
     # TODO FIX flight_mode_id = FMEnum.Command.value
 
     command_codecs = {}

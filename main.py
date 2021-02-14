@@ -6,7 +6,7 @@ from datetime import datetime
 from queue import Queue
 import signal
 from utils.log import get_log
-from communications.satellite_radio import Radio
+#from communications.satellite_radio import Radio
 
 from dotenv import load_dotenv
 
@@ -50,6 +50,7 @@ FOR_FLIGHT = None
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
+        self.last_transmit_time = datetime.today()
         self.command_queue = Queue()
         self.downlink_queue = Queue()
         self.commands_to_execute = []
@@ -87,7 +88,7 @@ class MainSatelliteThread(Thread):
     # TODO
 
     def init_sensors(self):
-        self.radio = Radio()
+        #self.radio = Radio()
         self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC()
@@ -104,24 +105,26 @@ class MainSatelliteThread(Thread):
     # TODO (major: implement telemetry)
     def poll_inputs(self):
         # Switch on/off electrolyzer
-        curr_pressure = self.pressure_sensor.read_pressure()
+        """curr_pressure = self.pressure_sensor.read_pressure()
         if curr_pressure < IDEAL_CRACKING_PRESSURE:
             if not self.gom.is_electrolyzing():
                 self.gom.set_electrolysis(True)
         else:
-            self.gom.set_electrolysis(False)
+            self.gom.set_electrolysis(False)"""
         
         #Telemetry downlink
-        if (datetime.today() - self.radio.last_transmit_time).total_seconds/60 >= TELEM_DOWNLINK_TIME:
+        if (datetime.today() - self.last_transmit_time).total_seconds/60 >= TELEM_DOWNLINK_TIME:
             self.enter_transmit_safe_mode()
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (
                 self.downlink_handler.pack_downlink(self.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.BasicTelem.value,**telemetry))
             #self.downlink_queue.put(telem_downlink)
             print(self.downlink_handler.unpack_downlink(telem_downlink))
+            self.last_transmit_time = datetime.today()
 
         #Listening for new commands
-        newCommand = self.radio.receiveSignal()
+        #newCommand = self.radio.receiveSignal()
+        newCommand = None
         if newCommand is not None:
             try:
                 unpackedCommand = self.command_handler.unpack_command(newCommand)
@@ -201,7 +204,7 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
-                # self.poll_inputs()
+                self.poll_inputs()
                 # self.update_state()
                 #self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately

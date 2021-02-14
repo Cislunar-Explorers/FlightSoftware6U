@@ -21,5 +21,5 @@ jobs:
         pip install matplotlib
     - name: Test with pytest
       run: |
-        pytest OpticalNavigation/tests/
         pytest tests/
+        pytest OpticalNavigation/tests/

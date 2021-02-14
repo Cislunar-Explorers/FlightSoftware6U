@@ -47,6 +47,8 @@ class MainSatelliteThread(Thread):
         self.FMQueue = Queue()
         self.commands_to_execute = []
         self.burn_queue = Queue()
+        self.reorientation_queue = Queue()
+        self.reorientation_list = []
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.command_definitions = CommandDefinitions(self)
@@ -114,7 +116,7 @@ class MainSatelliteThread(Thread):
 
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
         if fm_to_update_to != NO_FM_CHANGE and fm_to_update_to != self.flight_mode.flight_mode_id:
-            self.replace_flight_mode_by_id(self.flight_mode.update_state())
+            self.replace_flight_mode_by_id(fm_to_update_to)
 
     def clear_command_queue(self):
         while not self.command_queue.empty():

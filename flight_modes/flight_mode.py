@@ -27,7 +27,8 @@ from utils.constants import (  # noqa F401
     INTERVAL,
     DELAY,
     NO_FM_CHANGE,
-    GLOWPLUG_DURATION
+    GLOWPLUG_DURATION,
+    BURN_WAIT_TIME
 )
 
 from utils.log import get_log
@@ -90,6 +91,13 @@ class FlightMode:
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
+        # go to maneuver mode
+        if not self.parent.maneuver_queue.empty():
+            # TODO assign the time command to this var
+            self.burn_time = None
+            if self.burn_time - time() < (60.0*BURN_WAIT_TIME):
+                return FMEnum.Maneuver.value
+
         # if battery is low, go to low battery mode
         batt_percent = self.parent.tlm.gom.percent
         if (batt_percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
@@ -101,14 +109,6 @@ class FlightMode:
                 and batt_percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not self.parent.constants.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
-
-        # go to maneuver mode
-        if not self.parent.maneuver_queue.empty():
-            # TODO assign the time command to this var
-            self.burn_time = None
-            # should I use time() or self.parent.tlm.opn.poll_time()?
-            if self.burn_time - time() < (60.0*30):
-                return FMEnum.Maneuver.value
 
         # go to comms mode
         if not self.parent.communications_queue.empty():
@@ -351,9 +351,7 @@ class ManeuverMode(PauseBackgroundMode):
 
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
-        self.sleep = self.burn_time - time() - 5
-        # TODO vector = do the same ^^
-        sleep(self.sleep)
+        sleep((self.burn_time - time()) - 5)
         self.gom.glowplug(GLOWPLUG_DURATION)
         self.task_completed = True
 
@@ -471,3 +469,22 @@ class CommandMode(PauseBackgroundMode):
 
     def poll_inputs(self):
         raise NotImplementedError  # only check the comms queue
+
+
+class ReorientMode(FlightMode):
+
+    # TODO FIX flight_mode_id = FMEnum.Command.value
+
+    command_codecs = {}
+
+    command_arg_unpackers = {}
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def update_state(self):
+        # DO NOT TICK THE WDT
+        return NO_FM_CHANGE  # intentional
+
+    def run_mode(self):
+        pass

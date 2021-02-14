@@ -113,7 +113,7 @@ class MainSatelliteThread(Thread):
             self.gom.set_electrolysis(False)"""
         
         #Telemetry downlink
-        if (datetime.today() - self.last_transmit_time).total_seconds/60 >= TELEM_DOWNLINK_TIME:
+        if (datetime.today() - self.last_transmit_time).total_seconds()/60 >= TELEM_DOWNLINK_TIME:
             self.enter_transmit_safe_mode()
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (

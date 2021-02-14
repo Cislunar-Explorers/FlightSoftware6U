@@ -228,9 +228,9 @@ class Telemetry(SynchronousSensor):
     
     def standard_packet_dict(self):
         return {'rtc_time': self.rtc.rtc_time,
-                'position_x': self.opn.pos[0],
-                'position_y': self.opn.pos[1],
-                'position_z': self.opn.pos[2],
+                'position_x': 1,
+                'position_y': 2,
+                'position_z': 3,
                 'attitude_1': self.opn.quat[0],
                 'attitude_2': self.opn.quat[1],
                 'attitude_3': self.opn.quat[2],

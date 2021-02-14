@@ -259,8 +259,7 @@ class CommandDefinitions:
 
     def gather_basic_telem(self):
         # what's defined in section 3.6.1 of https://cornell.app.box.com/file/629596158344 would be a good packet
-        standard_packet_dict = self.parent.telemetry.standard_packet()
-        self.parent.downlink_handler.pack_downlink()
+        return self.parent.telemetry.standard_packet_dict()
 
     def gather_detailed_telem(self):
         # here we'd gather as much data about the satellite as possible

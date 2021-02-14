@@ -14,6 +14,9 @@ MAC = hashlib.blake2s(MAC_DATA,digest_size=MAC_LENGTH,key=MAC_KEY).digest()
 #Delay between successive downlinks in seconds
 DOWNLINK_BUFFER_TIME = 3
 
+#Basic telemetry automatic downlink interval (minutes)
+TELEM_DOWNLINK_TIME = 60
+
 # Delay to wait on BootUp
 BOOTUP_SEPARATION_DELAY = 30.0
 

@@ -19,7 +19,10 @@ from utils.constants import (
     IDEAL_CRACKING_PRESSURE,
     FMEnum,
     MAC,
-    DOWNLINK_BUFFER_TIME
+    DOWNLINK_BUFFER_TIME,
+    TELEM_DOWNLINK_TIME,
+    FMEnum,
+    NormalCommandEnum
 )  # TODO: optimize this import
 
 import utils.constants
@@ -47,8 +50,6 @@ FOR_FLIGHT = None
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
-        
-        self.radio = Radio()
         self.command_queue = Queue()
         self.downlink_queue = Queue()
         self.commands_to_execute = []
@@ -59,7 +60,7 @@ class MainSatelliteThread(Thread):
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
         self.command_counter = 0
-        self.downlink_counteer = 0
+        self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
         self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
@@ -86,6 +87,7 @@ class MainSatelliteThread(Thread):
     # TODO
 
     def init_sensors(self):
+        self.radio = Radio()
         self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC()
@@ -108,6 +110,40 @@ class MainSatelliteThread(Thread):
                 self.gom.set_electrolysis(True)
         else:
             self.gom.set_electrolysis(False)
+        
+        #Telemetry downlink
+        if (datetime.today() - self.radio.last_transmit_time).total_seconds/60 >= TELEM_DOWNLINK_TIME:
+            self.enter_transmit_safe_mode()
+            telemetry = self.command_definitions.gather_basic_telem()
+            telem_downlink = (
+                self.downlink_handler.pack_downlink(self.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.BasicTelem.value,**telemetry))
+            #self.downlink_queue.put(telem_downlink)
+            print(self.downlink_handler.unpack_downlink(telem_downlink))
+
+        #Listening for new commands
+        newCommand = self.radio.receiveSignal()
+        if newCommand is not None:
+            try:
+                unpackedCommand = self.command_handler.unpack_command(newCommand)
+                
+                if unpackedCommand[0] == MAC:
+                    if unpackedCommand[1] == self.command_counter + 1:
+                        self.command_queue.put(bytes(newCommand))
+                        self.command_counter+=1
+                    else:
+                        print('Command with Invalid Counter Received. '
+                        + 'Counter: ' + str(unpackedCommand[1]))
+                else:
+                    print('Unauthenticated Command Received')
+
+            except:
+                print('Invalid Command Received')
+        else:
+            print('Not Received')
+
+    def enter_transmit_safe_mode(self):
+        #TODO: Make sure that everything else is turned off before transmitting
+        pass
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -137,9 +173,11 @@ class MainSatelliteThread(Thread):
         self.flight_mode.execute_commands()
 
     def execute_downlinks(self):
+        self.enter_transmit_safe_mode()
         while not self.downlink_queue.empty():
             self.radio.transmit(self.downlink_queue.get())
-            time.sleep(DOWNLINK_BUFFER)_TIME)
+            self.downlink_counter += 1
+            sleep(DOWNLINK_BUFFER_TIME)
 
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         # check if file exists
@@ -165,25 +203,6 @@ class MainSatelliteThread(Thread):
                 sleep(5)  # TODO remove when flight modes execute real tasks
                 # self.poll_inputs()
                 # self.update_state()
-                newCommand = self.radio.receiveSignal()
-                if newCommand is not None:
-                    try:
-                        unpackedCommand = self.command_handler.unpack_command(newCommand)
-                        
-                        if unpackedCommand[0] == MAC:
-                            if unpackedCommand[1] == self.command_counter + 1:
-                                self.command_queue.put(bytes(newCommand))
-                                self.command_counter+=1
-                            else:
-                                print('Command with Invalid Counter Received. '
-                                + 'Counter: ' + str(unpackedCommand[1]))
-                        else:
-                            print('Unauthenticated Command Received')
-
-                    except:
-                        print('Invalid Command Received')
-                else:
-                    print('Not Received')
                 #self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

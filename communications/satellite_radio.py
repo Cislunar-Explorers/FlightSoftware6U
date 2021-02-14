@@ -13,12 +13,15 @@ from adafruit_bus_device.spi_device import SPIDevice
 from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 
+from datetime import datetime
+
 class Radio():
 
     def __init__(self):
 
         self.driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
         self.mgr = Manager(self.driver)
+        self.last_transmit_time = datetime.today()
 
     # Monitor radio health, request reset if faulted
     def monitorHealth(self):

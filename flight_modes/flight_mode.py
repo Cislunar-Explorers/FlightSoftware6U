@@ -2,10 +2,12 @@ import gc
 from time import sleep, time
 from datetime import datetime
 from quaternion.quaternion_time_series import integrate_angular_velocity
+from quaternion.numpy_quaternion import quaternion
 import os
 import numpy as np
 from astropy.coordinates import spherical_to_cartesian
 from main import MainSatelliteThread
+from typing import Tuple
 
 from utils.constants import (  # noqa F401
     LOW_CRACKING_PRESSURE,
@@ -335,7 +337,7 @@ class LowBatterySafetyMode(FlightMode):
         self.parent.gom.pc.set_GPIO_low()
 
 
-def quat_to_rotvec(q: tuple) -> tuple:
+def quat_to_rotvec(q: Tuple[float, float, float, float]) -> Tuple[float, float, float]:
     """Converts a 4-tuple representation of a quaternion into a 3-tuple rotation vector."""
     rotvec = q[1:] / np.linalg.norm(q[1:])
     return rotvec
@@ -380,7 +382,7 @@ class ManeuverMode(PauseBackgroundMode):
         if self.parent.reorientation_list:
             self.target_spin_vec = spherical_to_cartesian(1, *self.parent.reorientation_list[0])
 
-    def dead_reckoning(self):
+    def dead_reckoning(self) -> Tuple[Tuple[float, quaternion], Tuple[float, float, float]]:
         """Attempts to determine the current attitude of the spacecraft by integrating the gyros (prone to error) from
         the last opnav run. Returns a quaternion of the estimated attitude"""
 

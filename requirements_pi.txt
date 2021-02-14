@@ -9,3 +9,4 @@ Adafruit-Blinka
 adafruit-circuitpython-fxos8700
 adafruit-circuitpython-fxas21002c
 ADS1115
+numpy-quaternion

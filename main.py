@@ -136,6 +136,7 @@ class MainSatelliteThread(Thread):
         self.flight_mode.execute_commands()
 
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
+        """A temporary workaround to not having radio board access"""
         # check if file exists
         if os.path.isfile(filename):
             text_file = open(filename, "r")

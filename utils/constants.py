@@ -114,6 +114,7 @@ class FMEnum(IntEnum):
     TestMode = 8  # Execute specified test
     CommsMode = 9
     Command = 10
+    AttitudeAdjustment = 11
 
 
 @unique

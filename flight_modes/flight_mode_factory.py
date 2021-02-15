@@ -10,6 +10,7 @@ from flight_modes.flight_mode import (
 )
 
 from flight_modes.restart_reboot import RestartMode, BootUpMode
+from flight_modes.attitude_adjustment import AAMode
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException
 
@@ -24,6 +25,7 @@ FLIGHT_MODE_DICT = {
     FMEnum.SensorMode.value: SensorMode,
     FMEnum.TestMode.value: TestMode,
     FMEnum.CommsMode.value: CommsMode,
+    FMEnum.AttitudeAdjustment.value: AAMode
 }
 
 

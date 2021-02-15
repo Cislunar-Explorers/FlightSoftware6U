@@ -1,7 +1,6 @@
 picamera
 pigpio
 RPi.GPIO
-dotenv
 SQLalchemy
 adafruit-circuitpython-busdevice
 vcgencmd
@@ -9,5 +8,9 @@ Adafruit-Blinka
 adafruit-circuitpython-fxos8700
 adafruit-circuitpython-fxas21002c
 ADS1115
+tqdm
+psutil
+uptime
+opencv-python-headless
 numpy-quaternion
 astropy

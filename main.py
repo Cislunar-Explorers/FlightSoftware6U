@@ -49,6 +49,7 @@ class MainSatelliteThread(Thread):
         self.burn_queue = Queue()
         self.reorientation_queue = Queue()
         self.reorientation_list = []
+        self.maneuver_queue = Queue()  # maneuver queue
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.command_definitions = CommandDefinitions(self)

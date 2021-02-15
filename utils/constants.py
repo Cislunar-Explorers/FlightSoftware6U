@@ -78,6 +78,7 @@ GOM_VOLTAGE_MIN = 6000
 SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
+BURN_WAIT_TIME = 15 # minutes
 
 MAX_GYRO_RATE = 250  # degrees/sec
 
@@ -144,6 +145,8 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
+    WhenReorient = 13  # when we want to schedule a reorientation maneuver
+                       # 2 args, unix time stamp and spin axis vector (2 floats)
 
 
 

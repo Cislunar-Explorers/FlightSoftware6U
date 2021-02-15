@@ -1,7 +1,6 @@
 import gc
 from time import sleep, time
 from datetime import datetime
-
 import os
 
 from utils.constants import (  # noqa F401
@@ -15,6 +14,7 @@ from utils.constants import (  # noqa F401
     NormalCommandEnum,
     BootCommandEnum,
     TestCommandEnum,
+    ManeuverCommandEnum,
     POSITION_X,
     POSITION_Y,
     POSITION_Z,
@@ -27,7 +27,8 @@ from utils.constants import (  # noqa F401
     INTERVAL,
     DELAY,
     NO_FM_CHANGE,
-    DEG2RAD
+    GLOWPLUG_DURATION,
+    BURN_WAIT_TIME
 )
 
 from utils.log import get_log
@@ -76,6 +77,7 @@ class FlightMode:
     def __init__(self, parent):
         self.parent = parent
         self.task_completed = False
+        self.burn_time = None
 
     def update_state(self) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
@@ -90,6 +92,13 @@ class FlightMode:
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
+        # go to maneuver mode
+        if not self.parent.maneuver_queue.empty():
+            # TODO assign the time command to this var
+            self.burn_time = None
+            if self.burn_time - time() < (60.0*BURN_WAIT_TIME):
+                return FMEnum.Maneuver.value
+
         # if battery is low, go to low battery mode
         batt_percent = self.parent.tlm.gom.percent
         if (batt_percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
@@ -101,6 +110,10 @@ class FlightMode:
                 and batt_percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not self.parent.constants.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
+
+        # go to comms mode
+        if not self.parent.communications_queue.empty():
+            return FMEnum.CommsMode.value
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
@@ -128,19 +141,6 @@ class FlightMode:
 
         elif flight_mode_id == FMEnum.Safety.value:
             raise NotImplementedError  # TODO
-
-        elif flight_mode_id == FMEnum.Normal.value:
-            pass
-            # TODO do I need to enter electrolysis to prepare for maneuver?
-            # do I need to start a maneuver?
-            # do I need to run OpNav?
-
-        elif flight_mode_id == FMEnum.Boot.value:
-            pass
-
-        elif flight_mode_id == FMEnum.Restart.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
         elif flight_mode_id == FMEnum.Maneuver.value:
             if self.task_completed is True:
@@ -332,7 +332,6 @@ class LowBatterySafetyMode(FlightMode):
         self.parent.gom.pc.set_GPIO_low()
 
 
-
 class ManeuverMode(PauseBackgroundMode):
 
     flight_mode_id = FMEnum.Maneuver.value
@@ -341,21 +340,17 @@ class ManeuverMode(PauseBackgroundMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.goal = 10
-        self.moves_towards_goal = 0
 
-    def set_goal(self, goal: int):
-        self.goal = 10
+    def update_state(self) -> int:
+        if self.task_completed is True:
+            return FMEnum.Normal.value
+        return NO_FM_CHANGE
 
-    def execute_maneuver_towards_goal(self):
-        self.moves_towards_goal += 1
-
-    # TODO implement actual maneuver execution
-    # check if exit condition has completed
     def run_mode(self):
-        self.moves_towards_goal()
-        if self.moves_towards_goal >= self.goal:
-            self.task_completed()
+        # sleeping for 5 fewer seconds than the delay for safety
+        sleep((self.burn_time - time()) - 5)
+        self.parent.gom.glowplug(GLOWPLUG_DURATION)
+        self.task_completed = True
 
 
 class SafeMode(FlightMode):

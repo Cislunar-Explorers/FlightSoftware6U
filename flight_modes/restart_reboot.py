@@ -2,10 +2,8 @@ import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
 from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY
-# import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os
-import random
 from utils.log import get_log
 from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
 import psutil
@@ -36,7 +34,7 @@ class BootUpMode(FlightMode):
 
         # deploy antennae
         logger.info("Beginning burn wire...")
-        self.parent.gom.burnwire1(5)
+        parent.gom.burnwire1(5)
 
         logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
@@ -97,4 +95,3 @@ class RestartMode(FlightMode):
     def update_state(self) -> int:
         logger.info("updating state... will now transfer to normal")
         return 2
-

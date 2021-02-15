@@ -3,6 +3,7 @@ import board
 import busio
 import adafruit_fxos8700
 import adafruit_fxas21002c
+from typing import Tuple
 
 
 class GyroSensor:  # TODO rename class and file to something more representative
@@ -11,13 +12,13 @@ class GyroSensor:  # TODO rename class and file to something more representative
         self.fxos = adafruit_fxos8700.FXOS8700(self.i2c)
         self.fxas = adafruit_fxas21002c.FXAS21002C(self.i2c)
 
-    def get_acceleration(self) -> tuple:
+    def get_acceleration(self) -> Tuple[float, float, float]:
         return self.fxos.accelerometer  # m/s^2
 
-    def get_gyro(self) -> tuple:
+    def get_gyro(self) -> Tuple[float, float, float]:
         return self.fxas.gyroscope  # rad/s
 
-    def get_mag(self) -> tuple:
+    def get_mag(self) -> Tuple[float, float, float]:
         return self.fxos.magnetometer  # microTeslas
 
     def get_temp(self) -> float:

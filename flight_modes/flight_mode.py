@@ -1,6 +1,12 @@
-if False:
-    from main import MainSatelliteThread as MST
-# This lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from main import MainSatelliteThread
+    # for an explanation of the above 4 lines of code, see
+    # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+    # It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
+
 import gc
 from time import sleep, time
 from datetime import datetime
@@ -43,11 +49,13 @@ from utils.struct import (
     pack_double,
     pack_unsigned_int,
     pack_str,
+    pack_float,
     unpack_bool,
     unpack_unsigned_short,
     unpack_double,
     unpack_unsigned_int,
-    unpack_str
+    unpack_str,
+    unpack_float
 )
 
 
@@ -77,7 +85,7 @@ class FlightMode:
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
-    def __init__(self, parent: MST):
+    def __init__(self, parent: MainSatelliteThread):
         self.parent = parent
         self.task_completed = False
         self.burn_time = None
@@ -278,7 +286,7 @@ class OpNavMode(FlightMode):
     flight_mode_id = FMEnum.OpNav.value
 
     def __init__(self, parent):
-        super().__init__(self, parent)
+        super().__init__(parent)
 
     def run_mode(self):
         from core.opnav import start
@@ -378,7 +386,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.Switch.value: ([], 0),
         NormalCommandEnum.RunOpNav.value: ([], 0),
         NormalCommandEnum.SetDesiredAttitude.value: (
-            [AZIMUTH, ELEVATION], 16),
+            [AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
@@ -387,8 +395,8 @@ class NormalMode(FlightMode):
     }
 
     command_arg_unpackers = {
-        AZIMUTH: (pack_double, unpack_double),
-        ELEVATION: (pack_double, unpack_double),
+        AZIMUTH: (pack_float, unpack_float),
+        ELEVATION: (pack_float, unpack_float),
         ACCELERATE: (pack_bool, unpack_bool),
         NAME: (pack_str, unpack_str),
         # TODO: can't use strings in current configuration b/c command_codecs requires a fixed number of bytes
@@ -437,6 +445,7 @@ class NormalMode(FlightMode):
             if need_to_electrolyze:
                 # If it's time for opnav to run BUT we are below ideal pressure: turn off electrolysis after a delay
                 self.parent.gom.set_electrolysis(False, delay=seconds_to_electrolyze)
+                # may not be relevant anymore now that opnav is becoming a subprocess
 
             return FMEnum.OpNav.value
 

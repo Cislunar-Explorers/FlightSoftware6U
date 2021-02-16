@@ -1,11 +1,11 @@
 from quaternion.quaternion_time_series import integrate_angular_velocity
 from quaternion.numpy_quaternion import quaternion
 import numpy as np
-from astropy.coordinates import spherical_to_cartesian
 from typing import Tuple
 from time import sleep, time
 from utils.constants import FMEnum, DEG2RAD, NO_FM_CHANGE
 from flight_modes.flight_mode import FlightMode
+from math import sin, cos
 
 
 def quat_to_rotvec(q: Tuple[float, float, float, float]) -> Tuple[float, float, float]:
@@ -14,15 +14,25 @@ def quat_to_rotvec(q: Tuple[float, float, float, float]) -> Tuple[float, float, 
     return rotvec
 
 
+def spherical_to_cartesian(v: Tuple[float, float]) -> Tuple[float, float, float]:
+    """Converts two angles (azimuth and elevation) into a normalized vector (length = 1).
+        Angle of elevation is measured from the north pole down"""
+
+    _theta = v[0]
+    _phi = v[1]
+
+    return sin(_phi) * cos(_theta), sin(_phi) * sin(_theta), cos(_phi)
+
+
 def theta(v, w): return np.arccos(np.dot(v, w) / (np.linalg.norm(v) * np.linalg.norm(w)))
 
 
 def C3(theta):
-    sin = np.sin(theta)
-    cos = np.cos(theta)
+    sint = sin(theta)
+    cost = cos(theta)
 
-    return np.array([[cos, sin, 0],
-                     [-sin, cos, 0],
+    return np.array([[cost, sint, 0],
+                     [-sint, cost, 0],
                      [0, 0, 1]])
 
 
@@ -55,7 +65,7 @@ class AAMode(FlightMode):
             self.parent.reorientation_list.append(self.parent.reorientation_queue.get())
 
         if self.parent.reorientation_list:
-            self.target_spin_vec = spherical_to_cartesian(1, *self.parent.reorientation_list[0])
+            self.target_spin_vec = spherical_to_cartesian(*self.parent.reorientation_list[0])
 
     def dead_reckoning(self) -> Tuple[Tuple[float, quaternion], Tuple[float, float, float]]:
         """Attempts to determine the current attitude of the spacecraft by integrating the gyros (prone to error) from
@@ -83,7 +93,7 @@ class AAMode(FlightMode):
         location of the cislunar explorer while firing """
 
         cur_spin_vector = cur_quat.vec
-        desired_spin_vector = spherical_to_cartesian(1, *desired_spin_axis)
+        desired_spin_vector = spherical_to_cartesian(*desired_spin_axis)
 
         firing_vector_ECI = np.cross(cur_spin_vector, desired_spin_vector)
 
@@ -127,6 +137,3 @@ class AAMode(FlightMode):
             # resume garbage collection and other threads
             # run opnav again
 
-        self.moves_towards_goal()
-        if self.moves_towards_goal >= self.goal:
-            self.task_completed()

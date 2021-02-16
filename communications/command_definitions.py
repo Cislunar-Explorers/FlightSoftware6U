@@ -1,15 +1,17 @@
-from datetime import datetime
+if False:
+    from main import MainSatelliteThread
 
+from datetime import datetime
 from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, AZIMUTH, ELEVATION
 
 
 class CommandDefinitions:
-    def __init__(self, parent):
+    def __init__(self, parent: MainSatelliteThread):
         self.parent = parent
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}
@@ -24,7 +26,7 @@ class CommandDefinitions:
             NormalCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
             NormalCommandEnum.Verification.value: self.verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
-            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval
+            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
         }
 
         self.low_battery_commands = {
@@ -145,13 +147,8 @@ class CommandDefinitions:
             filehandle.writelines("%s\n" % line for line in gyro_data)
 
     def run_opnav(self):
-        self.parent.logger.info("Running OpNav Pipeline")
-        time.sleep(10)
-        self.parent.logger.info("OpNav calculations complete. Resulting attitude is [x, y, z, phi, theta]")
-        if self.parent.flight_mode.flight_mode_id == 2:
-            self.parent.flight_mode.last_opnav_run = datetime.now()
-        # self.parent.run_opnav
-        # raise NotImplementedError
+        """Schedules Opnav mode into the FM queue"""
+        self.parent.FMQueue.put(FMEnum.OpNav.value)
 
     def set_parameter(self, **kwargs):
         """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
@@ -191,13 +188,13 @@ class CommandDefinitions:
             self.parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
     def change_attitude(self, **kwargs):
-        azimuth = kwargs['theta']
-        elevation = kwargs['phi']
+        theta = kwargs.get(AZIMUTH)
+        phi = kwargs.get(ELEVATION)  # angle down from z-axis of ECI frame
 
-        # current_theta = telemetry.latest.theta
-        # current_phi = telemetry.latest.phi
+        assert 0 <= theta < 6.28318530718
+        assert 0 <= phi < 3.14159265359
 
-        raise NotImplementedError
+        self.parent.reorientation_queue.put((theta, phi))
 
     def gather_critical_telem(self):
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
@@ -239,6 +236,7 @@ class CommandDefinitions:
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
+    @staticmethod
     def reboot_pi(self):
         os.system("reboot")
         # add something here that adds to the restarts db that this restart was commanded

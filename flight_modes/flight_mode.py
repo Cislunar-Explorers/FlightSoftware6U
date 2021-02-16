@@ -1,11 +1,6 @@
-from __future__ import annotations
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from main import MainSatelliteThread
-# for an explanation of the above 4 lines of code, see
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-# It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
+if False:
+    from main import MainSatelliteThread as MST
+# This lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
 import gc
 from time import sleep, time
 from datetime import datetime
@@ -82,7 +77,7 @@ class FlightMode:
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
-    def __init__(self, parent: MainSatelliteThread):
+    def __init__(self, parent: MST):
         self.parent = parent
         self.task_completed = False
         self.burn_time = None

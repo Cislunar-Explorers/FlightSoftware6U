@@ -13,10 +13,10 @@ if __name__ == "__main__":
         mux = camera.CameraMux()
         mux.selectCamera(1)
         print("selected mux")
-    else
-				mux = camera.CameraMux()
-				mux.selectCamera(1)
-				print("selected mux")
-				cam = camera.Camera()
-				f, t = cam.rawObservation(args["mode"])
-				print(f, t)
+    else:
+        mux = camera.CameraMux()
+        mux.selectCamera(1)
+        print("selected mux")
+        cam = camera.Camera()
+        f, t = cam.rawObservation(args["mode"])
+        print(f, t)

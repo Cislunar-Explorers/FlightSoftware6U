@@ -174,7 +174,8 @@ class CommandDefinitions:
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
         gyro_threader.start()
-        self.parent.gom.burnwire2(2)
+        self.parent.gom.burnwire2(self.parent.constants.SPLIT_BURNWIRE_DURATION)
+        # self.parent.gom.burnwire1(self.parent.constants.SPLIT_BURNWIRE_DURATION)
         gyro_threader.join()
 
     def gyro_thread(self):

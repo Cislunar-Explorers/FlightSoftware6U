@@ -66,7 +66,7 @@ M = 2 ** 32
 team_identifier = 0xEB902D2D  # Team 2
 
 # TODO: validate these values:
-SPLIT_BURNWIRE_DURATION = 1  # second
+SPLIT_BURNWIRE_DURATION = 5  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
 

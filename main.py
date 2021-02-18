@@ -26,13 +26,11 @@ from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
-# from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
-from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
@@ -77,7 +75,9 @@ class MainSatelliteThread(Thread):
     # TODO
 
     def init_sensors(self):
+        self.logger.info("Initializing sensors")
         self.gom = Gomspace()
+        self.gom.set_output("comms", 1)  # turn on LNA
         self.gyro = GyroSensor()
         self.adc = ADC()
         self.radio = Radio()
@@ -99,9 +99,9 @@ class MainSatelliteThread(Thread):
                 self.command_handler.unpack_command(newCommand) #Only for error checking
                 self.command_queue.put(bytes(newCommand))
             except:
-                print('Invalid Command Received')
+                self.logger.error('Invalid Command Received')
         else:
-            print('Not Received')
+            self.logger.info('Not Received')
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -151,7 +151,7 @@ class MainSatelliteThread(Thread):
     def run(self):
         try:
             while True:
-                sleep(5)  # TODO remove when flight modes execute real tasks
+                sleep(1)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
                 # self.update_state()
                 # self.read_command_queue_from_file()
@@ -159,6 +159,7 @@ class MainSatelliteThread(Thread):
                 self.run_mode()
         finally:
             # TODO handle failure gracefully
+            self.gom.all_off()
             if FOR_FLIGHT is True:
                 self.run()
 

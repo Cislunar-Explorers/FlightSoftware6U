@@ -124,4 +124,4 @@ class Camera:
                 lastIndex = f.index
                 lastTimestamp = f.timestamp
             camera.stop_recording()
-            return {filename: lastTimestamp}
+            return (filename, lastTimestamp)

@@ -48,6 +48,7 @@ FOR_FLIGHT = None
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
+        self.logger = get_log()
         self.last_transmit_time = datetime.today()
 
         self.command_queue = Queue()
@@ -65,7 +66,7 @@ class MainSatelliteThread(Thread):
         self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
-        self.logger = get_log()
+
         self.attach_sigint_handler()  # FIXME
 
         if os.path.isdir(self.log_dir):

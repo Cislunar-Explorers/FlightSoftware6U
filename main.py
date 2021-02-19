@@ -90,10 +90,14 @@ class MainSatelliteThread(Thread):
     def init_sensors(self):
         self.logger.info("Initializing sensors")
         self.gom = Gomspace()
-        self.gom.set_output("comms", 1)  # turn on LNA
+        sleep(1)
         self.gyro = GyroSensor()
         self.adc = ADC()
+        sleep(1)
+        self.logger.info("Initializing radio")
         self.radio = Radio()
+        self.logger.info("Done initializing sensors")
+        # self.gom.set_output("comms", 1)  # turns on LNA
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
 

@@ -96,7 +96,6 @@ class MainSatelliteThread(Thread):
         logger.info("Taking a raw observation...")
         self.camera.rawObservation("restart_cam_test.mjpeg")
 
-
     def handle_sigint(self, signal, frame):
         self.shutdown()
         sys.exit(0)

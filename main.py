@@ -93,6 +93,9 @@ class MainSatelliteThread(Thread):
         logger.info("Selecting a camera...")
         # select camera before reboot so that we will detect cam on reboot
         self.mux.selectCamera(random.choice([1, 2, 3]))
+        logger.info("Taking a raw observation...")
+        self.camera.rawObservation("restart_cam_test.mjpeg")
+
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

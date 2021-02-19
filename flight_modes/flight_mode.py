@@ -55,8 +55,6 @@ from utils.struct import (
     unpack_str
 )
 
-
-
 # Necessary modes to implement
 # BootUp, Restart, Normal, Eclipse, Safety, Propulsion,
 # Attitude Adjustment, Transmitting, OpNav (image processing)

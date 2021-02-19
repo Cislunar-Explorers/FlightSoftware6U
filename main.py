@@ -108,7 +108,7 @@ class MainSatelliteThread(Thread):
         newCommand = self.radio.receiveSignal()
         if newCommand is not None:
             try:
-                self.command_handler.unpack_command(newCommand) #Only for error checking
+                self.command_handler.unpack_command(newCommand)  # Only for error checking
                 self.command_queue.put(bytes(newCommand))
             except:
                 self.logger.error('Invalid Command Received')
@@ -173,16 +173,7 @@ class MainSatelliteThread(Thread):
                 sleep(1)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
                 # self.update_state()
-                newCommand = self.radio.receiveSignal()
-                if newCommand is not None:
-                    try:
-                        self.command_handler.unpack_command(newCommand) #Only for error checking
-                        self.command_queue.put(bytes(newCommand))
-                    except:
-                        print('Invalid Command Received')
-                else:
-                    print('Not Received')
-                #self.read_command_queue_from_file()
+                # self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:

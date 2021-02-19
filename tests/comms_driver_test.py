@@ -9,7 +9,7 @@ dh = DownlinkHandler()
 groundstation = Radio()
 
 #Send command to get gyro/mag/acc data
-gmaCommand = ch.pack_command(8,7)
+gmaCommand = ch.pack_command(1,8,7)
 groundstation.transmit(gmaCommand)
 print('GMA Command Transmitted')
 

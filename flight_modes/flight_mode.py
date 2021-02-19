@@ -3,7 +3,7 @@ from time import sleep
 from datetime import datetime
 import os
 
-from utils.constants import (  # noqa F401
+"""from utils.constants import (  # noqa F401
     LOW_CRACKING_PRESSURE,
     EXIT_LOW_BATTERY_MODE_THRESHOLD,
     HIGH_CRACKING_PRESSURE,
@@ -25,26 +25,16 @@ from utils.constants import (  # noqa F401
     STATE,
     INTERVAL,
     DELAY,
-    NUM_BLOCKS
-)
+    NUM_BLOCKS,
+    RTC_TIME
+)"""
+
+from utils.constants import *
 
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
-from utils.struct import (
-    pack_bool,
-    pack_unsigned_short,
-    pack_double,
-    pack_unsigned_int,
-    pack_str,
-    unpack_bool,
-    unpack_unsigned_short,
-    unpack_double,
-    unpack_unsigned_int,
-    unpack_str,
-    pack_float,
-    unpack_float
-)
+from utils.struct import packer_dict
 
 from communications.command_definitions import CommandDefinitions
 
@@ -153,7 +143,7 @@ class FlightMode:
 
                 bogus = False
                 try:
-                    command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
+                    mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
                     logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
@@ -233,16 +223,18 @@ class TestMode(PauseBackgroundMode):
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
                       TestCommandEnum.ADCTest.value: ([], 0),
-                      TestCommandEnum.CommsDriver.value:([],0)}
+                      TestCommandEnum.CommsDriver.value:([],0),
+                      TestCommandEnum.PiShutdown.value:([],0)
+                      }
 
     command_arg_unpackers = {}
 
     downlink_codecs = {TestCommandEnum.CommsDriver.value:(['gyro1','gyro2','gyro3'],12)}
 
     downlink_arg_unpackers = {
-        'gyro1': (pack_float, unpack_float),
-        'gyro2': (pack_float, unpack_float),
-        'gyro3': (pack_float, unpack_float),
+        'gyro1': packer_dict['float'],
+        'gyro2': packer_dict['float'],
+        'gyro3': packer_dict['float'],
         }
 
 
@@ -329,21 +321,50 @@ class NormalMode(FlightMode):
     }
 
     command_arg_unpackers = {
-        AZIMUTH: (pack_double, unpack_double),
-        ELEVATION: (pack_double, unpack_double),
-        ACCELERATE: (pack_bool, unpack_bool),
-        NAME: (pack_str, unpack_str),
+        AZIMUTH: packer_dict['double'],
+        ELEVATION: packer_dict['double'],
+        ACCELERATE: packer_dict['bool'],
+        NAME: packer_dict['string'],
         # TODO: can't use strings in current configuration b/c command_codecs requires a fixed number of bytes
-        VALUE: (pack_double, unpack_double),
-        STATE: (pack_bool, unpack_bool),
-        INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
-        DELAY: (pack_unsigned_short, unpack_unsigned_short),
-        NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short)
+        VALUE: packer_dict['double'],
+        STATE: packer_dict['bool'],
+        INTERVAL: packer_dict['int'],
+        DELAY: packer_dict['short'],
+        NUM_BLOCKS: packer_dict['short']
     }
 
-    downlink_codecs = {}
+    downlink_codecs = {
+        NormalCommandEnum.BasicTelem.value: ([RTC_TIME,ATT_1,ATT_2,ATT_3,ATT_4,
+        HK_TEMP_1,HK_TEMP_2,HK_TEMP_3,HK_TEMP_4,GYRO_TEMP,THERMOCOUPLER_TEMP, CURRENT_IN_1,
+        CURRENT_IN_2,CURRENT_IN_3,VBOOST_1,VBOOST_2,VBOOST_3,SYSTEM_CURRENT,BATTERY_VOLTAGE,
+        PROP_TANK_PRESSURE], 216)
+    }
 
-    downlink_arg_unpackers = {}
+    downlink_arg_unpackers = {
+        RTC_TIME: packer_dict['double'],
+        POSITION_X: packer_dict['double'],
+        POSITION_Y: packer_dict['double'],
+        POSITION_Z: packer_dict['double'],
+        ATT_1: packer_dict['float'],
+        ATT_2: packer_dict['float'],
+        ATT_3: packer_dict['float'],
+        ATT_4: packer_dict['float'],
+        HK_TEMP_1: packer_dict['float'],
+        HK_TEMP_2: packer_dict['float'],
+        HK_TEMP_3: packer_dict['float'],
+        HK_TEMP_4: packer_dict['float'],
+        GYRO_TEMP: packer_dict['float'],
+        THERMOCOUPLER_TEMP: packer_dict['float'],
+        CURRENT_IN_1: packer_dict['float'],
+        CURRENT_IN_2: packer_dict['float'],
+        CURRENT_IN_3: packer_dict['float'],
+        VBOOST_1: packer_dict['float'],
+        VBOOST_2: packer_dict['float'],
+        VBOOST_3: packer_dict['float'],
+        SYSTEM_CURRENT: packer_dict['float'],
+        BATTERY_VOLTAGE: packer_dict['float'],
+        PROP_TANK_PRESSURE: packer_dict['float']
+    }
 
     def __init__(self, parent):
         super().__init__(parent)

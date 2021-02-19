@@ -17,7 +17,12 @@ from utils.constants import (
     LOW_CRACKING_PRESSURE,
     HIGH_CRACKING_PRESSURE,
     IDEAL_CRACKING_PRESSURE,
-    FMEnum
+    FMEnum,
+    MAC,
+    DOWNLINK_BUFFER_TIME,
+    TELEM_DOWNLINK_TIME,
+    FMEnum,
+    NormalCommandEnum
 )  # TODO: optimize this import
 
 import utils.constants
@@ -34,6 +39,7 @@ from flight_modes.flight_mode_factory import build_flight_mode
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
+from telemetry.telemetry import Telemetry
 
 
 FOR_FLIGHT = None
@@ -42,13 +48,19 @@ FOR_FLIGHT = None
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
-        
+        self.last_transmit_time = datetime.today()
+
         self.command_queue = Queue()
+        self.downlink_queue = Queue()
         self.commands_to_execute = []
+        self.downlinks_to_execute = []
+        self.telemetry = Telemetry(self)
         self.burn_queue = Queue()
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
+        self.command_counter = 0
+        self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
         self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
@@ -130,6 +142,13 @@ class MainSatelliteThread(Thread):
             self.commands_to_execute.append(self.command_queue.get())
         self.flight_mode.execute_commands()
 
+    def execute_downlinks(self):
+        self.enter_transmit_safe_mode()
+        while not self.downlink_queue.empty():
+            self.radio.transmit(self.downlink_queue.get())
+            self.downlink_counter += 1
+            sleep(DOWNLINK_BUFFER_TIME)
+
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         # check if file exists
         if os.path.isfile(filename):
@@ -154,7 +173,16 @@ class MainSatelliteThread(Thread):
                 sleep(1)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
                 # self.update_state()
-                # self.read_command_queue_from_file()
+                newCommand = self.radio.receiveSignal()
+                if newCommand is not None:
+                    try:
+                        self.command_handler.unpack_command(newCommand) #Only for error checking
+                        self.command_queue.put(bytes(newCommand))
+                    except:
+                        print('Invalid Command Received')
+                else:
+                    print('Not Received')
+                #self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:

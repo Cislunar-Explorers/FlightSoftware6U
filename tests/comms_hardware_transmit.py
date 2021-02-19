@@ -1,13 +1,15 @@
-from communications .satellite_radio import Radio
-import time
+from communications.satellite_radio import Radio
+from communications.commands import CommandHandler
 
-#Test constants
-radio = Radio() # Do not modify
-signal = b'\x08\x07\x00\x00' #Pattern you want to send
-interval = 3 # Number of seconds between each transmission
-repetitions = 10 # Number of total times you want to transmit the pattern
+ch = CommandHandler()
+radio = Radio()  # Do not modify
+num_sent = 0
 
-for i in range(1, repetitions+1):
-    radio.transmit(signal)
-    print('Transmitted: ' + str(i))
-    time.sleep(interval)
+proceed = 1
+while proceed > 0:
+    signal = ch.pack_command(num_sent, 8, 5)
+    proceed = int(input("Do you want to send this signal?: " + str(signal.hex())))
+    if proceed > 0:
+        radio.transmit(signal)
+        # radio.transmit(bytearray(signal))
+        num_sent += 1

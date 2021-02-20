@@ -47,9 +47,9 @@ class AAMode(FlightMode):
         super().__init__(parent)
         # Since we can't control the magnitude of our spin vector, we only car about the two angles (in spherical
         # coordinates) that define the direction of our spin vector, which saves us some up/downlink space.
-        self.current_spin_vec = tuple() * 3
-        self.target_spin_vec = tuple() * 3
-        self.latest_opnav_quat = tuple() * 4
+        self.current_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.target_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.latest_opnav_quat: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
         self.latest_opnav_time = float()
 
     def get_data(self):
@@ -86,15 +86,13 @@ class AAMode(FlightMode):
 
         return latest_orientation_estimate, latest_gyro_data
 
-    def calculate_firing_orientation(self, cur_quat: quaternion, desired_spin_axis: Tuple[float, float]):
+    def calculate_firing_orientation(self, cur_quat: quaternion, desired_spin_vector: Tuple[float, float, float]):
         """Calculates the optimal vector along which to fire the ACS thruster, cur_spin_axis is a numpy quaternion of
         the current orientation and desired_spin_axis is a  2-tuple of floats of the angles of elevation (from the
         equator) and azimuth of the spin vectors in a spherical ECI frame. This function returns the optimal pointing
         location of the cislunar explorer while firing """
 
         cur_spin_vector = cur_quat.vec
-        desired_spin_vector = spherical_to_cartesian(*desired_spin_axis)
-
         firing_vector_ECI = np.cross(cur_spin_vector, desired_spin_vector)
 
         gyroz = self.parent.tlm.gyr.rot(2)
@@ -116,11 +114,13 @@ class AAMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
+        return NO_FM_CHANGE
+
     # TODO implement actual maneuver execution
     # check if exit condition has completed
     def run_mode(self):
 
-        outdated_opnav = (time() - self.parent.tlm.opn.acq_time) // 60 > 15  # if opnav was run >15 minutes ago, rerun
+        outdated_opnav = (time() - self.parent.tlm.opn.acq_time) // 60 >= 15  # if opnav was run >15 minutes ago, rerun
         unfinished_opnav = not self.parent.tlm.opn.currently_running()
 
         if outdated_opnav or unfinished_opnav:
@@ -128,12 +128,20 @@ class AAMode(FlightMode):
             self.parent.FMQueue.put(FMEnum.AttitudeAdjustment.value)
         else:
             # check if current orientation is within 10 degrees of desired orientation
-            orientation_estimate, gyro_data = self.dead_reckoning()
+            self.get_data()
+            current = np.array(self.current_spin_vec)
+            target = np.array(self.target_spin_vec)
 
-            self.calculate_firing_orientation(orientation_estimate[1], self.parent.reorientation_queue.get())
-            # calculate firing times based off firing orientation and "current" orientation
-            # stop garbage collection and other threads
-            # send pulse commands
-            # resume garbage collection and other threads
-            # run opnav again
+            angle = np.arccos(np.dot(current, target))
 
+            if angle < 10 * DEG2RAD:
+                self.task_completed = True
+            else:
+                orientation_estimate, gyro_data = self.dead_reckoning()
+
+                self.calculate_firing_orientation(orientation_estimate[1], self.target_spin_vec)
+                # calculate firing times based off firing orientation and "current" orientation
+                # stop garbage collection and other threads
+                # send pulse commands
+                # resume garbage collection and other threads
+                # run opnav again

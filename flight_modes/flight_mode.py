@@ -97,18 +97,25 @@ class FlightMode:
         # Please do so!
         flight_mode_id = self.flight_mode_id
 
-        if self.task_completed and not self.parent.FMQueue.empty():
-            return self.parent.FMQueue.get()
+        if self.task_completed:
+            if self.parent.FMQueue.empty():
+                return FMEnum.Normal.value
+            else:
+                return self.parent.FMQueue.get()
 
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
-        # go to maneuver mode
+        # go to maneuver mode if there is something in the maneuver queue
         if not self.parent.maneuver_queue.empty():
             # TODO assign the time command to this var
             self.burn_time = None
-            if self.burn_time - time() < (60.0*BURN_WAIT_TIME):
+            if self.burn_time - time() < (60.0 * BURN_WAIT_TIME):
                 return FMEnum.Maneuver.value
+
+        # go to reorientation mode if there is something in the reorientation queue
+        if not self.parent.reorientation_queue.empty():
+            return FMEnum.AttitudeAdjustment.value
 
         # if battery is low, go to low battery mode
         batt_percent = self.parent.tlm.gom.percent
@@ -122,7 +129,7 @@ class FlightMode:
                 and not self.parent.constants.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
-        # go to comms mode
+        # go to comms mode if there is something in the comms queue
         if not self.parent.communications_queue.empty():
             return FMEnum.CommsMode.value
 

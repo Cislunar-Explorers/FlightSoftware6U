@@ -189,7 +189,8 @@ class MainSatelliteThread(Thread):
 
     def shutdown(self):
         print("Shutting down...")
-        self.comms.stop()
+        # self.comms.stop()
+        self.gom.all_off()
 
 
 if __name__ == "__main__":

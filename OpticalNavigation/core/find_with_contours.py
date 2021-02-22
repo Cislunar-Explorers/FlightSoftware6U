@@ -1,3 +1,4 @@
+from OpticalNavigation.core.const import ImageDetectionCircles
 from dataclasses import dataclass
 import cv2
 import numpy as np

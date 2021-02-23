@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import ImageDetectionCircles
+from const import ImageDetectionCircles
 from dataclasses import dataclass
 import cv2
 import numpy as np
@@ -77,7 +77,8 @@ def sph_to_st(s):
 def st_to_sph(x, y):
     """Convert stereographic coordinates to spherical coordinates."""
     norm = x ** 2 + y ** 2 + 4
-    return 4 * x / norm, 4 * y / norm, (norm - 8) / norm
+    # Added a negative sign to z value below
+    return 4 * x / norm, 4 * y / norm, -(norm - 8) / norm
 
 
 @dataclass
@@ -221,11 +222,17 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
 # Threshold based primarily on blue and green channels
 # Percent of white pixels determines if earth detected
 def measureEarth(img):
-    lowThresh = cv2.inRange(img, (75, 50, 0), (255, 230, 100))
+    lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
+    cv2.imshow("low", lowThresh)
     percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
-    print(percentWhite)
-    if percentWhite >= 0.23:
-        highThresh = cv2.inRange(img, (75, 50, 0), (255, 230, 180))
+    print("Earth white%", percentWhite)
+    if percentWhite >= 0.20:
+        highThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
+        highThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
+        highThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
+        highThresh = highThreshRed + highThreshGreen + highThreshBlue
+        # highthresh = cv2.mean(img, img > 70)
+        # highThresh = cv2.inRange(img, (5, 5, 0), (255, 255, 255))
         cv2.imshow("Earth thresh", highThresh)
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
@@ -242,8 +249,9 @@ def measureEarth(img):
 # Measure white pixels
 def measureSun(img):
     highThresh = cv2.inRange(img, (230, 230, 230), (255, 255, 255))
+    cv2.imshow("Sun thresh", highThresh)
     percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
-    print(percentWhite)
+    # print("Sun white%", percentWhite)
     if percentWhite >= 0.23:
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
@@ -257,18 +265,20 @@ def measureSun(img):
 
 
 def measureMoon(img):
-    thresh = cv2.inRange(img, (50, 50, 50), (255, 255, 255))
+    thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
     cv2.imshow("Moon thresh", thresh)
+    # percentWhite = cv2.countNonZero(thresh) / (thresh.shape[0] * thresh.shape[1])
+    # print("Moon white%", percentWhite)
+    # if percentWhite >= 0.23:
     contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
-    if contours is not None:
+    if len(contours) is not 0:
         c = contours[0]
         xy, (major, minor), ang = cv2.minAreaRect(c)
         r = major / 2
         # TODO: Shift center based on aspect ratio, center of "mass"
         return xy, r
-    else:
-        return None
+    return None
 
 
 def find(src):
@@ -281,6 +291,8 @@ def find(src):
     dt = 18.904e-6
     rot = CameraRotation(u, -omega * dt)
 
+    result = ImageDetectionCircles()
+
     # img = cv2.imread('sun1.jpg')
     img = cv2.imread(src)
     imgCopy = img.copy()
@@ -289,15 +301,24 @@ def find(src):
     img = cv2.GaussianBlur(img, (5, 5), 0, dst=img)
 
     # Extract and threshold blue channel (least sensitive)
-    thresh = 64  # 245
-    bw = cv2.threshold(img[:, :, 0], thresh, 255, cv2.THRESH_BINARY)[1]
-    # cv2.imshow("Blue channel threshold", bw)
 
-    contours = cv2.findContours(bw, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    bwThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
+    bwThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
+    bwThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
+    bw = bwThreshRed + bwThreshGreen + bwThreshBlue
+
+    # thresh = 64 # 245
+    # bw = cv2.threshold(img[:,:,0], thresh, 255, cv2.THRESH_BINARY)[1]
+    cv2.imshow("Blue channel threshold", bw)
+
+    contours = cv2.findContours(bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
+    if len(contours) is 0:
+        return result
 
+    print("Contour size", len(contours))
     cv2.drawContours(imgCopy, contours, -1, (0, 255, 0), 3)
     cv2.imshow("Contours", imgCopy)
 
@@ -309,6 +330,7 @@ def find(src):
     x, y, w, h = cv2.boundingRect(c)
 
     full_contour = cv2.rectangle(imgCopy, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    cv2.imshow("full_contour", full_contour)
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)
     # print(x, y, w, h)
     box = BoundingBox(x, y, w, h)
@@ -318,18 +340,20 @@ def find(src):
     # Gets the next largest body that doesn't overlap with first body
     c2 = None
     x2, y2, w2, h2 = 0, 0, 0, 0
+    out2 = None
     for con in contours:
         area = cv2.contourArea(con)
-        if area >= 200:  # TODO: Placeholder
+        if area >= 100:  # TODO: Placeholder
             x2, y2, w2, h2 = cv2.boundingRect(con)
             # Checks for rectangle overlap
             if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y + h > y:
                 c2 = con
                 break
-    print(x2, y2, w2, h2)
+    # print(x2, y2, w2, h2)
 
+    # if w2 is not 0 and h2 is not 0:
     full_contour2 = cv2.rectangle(imgCopy, (x2, y2), (x2 + w2, y2 + h2), (0, 255, 0), 2)
-    cv2.imshow("full_contour", full_contour)
+    cv2.imshow("full_contour2", full_contour2)
     x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
     # print(x, y, w, h)
     box2 = BoundingBox(x2, y2, w2, h2)
@@ -340,9 +364,9 @@ def find(src):
     sun = None
     earth = None
     moon = None
-    result = ImageDetectionCircles()
+
     if "Low" in src:
-        for f in [out, out2]:
+        for f in [out]:
             sun = measureSun(f)
             if sun is not None:
                 (sX, sY), sR = sun
@@ -356,10 +380,14 @@ def find(src):
 
     else:
         for f in [out, out2]:
+            if cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
+                continue
             earth = measureEarth(f)
             if earth is not None:
                 (eX, eY), eR = earth
+                print("bbst.x0 + eX, bbst.y0 + eY", bbst.x0 + eX, bbst.y0 + eY)
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
+                print("eXst, eYst", eXst, eYst)
                 eRho2 = eXst ** 2 + eYst ** 2
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
@@ -370,7 +398,9 @@ def find(src):
                 moon = measureMoon(f)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
+                    # print("bbst2.m0 + eX, bbst2.y0 + mY", bbst2.x0 + mX, bbst2.y0 + mY)
+                    mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)
+                    print("mXst,meYst", mXst, mYst)
                     mRho2 = mXst ** 2 + mYst ** 2
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
@@ -378,8 +408,8 @@ def find(src):
                     print(mSx, mSy, mSz, mDia)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
 
-    print("Result")
-    print(result)
+    print("Result earth, moon, sun")
+    print(result.get_earth_detection(), result.get_moon_detection(), result.get_sun_detection())
     cv2.waitKey(0)
     return result
 

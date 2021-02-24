@@ -2,7 +2,7 @@
 
 """
 Python interface to NEMO (Netron Experiment in Moon Orbit). Intended for use on Raspberry Pi.
-(c) 2020-2021 Los Alamos National Laboratory v1.8
+(c) 2020-2021 Los Alamos National Laboratory v2.0
 """
 
 import logging
@@ -16,7 +16,172 @@ import busio
 import RPi.GPIO as GPIO
 
 
-class Nemo:
+class I2CDevice:
+    """
+    Simple class to represent I2C devices.
+    """
+
+    def __init__(self, dev_addr=0x13, log=True):
+        """Class constructor"""
+        self._bus = busio.I2C(board.SCL, board.SDA)
+        self._dev_addr = dev_addr
+
+        # setup logging
+        if log:
+            log_dir = os.path.join('.', 'logs')
+            Path(log_dir).mkdir(parents=True, exist_ok=True)
+
+            log_fname = os.path.join(
+                log_dir,
+                datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S_nemo.log'))
+
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s %(levelname)s %(name)s %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S',
+                handlers=[logging.FileHandler(log_fname)])
+
+            self._log = logging.getLogger(__name__)
+        else:
+            self._log  = None
+
+    def _read_register(self, reg_address, size):
+        """Read registers from device"""
+        values = bytearray(size)
+        while not self._bus.try_lock():
+            pass
+        self._bus.writeto_then_readfrom(self._dev_addr, bytes([reg_address]), values)
+        self._bus.unlock()
+        if self._log is not None:
+            self._log.info(f'_read_register(0x{reg_address:02X}, {size}): {values}')
+        return list(values)
+
+    def _write_register(self, reg_address, values):
+        """Read registers to device"""
+        if self._log is not None:
+            self._log.info(f'_write_register(0x{reg_address:02X}, {values})')
+        while not self._bus.try_lock():
+            pass
+        self._bus.writeto(self._dev_addr, bytes([reg_address] + values))
+        self._bus.unlock()
+
+
+class Domino(I2CDevice):
+    """
+    Class to abstract common functions for both Domino detectors.
+    """
+
+    # Important values and conversions
+    DET_TEMP_TO_C       = (1.0 / 0x0100)
+    BIAS_TO_V           = (2.5 / 0xFF)
+    THRESHOLD_TO_V      = (0.5 / 0xFF)
+
+    DET_MFG_SN_DICT = {
+        0x00000163DAFF: '00581',
+        0x00000163D712: '00745',
+        0x00000163F373: '01678',
+        0x00000163EE67: '01854',
+        0x00000163F300: '01867',
+        0x00000163DB47: '01896',
+        0x00000163DD67: '01898',
+        0x00000164B257: '02478',
+        0x00000163D9E4: '02653',
+        0x00000163D5D6: 'A201',
+    }
+
+    def __init__(self, dev_addr, reg_sn, reg_temp, reg_bias, reg_threshold, reg_bin_0, log=True):
+        I2CDevice.__init__(self, dev_addr, log=log)
+        self._reg_sn = reg_sn
+        self._reg_temp = reg_temp
+        self._reg_bias = reg_bias
+        self._reg_threshold = reg_threshold
+        self._reg_bin_0 = reg_bin_0
+
+    def _det_mfg_sn(self, det_sn):
+        """Converts a detector array serial into the manufacture inscribed serial number.
+        Returns None if unknown"""
+
+        sn = int.from_bytes(det_sn, byteorder='big')
+
+        if sn in self.DET_MFG_SN_DICT.keys():
+            return self.DET_MFG_SN_DICT[sn]
+
+        return None
+
+    @property
+    def sn(self):
+        """Domino Detector Serial Number"""
+        return self._read_register(self._reg_sn, 6)
+
+    @property
+    def mfg_sn(self):
+        """Detector manufacture inscribed serial number.
+        Returns None if unknown"""
+        return self._det_mfg_sn(self.sn)
+
+    @property
+    def temp_int16(self):
+        """Domino Detector temperature as INT16"""
+        vals = bytearray(self._read_register(self._reg_temp, 2))
+        return int.from_bytes(vals, byteorder='little', signed=True)
+
+    @property
+    def temp_c(self):
+        """Domino Detector temperature in degrees Celsius"""
+        return self.DET_TEMP_TO_C * self.temp_int16
+
+    @property
+    def bias_uint8(self):
+        """Domino Detector bias as raw uint8"""
+        return self._read_register(self._reg_bias, 1)[0]
+
+    @bias_uint8.setter
+    def bias_uint8(self, bias):
+        val = int(bias)
+        val = max(val, 0x00)
+        val = min(val, 0xFF)
+        self._write_register(self._reg_bias, [val])
+
+    @property
+    def bias_v(self):
+        """Domino bias in volts"""
+        return self.BIAS_TO_V * self.bias_uint8
+
+    @bias_v.setter
+    def bias_v(self, bias):
+        self.bias_uint8 = int(bias / self.BIAS_TO_V)
+
+    @property
+    def threshold_uint8(self):
+        """Domino threshold as raw uint8"""
+        return self._read_register(self._reg_threshold, 1)[0]
+
+    @threshold_uint8.setter
+    def threshold_uint8(self, threshold):
+        val = int(threshold)
+        val = max(val, 0x00)
+        val = min(val, 0xFF)
+        self._write_register(self._reg_threshold, [val])
+
+    @property
+    def threshold_v(self):
+        """Domino threshold in volts"""
+        return self.THRESHOLD_TO_V * self.threshold_uint8
+
+    @threshold_v.setter
+    def threshold_v(self, threshold):
+        self.self.threshold_uint8 = int(threshold / self.THRESHOLD_TO_V)
+
+    @property
+    def bins(self):
+        """Get histogram bins for detector.
+        Returns a list of bins from smallest width to largest."""
+        bins = self._read_register(self._reg_bin_0, 32)
+        bins += self._read_register(self._reg_bin_0 + 32, 32)
+        return bins
+
+
+class Nemo(I2CDevice):
     """
     Interface to NEMO microcontroller register map.
     """
@@ -94,9 +259,6 @@ class Nemo:
     # Important values and conversions
     REBOOT_KEY          = 0x81
 
-    BIAS_TO_V           = (2.5 / 0xFF)
-    THRESHOLD_TO_V      = (0.5 / 0xFF)
-
     ASSEMBLY_NAME_DICT = {
         0: 'ETU1',
         1: 'ETU2',
@@ -116,50 +278,26 @@ class Nemo:
         15: '',
     }
 
-    DET_MFG_SN_DICT = {
-        0x00000163DAFF: 581,
-        0x00000163D712: 745,
-        0x00000163F373: 1678,
-        0x00000163EE67: 1854,
-        0x00000163F300: 1867,
-        0x00000163DB47: 1896,
-        0x00000163DD67: 1898,
-    }
-
     ASSEMBLY_DET_DICT = {
-        'ETU1': {'det0_mfg_sn': 1854, 'det1_mfg_sn': 1678},
-        'FU1': {'det0_mfg_sn': 1867, 'det1_mfg_sn': 1898},
-        'FU2': {'det0_mfg_sn': 581, 'det1_mfg_sn': 745},
+        'ETU1': {'det0_mfg_sn': '01854', 'det1_mfg_sn': '01678'},
+        'FU1': {'det0_mfg_sn': '01867', 'det1_mfg_sn': '01898'},
+        'FU2': {'det0_mfg_sn': '00581', 'det1_mfg_sn': '00745'},
     }
 
     def __init__(self, dev_addr=0x13, reset_gpio_ch=5, log=True):
-        # setup I2C bus
-        self._bus = busio.I2C(board.SCL, board.SDA)
-        self._dev_addr = dev_addr
+        I2CDevice.__init__(self, dev_addr, log=log)
         self._reset_gpio_ch = reset_gpio_ch
+
+        # setup detectors
+        self.det0 = Domino(self._dev_addr, self.REG_D0_SN0, self.REG_D0_TEMP_L, self.REG_D0_BIAS,
+                           self.REG_D0_THRESHOLD, self.REG_D0_BIN_0, log=log)
+
+        self.det1 = Domino(self._dev_addr, self.REG_D1_SN0, self.REG_D1_TEMP_L, self.REG_D1_BIAS,
+                           self.REG_D1_THRESHOLD, self.REG_D0_BIN_0, log=log)
 
         # setup reset line GPIO
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self._reset_gpio_ch, GPIO.OUT, initial=GPIO.HIGH)
-
-        # setup logging
-        if log:
-            log_dir = os.path.join('.', 'logs')
-            Path(log_dir).mkdir(parents=True, exist_ok=True)
-
-            log_fname = os.path.join(
-                log_dir,
-                datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S_nemo.log'))
-
-            logging.basicConfig(
-                level=logging.INFO,
-                format='%(asctime)s %(levelname)s %(name)s %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S',
-                handlers=[logging.FileHandler(log_fname)])
-
-            self._log = logging.getLogger(__name__)
-        else:
-            self._log  = None
 
         self._cached_config = None
         self.get_config()
@@ -181,13 +319,20 @@ class Nemo:
             self._cached_config = dict(
                 firmware_revision=self._firmware_revision,
                 serial_number=self._serial_number,
-                det0_sn=self._det0_sn,
-                det1_sn=self._det1_sn,
+                assembly_name=self._assembly_name,
+                det0_sn=self.det0.sn,
+                det0_mfg_sn=self.det0.mfg_sn,
+                det1_sn=self.det1.sn,
+                det1_mfg_sn=self.det1.mfg_sn,
                 det_enable=self._det_enable,
-                det0_bias=self._det0_bias,
-                det1_bias=self._det1_bias,
-                det0_threshold=self._det0_threshold,
-                det1_threshold=self._det1_threshold,
+                det0_bias=self.det0.bias_v,
+                det0_bias_uint8=self.det0.bias_uint8,
+                det1_bias=self.det1.bias_v,
+                det1_bias_uint8=self.det1.bias_uint8,
+                det0_threshold=self.det0.threshold_v,
+                det0_threshold_uint8=self.det0.threshold_uint8,
+                det1_threshold=self.det1.threshold_v,
+                det1_threshold_uint8=self.det1.threshold_uint8,
                 rate_width_min=self._rate_width_min,
                 rate_width_max=self._rate_width_max,
                 bin_width=self._bin_width,
@@ -217,19 +362,19 @@ class Nemo:
 
             elif key == 'det0_bias':
                 self._cached_config[key] = value
-                self._det0_bias = value
+                self.det0.bias_v = value
 
             elif key == 'det1_bias':
                 self._cached_config[key] = value
-                self._det1_bias = value
+                self.det1.bias_v = value
 
             elif key == 'det0_threshold':
                 self._cached_config[key] = value
-                self._det0_threshold = value
+                self.det0.threshold_v = value
 
             elif key == 'det1_threshold':
                 self._cached_config[key] = value
-                self._det1_threshold = value
+                self.det1.threshold_v = value
 
             elif key == 'rate_width_min':
                 self._cached_config[key] = value
@@ -260,7 +405,7 @@ class Nemo:
                 self._veto_threshold_max = value
 
             else:
-                self._log.warn(f'set_config(): invalid key "{key}"')
+                self._log.warning(f'set_config(): invalid key "{key}"')
                 print(f'set_config(): invalid key "{key}"')
 
         self._log.info(f'set_config(): self._cached_config: {self._cached_config}')
@@ -270,8 +415,8 @@ class Nemo:
 
         return(dict(
             clock=self._clock,
-            det0_temp=self._det0_temp,
-            det1_temp=self._det1_temp,
+            det0_temp=self.det0.temp_c,
+            det1_temp=self.det1.temp_c,
             last_reset=self._last_reset,
             rate_available=self._rate_available
         ))
@@ -284,16 +429,16 @@ class Nemo:
         self._cached_config = None
 
     @property
-    def assembly_name(self):
+    def _assembly_name(self):
         """Assembly name string, based on serial_number.
         Returns '' if unknown"""
 
-        sn = self.get_config()['serial_number']
+        sn = self._serial_number
 
         if sn in self.ASSEMBLY_NAME_DICT.keys():
             return self.ASSEMBLY_NAME_DICT[sn]
-        else:
-            return ''
+
+        return ''
 
     def self_test(self, verbose=False):
         """Performs a basic self-test of the hardware.
@@ -305,7 +450,7 @@ class Nemo:
 
         test_results['firmware_revision_valid'] = (self.get_config()['firmware_revision'] >= 3)
 
-        test_results['assembly_name_valid'] = (self.assembly_name != '')
+        test_results['assembly_name_valid'] = (self._assembly_name != '')
 
         test_results['det_en_valid'] = (self.get_config()['det_enable'] == [True, True])
 
@@ -313,34 +458,35 @@ class Nemo:
         clock_start = self.get_soh()['clock']
         sleep(5)
         clock_stop = self.get_soh()['clock']
-        test_results['clock_inc_valid'] = (abs(clock_stop - clock_start - 5.0) <= 1.0)
+        clock_delta = (0x10000 + clock_stop - clock_start) % 0x10000
+        test_results['clock_inc_valid'] = (abs(clock_delta - 5.0) <= 1.0)
 
         # det0_sn_valid
-        if self.assembly_name in self.ASSEMBLY_DET_DICT.keys():
+        if self._assembly_name in self.ASSEMBLY_DET_DICT.keys():
             test_results['det0_sn_valid'] = (
-                self.det0_mfg_sn == self.ASSEMBLY_DET_DICT[self.assembly_name]['det0_mfg_sn'])
-        elif self.det0_mfg_sn in self.DET_MFG_SN_DICT.keys():
+                self.det0.mfg_sn == self.ASSEMBLY_DET_DICT[self._assembly_name]['det0_mfg_sn'])
+        elif self.det0.mfg_sn in Domino.DET_MFG_SN_DICT.keys():
             test_results['det0_sn_valid'] = True
         else:
             test_results['det0_sn_valid'] = False
 
         # det1_sn_valid
-        if self.assembly_name in self.ASSEMBLY_DET_DICT.keys():
+        if self._assembly_name in self.ASSEMBLY_DET_DICT.keys():
             test_results['det1_sn_valid'] = (
-                self.det1_mfg_sn == self.ASSEMBLY_DET_DICT[self.assembly_name]['det1_mfg_sn'])
-        elif self.det1_mfg_sn in self.DET_MFG_SN_DICT.keys():
+                self.det1.mfg_sn == self.ASSEMBLY_DET_DICT[self._assembly_name]['det1_mfg_sn'])
+        elif self.det1.mfg_sn in Domino.DET_MFG_SN_DICT.keys():
             test_results['det1_sn_valid'] = True
         else:
             test_results['det1_sn_valid'] = False
 
         # det0_temp_valid
-        if self.det0_mfg_sn is not None:
+        if self.det0.mfg_sn is not None:
             test_results['det0_temp_valid'] = (self.get_soh()['det0_temp'] != 0.0)
         else:
             test_results['det0_temp_valid'] = False
 
         # det1_temp_valid
-        if self.det1_mfg_sn is not None:
+        if self.det1.mfg_sn is not None:
             test_results['det1_temp_valid'] = (self.get_soh()['det1_temp'] != 0.0)
         else:
             test_results['det1_temp_valid'] = False
@@ -371,49 +517,8 @@ class Nemo:
         # return results
         if verbose:
             return test_results
-        else:
-            return False not in test_results.values()
 
-    def _det_mfg_sn(self, det_sn):
-        """Converts a detector array serial into the manufacture inscribed serial number.
-        Returns None if unknown"""
-
-        sn = int.from_bytes(det_sn, byteorder='big')
-
-        if sn in self.DET_MFG_SN_DICT.keys():
-            return self.DET_MFG_SN_DICT[sn]
-        else:
-            return None
-
-    @property
-    def det0_mfg_sn(self):
-        """Detector 0 manufacture inscribed serial number.
-        Returns None if unknown"""
-        return self._det_mfg_sn(self._det0_sn)
-
-    @property
-    def det1_mfg_sn(self):
-        """Detector 1 manufacture inscribed serial number.
-        Returns None if unknown"""
-        return self._det_mfg_sn(self._det1_sn)
-
-    def _read_register(self, reg_address, size):
-        values = bytearray(size)
-        while not self._bus.try_lock():
-            pass
-        self._bus.writeto_then_readfrom(self._dev_addr, bytes([reg_address]), values)
-        self._bus.unlock()
-        if self._log is not None:
-            self._log.info(f'_read_register(0x{reg_address:02X}, {size}): {values}')
-        return list(values)
-
-    def _write_register(self, reg_address, values):
-        if self._log is not None:
-            self._log.info(f'_write_register(0x{reg_address:02X}, {values})')
-        while not self._bus.try_lock():
-            pass
-        self._bus.writeto(self._dev_addr, bytes([reg_address] + values))
-        self._bus.unlock()
+        return False not in test_results.values()
 
     @property
     def _firmware_revision(self):
@@ -425,16 +530,6 @@ class Nemo:
         """Unique serial number for NEMO assembly.
         Comes from serial number programming resistors on NEMO PCB."""
         return self._read_register(self.REG_NEMO_SN, 1)[0]
-
-    @property
-    def _det0_sn(self):
-        """Domino Detector 0 Serial Number"""
-        return self._read_register(self.REG_D0_SN0, 6)
-
-    @property
-    def _det1_sn(self):
-        """Domino Detector 1 Serial Number"""
-        return self._read_register(self.REG_D1_SN0, 6)
 
     @property
     def _last_reset(self):
@@ -466,70 +561,6 @@ class Nemo:
         Starts at 0 at power up or after reset. Rolls over after 0xFFFF."""
         vals = self._read_register(self.REG_CLOCK_L, 2)
         return vals[0] + (vals[1] << 8)
-
-    @property
-    def _det0_temp(self):
-        """Domino Detector 0 temperature in degrees Celsius"""
-        vals = bytearray(self._read_register(self.REG_D0_TEMP_L, 2))
-        return int.from_bytes(vals, byteorder='little', signed=True) / 256.0
-
-    @property
-    def _det1_temp(self):
-        """Domino Detector 1 temperature in degrees Celsius"""
-        vals = bytearray(self._read_register(self.REG_D1_TEMP_L, 2))
-        return int.from_bytes(vals, byteorder='little', signed=True) / 256.0
-
-    @property
-    def _det0_bias(self):
-        """Domino Detector 0 bias in volts"""
-        val = self._read_register(self.REG_D0_BIAS, 1)[0]
-        return self.BIAS_TO_V * val
-
-    @_det0_bias.setter
-    def _det0_bias(self, bias):
-        val = int(bias / self.BIAS_TO_V)
-        val = max(val, 0x00)
-        val = min(val, 0xFF)
-        self._write_register(self.REG_D0_BIAS, [val])
-
-    @property
-    def _det1_bias(self):
-        """Domino Detector 1 bias in volts"""
-        val = self._read_register(self.REG_D1_BIAS, 1)[0]
-        return self.BIAS_TO_V * val
-
-    @_det1_bias.setter
-    def _det1_bias(self, bias):
-        val = int(bias / self.BIAS_TO_V)
-        val = max(val, 0x00)
-        val = min(val, 0xFF)
-        self._write_register(self.REG_D1_BIAS, [val])
-
-    @property
-    def _det0_threshold(self):
-        """Domino Detector 0 threshold in volts"""
-        val = self._read_register(self.REG_D0_THRESHOLD, 1)[0]
-        return self.THRESHOLD_TO_V * val
-
-    @_det0_threshold.setter
-    def _det0_threshold(self, threshold):
-        val = int(threshold / self.THRESHOLD_TO_V)
-        val = max(val, 0x00)
-        val = min(val, 0xFF)
-        self._write_register(self.REG_D0_THRESHOLD, [val])
-
-    @property
-    def _det1_threshold(self):
-        """Domino Detector 1 threshold in volts"""
-        val = self._read_register(self.REG_D1_THRESHOLD, 1)[0]
-        return self.THRESHOLD_TO_V * val
-
-    @_det1_threshold.setter
-    def _det1_threshold(self, threshold):
-        val = int(threshold / self.THRESHOLD_TO_V)
-        val = max(val, 0x00)
-        val = min(val, 0xFF)
-        self._write_register(self.REG_D1_THRESHOLD, [val])
 
     @property
     def _rate_width_min(self):
@@ -666,22 +697,6 @@ class Nemo:
         return (det0_rates, det1_rates, veto_rates)
 
     @property
-    def det0_bins(self):
-        """Get histogram bins for detector 0.
-        Returns a list of bins from smallest width to largest."""
-        bins = self._read_register(self.REG_D0_BIN_0, 32)
-        bins += self._read_register(self.REG_D0_BIN_0 + 32, 32)
-        return bins
-
-    @property
-    def det1_bins(self):
-        """Get histogram bins for detector 1.
-        Returns a list of bins from smallest width to largest."""
-        bins = self._read_register(self.REG_D1_BIN_0, 32)
-        bins += self._read_register(self.REG_D1_BIN_0 + 32, 32)
-        return bins
-
-    @property
     def veto_bins(self):
         """Get histogram bins for veto counts.
         Returns a list of bins from smallest width to largest."""
@@ -694,19 +709,14 @@ if __name__ == "__main__":
     nemo = Nemo()
 
     def print_config():
+        """Get and print configuration"""
         print('Configuration:')
-        for k, v in nemo.get_config().items():
-            if k == 'serial_number':
-                print(f'  {k}: {v} ({nemo.assembly_name})')
-            elif k == 'det0_sn':
-                print(f'  {k}: {v} ({nemo.det0_mfg_sn})')
-            elif k == 'det1_sn':
-                print(f'  {k}: {v} ({nemo.det1_mfg_sn})')
-            else:
-                print(f'  {k}: {v}')
+        for key, val in nemo.get_config().items():
+            print(f'  {key}: {val}')
         print('')
 
     def print_self_test():
+        """Perform and print results of self_test"""
         print('Performing self test...')
         self_test_results = nemo.self_test(verbose=True)
 
@@ -715,8 +725,8 @@ if __name__ == "__main__":
         else:
             print('Self Test: (**Fail**)')
 
-        for k, v in self_test_results.items():
-            print(f'  {k}: {v}')
+        for key, val in self_test_results.items():
+            print(f'  {key}: {val}')
         print('')
 
     print_config()
@@ -728,8 +738,8 @@ if __name__ == "__main__":
         print('')
         print(f'Rate Data: {nemo.rate_data}')
         print('')
-        print(f'Detector 0 Historgram: {nemo.det0_bins}')
-        print(f'Detector 1 Historgram: {nemo.det1_bins}')
+        print(f'Detector 0 Historgram: {nemo.det0.bins}')
+        print(f'Detector 1 Historgram: {nemo.det1.bins}')
         print(f'Veto Historgram:       {nemo.veto_bins}')
         print('')
         nemo.reset_bins()

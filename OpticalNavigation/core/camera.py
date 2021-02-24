@@ -32,27 +32,27 @@ class CameraMux:
         if id == 1:
             with self.mux:
                 self.mux.write(bytes([0x04]))
-                self.sel_pin.value = False
-                self.oe1_pin.value = False
-                self.oe2_pin.value = True
+            self.sel_pin.value = False
+            self.oe1_pin.value = False
+            self.oe2_pin.value = True
         elif id == 2:
             with self.mux:
                 self.mux.write(bytes([0x05]))
-                self.sel_pin.value = True
-                self.oe1_pin.value = False
-                self.oe2_pin.value = True
+            self.sel_pin.value = True
+            self.oe1_pin.value = False
+            self.oe2_pin.value = True
         elif id == 3:
             with self.mux:
                 self.mux.write(bytes([0x06]))
-                self.sel_pin.value = False
-                self.oe1_pin.value = True
-                self.oe2_pin.value = False
+            self.sel_pin.value = False
+            self.oe1_pin.value = True
+            self.oe2_pin.value = False
         elif id == 4:
             with self.mux:
                 self.mux.write(bytes([0x07]))
-                self.sel_pin.value = True
-                self.oe1_pin.value = True
-                self.oe2_pin.value = False
+            self.sel_pin.value = True
+            self.oe1_pin.value = True
+            self.oe2_pin.value = False
         else:
             assert False
 

@@ -8,14 +8,14 @@ from flight_modes.flight_mode import (
     CommsMode,
 )
 
-from flight_modes.restart_reboot import RestartMode, BootUpMode
+#from flight_modes.restart_reboot import RestartMode, BootUpMode
 from .opnav_flightmode import OpNavMode
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException
 
 FLIGHT_MODE_DICT = {
-    FMEnum.Boot.value: BootUpMode,
-    FMEnum.Restart.value: RestartMode,
+    #FMEnum.Boot.value: BootUpMode,
+    #FMEnum.Restart.value: RestartMode,
     FMEnum.Normal.value: NormalMode,
     FMEnum.LowBatterySafety.value: LowBatterySafetyMode,
     FMEnum.Safety.value: SafeMode,

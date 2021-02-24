@@ -112,7 +112,8 @@ class CommandDefinitions:
             3: self.run_opnav,
             TestCommandEnum.ADCTest.value: self.adc_test,
             TestCommandEnum.SeparationTest.value: self.separation_test,
-            6: self.gom_outputs
+            6: self.gom_outputs,
+            7: self.comms_driver_test
         }
 
         self.comms_commands = {}
@@ -339,3 +340,13 @@ class CommandDefinitions:
             return result
         except TypeError:
             self.parent.logger.error(f"Incorrect arguments: {args} for method {method_name}")
+
+    def comms_driver_test(self):
+
+        gyro = self.parent.gyro.get_gyro()
+
+        fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value, 
+        TestCommandEnum.CommsDriver.value, gyro1 = gyro[0], gyro2 = gyro[1], gyro3=gyro[2])
+
+        time.sleep(5)
+        self.parent.radio.transmit(fx_data)

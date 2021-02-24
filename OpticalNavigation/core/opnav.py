@@ -19,6 +19,7 @@ import math
 from sqlalchemy import desc
 from sqlalchemy.orm import session
 from time import sleep
+import re
 
 """
 Entry point into OpNav. This method calls observe() and process().
@@ -152,12 +153,6 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
         filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", exposure=1)
         recordings.append(filename_timestamp1)
         recordings.append(filename_timestamp2)
-    #select_camera(id=1)
-    #record_video(exposure=0)
-    #select_camera(id=2)
-    #record_video(exposure=0)
-    #select_camera(id=3)
-    #record_video(exposure=0)
     # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
     frames0 = extract_frames(vid_dir=None, timestamp = recordings[0][1])
     frames1 = extract_frames(vid_dir=None, timestamp = recordings[1][1])
@@ -165,22 +160,13 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     frames3 = extract_frames(vid_dir=None, timestamp = recordings[3][1])
     frames4 = extract_frames(vid_dir=None, timestamp = recordings[4][1])
     frames5 = extract_frames(vid_dir=None, timestamp = recordings[5][1])
-    #frames = np.append(np.append(frames0, frames1, axis=0), frames2, axis=0)
     frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
-    #for f in range(frames.shape[0]):
-    for f in frames:
-        #frames[f, ...] = rect_to_stereo_proj(rolling_shutter(frames[f, ...]))
-        preprocess(f, f) # TODO: Determine which preprocess algorithm we are using / works
-    #Decide not to use circle_sameples, keep arrays separate
-    #circles_samples = np.zeros((frames.shape[0], 3, 4), dtype=np.float) # For each frame and body, record circle centers and sizes
-    #for f in range(frames.shape[0]):
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     for f in range(len(frames)):
-        #imageDetectionCircles = find(frames[f, ...])
         # TODO: add None check?
         imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
@@ -192,30 +178,30 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
         #    circles_samples[f, 1, ...] = moon_detection_array
         #if sun_detection_array is not None:
         #    circles_samples[f, 2, ...] = sun_detection_array
-    
-    ######
+
     # TODO: How to handle None results?
 
-    # best___Tuple is tuple of best distance and associated filename
+    # best___Tuple is tuple of file, distance and vector of best result
 
     # Find the distance to center
     earthCenterDistances = []
     for e in range(earthDetectionArray.shape[0]):
-        dist = math.sqrt(e[0] ** 2 + e[1] ** 2)
-        earthCenterDistances.append(dist)
+        if e is not None:
+            dist = math.sqrt(e[0]**2 + e[1]**2)
+            earthCenterDistances.append(dist)
     earthFileDistVec = list(zip(frames, earthCenterDistances, earthDetectionArray))
     bestEarthTuple = min(earthFileDistVec, key=lambda x:x[1])
 
     moonCenterDistances = []
     for m in range(moonDetectionArray.shape[0]):
-        dist = math.sqrt(m[0] ** 2 + m[1] ** 2)
+        dist = math.sqrt(m[0]**2 + m[1]**2)
         moonCenterDistances.append(dist)
     moonFileDistVec = list(zip(frames, moonCenterDistances, moonDetectionArray))
     bestMoonTuple = min(moonFileDistVec, key=lambda x: x[1])
 
     sunCenterDistances = []
     for s in range(sunDetectionArray.shape[0]):
-        dist = math.sqrt(s[0] ** 2 + s[1] ** 2)
+        dist = math.sqrt(s[0]**2 + s[1]**2)
         sunCenterDistances.append(dist)
     sunFileDistVec = list(zip(frames, sunCenterDistances, sunDetectionArray))
     bestSunTuple = min(sunFileDistVec, key=lambda x: x[1])
@@ -232,11 +218,12 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
 
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
         coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
-        if data[0] == 1:# is cam1 --> regex check
+        camNum = int(re.search("[cam](\d+)", data[0]).group(1))
+        if camNum== 1:
             coordArray = cam1Rotation.dot(coordArray)
-        elif data[0] == 2:# is cam2 --> regex check
+        elif camNum == 2:
             coordArray = cam2Rotation.dot(coordArray)
-        elif  data[0] == 3:# is cam3 --> regex check
+        elif camNum == 3:
             coordArray = cam3Rotation.dot(coordArray)
         data[2][0] = coordArray[0]
         data[2][1] = coordArray[1]

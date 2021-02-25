@@ -2,10 +2,10 @@ from quaternion.numpy_quaternion import quaternion
 import numpy as np
 from typing import Tuple
 from time import sleep, time
-from utils.constants import FMEnum, DEG2RAD, NO_FM_CHANGE, ACS_SPIKE_DURATION
+from utils.constants import FMEnum, DEG2RAD, NO_FM_CHANGE, ACS_SPIKE_DURATION, GOM_TIMING_FUDGE_FACTOR
 from flight_modes.flight_mode import PauseBackgroundMode
 from math import sin, cos
-
+import gc
 
 def quat_to_rotvec(q: Tuple[float, float, float, float]) -> Tuple[float, float, float]:
     """Converts a 4-tuple representation of a quaternion into a 3-tuple rotation vector."""
@@ -46,10 +46,11 @@ class AAMode(PauseBackgroundMode):
         super().__init__(parent)
         # Since we can't control the magnitude of our spin vector, we only car about the two angles (in spherical
         # coordinates) that define the direction of our spin vector, which saves us some up/downlink space.
-        self.current_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.target_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.latest_opnav_quat: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
-        self.latest_opnav_time = float()
+        # data for if we want to do autonomous attitude adjustment
+        # self.current_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+        # self.target_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+        # self.latest_opnav_quat: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+        # self.latest_opnav_time = float()
 
     def update_state(self) -> int:
         super_fm = super().update_state()
@@ -61,24 +62,48 @@ class AAMode(PauseBackgroundMode):
     # TODO implement actual maneuver execution
     # check if exit condition has completed
     def run_mode(self):
-        # get relevant info from attitude adjustment queue
-        while not self.parent.reorientation_queue.empty():
-            self.parent.reorientation_list.append(self.parent.reorientation_queue.get())
+        # double check to make sure that we actually have the info we need to reorient:
+        if not self.parent.reorientation_queue.empty() or self.parent.reorientation_list:
+            # get relevant info from attitude adjustment queue
+            while not self.parent.reorientation_queue.empty():
+                self.parent.reorientation_list.append(self.parent.reorientation_queue.get())
 
-        pulse_start, pulse_duration, pulse_num, pulse_dt = self.parent.reorientation_list[0]
+            pulse_start, pulse_duration, pulse_num, pulse_dt = self.parent.reorientation_list[0]
+            pulse_dt *= 1e-3  # convert from ms to seconds
 
-        time_between_pulses = pulse_dt - pulse_duration
+            relative_pulse_times = [x * pulse_dt for x in range(pulse_num)]
+            # https://www.geeksforgeeks.org/python-adding-k-to-each-element-in-a-list-of-integers/
+            absolute_pulse_times = [pulse_start + x for x in relative_pulse_times]
 
-        sleep(pulse_start - time())
+            # garbage collect one last time before timing critical applications start
+            gc.collect()
 
-        # pulse ACS according to timings
-        for i in range(pulse_num):
-            self.parent.gom.solenoid(ACS_SPIKE_DURATION, pulse_duration)
-            sleep(time_between_pulses)
+            if pulse_start - time() < 0.25:
+                # we missed the timing of the maneuver. Make a note and add relevant stuff to comms queue
+                self.missed_timing()
+            else:
+
+                sleep(max([(pulse_start - time()) - 2, 0]))
+
+                # pulse ACS according to timings
+                try:
+                    for pulse_time in absolute_pulse_times:
+                        sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
+                        self.parent.gom.solenoid(ACS_SPIKE_DURATION, pulse_duration)
+                except ValueError:
+                    self.missed_timing(pulse_time)
+
+            self.parent.reorientation_list.pop(0)
+        else:
+            self.parent.logger.warning("No data for reorientation pulses found")
 
         self.completed_task()
 
-    # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and 
+    def missed_timing(self, missed_pulse_timing):
+        self.parent.logger.error(f"Missed attitude adjustment maneuver at {missed_pulse_timing}")
+        # self.parent.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
+
+    # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and
     # it does all the math. However, due to our development timeline, we will have to fall back on calculaing exact 
     # timings on the ground, and then the satellite blindly follows these timings 
     def get_data(self):

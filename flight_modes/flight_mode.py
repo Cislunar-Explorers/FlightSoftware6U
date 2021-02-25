@@ -24,20 +24,16 @@ from utils.constants import (  # noqa F401
     BootCommandEnum,
     TestCommandEnum,
     ManeuverCommandEnum,
-    POSITION_X,
-    POSITION_Y,
-    POSITION_Z,
-    ACCELERATE,
-    NAME,
-    VALUE,
-    AZIMUTH,
-    ELEVATION,
+    POSITION_X, POSITION_Y, POSITION_Z, ACCELERATE,
+    NAME, VALUE,
+    AZIMUTH, ELEVATION,
     STATE,
     INTERVAL,
     DELAY,
     NO_FM_CHANGE,
     GLOWPLUG_DURATION,
-    BURN_WAIT_TIME
+    BURN_WAIT_TIME,
+    START, PULSE_NUM, PULSE_DT, PULSE_DURATION
 )
 
 from utils.log import get_log
@@ -255,10 +251,12 @@ class PauseBackgroundMode(FlightMode):
     def __enter__(self):
         super().__enter__()
         gc.disable()
+        # TODO pause nemo thread
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
+        # TODO resume nemo thread
         super().__exit__(exc_type, exc_val, exc_tb)
 
 
@@ -392,13 +390,13 @@ class NormalMode(FlightMode):
     command_codecs = {
         NormalCommandEnum.Switch.value: ([], 0),
         NormalCommandEnum.RunOpNav.value: ([], 0),
-        NormalCommandEnum.SetDesiredAttitude.value: (
-            [AZIMUTH, ELEVATION], 8),
+        NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
-        NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4)
+        NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
+        NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 10)
     }
 
     command_arg_unpackers = {
@@ -410,7 +408,11 @@ class NormalMode(FlightMode):
         VALUE: (pack_double, unpack_double),
         STATE: (pack_bool, unpack_bool),
         INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
-        DELAY: (pack_unsigned_short, unpack_unsigned_short)
+        DELAY: (pack_unsigned_short, unpack_unsigned_short),
+        START: (pack_float, unpack_float),
+        PULSE_DURATION: (pack_unsigned_short, unpack_unsigned_short),
+        PULSE_NUM: (pack_unsigned_short, unpack_unsigned_short),
+        PULSE_DT: (pack_unsigned_short, unpack_unsigned_short)
     }
 
     def __init__(self, parent):

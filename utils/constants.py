@@ -71,6 +71,11 @@ STATE = "state"
 INTERVAL = "interval"
 DELAY = "delay"
 
+START = "pulse_start"
+PULSE_DURATION = "pulse_duration"
+PULSE_NUM = "pulse_num"
+PULSE_DT = "pulse_dt"
+
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
 
@@ -84,7 +89,8 @@ MAX_GYRO_RATE = 250  # degrees/sec
 
 NO_FM_CHANGE = -1
 
-ACS_SPIKE_DURATION = 0.004  # seconds
+ACS_SPIKE_DURATION = 4  # milliseconds
+GOM_TIMING_FUDGE_FACTOR = 250  # milliseconds
 
 
 @unique
@@ -147,9 +153,7 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
-    WhenReorient = 13  # when we want to schedule a reorientation maneuver
-                       # 2 args, unix time stamp and spin axis vector (2 floats)
-    ScheduleReorientation = 14
+    ACSPulsing = 13
 
 
 

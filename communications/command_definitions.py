@@ -7,7 +7,8 @@ from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, AZIMUTH, ELEVATION
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, AZIMUTH, ELEVATION, START, PULSE_DT, PULSE_NUM, \
+    PULSE_DURATION
 from utils.exceptions import CommandArgException
 
 
@@ -28,6 +29,7 @@ class CommandDefinitions:
             NormalCommandEnum.Verification.value: self.verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
             NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
+            NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing
         }
 
         self.low_battery_commands = {
@@ -198,13 +200,13 @@ class CommandDefinitions:
         self.parent.reorientation_queue.put((theta, phi))
 
     def acs_pulse_timing(self, **kwargs):
-        pulse_start_time = kwargs['pulse_start']
-        pulse_duration = kwargs['pulse_duration']
-        pulse_num = kwargs['pulse_num']
-        pulse_dt = kwargs['pulse_dt']
+        pulse_start_time = kwargs[START]  # float, seconds
+        pulse_duration = kwargs[PULSE_DURATION]  # ushort, milliseconds
+        pulse_num = kwargs[PULSE_NUM]  # ushort, number
+        pulse_dt = kwargs[PULSE_DT]  # ushort, milliseconds
 
         try:
-            assert pulse_start_time > 0
+            assert pulse_start_time > time.time()
             assert pulse_duration > 0
             assert pulse_num >= 0
             assert pulse_dt >= 0

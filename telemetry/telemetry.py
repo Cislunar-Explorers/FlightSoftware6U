@@ -194,7 +194,7 @@ class Telemetry(SynchronousSensor):
             self.parent.logger.error("Gom HK not functioning properly")
             raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
 
-        if any(i < 0 for i in self.rpi.all()):
+        if any(i < 0 for i in self.rpi.all):
             self.parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
 

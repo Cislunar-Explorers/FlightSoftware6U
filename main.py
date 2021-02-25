@@ -104,8 +104,8 @@ class MainSatelliteThread(Thread):
     def attach_sigint_handler(self):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
-    # TODO (major: implement telemetry)
     def poll_inputs(self):
+        self.telemetry.poll()
         newCommand = self.radio.receiveSignal()
         if newCommand is not None:
             try:
@@ -179,9 +179,11 @@ class MainSatelliteThread(Thread):
                 self.run_mode()
         finally:
             # TODO handle failure gracefully
-            self.gom.all_off()
+            self.replace_flight_mode_by_id(FMEnum.Safety.value)
             if FOR_FLIGHT is True:
                 self.run()
+            else:
+                self.gom.all_off()  # turns off all gom outputs if we are testing and run into a software failure
 
     def shutdown(self):
         print("Shutting down...")

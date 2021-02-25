@@ -1,5 +1,6 @@
 # Unsuccessful attempt at changing boot config
-from power_controller import *
+from drivers.power.power_controller import *
+from drivers.power.power_structs import eps_config_t, displayConfig
 
 HITL_test = Power()
 
@@ -12,8 +13,8 @@ if confirm == "y":
     new_config = eps_config_t()
     new_config.ppt_mode = 2
     new_config.battheater_mode = 0
-    new_config.battheater_low = 0
-    new_config.battheater_high = 5
+    new_config.battheater_low = 5
+    new_config.battheater_high = 10
     new_config.output_normal_value = (0, 0, 0, 0, 0, 0, 0, 0)
     new_config.output_safe_value = (0, 0, 0, 0, 0, 0, 0, 0)
     new_config.output_initial_on_delay = (0, 0, 0, 0, 0, 0, 0, 0)

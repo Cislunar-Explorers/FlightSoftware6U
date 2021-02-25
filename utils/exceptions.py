@@ -13,6 +13,10 @@ class CommandException(CislunarException):
     """Raise when exception occurs during command handling"""
 
 
+class CommandArgException(CommandException):
+    """Raise when an argument to a command is weird"""
+
+
 class CommandPackingException(CommandException):
     """Raise when an exception occurs while packing a command"""
 

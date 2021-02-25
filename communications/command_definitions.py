@@ -8,6 +8,7 @@ import os
 import time
 from threading import Thread
 from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, AZIMUTH, ELEVATION
+from utils.exceptions import CommandArgException
 
 
 class CommandDefinitions:
@@ -196,6 +197,22 @@ class CommandDefinitions:
 
         self.parent.reorientation_queue.put((theta, phi))
 
+    def acs_pulse_timing(self, **kwargs):
+        pulse_start_time = kwargs['pulse_start']
+        pulse_duration = kwargs['pulse_duration']
+        pulse_num = kwargs['pulse_num']
+        pulse_dt = kwargs['pulse_dt']
+
+        try:
+            assert pulse_start_time > 0
+            assert pulse_duration > 0
+            assert pulse_num >= 0
+            assert pulse_dt >= 0
+        except AssertionError:
+            raise CommandArgException
+
+        self.parent.reorientation_queue.put((pulse_start_time, pulse_duration, pulse_num, pulse_dt))
+
     def gather_critical_telem(self):
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
         # downlinking them (think about a low-power scenario where the most important thing is our power in and out)
@@ -237,7 +254,7 @@ class CommandDefinitions:
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
     @staticmethod
-    def reboot_pi(self):
+    def reboot_pi():
         os.system("reboot")
         # add something here that adds to the restarts db that this restart was commanded
 

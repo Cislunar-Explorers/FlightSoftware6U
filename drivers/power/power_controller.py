@@ -14,7 +14,7 @@
 import pigpio
 import drivers.power.power_structs as ps
 import RPi.GPIO as GPIO
-import time
+from time import sleep
 from utils.constants import GomOutputs
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
 
@@ -361,19 +361,19 @@ class Power:
     # [delay] seconds.
     def pulse(self, output, duration, delay=0):
         ps.gom_logger.debug("Pulsing Gom output %i on for %i ms after a %i sec delay")
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output(output, 1, 0)
-        time.sleep(duration * 0.001)
+        sleep(duration * 0.001)
         self.set_single_output(output, 0, 0)
 
     # output must be off before the function is called
     # pulses high for duration amount of milliseconds
     def pulse_pi(self, output, duration, delay=0):
         ps.gom_logger.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
-        time.sleep(delay)
+        sleep(delay)
         ps.gom_logger.debug("Setting GPIO channel %i HIGH", output)
         GPIO.output(output, GPIO.HIGH)
-        time.sleep(duration * 0.001)
+        sleep(duration * 0.001)
         GPIO.output(output, GPIO.LOW)
         ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
 
@@ -397,14 +397,14 @@ class Power:
             hold,
             delay,
         )
-        time.sleep(delay)
+        sleep(delay)
         GPIO.output(
             OUT_PI_SOLENOID_ENABLE, GPIO.HIGH
         )  # Enable voltage boost for solenoid current spike
         self.set_single_output("solenoid", 1, 0)
-        time.sleep(0.001 * spike)
+        sleep(0.001 * spike)
         GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)  # Disable voltage boost
-        time.sleep(0.001 * hold)
+        sleep(0.001 * hold)
         # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
         self.set_single_output("solenoid", 0, 0)
 
@@ -415,9 +415,9 @@ class Power:
         ps.gom_logger.debug(
             "Pulsing glowplug for %i ms with a delay of %i sec", duration, delay
         )
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output("glowplug", 1, 0)
-        time.sleep(0.001 * duration)
+        sleep(0.001 * duration)
         self.set_single_output("glowplug", 0, 0)
 
     # turns both burnwires on for [duration] seconds, with a
@@ -428,11 +428,11 @@ class Power:
             duration,
             delay,
         )
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output("burnwire_1", 1, 0)
-        time.sleep(duration / 2)
+        sleep(duration / 2)
         self.displayAll()
-        time.sleep(duration / 2)
+        sleep(duration / 2)
         self.set_single_output("burnwire_1", 0, 0)
 
     # turns both burnwire 2 on for [duration] seconds, with a
@@ -444,11 +444,11 @@ class Power:
             delay,
         )
 
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output("burnwire_2", 1, 0)
-        time.sleep(duration / 2)
+        sleep(duration / 2)
         self.displayAll()
-        time.sleep(duration / 2)
+        sleep(duration / 2)
         self.set_single_output("burnwire_2", 0, 0)
 
     def comms(self, transmit):
@@ -480,7 +480,7 @@ class Power:
     # def nasa_demo(self):
     #     r = input("electrolyzers: ")
     #     self.electrolyzer(True)
-    #     time.sleep(float(r))
+    #     sleep(float(r))
     #     self.electrolyzer(False)
     #
     #     r = input("sparkplug:")
@@ -533,4 +533,4 @@ class Power:
     #             text_file.write(nxt)
     #         except:
     #             print("recovered from error")
-    #         time.sleep(t)
+    #         sleep(t)

@@ -78,7 +78,7 @@ class Gomspace:
         self.pc.displayAll()
 
     def solenoid(self, spike, hold, delay=0):
-        """Spikes the solenoid at 20V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
+        """Spikes the solenoid at 12V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
         self.pc.solenoid(spike, hold, delay)
 
     def glowplug(self, duration, delay=0):

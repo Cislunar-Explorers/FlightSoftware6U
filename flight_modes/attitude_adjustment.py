@@ -1,10 +1,9 @@
-from quaternion.quaternion_time_series import integrate_angular_velocity
 from quaternion.numpy_quaternion import quaternion
 import numpy as np
 from typing import Tuple
 from time import sleep, time
-from utils.constants import FMEnum, DEG2RAD, NO_FM_CHANGE
-from flight_modes.flight_mode import FlightMode
+from utils.constants import FMEnum, DEG2RAD, NO_FM_CHANGE, ACS_SPIKE_DURATION
+from flight_modes.flight_mode import PauseBackgroundMode
 from math import sin, cos
 
 
@@ -36,7 +35,7 @@ def C3(theta):
                      [0, 0, 1]])
 
 
-class AAMode(FlightMode):
+class AAMode(PauseBackgroundMode):
     """Attitude adjustment flight mode"""
 
     flight_mode_id = FMEnum.AttitudeAdjustment.value
@@ -52,6 +51,36 @@ class AAMode(FlightMode):
         self.latest_opnav_quat: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
         self.latest_opnav_time = float()
 
+    def update_state(self) -> int:
+        super_fm = super().update_state()
+        if super_fm != NO_FM_CHANGE:
+            return super_fm
+
+        return NO_FM_CHANGE
+
+    # TODO implement actual maneuver execution
+    # check if exit condition has completed
+    def run_mode(self):
+        # get relevant info from attitude adjustment queue
+        while not self.parent.reorientation_queue.empty():
+            self.parent.reorientation_list.append(self.parent.reorientation_queue.get())
+
+        pulse_start, pulse_duration, pulse_num, pulse_dt = self.parent.reorientation_list[0]
+
+        time_between_pulses = pulse_dt - pulse_duration
+
+        sleep(pulse_start - time())
+
+        # pulse ACS according to timings
+        for i in range(pulse_num):
+            self.parent.gom.solenoid(ACS_SPIKE_DURATION, pulse_duration)
+            sleep(time_between_pulses)
+
+        self.completed_task()
+
+    # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and 
+    # it does all the math. However, due to our development timeline, we will have to fall back on calculaing exact 
+    # timings on the ground, and then the satellite blindly follows these timings 
     def get_data(self):
         # get latest opnav location and gyro data
         self.parent.tlm.opn.poll()
@@ -70,6 +99,7 @@ class AAMode(FlightMode):
     def dead_reckoning(self) -> Tuple[Tuple[float, quaternion], Tuple[float, float, float]]:
         """Attempts to determine the current attitude of the spacecraft by integrating the gyros (prone to error) from
         the last opnav run. Returns a quaternion of the estimated attitude"""
+        from quaternion.quaternion_time_series import integrate_angular_velocity
 
         # query gyro data between self.latests_opnav_time and time.now(), needs to include
         gyro_data = np.array([tuple() * 4])
@@ -109,39 +139,30 @@ class AAMode(FlightMode):
 
         return np.matmul(DCM_ACS, firing_vector_ECI)
 
-    def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm
-
-        return NO_FM_CHANGE
-
-    # TODO implement actual maneuver execution
-    # check if exit condition has completed
-    def run_mode(self):
-
-        outdated_opnav = (time() - self.parent.tlm.opn.acq_time) // 60 >= 15  # if opnav was run >15 minutes ago, rerun
-        unfinished_opnav = not self.parent.tlm.opn.currently_running()
-
-        if outdated_opnav or unfinished_opnav:
-            self.parent.FMQueue.put(FMEnum.OpNav.value)
-            self.parent.FMQueue.put(FMEnum.AttitudeAdjustment.value)
-        else:
-            # check if current orientation is within 10 degrees of desired orientation
-            self.get_data()
-            current = np.array(self.current_spin_vec)
-            target = np.array(self.target_spin_vec)
-
-            angle = np.arccos(np.dot(current, target))
-
-            if angle < 10 * DEG2RAD:
-                self.task_completed = True
-            else:
-                orientation_estimate, gyro_data = self.dead_reckoning()
-
-                self.calculate_firing_orientation(orientation_estimate[1], self.target_spin_vec)
-                # calculate firing times based off firing orientation and "current" orientation
-                # stop garbage collection and other threads
-                # send pulse commands
-                # resume garbage collection and other threads
-                # run opnav again
+# If we want to do reorientations autonomously, the following would be an approach. However, we are probably not doing this
+# 
+# outdated_opnav = (time() - self.parent.tlm.opn.acq_time) // 60 >= 15  # if opnav was run >15 minutes ago, rerun
+# unfinished_opnav = not self.parent.tlm.opn.currently_running()
+# 
+# if outdated_opnav or unfinished_opnav:
+#     self.parent.FMQueue.put(FMEnum.OpNav.value)
+#     self.parent.FMQueue.put(FMEnum.AttitudeAdjustment.value)
+# else:
+#     # check if current orientation is within 10 degrees of desired orientation
+#     self.get_data()
+#     current = np.array(self.current_spin_vec)
+#     target = np.array(self.target_spin_vec)
+# 
+#     angle = np.arccos(np.dot(current, target))
+# 
+#     if angle < 10 * DEG2RAD:
+#         self.task_completed = True
+#     else:
+#         orientation_estimate, gyro_data = self.dead_reckoning()
+# 
+#         self.calculate_firing_orientation(orientation_estimate[1], self.target_spin_vec)
+#         # calculate firing times based off firing orientation and "current" orientation
+#         # stop garbage collection and other threads
+#         # send pulse commands
+#         # resume garbage collection and other threads
+#         # run opnav again

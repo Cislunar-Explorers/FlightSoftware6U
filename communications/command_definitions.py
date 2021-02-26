@@ -173,6 +173,7 @@ class CommandDefinitions:
         self.parent.logger.info(self.parent.adc.convert_temp_to_volt(self.parent.adc.convert_volt_to_temp(2.023)))
 
     def rtc_test(self):
+        self.parent.logger.info(f"Oscillator Disabled: {self.parent.rtc.ds3231.disable_oscillator}")
         self.parent.logger.info(f"RTC Temp: {self.parent.rtc.get_temp()}")
         self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)

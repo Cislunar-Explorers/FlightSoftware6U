@@ -20,14 +20,20 @@ class RTC:
         self.ds3231.datetime(gmtime(epoch_time))
 
     def get_temp(self):
-        return self.ds3231._temperature
+        return self.ds3231.temperature()
 
     def increment_rtc(self, dt: int):
         t0 = self.get_time()
         self.set_time(t0 + dt)
 
     def set_system_time_from_rtc(self):
-        clock_settime(1, self.get_time())
+        self.set_system_time(self.get_time())
+
+    def disable_oscillator(self):
+        self.ds3231.disable_oscillator = True
+
+    def enable_oscillator(self):
+        self.ds3231.disable_oscillator = False
 
     @staticmethod
     def set_system_time(time):

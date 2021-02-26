@@ -233,11 +233,12 @@ class TestMode(PauseBackgroundMode):
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
                       TestCommandEnum.ADCTest.value: ([], 0),
-                      TestCommandEnum.CommsDriver.value:([],0)}
+                      TestCommandEnum.CommsDriver.value: ([], 0),
+                      TestCommandEnum.RTCTest.value: ([], 0)}
 
     command_arg_unpackers = {}
 
-    downlink_codecs = {TestCommandEnum.CommsDriver.value:(['gyro1','gyro2','gyro3'],12)}
+    downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
 
     downlink_arg_unpackers = {
         'gyro1': (pack_float, unpack_float),

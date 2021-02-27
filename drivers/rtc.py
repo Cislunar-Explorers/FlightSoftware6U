@@ -6,8 +6,8 @@ from calendar import timegm
 
 
 class RTC:
-    """Interface class for the Adafruit DS3231. This clock only supports second-level accuracy, but is extremely
-    precise and will run whenever the gom has any power."""
+    """Interface class for the Adafruit DS3231. This clock only supports second-level precision, but is extremely
+    accurate and will run whenever the gom has any power."""
 
     def __init__(self):
         i2c = busio.I2C(board.SCL, board.SDA)
@@ -17,10 +17,10 @@ class RTC:
         return timegm(self.ds3231.datetime)
 
     def set_time(self, epoch_time: int):
-        self.ds3231.datetime(gmtime(epoch_time))
+        self.ds3231.datetime = gmtime(epoch_time)
 
     def get_temp(self):
-        return self.ds3231.temperature()
+        return self.ds3231.temperature
 
     def increment_rtc(self, dt: int):
         t0 = self.get_time()

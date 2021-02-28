@@ -209,11 +209,22 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     # We now have the best result for earth, moon and sun; time to rotate vectors
 
     # Camera to body rotation matrices
-    cam1Rotation = np.array([0, -1, 0, 0.5, 0, math.sqrt(3) / 2, -1 * math.sqrt(3) / 2, 0, 1 / 2]).reshape(3, 3)
-    #
-    cam2Rotation = np.array([0, -1, 0, 0.5, 0, -1 * math.sqrt(3) / 2, math.sqrt(3) / 2, 0, 1 / 2]).reshape(3, 3)
+    c1az = math.radians(90)
+    c1ay = math.radians(60)
+    c1rz = np.array([math.cos(c1az), -1 * math.sin(c1az), 0, math.sin(c1az), math.cos(c1az), 0, 0, 0, 1]).reshape(3,3)
+    c1ry = np.array([math.cos(c1ay), 0, math.sin(c1ay), 0, 1, 0, -1 * math.sin(c1ay), 0, math.cos(c1ay)]).reshape(3, 3)
+    cam1Rotation = np.matmul(c1rz, c1ry)
+
+    c2az = math.radians(90)
+    c2ay = math.radians(-60)
+    c2rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
+    c2ry = c1ry = np.array([math.cos(c2ay), 0, math.sin(c2ay), 0, 1, 0, -1 * math.sin(c2ay), 0, math.cos(c2ay)]).reshape(3, 3)
+    cam2Rotation = np.matmul(c2rz, c2ry)
+
     # Use 53 degrees for now (used in surrender dataset)
-    cam3Rotation = np.array([math.sqrt(2) / 2, math.sqrt(2) / 2, 0, math.sqrt(2) / 2, -1 * math.sqrt(2) / 2, 0, 0, 0, 1]).reshape(3, 3)
+    c3az = math.radians(53)
+    c3rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
+    cam3Rotation = c3rz
 
 
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:

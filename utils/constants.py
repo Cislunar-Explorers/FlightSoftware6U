@@ -193,6 +193,7 @@ class TestCommandEnum(IntEnum):
     SeparationTest = 5
     GomPin = 6
     CommsDriver = 7
+    RTCTest = 8
 
 
 @unique

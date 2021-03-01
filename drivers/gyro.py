@@ -7,9 +7,9 @@ import adafruit_fxas21002c
 
 class GyroSensor:  # TODO rename class and file to something more representative
     def __init__(self):
-        self.i2c = busio.I2C(board.SCL, board.SDA)
-        self.fxos = adafruit_fxos8700.FXOS8700(self.i2c)
-        self.fxas = adafruit_fxas21002c.FXAS21002C(self.i2c)
+        i2c = busio.I2C(board.SCL, board.SDA)
+        self.fxos = adafruit_fxos8700.FXOS8700(i2c)
+        self.fxas = adafruit_fxas21002c.FXAS21002C(i2c)
 
     def get_acceleration(self) -> tuple:
         return self.fxos.accelerometer  # m/s^2

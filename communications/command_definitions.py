@@ -113,7 +113,8 @@ class CommandDefinitions:
             TestCommandEnum.ADCTest.value: self.adc_test,
             TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs,
-            7: self.comms_driver_test
+            7: self.comms_driver_test,
+            TestCommandEnum.RTCTest.value: self.rtc_test
         }
 
         self.comms_commands = {}
@@ -170,6 +171,30 @@ class CommandDefinitions:
         self.parent.logger.info(self.parent.adc.convert_volt_to_temp(self.parent.adc.convert_temp_to_volt(25.6)))
         self.parent.logger.info("Conversion sanity check: 2.023 mV")
         self.parent.logger.info(self.parent.adc.convert_temp_to_volt(self.parent.adc.convert_volt_to_temp(2.023)))
+
+    def rtc_test(self):
+        self.parent.logger.info(f"Oscillator Disabled: {self.parent.rtc.ds3231.disable_oscillator}")
+        self.parent.logger.info(f"RTC Temp: {self.parent.rtc.get_temp()}")
+        self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
+        # time.sleep(1)
+        self.parent.logger.info(f"Setting RTC time to 1e9")
+        self.parent.rtc.set_time(1e9)
+        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
+        # time.sleep(1)
+        self.parent.logger.info(f"Incrementing RTC Time by 5555 seconds")
+        self.parent.rtc.increment_rtc(5555)
+        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
+        self.parent.logger.info(f"Disabling Oscillator, waiting 10 seconds")
+        self.parent.rtc.disable_oscillator()
+        time.sleep(10)
+        self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
+        self.parent.logger.info(f"Enabling Oscillator, waiting 10 seconds")
+        self.parent.rtc.enable_oscillator()
+        time.sleep(10)
+        self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
+        self.parent.logger.info("Disabling Oscillator")
+        self.parent.rtc.disable_oscillator()
+        self.parent.handle_sigint()
 
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)

@@ -110,7 +110,7 @@ class FlightMode:
                 return FMEnum.Maneuver.value
 
         # go to reorientation mode if there is something in the reorientation queue
-        if not self.parent.reorientation_queue.empty():
+        if (not self.parent.reorientation_queue.empty()) or self.parent.reorientation_list:
             return FMEnum.AttitudeAdjustment.value
 
         # if battery is low, go to low battery mode

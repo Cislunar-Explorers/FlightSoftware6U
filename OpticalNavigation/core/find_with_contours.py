@@ -1,4 +1,4 @@
-from const import ImageDetectionCircles
+from OpticalNavigation.core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
 from dataclasses import dataclass
 import cv2
 import numpy as np
@@ -6,6 +6,7 @@ from math import pi, radians, tan, floor, ceil
 import os
 import copy
 import argparse
+import re
 
 
 # from core.find_with_kmeans import getkmeans
@@ -281,10 +282,18 @@ def measureMoon(img):
     return None
 
 
-def find(src):
-    cam = Camera(radians(62.2), radians(48.8), 3280, 2464)
+def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
+    cam = Camera(radians(camera_params.hFov), radians(camera_params.vFov), 3280, 2464)
+    # u is in body frame here
     u = np.array([0, 1, 0], dtype=np.float32)
-    # TODO: rotate u to camera frame
+    camNum = int(re.search("[cam](\d+)", src).group(1))
+    if camNum == 1:
+        u = np.linalg.inv(camera_params.cam1Rotation).dot(u)
+    elif camNum == 2:
+        u = np.linalg.inv(camera_params.cam2Rotation).dot(u)
+    elif camNum == 3:
+        u = np.linalg.inv(camera_params.cam3Rotation).dot(u)
+    # u is now in the camera frame
     # omega = 78/60 * 2 * pi
     omega = -6
     # omega = 0

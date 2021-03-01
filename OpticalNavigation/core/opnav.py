@@ -134,7 +134,7 @@ def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()
 
     return OPNAV_EXIT_STATUS.SUCCESS
 
-def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
+def __observe(session: session.Session, gyro_count: int, camera_params:CameraParameters=CisLunarCameraParameters) -> OPNAV_EXIT_STATUS:
     """
     Begin OpNav acquisition and storing process. The system will record videos from
     the three cameras onboard and store them on the SD card as video format. It will
@@ -208,7 +208,7 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
 
     # We now have the best result for earth, moon and sun; time to rotate vectors
 
-    # Camera to body rotation matrices
+    ''''# Camera to body rotation matrices --> Moved to const.py
     c1az = math.radians(90)
     c1ay = math.radians(60)
     c1rz = np.array([math.cos(c1az), -1 * math.sin(c1az), 0, math.sin(c1az), math.cos(c1az), 0, 0, 0, 1]).reshape(3,3)
@@ -218,24 +218,24 @@ def __observe(session: session.Session, gyro_count: int) -> OPNAV_EXIT_STATUS:
     c2az = math.radians(90)
     c2ay = math.radians(-60)
     c2rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
-    c2ry = c1ry = np.array([math.cos(c2ay), 0, math.sin(c2ay), 0, 1, 0, -1 * math.sin(c2ay), 0, math.cos(c2ay)]).reshape(3, 3)
+    c2ry = np.array([math.cos(c2ay), 0, math.sin(c2ay), 0, 1, 0, -1 * math.sin(c2ay), 0, math.cos(c2ay)]).reshape(3, 3)
     cam2Rotation = np.matmul(c2rz, c2ry)
 
     # Use 53 degrees for now (used in surrender dataset)
     c3az = math.radians(53)
     c3rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
-    cam3Rotation = c3rz
+    cam3Rotation = c3rz'''
 
 
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
         coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
         camNum = int(re.search("[cam](\d+)", data[0]).group(1))
-        if camNum== 1:
-            coordArray = cam1Rotation.dot(coordArray)
+        if camNum == 1:
+            coordArray = (camera_params.cam1Rotation).dot(coordArray)
         elif camNum == 2:
-            coordArray = cam2Rotation.dot(coordArray)
+            coordArray = (camera_params.cam2Rotation).dot(coordArray)
         elif camNum == 3:
-            coordArray = cam3Rotation.dot(coordArray)
+            coordArray = (camera_params.cam3Rotation).dot(coordArray)
         data[2][0] = coordArray[0]
         data[2][1] = coordArray[1]
         data[2][2] = coordArray[2]

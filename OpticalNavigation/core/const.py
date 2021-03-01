@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from enum import Enum
+import math
 
 # The system will wait for the expected time elapsed 
 # for the spacecraft to face the angle that is 45 degrees
@@ -30,7 +31,8 @@ class CameraParameters:
     """
     def __init__(self, hFov:np.float, vFov:np.float, hPix:np.int, vPix:np.int, 
                 angular_separation_cam1_cam2:np.float, angular_separation_cam1_cam3:np.float, 
-                angular_separation_cam2_cam3:np.float) -> None:
+                angular_separation_cam2_cam3:np.float, c1az:np.float, c1ay:np.float, c2az:np.float, c2ay:np.float,
+                 c3az:np.float) -> None:
         # Camera constants
         # Horizontal/Vertical Field of View (Degrees), Pixel Dimensions
         self.hFov = hFov
@@ -42,7 +44,25 @@ class CameraParameters:
         self.dcam13 = -angular_separation_cam1_cam3
         self.dcam23 = -angular_separation_cam2_cam3
 
-CisLunarCameraParameters = CameraParameters(62.2, 48.8, 1685, 813, 60, -60, -120)
+        c1az = math.radians(c1az)
+        c1ay = math.radians(c1ay)
+        c2az = math.radians(c2az)
+        c2ay = math.radians(c2ay)
+        c3az = math.radians(c3az)
+
+        c1rz = np.array([math.cos(c1az), -1 * math.sin(c1az), 0, math.sin(c1az), math.cos(c1az), 0, 0, 0, 1]).reshape(3,3)
+        c1ry = np.array([math.cos(c1ay), 0, math.sin(c1ay), 0, 1, 0, -1 * math.sin(c1ay), 0, math.cos(c1ay)]).reshape(3,3)
+
+        c2rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
+        c2ry = np.array([math.cos(c2ay), 0, math.sin(c2ay), 0, 1, 0, -1 * math.sin(c2ay), 0, math.cos(c2ay)]).reshape(3, 3)
+
+        c3rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
+
+        self.cam1Rotation = np.matmul(c1rz, c1ry)
+        self.cam2Rotation = np.matmul(c2rz, c2ry)
+        self.cam3Rotation = c3rz
+
+CisLunarCameraParameters = CameraParameters(62.2, 48.8, 1685, 813, 60, -60, -120, 90, 60, 90, -60, 53)
 
 class CameraAcquisionDirectoryNotFound(Exception):
     def __init__(self, camLoc):

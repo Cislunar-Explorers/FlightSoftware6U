@@ -10,8 +10,6 @@ from utils.log import get_log
 import OpticalNavigation.core.camera as camera
 from communications.satellite_radio import Radio
 
-from dotenv import load_dotenv
-
 from utils.constants import (
     LOG_DIR,
     CISLUNAR_BASE_DIR,
@@ -85,11 +83,46 @@ class MainSatelliteThread(Thread):
     # TODO
 
     def _init_sensors(self):
-        self.gom = Gomspace()
-        self.gyro = GyroSensor()
-        self.adc = ADC(self.gyro)
-        self.radio = Radio()
-        self.rtc = RTC()
+        try:
+            self.gom = Gomspace()
+        except:
+            self.gom = None
+            logger.error("Gom initialization failed")
+        else:
+            logger.info("Gom initialized")
+
+        try:
+            self.gyro = GyroSensor()
+        except:
+            self.gyro = None
+            logger.error("Gyro initialization failed")
+        else:
+            logger.info("Gyro initialized")
+
+        try:
+            self.adc = ADC(self.gyro)
+        except:
+            self.adc = None
+            logger.error("ADC initalization failed")
+        else:
+            logger.info("ADC initialized")
+
+        try:
+            self.radio = Radio()
+        except:
+            self.radio = None
+            logger.error("Radio initialization failed")
+        else:
+            logger.info("Radio initialized")
+
+        try:
+            self.rtc = RTC()
+        except:
+            self.rtc = None
+            logger.error("RTC initialization failed")
+        else:
+            logger.info("RTC initialized")
+
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
 
@@ -167,7 +200,6 @@ class MainSatelliteThread(Thread):
             os.remove(filename)
 
     # Run the current flight mode
-    # TODO ensure comms thread halts during realtime ops
     def run_mode(self):
         with self.flight_mode:
             self.flight_mode.run_mode()
@@ -176,7 +208,7 @@ class MainSatelliteThread(Thread):
     def run(self):
         try:
             while True:
-                # sleep(5)  # TODO remove when flight modes execute real tasks
+                # sleep(5)
                 logger.info("flight mode: " + repr(self.flight_mode))
                 self.poll_inputs()
                 self.update_state()
@@ -190,12 +222,12 @@ class MainSatelliteThread(Thread):
                 self.run()
 
     def shutdown(self):
+        self.gom.all_off()
         print("Shutting down...")
         # self.comms.stop()
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
+    FOR_FLIGHT = False
     main = MainSatelliteThread()
     main.run()

@@ -29,12 +29,6 @@ class RTC:
     def set_system_time_from_rtc(self):
         self.set_system_time(self.get_time())
 
-    def disable_oscillator(self):
-        self.ds3231.disable_oscillator = True
-
-    def enable_oscillator(self):
-        self.ds3231.disable_oscillator = False
-
     @staticmethod
     def set_system_time(time):
-        clock_settime(1, float(time))
+        clock_settime(0, float(time))

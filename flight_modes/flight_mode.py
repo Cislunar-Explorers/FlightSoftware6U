@@ -34,6 +34,8 @@ from utils.constants import (  # noqa F401
     STATE,
     INTERVAL,
     DELAY,
+    NUM_BLOCKS,
+    DELAY,
     NO_FM_CHANGE,
     GLOWPLUG_DURATION,
     BURN_WAIT_TIME
@@ -52,7 +54,9 @@ from utils.struct import (
     unpack_unsigned_short,
     unpack_double,
     unpack_unsigned_int,
-    unpack_str
+    unpack_str,
+    pack_float,
+    unpack_float
 )
 
 # Necessary modes to implement
@@ -73,10 +77,14 @@ logger = get_log()
 class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
     command_codecs = {}
+    sensordata_codecs = {}
+    downlink_codecs = {}
 
     # Map argument names to (packer,unpacker) tuples
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
     command_arg_unpackers = {}
+    sensordata_arg_unpackers = {}
+    downlink_arg_unpackers = {}
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
@@ -263,9 +271,19 @@ class TestMode(PauseBackgroundMode):
         pass
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
-                      TestCommandEnum.ADCTest.value: ([], 0)}
+                      TestCommandEnum.ADCTest.value: ([], 0),
+                      TestCommandEnum.CommsDriver.value: ([], 0),
+                      TestCommandEnum.RTCTest.value: ([], 0)}
 
     command_arg_unpackers = {}
+
+    downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
+
+    downlink_arg_unpackers = {
+        'gyro1': (pack_float, unpack_float),
+        'gyro2': (pack_float, unpack_float),
+        'gyro3': (pack_float, unpack_float),
+        }
 
 
 class CommsMode(FlightMode):
@@ -339,7 +357,6 @@ class LowBatterySafetyMode(FlightMode):
 
 
 class ManeuverMode(PauseBackgroundMode):
-
     flight_mode_id = FMEnum.Maneuver.value
     command_codecs = {}
     command_arg_unpackers = {}
@@ -380,13 +397,13 @@ class NormalMode(FlightMode):
     command_codecs = {
         NormalCommandEnum.Switch.value: ([], 0),
         NormalCommandEnum.RunOpNav.value: ([], 0),
-        NormalCommandEnum.SetDesiredAttitude.value: (
-            [AZIMUTH, ELEVATION], 16),
+        NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 16),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
-        NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4)
+        NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
+        NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
     }
 
     command_arg_unpackers = {
@@ -398,8 +415,13 @@ class NormalMode(FlightMode):
         VALUE: (pack_double, unpack_double),
         STATE: (pack_bool, unpack_bool),
         INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
-        DELAY: (pack_unsigned_short, unpack_unsigned_short)
+        DELAY: (pack_unsigned_short, unpack_unsigned_short),
+        NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short)
     }
+
+    downlink_codecs = {}
+
+    downlink_arg_unpackers = {}
 
     def __init__(self, parent):
         super().__init__(parent)

@@ -7,6 +7,57 @@ from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, a, b, M, team_identifier
+
+
+def verification(**kwargs):
+    """CQC Comms Verification
+    For more info see https://cornell.app.box.com/file/766365097328
+    Assuming a data rate of 50 bits/second, 30 minutes of data transmission gives 78 data blocks"""
+    num_blocks = kwargs.get(NUM_BLOCKS)
+
+    data_block_sequence_num = 0
+    team_bytes = team_identifier.to_bytes(4, 'big')
+    data_transmission_sequence = bytes()
+
+    for x in range(num_blocks):
+        # header calculation:
+        sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
+        # get current time
+        timestamp = time.time()  # each block has its own timestamp
+        # extract seconds and milliseconds from timestamp:
+        seconds_int = int(timestamp)
+        seconds_bytes = seconds_int.to_bytes(4, 'big')
+        ms_bytes = int((timestamp - seconds_int) * (10 ** 6)).to_bytes(4, 'big')
+
+        # concatenate header
+        header = team_bytes + sequence_bytes + seconds_bytes + ms_bytes
+
+        operating_period_base_seed = team_identifier ^ seconds_int  # team identifier xor with timestamp seconds
+        block_seed = operating_period_base_seed ^ data_block_sequence_num  # xor previous with data block sequence num
+
+        prn_length = 128 // 4  # integer division
+        prn = [int()] * (prn_length + 1)  # preallocate memory for storing prn data
+        prn[0] = block_seed  # x0 is the block seed
+
+        for i in range(1, prn_length + 1):
+            # algorithm defined in sec 4.4.2 of CommsProc rev 4
+            xn = (a * prn[i - 1] + b) % 2 ** 32
+            # if the mod operator above causes issues, anding with 32-bit 2**32 should do the trick
+            prn[i] = xn
+
+        prn.pop(0)  # get rid of the first value in the PRN, x0 is not included in PRN
+
+        data_field = bytes()
+        for j in prn:
+            data_field += j.to_bytes(4, 'big')  # concatenate prn data into bytes
+
+        data_block = header + data_field
+
+        data_transmission_sequence += data_block  # concatenate data block into transmission sequence
+        data_block_sequence_num += 1
+
+    return data_transmission_sequence.hex()  # TODO instead of returning, add to comms queue
 from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, AZIMUTH, ELEVATION
 
 
@@ -26,7 +77,7 @@ class CommandDefinitions:
             NormalCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
             NormalCommandEnum.Verification.value: self.verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
-            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
+            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval
         }
 
         self.low_battery_commands = {
@@ -64,7 +115,9 @@ class CommandDefinitions:
             3: self.run_opnav,
             TestCommandEnum.ADCTest.value: self.adc_test,
             TestCommandEnum.SeparationTest.value: self.separation_test,
-            6: self.gom_outputs
+            6: self.gom_outputs,
+            7: self.comms_driver_test,
+            TestCommandEnum.RTCTest.value: self.rtc_test
         }
 
         self.comms_commands = {}
@@ -121,6 +174,30 @@ class CommandDefinitions:
         self.parent.logger.info(self.parent.adc.convert_volt_to_temp(self.parent.adc.convert_temp_to_volt(25.6)))
         self.parent.logger.info("Conversion sanity check: 2.023 mV")
         self.parent.logger.info(self.parent.adc.convert_temp_to_volt(self.parent.adc.convert_volt_to_temp(2.023)))
+
+    def rtc_test(self):
+        self.parent.logger.info(f"Oscillator Disabled: {self.parent.rtc.ds3231.disable_oscillator}")
+        self.parent.logger.info(f"RTC Temp: {self.parent.rtc.get_temp()}")
+        self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
+        # time.sleep(1)
+        self.parent.logger.info(f"Setting RTC time to 1e9")
+        self.parent.rtc.set_time(1e9)
+        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
+        # time.sleep(1)
+        self.parent.logger.info(f"Incrementing RTC Time by 5555 seconds")
+        self.parent.rtc.increment_rtc(5555)
+        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
+        self.parent.logger.info(f"Disabling Oscillator, waiting 10 seconds")
+        self.parent.rtc.disable_oscillator()
+        time.sleep(10)
+        self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
+        self.parent.logger.info(f"Enabling Oscillator, waiting 10 seconds")
+        self.parent.rtc.enable_oscillator()
+        time.sleep(10)
+        self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
+        self.parent.logger.info("Disabling Oscillator")
+        self.parent.rtc.disable_oscillator()
+        self.parent.handle_sigint()
 
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
@@ -291,3 +368,13 @@ class CommandDefinitions:
             return result
         except TypeError:
             self.parent.logger.error(f"Incorrect arguments: {args} for method {method_name}")
+
+    def comms_driver_test(self):
+
+        gyro = self.parent.gyro.get_gyro()
+
+        fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value,
+        TestCommandEnum.CommsDriver.value, gyro1 = gyro[0], gyro2 = gyro[1], gyro3=gyro[2])
+
+        time.sleep(5)
+        self.parent.radio.transmit(fx_data)

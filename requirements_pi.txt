@@ -14,3 +14,4 @@ uptime
 opencv-python-headless
 numpy-quaternion
 astropy
+adafruit-circuitpython-ds3231

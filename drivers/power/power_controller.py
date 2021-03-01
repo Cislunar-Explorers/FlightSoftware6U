@@ -452,16 +452,16 @@ class Power:
     # delay of [delay] seconds.
     def burnwire2(self, duration, delay=0):
         ps.gom_logger.info(
-            "Turning on burnwire 2 for %s seconds after a delay of %s sec",
+            "Turning on glowplug 2 for %s seconds after a delay of %s sec",
             duration,
             delay,
         )
 
         time.sleep(delay)
         self.set_single_output("burnwire_2", 1, 0)
-        time.sleep(duration / 2)
+        time.sleep(duration * 0.001 / 2)
         self.displayAll()
-        time.sleep(duration / 2)
+        time.sleep(duration * 0.001 / 2)
         self.set_single_output("burnwire_2", 0, 0)
 
     def comms(self, transmit):

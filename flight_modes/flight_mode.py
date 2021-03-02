@@ -146,23 +146,9 @@ class FlightMode:
         if time_diff.seconds * 60 > OPNAV_INTERVAL:
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
-        elif flight_mode_id == FMEnum.LowBatterySafety.value:
-            if (
-                self.gom.read_battery_percentage()
-                >= EXIT_LOW_BATTERY_MODE_THRESHOLD
-            ):
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
+        # TODO determine if I should delete this
         elif flight_mode_id == FMEnum.Safety.value:
             raise NotImplementedError  # TODO
-
-        elif flight_mode_id == FMEnum.Maneuver.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
-        elif flight_mode_id == FMEnum.OpNav.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
         elif flight_mode_id in no_transition_modes:
             pass

@@ -138,14 +138,12 @@ class MainSatelliteThread(Thread):
         # initialize the cameras, select a camera
 
         try:
-            logger.info("Creating camera mux...")
             self.mux = camera.CameraMux()
             self.camera = camera.Camera()
-            logger.info("Selecting a camera...")
-            # select camera before reboot so that we will detect cam on reboot
             self.mux.selectCamera(random.choice([1, 2, 3]))
-            logger.info("Taking a raw observation...")
-            self.camera.rawObservation("restart_cam_test.mjpeg")
+            # to test camera:
+            # logger.info("Taking a raw observation...")
+            # self.camera.rawObservation("restart_cam_test.mjpeg")
         except:
             self.mux = None
             self.camera = None
@@ -227,7 +225,7 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 # sleep(5)
-                logger.info("flight mode: " + repr(self.flight_mode))
+                logger.info("Flight mode: " + repr(self.flight_mode))
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()

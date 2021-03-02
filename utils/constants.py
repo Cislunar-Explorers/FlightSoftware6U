@@ -86,7 +86,7 @@ team_identifier = 0xEB902D2D  # Team 2
 SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
-BURN_WAIT_TIME = 15 # minutes
+BURN_WAIT_TIME = 15  # minutes
 
 MAX_GYRO_RATE = 250  # degrees/sec
 

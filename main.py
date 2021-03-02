@@ -56,11 +56,19 @@ class MainSatelliteThread(Thread):
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
         self.command_definitions = CommandDefinitions(self)
-        self._init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+
+        self.gom = None
+        self.gyro = None
+        self.adc = None
+        self.rtc = None
+        self.radio = None
+        self.mux = None
+        self.camera = None
+        self.init_sensors()
 
         # Telemetry
         self.tlm = Telemetry(self)
@@ -82,7 +90,7 @@ class MainSatelliteThread(Thread):
 
     # TODO
 
-    def _init_sensors(self):
+    def init_sensors(self):
         try:
             self.gom = Gomspace()
         except:
@@ -153,15 +161,16 @@ class MainSatelliteThread(Thread):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def poll_inputs(self):
-        newCommand = self.radio.receiveSignal()
-        if newCommand is not None:
-            try:
-                self.command_handler.unpack_command(newCommand) #Only for error checking
-                self.command_queue.put(bytes(newCommand))
-            except:
-                print('Invalid Command Received')
-        else:
-            print('Not Received')
+        if self.radio is not None:
+            newCommand = self.radio.receiveSignal()
+            if newCommand is not None:
+                try:
+                    self.command_handler.unpack_command(newCommand)  # Only for error checking
+                    self.command_queue.put(bytes(newCommand))
+                except:
+                    print('Invalid Command Received')
+            else:
+                print('Not Received')
         # self.tlm.poll()
         self.flight_mode.poll_inputs()
 

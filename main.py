@@ -101,6 +101,7 @@ class MainSatelliteThread(Thread):
 
         try:
             self.adc = ADC(self.gyro)
+            self.adc.read_temperature()
         except:
             self.adc = None
             logger.error("ADC initalization failed")
@@ -127,14 +128,22 @@ class MainSatelliteThread(Thread):
         # in pressure_sensor (to be made) can access burn queue"""
 
         # initialize the cameras, select a camera
-        logger.info("Creating camera mux...")
-        self.mux = camera.CameraMux()
-        self.camera = camera.Camera()
-        logger.info("Selecting a camera...")
-        # select camera before reboot so that we will detect cam on reboot
-        self.mux.selectCamera(random.choice([1, 2, 3]))
-        logger.info("Taking a raw observation...")
-        self.camera.rawObservation("restart_cam_test.mjpeg")
+
+        try:
+            logger.info("Creating camera mux...")
+            self.mux = camera.CameraMux()
+            self.camera = camera.Camera()
+            logger.info("Selecting a camera...")
+            # select camera before reboot so that we will detect cam on reboot
+            self.mux.selectCamera(random.choice([1, 2, 3]))
+            logger.info("Taking a raw observation...")
+            self.camera.rawObservation("restart_cam_test.mjpeg")
+        except:
+            self.mux = None
+            self.camera = None
+            logger.error("Camera initialization failed")
+        else:
+            logger.info("Cameras initialized")
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

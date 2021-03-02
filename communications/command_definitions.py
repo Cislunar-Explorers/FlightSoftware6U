@@ -20,7 +20,7 @@ class CommandDefinitions:
         self.normal_commands = {
             # TODO: use CommandEnums instead of hardcoded values for all commands below
             NormalCommandEnum.RunOpNav.value: self.run_opnav,
-            NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
+            # NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
             NormalCommandEnum.SetElectrolysis.value: self.electrolysis,
             NormalCommandEnum.SetParam.value: self.set_parameter,
             NormalCommandEnum.CritTelem.value: self.gather_critical_telem,
@@ -57,7 +57,7 @@ class CommandDefinitions:
 
         self.maneuver_commands = {
             1: self.run_opnav,
-            2: self.change_attitude,
+            # 2: self.change_attitude,
             9: self.burn}
 
         self.sensor_commands = {}
@@ -190,14 +190,14 @@ class CommandDefinitions:
         except AssertionError:
             self.parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
-    def change_attitude(self, **kwargs):
-        theta = kwargs.get(AZIMUTH)
-        phi = kwargs.get(ELEVATION)  # angle down from z-axis of ECI frame
-
-        assert 0 <= theta < 6.28318530718
-        assert 0 <= phi < 3.14159265359
-
-        self.parent.reorientation_queue.put((theta, phi))
+    # def change_attitude(self, **kwargs):
+    #     theta = kwargs.get(AZIMUTH)
+    #     phi = kwargs.get(ELEVATION)  # angle down from z-axis of ECI frame
+    #
+    #     assert 0 <= theta < 6.28318530718
+    #     assert 0 <= phi < 3.14159265359
+    #
+    #     self.parent.reorientation_queue.put((theta, phi))
 
     def acs_pulse_timing(self, **kwargs):
         pulse_start_time = kwargs[START]  # float, seconds

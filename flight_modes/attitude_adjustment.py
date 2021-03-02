@@ -81,7 +81,7 @@ class AAMode(PauseBackgroundMode):
 
             if pulse_start - time() < 0.25:
                 # we missed the timing of the maneuver. Make a note and add relevant stuff to comms queue
-                self.missed_timing()
+                self.missed_timing(pulse_start)
             else:
 
                 sleep(max([(pulse_start - time()) - 2, 0]))

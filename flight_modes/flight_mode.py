@@ -426,8 +426,6 @@ class NormalMode(FlightMode):
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and self.parent.constants.WANT_TO_ELECTROLYZE
 
-        # There's probably some super-optimized branchless way of implementing this logic, but oh well:
-
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
             self.parent.gom.set_electrolysis(False)

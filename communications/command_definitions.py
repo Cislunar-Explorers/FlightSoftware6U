@@ -1,5 +1,11 @@
-if False:
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
     from main import MainSatelliteThread
+# for an explanation of the above 4 lines of code, see
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+# It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
 
 from datetime import datetime
 from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum

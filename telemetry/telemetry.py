@@ -167,7 +167,7 @@ class Telemetry(SynchronousSensor):
         self.rtc = RtcSensor(parent)
         self.opn = OpNavSensor(parent)
 
-        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.opn, self.rtc]
+        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc]
 
         # initialize databases here if not init'd already
 

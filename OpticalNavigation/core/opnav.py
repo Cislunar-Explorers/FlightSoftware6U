@@ -186,22 +186,21 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # Find the distance to center
     earthCenterDistances = []
     for e in range(earthDetectionArray.shape[0]):
-        if e is not None:
-            dist = math.sqrt(e[0]**2 + e[1]**2)
+            dist = math.sqrt(earthDetectionArray[e, 0]**2 + earthDetectionArray[e, 1]**2)
             earthCenterDistances.append(dist)
     earthFileDistVec = list(zip(frames, earthCenterDistances, earthDetectionArray))
     bestEarthTuple = min(earthFileDistVec, key=lambda x:x[1])
 
     moonCenterDistances = []
     for m in range(moonDetectionArray.shape[0]):
-        dist = math.sqrt(m[0]**2 + m[1]**2)
+        dist = math.sqrt(moonDetectionArray[m, 0]**2 + moonDetectionArray[m, 1]**2)
         moonCenterDistances.append(dist)
     moonFileDistVec = list(zip(frames, moonCenterDistances, moonDetectionArray))
     bestMoonTuple = min(moonFileDistVec, key=lambda x: x[1])
 
     sunCenterDistances = []
     for s in range(sunDetectionArray.shape[0]):
-        dist = math.sqrt(s[0]**2 + s[1]**2)
+        dist = math.sqrt(sunDetectionArray[s, 0]**2 + sunDetectionArray[s, 1]**2)
         sunCenterDistances.append(dist)
     sunFileDistVec = list(zip(frames, sunCenterDistances, sunDetectionArray))
     bestSunTuple = min(sunFileDistVec, key=lambda x: x[1])

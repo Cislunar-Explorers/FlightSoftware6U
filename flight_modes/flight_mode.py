@@ -429,7 +429,7 @@ class NormalMode(FlightMode):
         START: (pack_float, unpack_float),
         PULSE_DURATION: (pack_unsigned_short, unpack_unsigned_short),
         PULSE_NUM: (pack_unsigned_short, unpack_unsigned_short),
-        PULSE_DT: (pack_unsigned_short, unpack_unsigned_short)
+        PULSE_DT: (pack_unsigned_short, unpack_unsigned_short),
         NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short)
     }
 

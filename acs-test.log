@@ -1,0 +1,341 @@
+2021-03-03 13:57:06,967 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01@\x01R\x01J\x1c \x00\x00\x00\x00\x00\x00\x00\r\x01\x1f\x00\x12\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\n\x00\x008;\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 13:57:06,991 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 13:57:06,999 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 13:57:07,007 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 13:57:07,017 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 13:57:07,032 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01@\x01R\x01J\x00\r\x1c\x16\x017\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 13:57:07,206 [DEBUG] [ax5043_manager.py:22] Transitioning from Autoranging to Idle
+2021-03-03 13:57:07,235 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 13:57:07,243 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 13:57:07,251 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 13:57:08,637 [INFO] [main.py:128] Changed to FM#4
+2021-03-03 14:02:43,116 [INFO] [main.py:47] Initializing...
+2021-03-03 14:02:43,152 [DEBUG] [power_controller.py:95] Initializing Power object with bus 1, device address 2, and flags 0
+2021-03-03 14:02:43,343 [DEBUG] [power_controller.py:198] Setting outputs to 0
+2021-03-03 14:02:43,362 [DEBUG] [power_controller.py:121] Writing to register 9 with byte list [0]
+2021-03-03 14:02:44,985 [INFO] [ax5043_manager.py:105] Initializing
+2021-03-03 14:02:45,184 [INFO] [ax5043_manager.py:109] POST passed
+2021-03-03 14:02:45,863 [INFO] [main.py:96] Creating camera mux...
+2021-03-03 14:02:46,546 [INFO] [main.py:99] Selecting a camera...
+2021-03-03 14:02:46,608 [INFO] [restart_reboot.py:64] Restarting...
+2021-03-03 14:02:46,621 [INFO] [restart_reboot.py:65] Creating DB session...
+2021-03-03 14:02:47,461 [DEBUG] [restart_reboot.py:70] Logging to DB...
+2021-03-03 14:02:48,357 [INFO] [restart_reboot.py:80] Logging to DB complete...
+2021-03-03 14:02:53,588 [INFO] [main.py:179] flight mode: <flight_modes.restart_reboot.RestartMode object at 0xb42789b0>
+2021-03-03 14:02:53,603 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:02:53,610 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:02:53,621 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:02:53,628 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:02:53,636 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:02:53,646 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:02:53,674 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01@\x01R\x01J\x1c\r\x00\x00\x00\x00\x00\x00\x00\r\x017\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x06\x00\x006\xf1\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:02:53,688 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:02:53,696 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:02:53,704 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:02:53,714 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:02:53,743 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01@\x01R\x01J\x00\r\x1c\r\x017\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:02:54,740 [DEBUG] [ax5043_manager.py:22] Transitioning from Initializing to Autoranging
+2021-03-03 14:02:54,749 [INFO] [ax5043_manager.py:125] Autoranging
+2021-03-03 14:02:54,806 [INFO] [restart_reboot.py:96] updating state... will now transfer to normal
+2021-03-03 14:02:54,814 [INFO] [main.py:128] Changed to FM#2
+2021-03-03 14:02:54,826 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:02:54,834 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:02:54,842 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:02:59,850 [INFO] [main.py:179] flight mode: <flight_modes.flight_mode.NormalMode object at 0xb4211630>
+2021-03-03 14:02:59,857 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:02:59,864 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:02:59,875 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:02:59,883 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:02:59,891 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:02:59,901 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:02:59,927 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01@\x01R\x01J\x1c\r\x00\x00\x00\x00\x00\x00\x00\r\x017\x00\x12\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\n\x00\x008:\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:02:59,938 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:02:59,946 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:02:59,954 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:02:59,963 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:02:59,978 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01@\x01R\x01J\x00\r\x1c\r\x017\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:03:00,151 [DEBUG] [ax5043_manager.py:22] Transitioning from Autoranging to Idle
+2021-03-03 14:03:00,182 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:03:00,190 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:03:00,197 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:03:05,206 [INFO] [main.py:179] flight mode: <flight_modes.flight_mode.NormalMode object at 0xb4211630>
+2021-03-03 14:03:05,221 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:03:05,228 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:03:05,240 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:03:05,247 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:03:05,255 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:03:05,265 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:03:05,291 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01I\x01R\x01J\x1c\x16\x00\x00\x00\x00\x00\x00\x00\r\x01\x1f\x00\x12\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x0b\x00\x008<\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:03:05,314 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:03:05,321 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:03:05,329 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:03:05,338 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:03:05,353 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01I\x01R\x01J\x00\r\x1c\x16\x01\x1f\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:03:05,504 [DEBUG] [ax5043_manager.py:22] Transitioning from Idle to Receiving
+2021-03-03 14:03:05,591 [INFO] [flight_mode.py:198] Received command 2:13 with args {'pulse_start': 1614798208.0, 'pulse_duration': 15, 'pulse_num': 10, 'pulse_dt': 1000}
+2021-03-03 14:03:05,601 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:03:05,609 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:03:05,617 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:03:10,625 [INFO] [main.py:179] flight mode: <flight_modes.flight_mode.NormalMode object at 0xb4211630>
+2021-03-03 14:03:10,641 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:03:10,648 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:03:10,659 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:03:10,667 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:03:10,675 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:03:10,685 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:03:10,712 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01@\x01R\x01J\x1c\r\x00\x00\x00\x00\x00\x00\x00\r\x01+\x00\x12\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x0b\x00\x008<\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:03:10,724 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:03:10,732 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:03:10,740 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:03:10,749 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:03:10,764 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01@\x01R\x01J\x00\r\x1c\r\x01C\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:03:10,949 [DEBUG] [ax5043_manager.py:277] Parsed chunk <communications.ax5043_manager.ax5043_driver.Antrssi2Chunk object at 0xb44b6d90>
+2021-03-03 14:03:10,966 [INFO] [main.py:128] Changed to FM#11
+2021-03-03 14:03:10,975 [INFO] [flight_mode.py:234] Starting flight mode 11
+2021-03-03 14:03:27,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:27,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:27,781 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:27,810 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:27,819 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:28,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:28,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:28,767 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:28,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:28,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:29,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:29,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:29,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:29,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:29,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:30,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:30,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:30,767 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:30,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:30,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:31,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:31,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:31,767 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:31,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:31,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:32,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:32,768 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:32,775 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:32,805 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:32,814 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:33,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:33,757 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:33,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:33,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:33,804 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:34,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:34,767 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:34,776 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:34,806 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:34,814 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:35,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:35,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:35,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:35,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:35,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:36,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:03:36,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:03:36,767 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:03:36,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:03:36,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:03:37,058 [INFO] [flight_mode.py:238] Finishing flight mode 11
+2021-03-03 14:03:42,066 [INFO] [main.py:179] flight mode: <flight_modes.attitude_adjustment.AAMode object at 0xb44b6d90>
+2021-03-03 14:03:42,073 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:03:42,079 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:03:42,090 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:03:42,098 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:03:42,106 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:03:42,116 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:03:42,142 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01@\x01R\x01J\x1c\r\x00\x00\x00\x00\x00\x00\x00\r\x01+\x00\x12\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x0b\x00\x008"\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:03:42,154 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:03:42,162 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:03:42,169 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:03:42,179 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:03:42,195 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01@\x01R\x01J\x00\r\x1c\r\x01+\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x08\x08') from device
+2021-03-03 14:03:42,371 [INFO] [main.py:128] Changed to FM#2
+2021-03-03 14:03:42,381 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:03:42,388 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:03:42,397 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:03:47,406 [INFO] [main.py:179] flight mode: <flight_modes.flight_mode.NormalMode object at 0xb5ef70f0>
+2021-03-03 14:03:47,425 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:03:47,433 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:03:47,444 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:03:47,452 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:03:47,460 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:03:47,470 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:03:47,496 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01I\x01R\x01J\x1c\r\x00\x00\x00\x00\x00\x00\x00\r\x01+\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x0b\x00\x008;\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:03:47,507 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:03:47,515 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:03:47,523 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:03:47,533 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:03:47,548 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01I\x01R\x01J\x00\r\x1c\r\x01+\x00\x12\x00\x13\x00\x12\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:03:47,723 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:03:47,731 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:03:47,739 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:03:48,338 [INFO] [main.py:128] Changed to FM#4
+2021-03-03 14:12:45,134 [INFO] [main.py:47] Initializing...
+2021-03-03 14:12:45,153 [DEBUG] [power_controller.py:95] Initializing Power object with bus 1, device address 2, and flags 0
+2021-03-03 14:12:45,248 [DEBUG] [power_controller.py:198] Setting outputs to 0
+2021-03-03 14:12:45,258 [DEBUG] [power_controller.py:121] Writing to register 9 with byte list [0]
+2021-03-03 14:12:46,087 [INFO] [ax5043_manager.py:105] Initializing
+2021-03-03 14:12:46,183 [INFO] [ax5043_manager.py:109] POST passed
+2021-03-03 14:12:46,507 [INFO] [main.py:96] Creating camera mux...
+2021-03-03 14:12:46,850 [INFO] [main.py:99] Selecting a camera...
+2021-03-03 14:12:46,872 [INFO] [restart_reboot.py:64] Restarting...
+2021-03-03 14:12:46,879 [INFO] [restart_reboot.py:65] Creating DB session...
+2021-03-03 14:12:47,279 [DEBUG] [restart_reboot.py:70] Logging to DB...
+2021-03-03 14:12:47,719 [INFO] [restart_reboot.py:80] Logging to DB complete...
+2021-03-03 14:12:52,832 [INFO] [main.py:179] flight mode: <flight_modes.restart_reboot.RestartMode object at 0xb41e8870>
+2021-03-03 14:12:52,848 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:12:52,854 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:12:52,866 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:12:52,873 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:12:52,881 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:12:52,891 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:12:52,920 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01I\x01R\x01J\x1c\x04\x00\x00\x00\x00\x00\x00\x00\r\x01\x1f\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\t\x00\x0060\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:12:52,948 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:12:52,956 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:12:52,963 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:12:52,973 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:12:52,988 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01I\x01R\x01J\x00\r\x1b\xfd\x01C\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:12:53,987 [DEBUG] [ax5043_manager.py:22] Transitioning from Initializing to Autoranging
+2021-03-03 14:12:53,996 [INFO] [ax5043_manager.py:125] Autoranging
+2021-03-03 14:12:54,052 [INFO] [restart_reboot.py:96] updating state... will now transfer to normal
+2021-03-03 14:12:54,060 [INFO] [main.py:128] Changed to FM#2
+2021-03-03 14:12:54,069 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:12:54,078 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:12:54,086 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:12:59,094 [INFO] [main.py:179] flight mode: <flight_modes.flight_mode.NormalMode object at 0xb41e8610>
+2021-03-03 14:12:59,101 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:12:59,109 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:12:59,121 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:12:59,128 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:12:59,136 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:12:59,146 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:12:59,173 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01I\x01R\x01J\x1c\x04\x00\x00\x00\x00\x00\x00\x00\r\x01\x1f\x00\x12\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\n\x00\x008;\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:12:59,185 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:12:59,193 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:12:59,201 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:12:59,211 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:12:59,226 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01I\x01R\x01J\x00\r\x1c\x04\x017\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:12:59,402 [DEBUG] [ax5043_manager.py:22] Transitioning from Autoranging to Idle
+2021-03-03 14:12:59,435 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:12:59,443 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:12:59,451 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:13:04,460 [INFO] [main.py:179] flight mode: <flight_modes.flight_mode.NormalMode object at 0xb41e8610>
+2021-03-03 14:13:04,481 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:13:04,489 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:13:04,501 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:13:04,508 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:13:04,516 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:13:04,526 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:13:04,552 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01I\x01R\x01J\x1c\x04\x00\x00\x00\x00\x00\x00\x00\r\x01K\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x0b\x00\x008;\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:13:04,564 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:13:04,571 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:13:04,580 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:13:04,590 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:13:04,605 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01I\x01R\x01J\x00\r\x1c\x04\x01K\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:13:04,755 [DEBUG] [ax5043_manager.py:22] Transitioning from Idle to Receiving
+2021-03-03 14:13:04,843 [INFO] [flight_mode.py:198] Received command 2:13 with args {'pulse_start': 1614798848.0, 'pulse_duration': 15, 'pulse_num': 10, 'pulse_dt': 1000}
+2021-03-03 14:13:04,851 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:13:04,859 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:13:04,867 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:13:09,876 [INFO] [main.py:179] flight mode: <flight_modes.flight_mode.NormalMode object at 0xb41e8610>
+2021-03-03 14:13:09,894 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:13:09,900 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:13:09,912 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:13:09,920 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:13:09,928 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:13:09,938 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:13:09,964 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01I\x01R\x01J\x1c\x04\x00\x00\x00\x00\x00\x00\x00\r\x01+\x00\x13\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x0b\x00\x008<\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:13:09,975 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:13:09,983 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:13:09,991 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:13:10,001 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:13:10,016 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01I\x01R\x01J\x00\r\x1b\xfd\x01C\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x00\x00') from device
+2021-03-03 14:13:10,215 [DEBUG] [ax5043_manager.py:277] Parsed chunk <communications.ax5043_manager.ax5043_driver.Antrssi2Chunk object at 0xb420fc70>
+2021-03-03 14:13:10,232 [INFO] [main.py:128] Changed to FM#11
+2021-03-03 14:13:10,241 [INFO] [flight_mode.py:234] Starting flight mode 11
+2021-03-03 14:13:10,251 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798848.0
+2021-03-03 14:13:10,258 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798849.0
+2021-03-03 14:13:10,266 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798850.0
+2021-03-03 14:13:10,274 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798851.0
+2021-03-03 14:13:10,282 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798852.0
+2021-03-03 14:13:10,290 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798853.0
+2021-03-03 14:13:10,298 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798854.0
+2021-03-03 14:13:10,306 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798855.0
+2021-03-03 14:13:10,313 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798856.0
+2021-03-03 14:13:10,321 [DEBUG] [attitude_adjustment.py:79] Pulsing ACS at 1614798857.0
+2021-03-03 14:14:07,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:07,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:07,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:07,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:07,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:08,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:08,757 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:08,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:08,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:08,804 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:09,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:09,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:09,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:09,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:09,804 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:10,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:10,757 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:10,765 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:10,794 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:10,803 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:11,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:11,757 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:11,765 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:11,808 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:11,817 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:12,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:12,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:12,769 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:12,799 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:12,808 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:13,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:13,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:13,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:13,795 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:13,804 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:14,751 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:14,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:14,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:14,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:14,804 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:15,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:15,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:15,767 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:15,797 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:15,805 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:16,750 [DEBUG] [power_controller.py:398] Spiking solenoid for 4 ms, holding for 15 ms, with a delay of 0 sec
+2021-03-03 14:14:16,758 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 1 after delay 0
+2021-03-03 14:14:16,766 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 1, 0, 0]
+2021-03-03 14:14:16,796 [DEBUG] [power_controller.py:212] Setting single channel solenoid output to value 0 after delay 0
+2021-03-03 14:14:16,804 [DEBUG] [power_controller.py:121] Writing to register 10 with byte list [4, 0, 0, 0]
+2021-03-03 14:14:17,058 [INFO] [flight_mode.py:238] Finishing flight mode 11
+2021-03-03 14:14:22,067 [INFO] [main.py:179] flight mode: <flight_modes.attitude_adjustment.AAMode object at 0xb420fc70>
+2021-03-03 14:14:22,074 [DEBUG] [power_controller.py:292] Resetting WDT
+2021-03-03 14:14:22,081 [DEBUG] [power_controller.py:121] Writing to register 16 with byte list [120]
+2021-03-03 14:14:22,092 [DEBUG] [gom.py:49] Getting health data eps from get_health_data
+2021-03-03 14:14:22,099 [DEBUG] [power_controller.py:161] Running get_hk_2
+2021-03-03 14:14:22,107 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list [0]
+2021-03-03 14:14:22,117 [DEBUG] [power_controller.py:127] Reading 136 bytes from the device
+2021-03-03 14:14:22,143 [DEBUG] [power_controller.py:129] Read 138, and bytearray(b'\x08\x00\x01I\x01R\x01J\x1c\x04\x00\x00\x00\x00\x00\x00\x00\r\x01+\x00\x13\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0e\x0b\x00\x007\xfb\x05\x05\x00\x00\xff\\\x00\x00\x00h\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\r\x15\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x07\x03\x02\x00\x00\x00\x00\x00\x00\x00') from device
+2021-03-03 14:14:22,168 [DEBUG] [gom.py:49] Getting health data default from get_health_data
+2021-03-03 14:14:22,176 [DEBUG] [power_controller.py:154] Running get_hk_1
+2021-03-03 14:14:22,184 [DEBUG] [power_controller.py:121] Writing to register 8 with byte list []
+2021-03-03 14:14:22,194 [DEBUG] [power_controller.py:127] Reading 44 bytes from the device
+2021-03-03 14:14:22,209 [DEBUG] [power_controller.py:129] Read 46, and bytearray(b'\x08\x00\x01I\x01R\x01T\x00\r\x1b\xfd\x01C\x00\x12\x00\x14\x00\x12\x00\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\r\x15\x00\x00\x02\x08\x08') from device
+2021-03-03 14:14:22,384 [INFO] [main.py:128] Changed to FM#2
+2021-03-03 14:14:22,394 [INFO] [flight_mode.py:234] Starting flight mode 2
+2021-03-03 14:14:22,402 [INFO] [flight_mode.py:488] In NORMAL flight mode
+2021-03-03 14:14:22,410 [INFO] [flight_mode.py:238] Finishing flight mode 2
+2021-03-03 14:14:25,353 [INFO] [main.py:128] Changed to FM#4

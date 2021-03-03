@@ -8,7 +8,7 @@ import random
 from utils.log import get_log
 from communications.satellite_radio import Radio
 import OpticalNavigation.core.camera as camera
-
+from time import sleep
 from dotenv import load_dotenv
 
 from utils.constants import (
@@ -131,7 +131,9 @@ class MainSatelliteThread(Thread):
         fm_to_update_to = self.flight_mode.update_state()
 
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
-        if fm_to_update_to != NO_FM_CHANGE and fm_to_update_to != self.flight_mode.flight_mode_id:
+        if fm_to_update_to is None:
+            pass
+        elif fm_to_update_to != NO_FM_CHANGE and fm_to_update_to != self.flight_mode.flight_mode_id:
             self.replace_flight_mode_by_id(fm_to_update_to)
 
     def clear_command_queue(self):
@@ -173,10 +175,10 @@ class MainSatelliteThread(Thread):
     def run(self):
         try:
             while True:
-                # sleep(5)  # TODO remove when flight modes execute real tasks
+                sleep(5)  # TODO remove when flight modes execute real tasks
                 logger.info("flight mode: " + repr(self.flight_mode))
                 self.poll_inputs()
-                # self.update_state()
+                self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

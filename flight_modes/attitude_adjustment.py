@@ -75,7 +75,8 @@ class AAMode(PauseBackgroundMode):
             relative_pulse_times = [x * pulse_dt for x in range(pulse_num)]
             # https://www.geeksforgeeks.org/python-adding-k-to-each-element-in-a-list-of-integers/
             absolute_pulse_times = [pulse_start + x for x in relative_pulse_times]
-
+            for i in absolute_pulse_times:
+                self.parent.logger.debug(f"Pulsing ACS at {i}")
             # garbage collect one last time before timing critical applications start
             gc.collect()
 

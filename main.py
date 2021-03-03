@@ -6,6 +6,7 @@ from queue import Queue
 import signal
 import random
 from utils.log import get_log
+from communications.satellite_radio import Radio
 import OpticalNavigation.core.camera as camera
 
 from dotenv import load_dotenv
@@ -23,6 +24,7 @@ from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
+from drivers.rtc import RTC
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -30,6 +32,7 @@ from flight_modes.restart_reboot import (
 )
 from flight_modes.flight_mode_factory import build_flight_mode
 from communications.commands import CommandHandler
+from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 
@@ -52,6 +55,7 @@ class MainSatelliteThread(Thread):
         self.maneuver_queue = Queue()  # maneuver queue
         # self.init_comms()
         self.command_handler = CommandHandler()
+        self.downlink_handler = DownlinkHandler()
         self.command_definitions = CommandDefinitions(self)
         self._init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
@@ -83,6 +87,8 @@ class MainSatelliteThread(Thread):
         self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC(self.gyro)
+        self.radio = Radio()
+        self.rtc = RTC()
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
 
@@ -104,6 +110,15 @@ class MainSatelliteThread(Thread):
     def poll_inputs(self):
         # self.tlm.poll()
         self.flight_mode.poll_inputs()
+        newCommand = self.radio.receiveSignal()
+        if newCommand is not None:
+            try:
+                self.command_handler.unpack_command(newCommand) #Only for error checking
+                self.command_queue.put(bytes(newCommand))
+            except:
+                print('Invalid Command Received')
+        else:
+            print('Not Received')
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -173,7 +188,7 @@ class MainSatelliteThread(Thread):
 
     def shutdown(self):
         print("Shutting down...")
-        self.comms.stop()
+        # self.comms.stop()
 
 
 if __name__ == "__main__":

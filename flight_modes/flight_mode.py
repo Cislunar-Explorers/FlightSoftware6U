@@ -33,7 +33,9 @@ from utils.constants import (  # noqa F401
     NO_FM_CHANGE,
     GLOWPLUG_DURATION,
     BURN_WAIT_TIME,
-    START, PULSE_NUM, PULSE_DT, PULSE_DURATION
+    START, PULSE_NUM, PULSE_DT, PULSE_DURATION,
+    DELAY,
+    NUM_BLOCKS
 )
 
 from utils.log import get_log
@@ -74,10 +76,14 @@ logger = get_log()
 class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
     command_codecs = {}
+    sensordata_codecs = {}
+    downlink_codecs = {}
 
     # Map argument names to (packer,unpacker) tuples
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
     command_arg_unpackers = {}
+    sensordata_arg_unpackers = {}
+    downlink_arg_unpackers = {}
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
@@ -273,9 +279,19 @@ class TestMode(PauseBackgroundMode):
         pass
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
-                      TestCommandEnum.ADCTest.value: ([], 0)}
+                      TestCommandEnum.ADCTest.value: ([], 0),
+                      TestCommandEnum.CommsDriver.value: ([], 0),
+                      TestCommandEnum.RTCTest.value: ([], 0)}
 
     command_arg_unpackers = {}
+
+    downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
+
+    downlink_arg_unpackers = {
+        'gyro1': (pack_float, unpack_float),
+        'gyro2': (pack_float, unpack_float),
+        'gyro3': (pack_float, unpack_float),
+        }
 
 
 class CommsMode(FlightMode):
@@ -396,7 +412,8 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
-        NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 10)
+        NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 10),
+        NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
     }
 
     command_arg_unpackers = {
@@ -413,7 +430,12 @@ class NormalMode(FlightMode):
         PULSE_DURATION: (pack_unsigned_short, unpack_unsigned_short),
         PULSE_NUM: (pack_unsigned_short, unpack_unsigned_short),
         PULSE_DT: (pack_unsigned_short, unpack_unsigned_short)
+        NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short)
     }
+
+    downlink_codecs = {}
+
+    downlink_arg_unpackers = {}
 
     def __init__(self, parent):
         super().__init__(parent)

@@ -80,7 +80,7 @@ OUT_SWITCH = 7
 
 # GPIO outputs
 OUT_PI_COMMS = 17  # Physical pin 11
-OUT_PI_SOLENOID_ENABLE = 21  # Physical pin 40
+OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
 _ = ps._
 

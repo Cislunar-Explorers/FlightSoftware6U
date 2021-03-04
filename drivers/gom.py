@@ -77,9 +77,9 @@ class Gomspace:
         logger.debug("Printing housekeeping, config and config2 data")
         self.pc.displayAll()
 
-    def solenoid(self, spike, hold, delay=0):
+    def solenoid(self, spike, hold):
         """Spikes the solenoid at 12V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
-        self.pc.solenoid(spike, hold, delay)
+        self.pc.solenoid(spike, hold)
 
     def glowplug(self, duration, delay=0):
         """Pulses the glowplug for [duration] milliseconds with after a delay of [delay] seconds"""

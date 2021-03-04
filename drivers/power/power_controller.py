@@ -13,7 +13,6 @@
 
 import pigpio
 import drivers.power.power_structs as ps
-import RPi.GPIO as GPIO
 from time import sleep
 from utils.constants import GomOutputs
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
@@ -97,14 +96,7 @@ class Power:
         self._pi = pigpio.pi()  # initialize pigpio object
         self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
-        # initialize pi outputs
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
-        GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
-        GPIO.output(OUT_PI_COMMS, GPIO.LOW)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
-
-        # initialize eps outputs
+        # initialize gom outputs
         self.set_output(0)
 
     # prints housekeeping/config/config2
@@ -372,10 +364,10 @@ class Power:
         ps.gom_logger.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
         sleep(delay)
         ps.gom_logger.debug("Setting GPIO channel %i HIGH", output)
-        GPIO.output(output, GPIO.HIGH)
+        self._pi.write(output, 1)
         sleep(duration * 0.001)
-        GPIO.output(output, GPIO.LOW)
-        ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
+        self._pi.write(output, 0)
+        ps.gom_logger.debug("Set GPIO channel %i LOW", output)
 
     # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
@@ -390,22 +382,19 @@ class Power:
     # holds at 5v for [hold] milliseconds with a
     # delay of [delay] seconds.
     # output must be off before the function is called
-    def solenoid(self, spike, hold, delay=0):
+    def solenoid(self, spike, hold):
         ps.gom_logger.debug(
             "Spiking solenoid for %i ms, holding for %i ms, with a delay of %i sec",
             spike,
             hold,
-            delay,
         )
-        sleep(delay)
-        GPIO.output(
-            OUT_PI_SOLENOID_ENABLE, GPIO.HIGH
-        )  # Enable voltage boost for solenoid current spike
+
+        self._pi.write(OUT_PI_SOLENOID_ENABLE, 1)  # enable vboost
         self.set_single_output("solenoid", 1, 0)
+        # Enable voltage boost for solenoid current spike
         sleep(0.001 * spike)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)  # Disable voltage boost
+        self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)  # disable vboost
         sleep(0.001 * hold)
-        # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
         self.set_single_output("solenoid", 0, 0)
 
     # pulses glowplug for [duration] milliseconds with
@@ -451,21 +440,21 @@ class Power:
         sleep(duration / 2)
         self.set_single_output("burnwire_2", 0, 0)
 
+    # tell RF switch to either transmit or receive
     def comms(self, transmit):
         if transmit:
-            GPIO.output(OUT_PI_COMMS, GPIO.HIGH)
+            self._pi.write(OUT_PI_COMMS, 1)
         else:
-            GPIO.output(OUT_PI_COMMS, GPIO.LOW)
+            self._pi.write(OUT_PI_COMMS, 0)
 
-    # Toggles comms amp on/off
+    # Toggles receiving comms amp on/off
     # Input on is either True (on) or False (off)
     def comms_amplifier(self, on):
         self.set_single_output("comms", int(on), 0)
 
-    @staticmethod
-    def set_GPIO_low():
-        GPIO.output(OUT_PI_COMMS, GPIO.LOW)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)
+    def set_GPIO_low(self):
+        self._pi.write(OUT_PI_COMMS, 0)
+        self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)
 
     # Legacy stuff, may or may not be useful
 

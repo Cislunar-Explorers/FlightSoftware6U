@@ -30,7 +30,7 @@ import os
 )"""
 
 from utils.constants import *
-
+from utils.parameters import *
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
@@ -314,7 +314,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 16),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-        NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
+        NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 100),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
@@ -330,7 +330,8 @@ class NormalMode(FlightMode):
         STATE: packer_dict['bool'],
         INTERVAL: packer_dict['int'],
         DELAY: packer_dict['short'],
-        NUM_BLOCKS: packer_dict['short']
+        NUM_BLOCKS: packer_dict['short'],
+        HARD_SET: packer_dict['bool']
     }
 
     downlink_codecs = {

@@ -22,6 +22,7 @@ class Radio():
         self.driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
         self.mgr = Manager(self.driver)
         self.last_transmit_time = datetime.today()
+        self.last_telemetry_time = datetime.today()
 
     # Monitor radio health, request reset if faulted
     def monitorHealth(self):
@@ -65,3 +66,5 @@ class Radio():
         self.mgr.tx_enabled = False
         self.mgr.rx_enabled = False
         self.mgr.dispatch()
+        
+        self.last_transmit_time = datetime.today()

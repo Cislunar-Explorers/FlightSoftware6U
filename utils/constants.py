@@ -2,55 +2,29 @@ from enum import IntEnum, unique
 import os
 import hashlib
 
-# TODO
-# Create method to set constants based on purpose of run
-
 #Verification Key Parameters
 MAC_LENGTH = 4
 MAC_DATA = b'Hello'
 MAC_KEY = b'World'
 MAC = hashlib.blake2s(MAC_DATA,digest_size=MAC_LENGTH,key=MAC_KEY).digest()
 
-#Delay between successive downlinks in seconds
-DOWNLINK_BUFFER_TIME = 3
-
-#Basic telemetry automatic downlink interval (minutes)
-TELEM_DOWNLINK_TIME = 60
-
-# Delay to wait on BootUp
-BOOTUP_SEPARATION_DELAY = 30.0
-
-# TODO determine correct values threshold values
-ENTER_LOW_BATTERY_MODE_THRESHOLD = 0.3
-EXIT_LOW_BATTERY_MODE_THRESHOLD = 0.5
-
-# Constants defining goal cracking pressures for electrolysis
-LOW_CRACKING_PRESSURE = 10.0
-HIGH_CRACKING_PRESSURE = 20.0
-IDEAL_CRACKING_PRESSURE = 15.0
-
-# OpNav timing interval in minutes
-OPNAV_INTERVAL = 60
-
-SQL_PREFIX = "sqlite:///"
-CISLUNAR_BASE_DIR = os.path.join(
-    os.path.expanduser("~"), ".cislunar-flight-software"
-)
-LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
-DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
-
+#Serialization Sizes
 MODE_SIZE = 1
 ID_SIZE = 1
 COUNTER_SIZE = 3
 DATA_LEN_SIZE = 2
 MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE 
 
+#Serializations Offsets
 MAC_OFFSET = 0
 COUNTER_OFFSET = 0 + MAC_LENGTH
 MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
 ID_OFFSET = 1+ COUNTER_SIZE + MAC_LENGTH
 DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
+
+#Parameters.json path
+PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -71,41 +45,44 @@ DELAY = "delay"
 
 NUM_BLOCKS = "num_blocks"
 
-GOM_VOLTAGE_MAX = 8400  # mV
-GOM_VOLTAGE_MIN = 6000
+HARD_SET = "hard_set"
 
 #Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
+
 ATT_1 = "attitude_1"
 ATT_2 = "attitude_2"
 ATT_3 = "attitude_3"
 ATT_4 = "attitude_4"
+
 HK_TEMP_1 = "hk_temp_1"
 HK_TEMP_2 = "hk_temp_2"
 HK_TEMP_3 = "hk_temp_3"
 HK_TEMP_4 = "hk_temp_4"
 GYRO_TEMP = "gyro_temp"
+
 THERMOCOUPLER_TEMP = "thermo_temp"
+
 CURRENT_IN_1 = "curin_1"
 CURRENT_IN_2 = "curin_2"
 CURRENT_IN_3 = "curin_3"
+
 VBOOST_1 = "vboost_1"
 VBOOST_2 = "vboost_2"
 VBOOST_3 = "vboost_3"
+
 SYSTEM_CURRENT = "cursys"
 BATTERY_VOLTAGE = "vbatt"
+
 PROP_TANK_PRESSURE = "prs_pressure"
 
-# Random data generation constants:
-a = 1664525
-b = 1013904223
-M = 2 ** 32
-team_identifier = 0xEB902D2D  # Team 2
-
-# TODO: validate these values:
-SPLIT_BURNWIRE_DURATION = 1  # second
-ANTENNAE_BURNWIRE_DURATION = 1  # second
-GLOWPLUG_DURATION = 1  # SECOND
+#SQL Stuff
+SQL_PREFIX = "sqlite:///"
+CISLUNAR_BASE_DIR = os.path.join(
+    os.path.expanduser("~"), ".cislunar-flight-software"
+)
+LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
+DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 
 @unique
 class ConstantsEnum(IntEnum):
@@ -165,8 +142,6 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
-
-
 
 @unique
 class LowBatterySafetyCommandEnum(IntEnum):

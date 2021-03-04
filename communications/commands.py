@@ -162,6 +162,9 @@ class CommandHandler:
                 elif isinstance(kwargs[arg], float): #double
                     self.register_new_codec(arg,us.pack_double, us.unpack_double)
                     totalBytes += 8
+                elif isinstance(kwargs[arg], str): #double
+                    self.register_new_codec(arg,us.pack_str, us.unpack_str)
+                    totalBytes += 195
             
             command_args = list(kwargs.keys())
             command_data_tuple = (command_args, totalBytes)
@@ -169,3 +172,7 @@ class CommandHandler:
 
         except:
             raise SerializationException()
+
+ch = CommandHandler()
+buf = ch.pack_command(1,2,5,name='hello',value=6,hard_set=False)
+print(ch.unpack_command(buf))

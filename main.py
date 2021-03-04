@@ -6,26 +6,15 @@ from datetime import datetime
 from queue import Queue
 import signal
 from utils.log import get_log
-#from communications.satellite_radio import Radio
+from json import load
+from communications.satellite_radio import Radio
 
 from dotenv import load_dotenv
 
-from utils.constants import (
-    LOG_DIR,
-    CISLUNAR_BASE_DIR,
-    DB_FILE,
-    LOW_CRACKING_PRESSURE,
-    HIGH_CRACKING_PRESSURE,
-    IDEAL_CRACKING_PRESSURE,
-    FMEnum,
-    MAC,
-    DOWNLINK_BUFFER_TIME,
-    TELEM_DOWNLINK_TIME,
-    FMEnum,
-    NormalCommandEnum
-)  # TODO: optimize this import
-
 import utils.constants
+from utils.constants import *
+from utils.parameters import *
+import utils.parameters
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
@@ -50,7 +39,7 @@ FOR_FLIGHT = None
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
-        self.last_transmit_time = datetime.today()
+        
         self.command_queue = Queue()
         self.downlink_queue = Queue()
         self.commands_to_execute = []
@@ -85,10 +74,25 @@ class MainSatelliteThread(Thread):
         )
         self.comms.listen()
 
+    def init_parameters(self):
+        with open(PARAMETERS_JSON_PATH) as f:
+            json_parameter_dict = load(f)
+        self.parameters = utils.parameters
+            
+        try:
+            for parameter in self.parameters.__dir__():
+                if parameter[0] != '_':
+                    pt.__setattr__(i,parameter_dict[i])
+        except:
+            raise Exception(
+                'Attempted to set parameter ' + str(parameter) + 
+                ', which could not be found in parameters.json'
+            )
+
     # TODO
 
     def init_sensors(self):
-        #self.radio = Radio()
+        self.radio = Radio()
         self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC()
@@ -113,17 +117,15 @@ class MainSatelliteThread(Thread):
             self.gom.set_electrolysis(False)"""
         
         #Telemetry downlink
-        if (datetime.today() - self.last_transmit_time).total_seconds()/60 >= TELEM_DOWNLINK_TIME:
+        if (datetime.today() - self.radio.last_telemetry_time).total_seconds()/60 >= TELEM_DOWNLINK_TIME:
             self.enter_transmit_safe_mode()
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (
                 self.downlink_handler.pack_downlink(self.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.BasicTelem.value,**telemetry))
-            #self.downlink_queue.put(telem_downlink)
-            print(self.downlink_handler.unpack_downlink(telem_downlink))
-            self.last_transmit_time = datetime.today()
+            self.downlink_queue.put(telem_downlink)
 
         #Listening for new commands
-        #newCommand = self.radio.receiveSignal()
+        newCommand = self.radio.receiveSignal()
         newCommand = None
         if newCommand is not None:
             try:

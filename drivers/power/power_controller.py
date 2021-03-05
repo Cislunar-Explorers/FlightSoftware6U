@@ -14,8 +14,9 @@
 import pigpio
 import drivers.power.power_structs as ps
 from time import sleep
-from utils.constants import GomOutputs
+from utils.constants import GomOutputs, ACS_SPIKE_DURATION
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
+from time import time, sleep
 
 
 # power device address
@@ -96,8 +97,23 @@ class Power:
         self._pi = pigpio.pi()  # initialize pigpio object
         self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
-        # initialize gom outputs
+        # initialize GPIO outputs
+        self._pi.set_mode(OUT_PI_COMMS, pigpio.OUTPUT)
+        self._pi.set_mode(OUT_PI_SOLENOID_ENABLE, pigpio.OUTPUT)
+
+        self.solenoid_wave = []
+        self.solenoid_wave_id = -1
+
+        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, ACS_SPIKE_DURATION * 1000))
+        self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
+
+        self._pi.wave_clear()
+        self._pi.wave_add_generic(self.solenoid_wave)
+        self.solenoid_wave_id = self._pi.wave_create()
+
+        # initialize gom outputs (all off)
         self.set_output(0)
+
 
     # prints housekeeping/config/config2
     def displayAll(self):
@@ -391,10 +407,18 @@ class Power:
 
         self._pi.write(OUT_PI_SOLENOID_ENABLE, 1)  # enable vboost
         self.set_single_output("solenoid", 1, 0)
-        # Enable voltage boost for solenoid current spike
         sleep(0.001 * spike)
         self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)  # disable vboost
         sleep(0.001 * hold)
+        self.set_single_output("solenoid", 0, 0)
+
+    # Experimental implementation of above functionality
+    def solenoid_single_wave(self, spike, hold):
+        ps.gom_logger.debug(f"Experimental solenoid function. spike={spike}, hold={hold}")
+        t = time()
+        self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async?
+        self.set_single_output("solenoid", 1, 0)  # consider replacing with set_output
+        sleep((t + (hold * 1e-3)) - time())
         self.set_single_output("solenoid", 0, 0)
 
     # pulses glowplug for [duration] milliseconds with

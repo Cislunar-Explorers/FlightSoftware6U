@@ -12,7 +12,7 @@ import numpy as np
 import traceback
 import pandas as pd
 from FlightSoftware.utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
-from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel
+from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
 from FlightSoftware.utils.constants import DB_FILE
 from datetime import datetime, timedelta
 import math
@@ -167,19 +167,10 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     for f in range(len(frames)):
-        # TODO: add None check?
         imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
-        #if earth_detection_array is not None:
-        #    circles_samples[f, 0, ...] = earth_detection_array
-        #if moon_detection_array is not None:
-        #    circles_samples[f, 1, ...] = moon_detection_array
-        #if sun_detection_array is not None:
-        #    circles_samples[f, 2, ...] = sun_detection_array
-
-    # TODO: How to handle None results?
 
     # best___Tuple is tuple of file, distance and vector of best result
 
@@ -253,7 +244,10 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
     avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
     # TODO: how to correlate timestamp with global time
-    rotation = avgGyroY *  """time of frame - time zero"""
+    # Rotation is product of angular speed and time between frame and start of observation
+    lastReboot = session.query(RebootsModel) #TODO how to access time
+    timeFrame = lastReboot + "timestamp"
+    rotation = avgGyroY *  (timeframe - startTime)
 
     tZeroRotation = np.array([math.cos(rotation), 0,  math.sin(rotation), 0, 1, 0, -1 * math.sin(rotation), 0, math.cos(rotation)]).reshape(3, 3)
 

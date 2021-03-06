@@ -414,11 +414,11 @@ class Power:
     # Experimental implementation of above functionality
     def solenoid_single_wave(self, spike, hold):
         ps.gom_logger.debug(f"Experimental solenoid function. spike={spike}, hold={hold}")
-        t = time()
-        hold_t = t + (hold * 1e-3)
+        # t = time()
+        # hold_t = t + (hold * 1e-3)
         self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async?
         self.set_single_output("solenoid", 1, 0)  # consider replacing with set_output
-        sleep(hold_t - time())
+        sleep(hold * 1e-3)
         self.set_single_output("solenoid", 0, 0)
 
     # pulses glowplug for [duration] milliseconds with

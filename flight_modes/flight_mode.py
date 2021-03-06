@@ -412,7 +412,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
-        NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 10),
+        NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 14),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
     }
 
@@ -426,7 +426,7 @@ class NormalMode(FlightMode):
         STATE: (pack_bool, unpack_bool),
         INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
         DELAY: (pack_unsigned_short, unpack_unsigned_short),
-        START: (pack_float, unpack_float),
+        START: (pack_double, unpack_double),
         PULSE_DURATION: (pack_unsigned_short, unpack_unsigned_short),
         PULSE_NUM: (pack_unsigned_short, unpack_unsigned_short),
         PULSE_DT: (pack_unsigned_short, unpack_unsigned_short),

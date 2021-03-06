@@ -70,6 +70,8 @@ class AAMode(PauseBackgroundMode):
                 self.parent.reorientation_list.append(self.parent.reorientation_queue.get())
 
             pulse_start, pulse_duration, pulse_num, pulse_dt = self.parent.reorientation_list[0]
+            self.parent.logger.debug(
+                f"ACS start:{pulse_start}, duration:{pulse_duration}, num:{pulse_num}, dt:{pulse_dt}")
             pulse_dt *= 1e-3  # convert from ms to seconds
 
             relative_pulse_times = [x * pulse_dt for x in range(pulse_num)]
@@ -79,12 +81,13 @@ class AAMode(PauseBackgroundMode):
                 self.parent.logger.debug(f"Pulsing ACS at {i}")
             # garbage collect one last time before timing critical applications start
             gc.collect()
+            self.parent.logger.debug("Done garbage collecting")
 
-            if pulse_start - time() < 0.25:
+            if pulse_start - time() < 0.125:
                 # we missed the timing of the maneuver. Make a note and add relevant stuff to comms queue
                 self.missed_timing(pulse_start)
             else:
-
+                self.parent.logger.debug(f"Sleeping {pulse_start - time()}s")
                 sleep(max([(pulse_start - time()) - 2, 0]))
 
                 # pulse ACS according to timings

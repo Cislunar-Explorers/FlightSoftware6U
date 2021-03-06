@@ -98,7 +98,7 @@ MAX_GYRO_RATE = 250  # degrees/sec
 NO_FM_CHANGE = -1
 
 ACS_SPIKE_DURATION = 4  # milliseconds
-GOM_TIMING_FUDGE_FACTOR = 250  # milliseconds
+GOM_TIMING_FUDGE_FACTOR = 0  # milliseconds
 
 
 @unique

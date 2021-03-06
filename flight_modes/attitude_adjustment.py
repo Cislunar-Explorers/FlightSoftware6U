@@ -91,7 +91,8 @@ class AAMode(PauseBackgroundMode):
                 try:
                     for pulse_time in absolute_pulse_times:
                         sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
-                        self.parent.gom.solenoid(ACS_SPIKE_DURATION, pulse_duration)
+                        # self.parent.gom.solenoid(ACS_SPIKE_DURATION, pulse_duration)
+                        self.parent.gom.pc.solenoid_single_wave(ACS_SPIKE_DURATION, pulse_duration)
                 except ValueError:
                     self.missed_timing(pulse_time)
 

@@ -13,7 +13,6 @@
 
 import pigpio
 import drivers.power.power_structs as ps
-from time import sleep
 from utils.constants import GomOutputs, ACS_SPIKE_DURATION
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
 from time import time, sleep
@@ -416,9 +415,10 @@ class Power:
     def solenoid_single_wave(self, spike, hold):
         ps.gom_logger.debug(f"Experimental solenoid function. spike={spike}, hold={hold}")
         t = time()
+        hold_t = t + (hold * 1e-3)
         self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async?
         self.set_single_output("solenoid", 1, 0)  # consider replacing with set_output
-        sleep((t + (hold * 1e-3)) - time())
+        sleep(hold_t - time())
         self.set_single_output("solenoid", 0, 0)
 
     # pulses glowplug for [duration] milliseconds with

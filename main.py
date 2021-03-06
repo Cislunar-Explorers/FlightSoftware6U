@@ -183,10 +183,12 @@ class MainSatelliteThread(Thread):
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:
-            self.replace_flight_mode_by_id(self.constants.FMEnum.Safety.value)
+            self.replace_flight_mode_by_id(utils.constants.FMEnum.Safety.value)
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:
                 self.run()
+            else:
+                self.gom.all_off()
 
     def shutdown(self):
         print("Shutting down...")

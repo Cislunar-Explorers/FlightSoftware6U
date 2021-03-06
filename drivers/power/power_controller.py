@@ -81,6 +81,10 @@ OUT_SWITCH = 7
 OUT_PI_COMMS = 17  # Physical pin 11
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
+# Precomputed solenoid command bytearrays
+SOLENOID_ON_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, 4, 1, 0, 0])
+SOLENOID_OFF_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, 4, 0, 0, 0])
+
 _ = ps._
 
 
@@ -418,9 +422,9 @@ class Power:
         # t = time()
         # hold_t = t + (hold * 1e-3)
         self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async?
-        self.write(CMD_SET_SINGLE_OUTPUT, [4, 1, 0, 0])  # consider replacing with set_output
+        self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
         sleep(hold)
-        self.write(CMD_SET_SINGLE_OUTPUT, [4, 0, 0, 0])
+        self._pi.i2c_write_device(self._dev, SOLENOID_OFF_COMMAND)
 
     # pulses glowplug for [duration] milliseconds with
     # delay of [delay] seconds.

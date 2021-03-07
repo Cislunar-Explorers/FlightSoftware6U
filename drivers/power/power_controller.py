@@ -419,10 +419,6 @@ class Power:
 
     # Experimental implementation of above functionality
     def solenoid_single_wave(self, spike, hold):
-        ps.gom_logger.debug(f"Experimental solenoid function. spike={spike}, hold={hold}")
-        hold *= 1e-3
-        # t = time()
-        # hold_t = t + (hold * 1e-3)
         # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
         self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async

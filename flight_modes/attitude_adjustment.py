@@ -73,6 +73,7 @@ class AAMode(PauseBackgroundMode):
             self.parent.logger.debug(
                 f"ACS start:{pulse_start}, duration:{pulse_duration}, num:{pulse_num}, dt:{pulse_dt}")
             pulse_dt *= 1e-3  # convert from ms to seconds
+            pulse_duration *= 1e-3
 
             relative_pulse_times = [x * pulse_dt for x in range(pulse_num)]
             # https://www.geeksforgeeks.org/python-adding-k-to-each-element-in-a-list-of-integers/
@@ -89,7 +90,8 @@ class AAMode(PauseBackgroundMode):
             else:
                 self.parent.logger.debug(f"Sleeping {pulse_start - time()}s")
                 sleep(max([(pulse_start - time()) - 2, 0]))
-
+                ps.gom_logger.debug(
+                    f"Experimental solenoid function. spike={ACS_SPIKE_DURATION}, hold={pulse_duration}")
                 # pulse ACS according to timings
                 try:
                     for pulse_time in absolute_pulse_times:

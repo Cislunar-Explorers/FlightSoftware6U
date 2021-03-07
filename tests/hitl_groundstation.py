@@ -1,10 +1,10 @@
-#from communications.satellite_radio import Radio
+from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
 from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
 import time
 
 ch = CommandHandler()
-#groundstation = Radio()
+groundstation = Radio()
 commandCounter = 1
 transmitInterval = 3
 
@@ -35,7 +35,7 @@ while True:
             kwargs[argName] = argValue
     
     commandToTransmit = ch.pack_command(commandCounter, mode_id, command_id, **kwargs)
-    #groundstation.transmit(commandToTransmit)
+    groundstation.transmit(commandToTransmit)
     commandCounter += 1
     print('Successfully transmitted ' + str(ch.unpack_command(commandToTransmit)))
     time.sleep(transmitInterval)

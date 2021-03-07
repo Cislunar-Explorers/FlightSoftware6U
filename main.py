@@ -83,7 +83,7 @@ class MainSatelliteThread(Thread):
         try:
             for parameter in self.parameters.__dir__():
                 if parameter[0] != '_':
-                    pt.__setattr__(i,parameter_dict[i])
+                    pt.__setattr__(parameter,parameter_dict[parameter])
         except:
             raise Exception(
                 'Attempted to set parameter ' + str(parameter) + 

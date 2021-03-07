@@ -40,6 +40,7 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         
+        self.init_parameters()
         self.command_queue = Queue()
         self.downlink_queue = Queue()
         self.commands_to_execute = []

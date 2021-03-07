@@ -218,7 +218,6 @@ class CommandDefinitions:
 
         #Hard sets new parameter value into JSON file
         if hard_set:
-            
             with open(PARAMETERS_JSON_PATH) as f:
                 json_parameter_dict = load(f)
             json_parameter_dict[name] = value

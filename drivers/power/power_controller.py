@@ -421,8 +421,8 @@ class Power:
         hold *= 1e-3
         # t = time()
         # hold_t = t + (hold * 1e-3)
-        self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async?
         self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
+        self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async
         sleep(hold)
         self._pi.i2c_write_device(self._dev, SOLENOID_OFF_COMMAND)
 

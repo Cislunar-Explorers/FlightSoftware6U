@@ -134,6 +134,7 @@ class MainSatelliteThread(Thread):
                 
                 if unpackedCommand[0] == MAC:
                     if unpackedCommand[1] == self.command_counter + 1:
+                        print('hello')
                         self.command_queue.put(bytes(newCommand))
                         self.command_counter+=1
                     else:

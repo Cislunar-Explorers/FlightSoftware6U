@@ -127,7 +127,6 @@ class MainSatelliteThread(Thread):
 
         #Listening for new commands
         newCommand = self.radio.receiveSignal()
-        newCommand = None
         if newCommand is not None:
             try:
                 unpackedCommand = self.command_handler.unpack_command(newCommand)

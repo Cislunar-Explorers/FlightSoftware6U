@@ -19,5 +19,10 @@
 
     "SPLIT_BURNWIRE_DURATION": 1,
     "ANTENNAE_BURNWIRE_DURATION": 1,
-    "GLOWPLUG_DURATION": 1
+    "GLOWPLUG_DURATION": 1,
+
+    "a": 1664525,
+    "b": 1013904223,
+    "M": 4294967296,
+    "team_identifier": 3952094509
 }

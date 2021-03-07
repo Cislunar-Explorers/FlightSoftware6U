@@ -26,7 +26,7 @@ from flight_modes.restart_reboot import (
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
-from OpticalNavigation.core import opnav
+#from OpticalNavigation.core import opnav
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions

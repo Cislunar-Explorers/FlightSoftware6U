@@ -86,6 +86,11 @@ CISLUNAR_BASE_DIR = os.path.join(
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 
+a = 1664525
+b = 1013904223
+M = 2 ** 32
+team_identifier = 0xEB902D2D
+
 @unique
 class ConstantsEnum(IntEnum):
     GOM_VOLTAGE_MAX = 1

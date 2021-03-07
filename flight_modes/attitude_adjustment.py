@@ -90,7 +90,7 @@ class AAMode(PauseBackgroundMode):
             else:
                 self.parent.logger.debug(f"Sleeping {pulse_start - time()}s")
                 sleep(max([(pulse_start - time()) - 2, 0]))
-                ps.gom_logger.debug(
+                self.parent.logger.debug(
                     f"Experimental solenoid function. spike={ACS_SPIKE_DURATION}, hold={pulse_duration}")
                 # pulse ACS according to timings
                 try:

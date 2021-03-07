@@ -30,7 +30,10 @@ while True:
             elif arg_type == 'float' or arg_type == 'double':
                 argValue = float(argValue)
             elif arg_type == 'bool':
-                argValue = bool(argValue)
+                if argValue == 'True':
+                    argValue = True
+                else:
+                    argValue = False
             
             kwargs[argName] = argValue
     

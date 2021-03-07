@@ -76,6 +76,8 @@ BATTERY_VOLTAGE = "vbatt"
 
 PROP_TANK_PRESSURE = "prs_pressure"
 
+SUCCESSFUL = "successful"
+
 #SQL Stuff
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(

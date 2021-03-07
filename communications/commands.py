@@ -23,13 +23,12 @@ from utils.exceptions import (
 from utils.struct import (
     pack_unsigned_short,
     unpack_unsigned_short,
-    pack_unsigned_int
+    pack_unsigned_int,
+    packer_dict
 )
-
 
 def calc_command_size(data: bytes):
     return MIN_COMMAND_SIZE + len(data)
-
 
 def pack_command_bytes(counter: int, mode: int, command_id: int, data: bytes):
     buf = bytearray(calc_command_size(data))
@@ -68,10 +67,10 @@ class CommandHandler:
     
     def register_codecs(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
-            for argname, pack_tuple in mode_name.command_arg_unpackers.items():
+            for argname, arg_type in mode_name.command_arg_types.items():
+                pack_tuple = packer_dict[arg_type]
                 packer, unpacker = pack_tuple
                 self.register_new_codec(argname, packer, unpacker)
-
 
     def get_command_size(self, mode: int, application_id: int):
         return self.command_dict[mode][application_id][1] + DATA_OFFSET
@@ -162,7 +161,7 @@ class CommandHandler:
                 elif isinstance(kwargs[arg], float): #double
                     self.register_new_codec(arg,us.pack_double, us.unpack_double)
                     totalBytes += 8
-                elif isinstance(kwargs[arg], str): #double
+                elif isinstance(kwargs[arg], str): #string
                     self.register_new_codec(arg,us.pack_str, us.unpack_str)
                     totalBytes += 195
             
@@ -174,5 +173,4 @@ class CommandHandler:
             raise SerializationException()
 
 ch = CommandHandler()
-buf = ch.pack_command(1,2,5,name='hello',value=6,hard_set=False)
-print(ch.unpack_command(buf))
+buf = ch.pack_command(1,2,5,name='TELEM_DOWNLINK_TIME',value=7,hard_set=False)

@@ -34,7 +34,6 @@ from utils.parameters import *
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
-from utils.struct import packer_dict
 
 from communications.command_definitions import CommandDefinitions
 
@@ -60,9 +59,9 @@ class FlightMode:
 
     # Map argument names to (packer,unpacker) tuples
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
-    command_arg_unpackers = {}
+    command_arg_types = {}
     sensordata_arg_unpackers = {}
-    downlink_arg_unpackers = {}
+    downlink_arg_types = {}
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
@@ -160,6 +159,12 @@ class FlightMode:
                     method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
                     method_to_run(**command_kwargs)  # run that method
                 finished_commands.append(command)
+
+                #Prioritize downlinking: execute all necessary downlinks before
+                #Starting next command
+                if not self.parent.downlink_queue.empty():
+                    self.parent.execute_downlinks()
+
             # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
             #  exception occurs in the above for loop
             for finished_command in finished_commands:
@@ -232,9 +237,9 @@ class TestMode(PauseBackgroundMode):
     downlink_codecs = {TestCommandEnum.CommsDriver.value:(['gyro1','gyro2','gyro3'],12)}
 
     downlink_arg_unpackers = {
-        'gyro1': packer_dict['float'],
-        'gyro2': packer_dict['float'],
-        'gyro3': packer_dict['float'],
+        'gyro1': 'float',
+        'gyro2': 'float',
+        'gyro3': 'float',
         }
 
 
@@ -314,57 +319,60 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 16),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-        NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 100),
+        NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
     }
 
-    command_arg_unpackers = {
-        AZIMUTH: packer_dict['double'],
-        ELEVATION: packer_dict['double'],
-        ACCELERATE: packer_dict['bool'],
-        NAME: packer_dict['string'],
+    command_arg_types = {
+        AZIMUTH: 'double',
+        ELEVATION: 'double',
+        ACCELERATE: 'bool',
+        NAME: 'string',
         # TODO: can't use strings in current configuration b/c command_codecs requires a fixed number of bytes
-        VALUE: packer_dict['double'],
-        STATE: packer_dict['bool'],
-        INTERVAL: packer_dict['int'],
-        DELAY: packer_dict['short'],
-        NUM_BLOCKS: packer_dict['short'],
-        HARD_SET: packer_dict['bool']
+        VALUE: 'double',
+        STATE: 'bool',
+        INTERVAL: 'int',
+        DELAY: 'short',
+        NUM_BLOCKS: 'short',
+        HARD_SET: 'bool'
     }
 
     downlink_codecs = {
         NormalCommandEnum.BasicTelem.value: ([RTC_TIME,ATT_1,ATT_2,ATT_3,ATT_4,
         HK_TEMP_1,HK_TEMP_2,HK_TEMP_3,HK_TEMP_4,GYRO_TEMP,THERMOCOUPLER_TEMP, CURRENT_IN_1,
         CURRENT_IN_2,CURRENT_IN_3,VBOOST_1,VBOOST_2,VBOOST_3,SYSTEM_CURRENT,BATTERY_VOLTAGE,
-        PROP_TANK_PRESSURE], 216)
+        PROP_TANK_PRESSURE], 216),
+
+        NormalCommandEnum.SetParam.value:([SUCCESSFUL],1)
     }
 
-    downlink_arg_unpackers = {
-        RTC_TIME: packer_dict['double'],
-        POSITION_X: packer_dict['double'],
-        POSITION_Y: packer_dict['double'],
-        POSITION_Z: packer_dict['double'],
-        ATT_1: packer_dict['float'],
-        ATT_2: packer_dict['float'],
-        ATT_3: packer_dict['float'],
-        ATT_4: packer_dict['float'],
-        HK_TEMP_1: packer_dict['float'],
-        HK_TEMP_2: packer_dict['float'],
-        HK_TEMP_3: packer_dict['float'],
-        HK_TEMP_4: packer_dict['float'],
-        GYRO_TEMP: packer_dict['float'],
-        THERMOCOUPLER_TEMP: packer_dict['float'],
-        CURRENT_IN_1: packer_dict['float'],
-        CURRENT_IN_2: packer_dict['float'],
-        CURRENT_IN_3: packer_dict['float'],
-        VBOOST_1: packer_dict['float'],
-        VBOOST_2: packer_dict['float'],
-        VBOOST_3: packer_dict['float'],
-        SYSTEM_CURRENT: packer_dict['float'],
-        BATTERY_VOLTAGE: packer_dict['float'],
-        PROP_TANK_PRESSURE: packer_dict['float']
+    downlink_arg_types = {
+        RTC_TIME: 'double',
+        POSITION_X: 'double',
+        POSITION_Y: 'double',
+        POSITION_Z: 'double',
+        ATT_1: 'float',
+        ATT_2: 'float',
+        ATT_3: 'float',
+        ATT_4: 'float',
+        HK_TEMP_1: 'float',
+        HK_TEMP_2: 'float',
+        HK_TEMP_3: 'float',
+        HK_TEMP_4: 'float',
+        GYRO_TEMP: 'float',
+        THERMOCOUPLER_TEMP: 'float',
+        CURRENT_IN_1: 'float',
+        CURRENT_IN_2: 'float',
+        CURRENT_IN_3: 'float',
+        VBOOST_1: 'float',
+        VBOOST_2: 'float',
+        VBOOST_3: 'float',
+        SYSTEM_CURRENT: 'float',
+        BATTERY_VOLTAGE: 'float',
+        PROP_TANK_PRESSURE: 'float',
+        SUCCESSFUL: 'bool'
     }
 
     def __init__(self, parent):

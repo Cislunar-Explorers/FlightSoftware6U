@@ -23,6 +23,7 @@ from utils.exceptions import (
 from utils.struct import (
     pack_unsigned_short,
     unpack_unsigned_short,
+    packer_dict
 )
 
 
@@ -67,7 +68,8 @@ class DownlinkHandler:
     
     def register_codecs(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
-            for argname, pack_tuple in mode_name.downlink_arg_unpackers.items():
+            for argname, arg_type in mode_name.downlink_arg_types.items():
+                pack_tuple = packer_dict[arg_type]
                 packer, unpacker = pack_tuple
                 self.register_new_codec(argname, packer, unpacker)
 

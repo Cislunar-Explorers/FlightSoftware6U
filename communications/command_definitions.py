@@ -224,6 +224,10 @@ class CommandDefinitions:
             json_parameter_dict[name] = value
             dump(json_parameter_dict, open(PARAMETERS_JSON_PATH,'w'),indent=0)
 
+        acknowledgement = self.parent.downlinkHandler.pack_downlink(
+            self.parent.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.SetParam.value,successful=True)
+        self.parent.downlink_queue.put(acknowledgement)
+
         #initial_value = getattr(self.parent.constants, name)
         #setattr(self.parent.constants, name, value)
         #changed_value = getattr(self.parent.constants, name)

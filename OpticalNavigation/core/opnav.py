@@ -143,7 +143,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # 1. select camera
     # 2. record camera measurements
     # 3. record gyro measurements
-    startTime = datetime.now()
+    observeStart = datetime.now()
     recordings = []
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
@@ -177,8 +177,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # Find the distance to center
     earthCenterDistances = []
     for e in range(earthDetectionArray.shape[0]):
-            dist = math.sqrt(earthDetectionArray[e, 0]**2 + earthDetectionArray[e, 1]**2)
-            earthCenterDistances.append(dist)
+        dist = math.sqrt(earthDetectionArray[e, 0]**2 + earthDetectionArray[e, 1]**2)
+        earthCenterDistances.append(dist)
     earthFileDistVec = list(zip(frames, earthCenterDistances, earthDetectionArray))
     bestEarthTuple = min(earthFileDistVec, key=lambda x:x[1])
 
@@ -245,18 +245,44 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
     # TODO: how to correlate timestamp with global time
     # Rotation is product of angular speed and time between frame and start of observation
-    lastReboot = session.query(RebootsModel) #TODO how to access time
-    timeFrame = lastReboot + "timestamp"
-    rotation = avgGyroY *  (timeframe - startTime)
+    lastReboot = session.query(RebootsModel).order_by(desc('updated')).first() #TODO how to access time
 
-    tZeroRotation = np.array([math.cos(rotation), 0,  math.sin(rotation), 0, 1, 0, -1 * math.sin(rotation), 0, math.cos(rotation)]).reshape(3, 3)
+    if not np.isnan(bestEarthTuple[1]):
+        earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))
+        dateTimeEarth = lastReboot + earthTimestamp
+        earthTimeElapsed = dateTimeEarth - observeStart
+        earthRotation = avgGyroY * earthTimeElapsed
+        tZeroEarthRotation = np.array([math.cos(earthRotation), 0, math.sin(earthRotation), 0, 1, 0, -1 * math.sin(earthRotation), 0, math.cos(earthRotation)]).reshape(3, 3)
+        coordArray = np.array([bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2]]).reshape(3, 1)
+        coordArray = tZeroEarthRotation.dot(coordArray)
+        bestEarthTuple[2][1] = coordArray[1]
+        bestEarthTuple[2][2] = coordArray[2]
+        bestEarthTuple[2][0] = coordArray[0]
 
-    for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
-        coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
-        coordArray = tZeroRotation.dot(coordArray)
-        data[2][0] = coordArray[0]
-        data[2][1] = coordArray[1]
-        data[2][2] = coordArray[2]
+    if not np.isnan(bestMoonTuple[1]):
+        moonTimestamp = int(re.search("[t](\d+)", bestMoonTuple[0]).group(1))
+        dateTimeMoon = lastReboot + moonTimestamp
+        moonTimeElapsed = dateTimeMoon - observeStart
+        moonRotation = avgGyroY * moonTimeElapsed
+        tZeroMoonRotation = np.array([math.cos(moonRotation), 0, math.sin(moonRotation), 0, 1, 0, -1 * math.sin(moonRotation), 0, math.cos(moonRotation)]).reshape(3, 3)
+        coordArray = np.array([bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2]]).reshape(3, 1)
+        coordArray = tZeroMoonRotation.dot(coordArray)
+        bestMoonTuple[2][1] = coordArray[1]
+        bestMoonTuple[2][2] = coordArray[2]
+        bestMoonTuple[2][0] = coordArray[0]
+
+
+    if not np.isnan(bestSunTuple[1]):
+        sunTimestamp = int(re.search("[t](\d+)", bestSunTuple[0]).group(1))
+        dateTimeSun = lastReboot + sunTimestamp
+        sunTimeElapsed = dateTimeSun - observeStart
+        sunRotation = avgGyroY * sunTimeElapsed
+        tZeroSunRotation = np.array([math.cos(sunRotation), 0, math.sin(sunRotation), 0, 1, 0, -1 * math.sin(sunRotation), 0, math.cos(sunRotation)]).reshape(3, 3)
+        coordArray = np.array([bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2]]).reshape(3, 1)
+        coordArray = tZeroSunRotation.dot(coordArray)
+        bestSunTuple[2][1] = coordArray[1]
+        bestSunTuple[2][2] = coordArray[2]
+        bestSunTuple[2][0] = coordArray[0]
 
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2], bestEarthTuple[2][3])
@@ -270,7 +296,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
 
     # Calculate angular separation
     ang_em = __calculate_cam_measurements(body1=bestDetectedCircles.get_earth_detection(), body2=bestDetectedCircles.get_moon_detection())
-    
+
     ang_es = __calculate_cam_measurements(body1=bestDetectedCircles.get_earth_detection(), body2=bestDetectedCircles.get_sun_detection())
 
     ang_ms = __calculate_cam_measurements(body1=bestDetectedCircles.get_moon_detection(), body2=bestDetectedCircles.get_sun_detection())
@@ -282,8 +308,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     )
     session.add(new_entry)
     session.commit()
-    
-    session.commit()    
+
+    session.commit()
 
 def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EXIT_STATUS:
     """

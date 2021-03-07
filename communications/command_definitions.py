@@ -214,6 +214,8 @@ class CommandDefinitions:
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
 
+        print(name + ', ' + str(value) + ', ' + str(hard_set))
+
         self.parent.parameters.__setattr__(name,value)
 
         #Hard sets new parameter value into JSON file

@@ -382,7 +382,7 @@ class NormalMode(FlightMode):
     def run_mode(self):
         time_since_last_run = datetime.now() - self.last_opnav_run
         minutes_since_last_run = time_since_last_run.total_seconds() / 60.0
-        minutes_until_next_run = self.parent.constants.OPNAV_INTERVAL - minutes_since_last_run
+        minutes_until_next_run = self.parent.parameters.OPNAV_INTERVAL - minutes_since_last_run
         if minutes_until_next_run < 0:
             CommandDefinitions(self.parent).run_opnav()
         logger.info(f"In NORMAL flight mode. Minutes until next OpNav run: {minutes_until_next_run}")

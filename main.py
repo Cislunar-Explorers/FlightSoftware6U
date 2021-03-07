@@ -210,6 +210,7 @@ class MainSatelliteThread(Thread):
                 print(self.parameters)
                 # self.update_state()
                 #self.read_command_queue_from_file()
+                self.execute_downlinks()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
         finally:

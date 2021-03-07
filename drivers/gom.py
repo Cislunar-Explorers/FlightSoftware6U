@@ -1,7 +1,8 @@
 import drivers.power.power_controller as pc
 import drivers.power.power_structs as ps
 from enum import Enum
-from utils.constants import GomOutputs, GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
+from utils.constants import GomOutputs 
+from utils.parameters import GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
 
 logger = ps.gom_logger
 

@@ -208,7 +208,7 @@ class MainSatelliteThread(Thread):
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
-                print(self.parameters)
+                print(self.parameters.TELEM_DOWNLINK_TIME)
                 # self.update_state()
                 #self.read_command_queue_from_file()
                 self.execute_downlinks()

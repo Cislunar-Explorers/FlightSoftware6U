@@ -64,6 +64,19 @@ class CameraParameters:
 
 CisLunarCameraParameters = CameraParameters(62.2, 48.8, 1685, 813, 60, -60, -120, 90, 60, 90, -60, 53)
 
+class CameraRecordingParameters:
+    """
+    Contains camera specifications for recording
+    """
+    def __init__(self, fps, recTime, expLow, expHigh ) -> None:
+        self.fps = fps
+        self.recTime = recTime
+        self.expLow = expLow
+        self.expHigh = expHigh
+
+
+CisLunarCamRecParams = CameraRecordingParameters(15, 1, 0, 1)
+
 class CameraAcquisionDirectoryNotFound(Exception):
     def __init__(self, camLoc):
         self.camLoc = camLoc

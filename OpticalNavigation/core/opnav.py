@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
+from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
 from utils.constants import OPNAV_INTERVAL
 from OpticalNavigation.core.acquisition import startAcquisition, readOmega
 from OpticalNavigation.core.cam_meas import cameraMeasurements
@@ -7,7 +7,7 @@ import OpticalNavigation.core.attitude as attitude
 from OpticalNavigation.core.sense import select_camera, record_video, record_gyro
 from OpticalNavigation.core.preprocess import rolling_shutter, rect_to_stereo_proj, extract_frames
 from OpticalNavigation.core.find import find
-from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
+from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
 import numpy as np
 import traceback
 import pandas as pd
@@ -134,7 +134,7 @@ def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()
 
     return OPNAV_EXIT_STATUS.SUCCESS
 
-def __observe(session: session.Session, gyro_count: int, camera_params:CameraParameters=CisLunarCameraParameters) -> OPNAV_EXIT_STATUS:
+def __observe(session: session.Session, gyro_count: int, camera_params:CameraParameters=CisLunarCameraParameters, camera_rec_params:CameraRecordingParameters=CisLunarCamRecParams) -> OPNAV_EXIT_STATUS:
     """
     Begin OpNav acquisition and storing process. The system will record videos from
     the three cameras onboard and store them on the SD card as video format. It will
@@ -149,8 +149,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         select_camera(id = i)
         # TODO: figure out exposure parameters
         # TODO: make parameters like framerate, recording time, exposure configurable through registry
-        filename_timestamp1 = record_video(f"cam{i}_expLow.mjpeg", exposure=0)
-        filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", exposure=1)
+        filename_timestamp1 = record_video(f"cam{i}_expLow.mjpeg", framerate = CisLunarCamRecParams.fps, recTime=CisLunarCamRecParams.recTime, exposure=CisLunarCamRecParams.expLow)
+        filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", framerate = CisLunarCamRecParams.fps, recTime=CisLunarCamRecParams.recTime, exposure=CisLunarCamRecParams.expHigh)
         recordings.append(filename_timestamp1)
         recordings.append(filename_timestamp2)
     # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
@@ -243,7 +243,6 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         session.add(new_entry)
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
     avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
-    # TODO: how to correlate timestamp with global time
     # Rotation is product of angular speed and time between frame and start of observation
     lastReboot = session.query(RebootsModel).order_by(desc('updated')).first() #TODO how to access time
 
@@ -309,7 +308,6 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     session.add(new_entry)
     session.commit()
 
-    session.commit()
 
 def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EXIT_STATUS:
     """

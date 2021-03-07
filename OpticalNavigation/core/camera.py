@@ -79,7 +79,7 @@ class Camera:
 
 
     # Code from video-timing.py
-    def rawObservation(self, filename, frame_rate=15, shutterSpeed = 30000):
+    def rawObservation(self, filename, frame_rate=15, video_time=1, shutterSpeed = 30000):
 
         # Analog and digital gain parameters (not exposed in picamera-1.13)
         MMAL_PARAMETER_ANALOG_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x59
@@ -116,7 +116,7 @@ class Camera:
             lastTimestamp = camera.timestamp
             lastIndex = -1
             # Loop over expected frames
-            for n in range(2 * frame_rate): # 2 seconds
+            for n in range(video_time * frame_rate): # 2 seconds
                 f = camera.frame
                 # If no new frame yet, sleep for half a frame
                 while f is None or f.index == lastIndex or f.frame_type == PiVideoFrameType.sps_header:
@@ -125,5 +125,5 @@ class Camera:
                 lastIndex = f.index
                 lastTimestamp = f.timestamp
             camera.stop_recording()
-            # Timestamp is in microseconds
+            # Timestamp is in microseconds, relative to last system reboot (default clock_mode='raw')
             return (filename, lastTimestamp)

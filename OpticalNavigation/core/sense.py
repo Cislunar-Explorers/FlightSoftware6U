@@ -12,7 +12,7 @@ def select_camera(id):
     mux = CameraMux()
     mux.selectCamera(id)
 
-def record_video(filename, exposure):
+def record_video(filename, framerate, recTime, exposure):
     """
     Records video from selected camera
     [exposure]: exposure level for camera
@@ -20,7 +20,7 @@ def record_video(filename, exposure):
     #time.sleep(3)
     #raise NotImplementedError("implement record_video")
     cam = Camera()
-    filename_timestamp = cam.rawObservation(filename, shutterspeed = exposure)
+    filename_timestamp = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterspeed=exposure)
     return filename_timestamp
 
 def record_gyro(count):

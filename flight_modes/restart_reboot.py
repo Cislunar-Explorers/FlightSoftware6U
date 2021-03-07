@@ -1,7 +1,8 @@
 import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY
+from utils.constants import DB_FILE 
+from utils.parameters import BOOTUP_SEPARATION_DELAY
 import OpticalNavigation.core.camera as camera
 from flight_modes.flight_mode import FlightMode
 import os

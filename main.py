@@ -16,11 +16,13 @@ from utils.constants import (
     LOG_DIR,
     CISLUNAR_BASE_DIR,
     DB_FILE,
-    NO_FM_CHANGE
-)  # TODO: optimize this import
+    NO_FM_CHANGE,
+    PARAMETERS_JSON_PATH,
+    MAC,
+    FMEnum,
+    NormalCommandEnum
+)
 
-import utils.constants
-from utils.parameters import *
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
@@ -64,7 +66,7 @@ class MainSatelliteThread(Thread):
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self._init_sensors()
+        self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
@@ -77,7 +79,6 @@ class MainSatelliteThread(Thread):
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
-        self.constants = utils.constants
 
     def init_comms(self):
         self.comms = CommunicationsSystem(
@@ -130,15 +131,17 @@ class MainSatelliteThread(Thread):
         # self.tlm.poll()
         self.flight_mode.poll_inputs()
 
-        #Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds()/60 >= TELEM_DOWNLINK_TIME:
+        # Telemetry downlink
+        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= self.parameters[
+            "TELEM_DOWNLINK_TIME"]:
             self.enter_transmit_safe_mode()
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (
-                self.downlink_handler.pack_downlink(self.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.BasicTelem.value,**telemetry))
+                self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
+                                                    NormalCommandEnum.BasicTelem.value, **telemetry))
             self.downlink_queue.put(telem_downlink)
 
-        #Listening for new commands
+        # Listening for new commands
         newCommand = self.radio.receiveSignal()
         if newCommand is not None:
             try:
@@ -148,7 +151,7 @@ class MainSatelliteThread(Thread):
                     if unpackedCommand[1] == self.command_counter + 1:
                         print('hello')
                         self.command_queue.put(bytes(newCommand))
-                        self.command_counter+=1
+                        self.command_counter += 1
                     else:
                         print('Command with Invalid Counter Received. '
                         + 'Counter: ' + str(unpackedCommand[1]))
@@ -161,7 +164,7 @@ class MainSatelliteThread(Thread):
             print('Not Received')
 
     def enter_transmit_safe_mode(self):
-        #TODO: Make sure that everything else is turned off before transmitting
+        # TODO: Make sure that everything else is turned off before transmitting
         pass
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
@@ -202,7 +205,7 @@ class MainSatelliteThread(Thread):
         while not self.downlink_queue.empty():
             self.radio.transmit(self.downlink_queue.get())
             self.downlink_counter += 1
-            sleep(DOWNLINK_BUFFER_TIME)
+            sleep(self.parameters["DOWNLINK_BUFFER_TIME"])
 
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         """A temporary workaround to not having radio board access"""
@@ -234,7 +237,7 @@ class MainSatelliteThread(Thread):
                 self.execute_downlinks()
                 self.run_mode()
         finally:
-            self.replace_flight_mode_by_id(utils.constants.FMEnum.Safety.value)
+            self.replace_flight_mode_by_id(FMEnum.Safety.value)
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:
                 self.run()

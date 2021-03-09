@@ -10,32 +10,28 @@ DEG2RAD = 3.14159265359 / 180
 # TODO change back to 30.0
 BOOTUP_SEPARATION_DELAY = 5.0
 
-# TODO determine correct values threshold values
-ENTER_LOW_BATTERY_MODE_THRESHOLD = 0.3
-EXIT_LOW_BATTERY_MODE_THRESHOLD = 0.5
-
-#Verification Key Parameters
+# Verification Key Parameters
 MAC_LENGTH = 4
 MAC_DATA = b'Hello'
 MAC_KEY = b'World'
-MAC = hashlib.blake2s(MAC_DATA,digest_size=MAC_LENGTH,key=MAC_KEY).digest()
+MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
-#Serialization Sizes
+# Serialization Sizes
 MODE_SIZE = 1
 ID_SIZE = 1
 COUNTER_SIZE = 3
 DATA_LEN_SIZE = 2
 MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
 
-#Serializations Offsets
+# Serializations Offsets
 MAC_OFFSET = 0
 COUNTER_OFFSET = 0 + MAC_LENGTH
 MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
-ID_OFFSET = 1+ COUNTER_SIZE + MAC_LENGTH
+ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
 DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
-#Parameters.json path
+# Parameters.json path
 PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
@@ -64,7 +60,7 @@ NUM_BLOCKS = "num_blocks"
 
 HARD_SET = "hard_set"
 
-#Keyword argument definitions for downlink
+# Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
 
 ATT_1 = "attitude_1"
@@ -95,7 +91,7 @@ PROP_TANK_PRESSURE = "prs_pressure"
 
 SUCCESSFUL = "successful"
 
-#SQL Stuff
+# SQL Stuff
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
     os.path.expanduser("~"), ".cislunar-flight-software"
@@ -183,6 +179,7 @@ class NormalCommandEnum(IntEnum):
     GetParam = 11
     SetOpnavInterval = 12
     ACSPulsing = 13
+
 
 @unique
 class LowBatterySafetyCommandEnum(IntEnum):

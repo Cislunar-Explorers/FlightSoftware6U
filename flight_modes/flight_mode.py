@@ -13,11 +13,6 @@ from datetime import datetime
 import os
 
 from utils.constants import (  # noqa F401
-    LOW_CRACKING_PRESSURE,
-    EXIT_LOW_BATTERY_MODE_THRESHOLD,
-    HIGH_CRACKING_PRESSURE,
-    IDEAL_CRACKING_PRESSURE,
-    OPNAV_INTERVAL,
     BOOTUP_SEPARATION_DELAY,
     FMEnum,
     NormalCommandEnum,
@@ -34,12 +29,10 @@ from utils.constants import (  # noqa F401
     GLOWPLUG_DURATION,
     BURN_WAIT_TIME,
     START, PULSE_NUM, PULSE_DT, PULSE_DURATION,
-    DELAY,
     NUM_BLOCKS
 )
 
 from utils.constants import *
-from utils.parameters import *
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
@@ -108,19 +101,19 @@ class FlightMode:
             return FMEnum.AttitudeAdjustment.value
 
         # if battery is low, go to low battery mode
-        batt_percent = self.parent.tlm.gom.percent
-        if (batt_percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
-                and not self.parent.constants.IGNORE_LOW_BATTERY:
+        batt_percent = self.parent.telemetry.gom.percent
+        if (batt_percent < self.parent.parameters["ENTER_LOW_BATTERY_MODE_THRESHOLD"]) \
+                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
             return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
-        if sum(self.parent.tlm.gom.hk.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
-                and batt_percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD \
-                and not self.parent.constants.IGNORE_LOW_BATTERY:
+        if sum(self.parent.telemetry.gom.hk.curin) < self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"] \
+                and batt_percent < self.parent.parameters["ENTER_ECLIPSE_MODE_THRESHOLD"] \
+                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
             return FMEnum.LowBatterySafety.value
 
         # go to comms mode if there is something in the comms queue
-        if not self.parent.communications_queue.empty():
+        if not self.parent.downlink_queue.empty():
             return FMEnum.CommsMode.value
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
@@ -142,8 +135,8 @@ class FlightMode:
 
         elif flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
-                self.gom.read_battery_percentage()
-                >= EXIT_LOW_BATTERY_MODE_THRESHOLD
+                    self.gom.read_battery_percentage()
+                    >= EXIT_LOW_BATTERY_MODE_THRESHOLD
             ):
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
@@ -182,7 +175,8 @@ class FlightMode:
 
                 bogus = False
                 try:
-                    mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
+                    mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(
+                        command)
                     logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
@@ -200,9 +194,9 @@ class FlightMode:
                     method_to_run(**command_kwargs)  # run that method
                 finished_commands.append(command)
 
-                #Prioritize downlinking: execute all necessary downlinks before
-                #Starting next command
-                #TODO: Execute downlinks before moving on to next command
+                # Prioritize downlinking: execute all necessary downlinks before
+                # Starting next command
+                # TODO: Execute downlinks before moving on to next command
 
             # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
             #  exception occurs in the above for loop
@@ -211,7 +205,7 @@ class FlightMode:
 
     def poll_inputs(self):
         self.parent.gom.tick_wdt()
-        self.parent.tlm.poll()
+        self.parent.telemetry.poll()
 
     def completed_task(self):
         self.task_completed = True
@@ -286,7 +280,7 @@ class TestMode(PauseBackgroundMode):
         'gyro1': 'float',
         'gyro2': 'float',
         'gyro3': 'float',
-        }
+    }
 
 
 class CommsMode(FlightMode):
@@ -341,15 +335,15 @@ class LowBatterySafetyMode(FlightMode):
     # TODO point solar panels directly at the sun
 
     def run_mode(self):
-        sleep(self.parent.constants.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
+        sleep(self.parent.parameters["LOW_BATT_MODE_SLEEP"])  # saves battery, maybe?
         raise NotImplementedError
 
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
-        if self.parent.tlm.gom.percent > self.parent.constants.EXIT_LOW_BATTERY_MODE_THRESHOLD:
-            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.Normal.value)
+        if self.parent.telemetry.gom.percent > self.parent.parameters["EXIT_LOW_BATTERY_MODE_THRESHOLD"]:
+            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
-        if sum(self.parent.tlm.gom.hk.curin) > self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT:
+        if sum(self.parent.telemetry.gom.hk.curin) > self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"]:
             # If we do have some power coming in (i.e. we are not eclipsed by the moon/earth), reorient to face sun
             raise NotImplementedError
 
@@ -380,7 +374,6 @@ class ManeuverMode(PauseBackgroundMode):
 
 
 class SafeMode(FlightMode):
-
     flight_mode_id = FMEnum.Safety.value
 
     def __init__(self, parent):
@@ -428,12 +421,13 @@ class NormalMode(FlightMode):
     }
 
     downlink_codecs = {
-        NormalCommandEnum.BasicTelem.value: ([RTC_TIME,ATT_1,ATT_2,ATT_3,ATT_4,
-        HK_TEMP_1,HK_TEMP_2,HK_TEMP_3,HK_TEMP_4,GYRO_TEMP,THERMOCOUPLER_TEMP, CURRENT_IN_1,
-        CURRENT_IN_2,CURRENT_IN_3,VBOOST_1,VBOOST_2,VBOOST_3,SYSTEM_CURRENT,BATTERY_VOLTAGE,
-        PROP_TANK_PRESSURE], 216),
+        NormalCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
+                                              HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
+                                              CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
+                                              VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
+                                              PROP_TANK_PRESSURE], 216),
 
-        NormalCommandEnum.SetParam.value:([SUCCESSFUL],1)
+        NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1)
     }
 
     downlink_arg_types = {
@@ -472,13 +466,13 @@ class NormalMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL
-        need_to_electrolyze = self.parent.tlm.prs.pressure < self.parent.constants.IDEAL_CRACKING_PRESSURE
-        currently_electrolyzing = self.parent.tlm.gom.is_electrolyzing
+        time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < self.parent.parameters["OPNAV_INTERVAL"]
+        need_to_electrolyze = self.parent.telemetry.prs.pressure < self.parent.parameters["IDEAL_CRACKING_PRESSURE"]
+        currently_electrolyzing = self.parent.telemetry.gom.is_electrolyzing
         seconds_to_electrolyze = 60  # TODO: actual calculation involving current pressure
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
-        need_to_electrolyze = need_to_electrolyze and self.parent.constants.WANT_TO_ELECTROLYZE
+        need_to_electrolyze = need_to_electrolyze and self.parent.parameters["WANT_TO_ELECTROLYZE"]
 
         # There's probably some super-optimized branchless way of implementing this logic, but oh well:
 
@@ -506,9 +500,6 @@ class NormalMode(FlightMode):
 
             return FMEnum.OpNav.value
 
-        # if we have data to downlink, change to comms mode
-        if not (self.parent.communications_queue.empty()):
-            return FMEnum.CommsMode.value
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")

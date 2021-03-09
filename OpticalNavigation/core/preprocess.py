@@ -3,7 +3,7 @@ from math import *
 import cv2
 import os
 import numpy as np
-from OpticalNavigation.core.const import CisLunarCameraParameters
+from OpticalNavigation.core.const import CisLunarCameraParameters, CisLunarCamRecParams
 import time
 
 def rolling_shutter(img):
@@ -35,7 +35,8 @@ def extract_frames(vid_dir, endTimestamp):
         ret, frame = src.read()
         if ret:
             # TODO: How to incorporate total number of frames, fps
-            timestamp = endTimestamp - (len(frames) - 1 - currentFrame) * (1 / "fps" * 10 ** 6)
+            timestamp = endTimestamp - ((CisLunarCamRecParams.recTime * CisLunarCamRecParams.fps + 1) - 1 - currentFrame) * (1 / CisLunarCamRecParams.fps * 10 ** 6)
+            timestamp = ceil(timestamp)
             name = base + f"_f{currentFrame}_t{timestamp}.jpeg"
             cv2.imwrite(name, frame)
             frames.append(name)

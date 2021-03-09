@@ -7,6 +7,7 @@ import os
 from tqdm import tqdm
 from datetime import datetime, timedelta
 from time import sleep
+from unittest.mock import patch
 
 import OpticalNavigation.core.opnav as opnav
 import OpticalNavigation.core.preprocess as preprocess
@@ -14,8 +15,8 @@ import OpticalNavigation.core.sense as sense
 import OpticalNavigation.core.const as opnav_constants
 from OpticalNavigation.tests.const import CesiumTestCameraParameters
 
-from FlightSoftware.utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
-from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel
+from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
+from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
 
 # from core.ukf import runTrajUKF
 # from tests.const import POS_ERROR, VEL_ERROR
@@ -24,8 +25,7 @@ from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementM
 # from tests.animations import LiveTrajectoryPlot
 
 SQL_PREFIX = "sqlite:///"
-sql_path = SQL_PREFIX + os.path.join("D:", "OpNav", "db", "satellite-db.sqlite")
-
+sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
 def setup_function(function):
     print("setup...")
     # Reset databases
@@ -43,6 +43,9 @@ def setup_function(function):
     assert len(session.query(OpNavPropulsionModel).all()) == 0
     session.query(OpNavGyroMeasurementModel).delete()
     assert len(session.query(OpNavGyroMeasurementModel).all()) == 0
+
+    new_bootup = RebootsModel(is_bootup=False, reboot_at=datetime.now())
+    session.add(new_bootup)
     session.commit()
 
 def teardown_function(function):
@@ -69,8 +72,8 @@ def test_start(mocker):
         OpNavEphemerisModel.from_tuples(
             sun_eph=(3333., 3333., 3333., 124., 24., 4.), moon_eph=(4244., 42424., 4244., 42., 42., 42.), time=time+timedelta(1,0)),
 
-        OpNavCameraMeasurementModel.from_tuples(
-            measurement=(0.2, 0.1, 0.2, 0.1, 0.11, 0.22), time=time), # camera measurement taken now, uses state 
+        #OpNavCameraMeasurementModel.from_tuples(
+        #    measurement=(0.2, 0.1, 0.2, 0.1, 0.11, 0.22), time=time), # camera measurement taken now, uses state
 
         OpNavGyroMeasurementModel.from_tuples(
             measurement=(0., 2., 1.), time=time+timedelta(0,-50)), # Not picked because gyro was read before this run's corresponding cam meas
@@ -87,9 +90,36 @@ def test_start(mocker):
     # do not test observe()
     def observe_mock(session, gyro_count):
         return opnav_constants.OPNAV_EXIT_STATUS.SUCCESS
-    mocker.patch('OpticalNavigation.core.opnav.__observe', side_effect=observe_mock)
+    #mocker.patch('OpticalNavigation.core.opnav.__observe', side_effect=observe_mock)
+
+    def select_camera_mock(id):
+        print("select_mock")
+        return
+    mocker.patch('OpticalNavigation.core.opnav.select_camera', side_effect=select_camera_mock)
+
+    idx = [0]
+    timestamps = [981750, 981750, 2028950, 2028950, 3010700, 3010700]
+    videos = ['/home/stephen_z/Desktop/test-videos/cam1_expLow.mjpeg', '/home/stephen_z/Desktop/test-videos/cam1_expHigh.mjpeg',
+              '/home/stephen_z/Desktop/test-videos/cam2_expLow.mjpeg', '/home/stephen_z/Desktop/test-videos/cam2_expHigh.mjpeg',
+              '/home/stephen_z/Desktop/test-videos/cam3_expLow.mjpeg', '/home/stephen_z/Desktop/test-videos/cam3_expHigh.mjpeg']
+
+    def record_video_mock(filename, framerate, recTime, exposure):
+        print("video_mock")
+        time = timestamps[idx[0]]
+        filename = videos[idx[0]]
+        idx[0] += 1
+        return (filename, time)
+
+    mocker.patch('OpticalNavigation.core.opnav.record_video', side_effect=record_video_mock)
+
+    def record_gyro_mock(count):
+        print("gyro_mock")
+        return np.array([[0, 5, 0]])
+    mocker.patch('OpticalNavigation.core.opnav.record_gyro', side_effect=record_gyro_mock)
+
+
     # start opnav system
-    opnav.start(sql_path=sql_path, num_runs=1, gyro_count=1)
+    opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)
     # TODO: verification
     # - there should be a new entry in trajectory db with time_retrieved set to propulsion end time (for each propulsion entry)
     # - propulsion db should be empty

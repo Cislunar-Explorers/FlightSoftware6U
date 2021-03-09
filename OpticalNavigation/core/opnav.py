@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
+from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
 from utils.constants import OPNAV_INTERVAL
 from OpticalNavigation.core.acquisition import startAcquisition, readOmega
 from OpticalNavigation.core.cam_meas import cameraMeasurements
@@ -6,14 +6,14 @@ import OpticalNavigation.core.ukf as traj_ukf
 import OpticalNavigation.core.attitude as attitude
 from OpticalNavigation.core.sense import select_camera, record_video, record_gyro
 from OpticalNavigation.core.preprocess import rolling_shutter, rect_to_stereo_proj, extract_frames
-from OpticalNavigation.core.find import find
+from OpticalNavigation.core.find_with_contours import *
 from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
 import numpy as np
 import traceback
 import pandas as pd
-from FlightSoftware.utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
-from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
-from FlightSoftware.utils.constants import DB_FILE
+from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
+from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
+from utils.constants import DB_FILE
 from datetime import datetime, timedelta
 import math
 from sqlalchemy import desc
@@ -144,28 +144,33 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # 2. record camera measurements
     # 3. record gyro measurements
     observeStart = datetime.now()
+    print("Recording videos...")
     recordings = []
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
         # TODO: figure out exposure parameters
-        # TODO: make parameters like framerate, recording time, exposure configurable through registry
-        filename_timestamp1 = record_video(f"cam{i}_expLow.mjpeg", framerate = CisLunarCamRecParams.fps, recTime=CisLunarCamRecParams.recTime, exposure=CisLunarCamRecParams.expLow)
-        filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", framerate = CisLunarCamRecParams.fps, recTime=CisLunarCamRecParams.recTime, exposure=CisLunarCamRecParams.expHigh)
+        filename_timestamp1 = record_video(f"cam{i}_expLow.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expLow)
+        filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
         recordings.append(filename_timestamp1)
         recordings.append(filename_timestamp2)
+
+    print("Extracting frames...")
+    print(recordings)
     # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
-    frames0 = extract_frames(vid_dir=None, timestamp = recordings[0][1])
-    frames1 = extract_frames(vid_dir=None, timestamp = recordings[1][1])
-    frames2 = extract_frames(vid_dir=None, timestamp = recordings[2][1])
-    frames3 = extract_frames(vid_dir=None, timestamp = recordings[3][1])
-    frames4 = extract_frames(vid_dir=None, timestamp = recordings[4][1])
-    frames5 = extract_frames(vid_dir=None, timestamp = recordings[5][1])
+    frames0 = extract_frames(vid_dir=recordings[0][0], endTimestamp = recordings[0][1])
+    frames1 = extract_frames(vid_dir=recordings[1][0], endTimestamp = recordings[1][1])
+    frames2 = extract_frames(vid_dir=recordings[2][0], endTimestamp = recordings[2][1])
+    frames3 = extract_frames(vid_dir=recordings[3][0], endTimestamp = recordings[3][1])
+    frames4 = extract_frames(vid_dir=recordings[4][0], endTimestamp = recordings[4][1])
+    frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
     frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
+    print(frames)
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
+    print("Finding...")
     for f in range(len(frames)):
         imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
@@ -174,6 +179,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
 
     # best___Tuple is tuple of file, distance and vector of best result
 
+    print("Finding centers...")
     # Find the distance to center
     earthCenterDistances = []
     for e in range(earthDetectionArray.shape[0]):
@@ -216,7 +222,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     c3rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
     cam3Rotation = c3rz'''
 
-
+    print("Camera to body rotations...")
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
         coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
         camNum = int(re.search("[cam](\d+)", data[0]).group(1))
@@ -230,7 +236,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         data[2][1] = coordArray[1]
         data[2][2] = coordArray[2]
 
-
+    print("Gyro recording...")
     gyro_meas = record_gyro(count=gyro_count)
     for g in range(gyro_meas.shape[0]):
         omega = gyro_meas[g, ...]
@@ -242,14 +248,18 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         )
         session.add(new_entry)
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
+
+    print("Body to tZero rotations...")
     avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
     # Rotation is product of angular speed and time between frame and start of observation
-    lastReboot = session.query(RebootsModel).order_by(desc('updated')).first() #TODO how to access time
+    lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first() #TODO how to access time
+    lastReboot = lastRebootRow.reboot_at
+    print("Last Reboot: ", lastReboot)
 
     if not np.isnan(bestEarthTuple[1]):
         earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))
-        dateTimeEarth = lastReboot + earthTimestamp
-        earthTimeElapsed = dateTimeEarth - observeStart
+        dateTimeEarth = lastReboot + timedelta(microseconds=earthTimestamp)
+        earthTimeElapsed = (dateTimeEarth - observeStart).total_seconds()
         earthRotation = avgGyroY * earthTimeElapsed
         tZeroEarthRotation = np.array([math.cos(earthRotation), 0, math.sin(earthRotation), 0, 1, 0, -1 * math.sin(earthRotation), 0, math.cos(earthRotation)]).reshape(3, 3)
         coordArray = np.array([bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2]]).reshape(3, 1)
@@ -260,8 +270,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
 
     if not np.isnan(bestMoonTuple[1]):
         moonTimestamp = int(re.search("[t](\d+)", bestMoonTuple[0]).group(1))
-        dateTimeMoon = lastReboot + moonTimestamp
-        moonTimeElapsed = dateTimeMoon - observeStart
+        dateTimeMoon = lastReboot + timedelta(microseconds=moonTimestamp)
+        moonTimeElapsed = (dateTimeMoon - observeStart).total_seconds()
         moonRotation = avgGyroY * moonTimeElapsed
         tZeroMoonRotation = np.array([math.cos(moonRotation), 0, math.sin(moonRotation), 0, 1, 0, -1 * math.sin(moonRotation), 0, math.cos(moonRotation)]).reshape(3, 3)
         coordArray = np.array([bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2]]).reshape(3, 1)
@@ -273,8 +283,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
 
     if not np.isnan(bestSunTuple[1]):
         sunTimestamp = int(re.search("[t](\d+)", bestSunTuple[0]).group(1))
-        dateTimeSun = lastReboot + sunTimestamp
-        sunTimeElapsed = dateTimeSun - observeStart
+        dateTimeSun = lastReboot + timedelta(microseconds=sunTimestamp)
+        sunTimeElapsed = (dateTimeSun - observeStart).total_seconds()
         sunRotation = avgGyroY * sunTimeElapsed
         tZeroSunRotation = np.array([math.cos(sunRotation), 0, math.sin(sunRotation), 0, 1, 0, -1 * math.sin(sunRotation), 0, math.cos(sunRotation)]).reshape(3, 3)
         coordArray = np.array([bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2]]).reshape(3, 1)
@@ -283,6 +293,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         bestSunTuple[2][2] = coordArray[2]
         bestSunTuple[2][0] = coordArray[0]
 
+    print("Setting best results...")
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2], bestEarthTuple[2][3])
     bestDetectedCircles.set_moon_detection(bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2], bestMoonTuple[2][3])
@@ -303,10 +314,11 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # Write measurements to corresponding databases
     new_entry = OpNavCameraMeasurementModel.from_tuples(
         measurement=CameraMeasurementVector(ang_em=ang_em, ang_es=ang_es, ang_ms=ang_ms, e_dia=best_e[3], m_dia=best_m[3], s_dia=best_s[3]),
-        time=datetime.now(),
+        time=datetime.now()
     )
     session.add(new_entry)
     session.commit()
+    print("Observe complete!")
 
 
 def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EXIT_STATUS:

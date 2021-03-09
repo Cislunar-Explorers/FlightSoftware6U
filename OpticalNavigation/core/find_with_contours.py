@@ -1,5 +1,6 @@
 from OpticalNavigation.core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
 #from const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
+from utils.constants import DB_FILE
 from dataclasses import dataclass
 import cv2
 import numpy as np
@@ -235,7 +236,7 @@ def measureEarth(img):
         highThresh = highThreshRed + highThreshGreen + highThreshBlue
         # highthresh = cv2.mean(img, img > 70)
         # highThresh = cv2.inRange(img, (5, 5, 0), (255, 255, 255))
-        cv2.imshow("Earth thresh", highThresh)
+        #cv2.imshow("Earth thresh", highThresh)
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
 
@@ -251,7 +252,7 @@ def measureEarth(img):
 # Measure white pixels
 def measureSun(img):
     highThresh = cv2.inRange(img, (230, 230, 230), (255, 255, 255))
-    cv2.imshow("Sun thresh", highThresh)
+    #cv2.imshow("Sun thresh", highThresh)
     percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
     # print("Sun white%", percentWhite)
     if percentWhite >= 0.23:
@@ -268,7 +269,7 @@ def measureSun(img):
 
 def measureMoon(img):
     thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
-    cv2.imshow("Moon thresh", thresh)
+    #cv2.imshow("Moon thresh", thresh)
     # percentWhite = cv2.countNonZero(thresh) / (thresh.shape[0] * thresh.shape[1])
     # print("Moon white%", percentWhite)
     # if percentWhite >= 0.23:
@@ -332,7 +333,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     print("Contour size", len(contours))
     cv2.drawContours(imgCopy, contours, -1, (0, 255, 0), 3)
-    cv2.imshow("Contours", imgCopy)
+    #cv2.imshow("Contours", imgCopy)
 
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
@@ -342,12 +343,12 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     x, y, w, h = cv2.boundingRect(c)
 
     full_contour = cv2.rectangle(imgCopy, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    cv2.imshow("full_contour", full_contour)
+    #cv2.imshow("full_contour", full_contour)
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)
     # print(x, y, w, h)
     box = BoundingBox(x, y, w, h)
     out, bbst = remap_roi(img, box, cam, rot)
-    cv2.imshow("roi", out)
+    #cv2.imshow("roi", out)
 
     # Gets the next largest body that doesn't overlap with first body
     c2 = None
@@ -365,12 +366,12 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     # if w2 is not 0 and h2 is not 0:
     full_contour2 = cv2.rectangle(imgCopy, (x2, y2), (x2 + w2, y2 + h2), (0, 255, 0), 2)
-    cv2.imshow("full_contour2", full_contour2)
+    #cv2.imshow("full_contour2", full_contour2)
     x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
     # print(x, y, w, h)
     box2 = BoundingBox(x2, y2, w2, h2)
     out2, bbst2 = remap_roi(img, box2, cam, rot)
-    cv2.imshow("roi2", out2)
+    #cv2.imshow("roi2", out2)
 
     # Measure body in region-of-interest
     sun = None
@@ -454,7 +455,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
-
+    print(DB_FILE)
     find(args["image"])
 
 # Notes

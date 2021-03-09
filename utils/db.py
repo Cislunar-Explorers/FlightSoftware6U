@@ -7,6 +7,8 @@ from sqlalchemy.types import Float, DateTime, Boolean
 
 from sqlalchemy.dialects import postgresql
 
+from OpticalNavigation.core.const import CameraMeasurementVector
+
 create_session = sessionmaker()
 
 
@@ -255,8 +257,13 @@ class OpNavCameraMeasurementModel(SQLAlchemyTableBase):
     [time]: mission time of the measurements when trajectory quantities were calculated
     """
     @staticmethod
-    def from_tuples(measurement, time):
-        z1, z2, z3, z4, z5, z6 = measurement
+    def from_tuples(measurement:CameraMeasurementVector, time):
+        z1 = measurement.get_angular_separation_earth_moon()
+        z2 = measurement.get_angular_separation_earth_sun()
+        z3 = measurement.get_angular_separation_moon_sun()
+        z4 = measurement.get_angular_diameter_earth()
+        z5 = measurement.get_angular_diameter_moon()
+        z6 = measurement.get_angular_diameter_sun()
         return OpNavCameraMeasurementModel(
             time_retrieved=time,
             ang_em=z1,

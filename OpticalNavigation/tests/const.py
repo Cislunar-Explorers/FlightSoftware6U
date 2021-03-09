@@ -15,9 +15,9 @@ import pytest
 #     dcam13 = -60
 #     dcam23 = -120
 
-MatlabTestCameraParameters = CameraParameters(62.2, 48.8, 3280, 813, 60, -60, -120)
+MatlabTestCameraParameters = CameraParameters(62.2, 48.8, 3280, 813, 60, -60, -120, 90, 60, 90, -60, 53)
 
-CesiumTestCameraParameters = CameraParameters(62.2, 48.8, 640, 480, -60, 60, 120) # Cam 2 looks down, Cam 3 looks up
+CesiumTestCameraParameters = CameraParameters(62.2, 48.8, 640, 480, 60, -60, -120, 90, 60, 90, -60, 53) # Cam 2 looks down, Cam 3 looks up
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 

@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from OpticalNavigation.core.camera import Camera, CameraMux
+#from OpticalNavigation.core.camera import Camera, CameraMux
 
 def select_camera(id):
     """
@@ -9,8 +9,10 @@ def select_camera(id):
     """
     #time.sleep(3)
     #raise NotImplementedError("implement camera selection")
-    mux = CameraMux()
-    mux.selectCamera(id)
+    #mux = CameraMux()
+    #mux.selectCamera(id)
+    print("hi")
+    pass
 
 def record_video(filename, framerate, recTime, exposure):
     """
@@ -19,9 +21,10 @@ def record_video(filename, framerate, recTime, exposure):
     """
     #time.sleep(3)
     #raise NotImplementedError("implement record_video")
-    cam = Camera()
-    filename_timestamp = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterspeed=exposure)
-    return filename_timestamp
+    #cam = Camera()
+    #filename_timestamp = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterspeed=exposure)
+    #return filename_timestamp
+    pass
 
 def record_gyro(count):
     """
@@ -33,5 +36,6 @@ def record_gyro(count):
         TODO: Obtain correct units for ang vel
     """
     # TODO: coordinate with Toby on integrating gyro from telemetry file into this
-    time.sleep(3)
-    raise NotImplementedError("implement record_gyro")
+    #time.sleep(3)
+    #raise NotImplementedError("implement record_gyro")
+    pass

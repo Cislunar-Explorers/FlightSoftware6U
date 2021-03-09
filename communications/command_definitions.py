@@ -4,9 +4,10 @@ from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HARD_SET, PARAMETERS_JSON_PATH, a, b, M, team_identifier
-from telemetry.telemetry import Telemetry
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HARD_SET, PARAMETERS_JSON_PATH, a, b, M, \
+    team_identifier, START, PULSE_DT, PULSE_NUM, PULSE_DURATION
 from json import load, dump
+from utils.exceptions import CommandArgException
 
 
 def verification(**kwargs):
@@ -41,7 +42,7 @@ def verification(**kwargs):
 
         for i in range(1, prn_length + 1):
             # algorithm defined in sec 4.4.2 of CommsProc rev 4
-            xn = (a * prn[i - 1] + b) % 2 ** 32
+            xn = (a * prn[i - 1] + b) % M
             # if the mod operator above causes issues, anding with 32-bit 2**32 should do the trick
             prn[i] = xn
 
@@ -57,9 +58,6 @@ def verification(**kwargs):
         data_block_sequence_num += 1
 
     return data_transmission_sequence.hex()  # TODO instead of returning, add to comms queue
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, AZIMUTH, ELEVATION, START, PULSE_DT, PULSE_NUM, \
-    PULSE_DURATION
-from utils.exceptions import CommandArgException
 
 
 class CommandDefinitions:
@@ -239,21 +237,21 @@ class CommandDefinitions:
 
         self.parent.parameters[name] = value
 
-        #Hard sets new parameter value into JSON file
+        # Hard sets new parameter value into JSON file
         if hard_set:
             with open(PARAMETERS_JSON_PATH) as f:
                 json_parameter_dict = load(f)
             json_parameter_dict[name] = value
-            dump(json_parameter_dict, open(PARAMETERS_JSON_PATH,'w'),indent=0)
+            dump(json_parameter_dict, open(PARAMETERS_JSON_PATH, 'w'), indent=0)
 
         acknowledgement = self.parent.downlink_handler.pack_downlink(
-            self.parent.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.SetParam.value,successful=True)
+            self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
         self.parent.downlink_queue.put(acknowledgement)
 
-        #initial_value = getattr(self.parent.constants, name)
-        #setattr(self.parent.constants, name, value)
-        #changed_value = getattr(self.parent.constants, name)
-        #self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
+        # initial_value = getattr(self.parent.constants, name)
+        # setattr(self.parent.constants, name, value)
+        # changed_value = getattr(self.parent.constants, name)
+        # self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
 
         # TODO: implement "saving" and reading of parameters to a text file
 
@@ -403,7 +401,8 @@ class CommandDefinitions:
         gyro = self.parent.gyro.get_gyro()
 
         fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value,
-        TestCommandEnum.CommsDriver.value, gyro1 = gyro[0], gyro2 = gyro[1], gyro3=gyro[2])
+                                                             TestCommandEnum.CommsDriver.value,
+                                                             gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
 
         time.sleep(5)
         self.parent.radio.transmit(fx_data)
@@ -412,21 +411,21 @@ class CommandDefinitions:
         os.system('sudo poweroff')
 
     def edit_file_at_line(self, **kwargs):
-        
+
         file_path = kwargs['file_path']
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
-        #Open and copy file
-        original_file = open(file_path,'r+')
+        # Open and copy file
+        original_file = open(file_path, 'r+')
         original_file_lines = original_file.readlines()
         new_file_lines = original_file_lines[:]
-       
-       #Modify copy at designated line
+
+        # Modify copy at designated line
         new_file_lines[line_number] = new_line + ' \n'
 
-        #Write copy onto original file and original file into a backup
-        backup_file = open('backup_' + file_path, 'w') 
+        # Write copy onto original file and original file into a backup
+        backup_file = open('backup_' + file_path, 'w')
         backup_file.writelines(original_file_lines)
         original_file.writelines(new_file_lines)
 
@@ -436,14 +435,12 @@ class CommandDefinitions:
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
-        #Get original file contents
-        original_file = open(file_path,'r+')
+        # Get original file contents
+        original_file = open(file_path, 'r+')
         my_file_lines = original_file.readlines()
         pre_contents = my_file_lines[:line_number]
         post_contents = my_file_lines[line_number:]
 
-        #Write new line into file
+        # Write new line into file
         original_file.seek(0)
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
-
-    

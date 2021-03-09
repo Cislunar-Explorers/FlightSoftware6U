@@ -106,6 +106,7 @@ class Gomspace:
         self.pc.rf_switch(receive)
 
     def set_PA(self, on: bool):
+        """Turns on/off the power circuit for the PA"""
         self.pc.set_PA(on)
 
     def is_electrolyzing(self):

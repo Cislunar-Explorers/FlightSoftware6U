@@ -212,6 +212,7 @@ class TestCommandEnum(IntEnum):
     GomPin = 6
     CommsDriver = 7
     PiShutdown = 11
+    RTCTest = 8
 
 
 @unique

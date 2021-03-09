@@ -19,6 +19,7 @@ from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
+from drivers.rtc import RTC
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -52,7 +53,7 @@ class MainSatelliteThread(Thread):
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self.init_sensors()
+        self._init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
@@ -96,6 +97,8 @@ class MainSatelliteThread(Thread):
         self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC()
+        self.radio = Radio()
+        self.rtc = RTC()
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
 
@@ -108,13 +111,6 @@ class MainSatelliteThread(Thread):
 
     # TODO (major: implement telemetry)
     def poll_inputs(self):
-        # Switch on/off electrolyzer
-        """curr_pressure = self.pressure_sensor.read_pressure()
-        if curr_pressure < IDEAL_CRACKING_PRESSURE:
-            if not self.gom.is_electrolyzing():
-                self.gom.set_electrolysis(True)
-        else:
-            self.gom.set_electrolysis(False)"""
         
         #Telemetry downlink
         if (datetime.today() - self.radio.last_telemetry_time).total_seconds()/60 >= TELEM_DOWNLINK_TIME:
@@ -219,7 +215,7 @@ class MainSatelliteThread(Thread):
 
     def shutdown(self):
         print("Shutting down...")
-        self.comms.stop()
+        # self.comms.stop()
 
 
 if __name__ == "__main__":

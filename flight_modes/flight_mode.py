@@ -162,8 +162,7 @@ class FlightMode:
 
                 #Prioritize downlinking: execute all necessary downlinks before
                 #Starting next command
-                if not self.parent.downlink_queue.empty():
-                    self.parent.execute_downlinks()
+                #TODO: Execute downlinks before moving on to next command
 
             # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
             #  exception occurs in the above for loop

@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 import utils.constants
 from utils.constants import *
 from utils.parameters import *
-import utils.parameters
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
@@ -78,12 +77,12 @@ class MainSatelliteThread(Thread):
     def init_parameters(self):
         with open(PARAMETERS_JSON_PATH) as f:
             json_parameter_dict = load(f)
-        self.parameters = utils.parameters
+        self.parameters = {}
             
         try:
             for parameter in self.parameters.__dir__():
                 if parameter[0] != '_':
-                    self.parameters.__setattr__(parameter,json_parameter_dict[parameter])
+                    self.parameters[parameter] = json_parameter_dict[parameter]
         except:
             raise Exception(
                 'Attempted to set parameter ' + str(parameter) + 
@@ -208,11 +207,10 @@ class MainSatelliteThread(Thread):
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
-                print(self.parameters.TELEM_DOWNLINK_TIME)
                 # self.update_state()
                 #self.read_command_queue_from_file()
-                self.execute_downlinks()
                 self.execute_commands()  # Set goal or execute command immediately
+                self.execute_downlinks()
                 self.run_mode()
         finally:
             # TODO handle failure gracefully

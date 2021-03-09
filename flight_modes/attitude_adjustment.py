@@ -96,8 +96,7 @@ class AAMode(PauseBackgroundMode):
                 try:
                     for pulse_time in absolute_pulse_times:
                         sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
-                        # self.parent.gom.solenoid(ACS_SPIKE_DURATION, pulse_duration)
-                        self.parent.gom.pc.solenoid_single_wave(ACS_SPIKE_DURATION, pulse_duration)
+                        self.parent.gom.pc.solenoid_single_wave(pulse_duration)
                 except ValueError:
                     self.missed_timing(pulse_time)
 
@@ -112,7 +111,7 @@ class AAMode(PauseBackgroundMode):
         # self.parent.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
 
     # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and
-    # it does all the math. However, due to our development timeline, we will have to fall back on calculaing exact 
+    # it does all the math. However, due to our development timeline, we will have to fall back on calculating exact
     # timings on the ground, and then the satellite blindly follows these timings 
     # def get_data(self):
     #     # get latest opnav location and gyro data

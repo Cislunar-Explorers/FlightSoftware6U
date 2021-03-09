@@ -77,9 +77,9 @@ class Gomspace:
         logger.debug("Printing housekeeping, config and config2 data")
         self.pc.displayAll()
 
-    def solenoid(self, spike, hold):
+    def solenoid(self, hold):
         """Spikes the solenoid at 12V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
-        self.pc.solenoid(spike, hold)
+        self.pc.solenoid_single_wave(hold)
 
     def glowplug(self, duration, delay=0):
         """Pulses the glowplug for [duration] milliseconds with after a delay of [delay] seconds"""
@@ -96,6 +96,14 @@ class Gomspace:
     def set_electrolysis(self, status: bool, delay=0):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
         self.pc.electrolyzer(status, delay=delay)
+
+    def lna(self, on: bool):
+        """Turns the receiving amplifier on (True)/off (False)"""
+        self.pc.comms_amplifier(on)
+
+    def rf_switch(self, receive: bool):
+        """Tells RF switch to either receive or transmit"""
+        self.pc.comms(receive)
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""

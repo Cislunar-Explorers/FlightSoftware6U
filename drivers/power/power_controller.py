@@ -78,7 +78,8 @@ OUT_SWITCH = 7
 #
 
 # GPIO outputs
-OUT_PI_COMMS = 17  # Physical pin 11
+RF_RX_EN = 19  # Physical pin 35
+RF_TX_EN = 26  # Physical pin 37
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
 # Precomputed solenoid command bytearrays
@@ -109,13 +110,7 @@ class Power:
         self.solenoid_wave = []
         self.solenoid_wave_id = -1
 
-        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, ACS_SPIKE_DURATION * 1000))
-        self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
-
-        self._pi.wave_clear()
-        self._pi.wave_add_generic(self.solenoid_wave)
-        self.solenoid_wave_id = self._pi.wave_create()
-
+        self.calculate_solenoid_wave()
         # initialize gom outputs (all off)
         self.set_output(0)
 
@@ -404,6 +399,7 @@ class Power:
     # delay of [delay] seconds.
     # output must be off before the function is called
     def solenoid(self, spike, hold):
+        ps.gom_logger.warning("DEPRECATED FUNCTION Power().solenoid")
         ps.gom_logger.debug(
             "Spiking solenoid for %i ms, holding for %i ms, with a delay of %i sec",
             spike,
@@ -418,13 +414,22 @@ class Power:
         self.set_single_output("solenoid", 0, 0)
 
     # Experimental implementation of above functionality
-    def solenoid_single_wave(self, spike, hold):
+    def solenoid_single_wave(self, hold):
         # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
         self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async
         sleep(hold)
         # self._pi.i2c_write_device(self._dev, SOLENOID_OFF_COMMAND)
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_OFF_LIST)
+
+    def calculate_solenoid_wave(self):
+        self.solenoid_wave = []
+        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, ACS_SPIKE_DURATION * 1000))
+        self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
+
+        self._pi.wave_clear()
+        self._pi.wave_add_generic(self.solenoid_wave)
+        self.solenoid_wave_id = self._pi.wave_create()
 
     # pulses glowplug for [duration] milliseconds with
     # delay of [delay] seconds.
@@ -470,19 +475,23 @@ class Power:
         self.set_single_output("burnwire_2", 0, 0)
 
     # tell RF switch to either transmit or receive
-    def comms(self, transmit):
-        if transmit:
-            self._pi.write(OUT_PI_COMMS, 1)
+    def comms(self, receive: bool = True):
+        if receive:
+            # Set RF switch to receive
+            self._pi.write(RF_TX_EN, pigpio.LOW)
+            self._pi.write(RF_RX_EN, pigpio.HIGH)
         else:
-            self._pi.write(OUT_PI_COMMS, 0)
+            # Set RF switch to transmit
+            self._pi.write(RF_RX_EN, pigpio.LOW)
+            self._pi.write(RF_TX_EN, pigpio.HIGH)
 
     # Toggles receiving comms amp on/off
     # Input on is either True (on) or False (off)
-    def comms_amplifier(self, on):
+    def comms_amplifier(self, on: bool):
         self.set_single_output("comms", int(on), 0)
 
     def set_GPIO_low(self):
-        self._pi.write(OUT_PI_COMMS, 0)
+        self.comms()
         self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)
 
     # Legacy stuff, may or may not be useful

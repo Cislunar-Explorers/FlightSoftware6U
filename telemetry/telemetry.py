@@ -227,6 +227,31 @@ class Telemetry(SynchronousSensor):
                 self.gom.hk.vbatt,
                 self.prs.pressure)
 
+    def standard_packet_dict(self):
+        return {'rtc_time': self.rtc.rtc_time,
+                'position_x': 1,
+                'position_y': 2,
+                'position_z': 3,
+                'attitude_1': 4,
+                'attitude_2': 5,
+                'attitude_3': 6,
+                'attitude_4': 7,
+                'hk_temp_1': self.gom.hk.temp[0],
+                'hk_temp_2': self.gom.hk.temp[1],
+                'hk_temp_3': self.gom.hk.temp[2],
+                'hk_temp_4': self.gom.hk.temp[3],
+                'gyro_temp': self.gyr.tmp,
+                'thermo_temp': self.thm.tmp,
+                'curin_1': self.gom.hk.curin[0],
+                'curin_2': self.gom.hk.curin[1],
+                'curin_3': self.gom.hk.curin[2],
+                'vboost_1': self.gom.hk.vboost[0],
+                'vboost_2': self.gom.hk.vboost[1],
+                'vboost_3': self.gom.hk.vboost[2],
+                'cursys': self.gom.hk.cursys,
+                'vbatt': self.gom.hk.vbatt,
+                'prs_pressure': self.prs.pressure}
+
     def write_telem(self, telem):
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>
         # functions above, or a list of all of them.

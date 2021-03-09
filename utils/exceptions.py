@@ -29,6 +29,7 @@ class CommandArgException(CommandException):
 class CommandPackingException(SerializationException):
     """Raise when an exception occurs while packing a command"""
 
+
 class CommandUnpackingException(DeserializationException):
     """Raise when an exception occurs while unpacking a command"""
 

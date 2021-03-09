@@ -1,7 +1,8 @@
 import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY
+from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
+from utils.parameters import BOOTUP_SEPARATION_DELAY
 from flight_modes.flight_mode import FlightMode
 import os
 from utils.log import get_log
@@ -32,9 +33,9 @@ class BootUpMode(FlightMode):
         logger.info("Logging info to DB...")
         self.log()
 
-        # deploy antennae
-        logger.info("Beginning burn wire...")
-        parent.gom.burnwire1(5)
+        # TODO deploy antennae
+        # logger.info("Beginning burn wire...")
+        # parent.gom.burnwire1(5)
 
         logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
@@ -50,7 +51,7 @@ class BootUpMode(FlightMode):
 
     def update_state(self) -> int:
         logger.info("updating state... doesnt do nothin")
-        return 0
+        return NO_FM_CHANGE
 
 
 class RestartMode(FlightMode):
@@ -94,4 +95,4 @@ class RestartMode(FlightMode):
 
     def update_state(self) -> int:
         logger.info("updating state... will now transfer to normal")
-        return 2
+        return FMEnum.Normal.value

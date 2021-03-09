@@ -4,7 +4,9 @@ from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, a, b, M, team_identifier
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HARD_SET, PARAMETERS_JSON_PATH, a, b, M, team_identifier
+from telemetry.telemetry import Telemetry
+from json import load, dump
 
 
 def verification(**kwargs):
@@ -117,6 +119,7 @@ class CommandDefinitions:
             TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs,
             7: self.comms_driver_test,
+            TestCommandEnum.PiShutdown.value: self.pi_shutdown,
             TestCommandEnum.RTCTest.value: self.rtc_test
         }
 
@@ -232,11 +235,25 @@ class CommandDefinitions:
         string which we can't pack/unpack """
         name = kwargs[NAME]
         value = kwargs[VALUE]
+        hard_set = kwargs[HARD_SET]
 
-        initial_value = getattr(self.parent.constants, name)
-        setattr(self.parent.constants, name, value)
-        changed_value = getattr(self.parent.constants, name)
-        self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
+        self.parent.parameters[name] = value
+
+        #Hard sets new parameter value into JSON file
+        if hard_set:
+            with open(PARAMETERS_JSON_PATH) as f:
+                json_parameter_dict = load(f)
+            json_parameter_dict[name] = value
+            dump(json_parameter_dict, open(PARAMETERS_JSON_PATH,'w'),indent=0)
+
+        acknowledgement = self.parent.downlink_handler.pack_downlink(
+            self.parent.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.SetParam.value,successful=True)
+        self.parent.downlink_queue.put(acknowledgement)
+
+        #initial_value = getattr(self.parent.constants, name)
+        #setattr(self.parent.constants, name, value)
+        #changed_value = getattr(self.parent.constants, name)
+        #self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
 
         # TODO: implement "saving" and reading of parameters to a text file
 
@@ -296,7 +313,7 @@ class CommandDefinitions:
 
     def gather_basic_telem(self):
         # what's defined in section 3.6.1 of https://cornell.app.box.com/file/629596158344 would be a good packet
-        raise NotImplementedError
+        return self.parent.telemetry.standard_packet_dict()
 
     def gather_detailed_telem(self):
         # here we'd gather as much data about the satellite as possible
@@ -390,3 +407,43 @@ class CommandDefinitions:
 
         time.sleep(5)
         self.parent.radio.transmit(fx_data)
+
+    def pi_shutdown(self):
+        os.system('sudo poweroff')
+
+    def edit_file_at_line(self, **kwargs):
+        
+        file_path = kwargs['file_path']
+        line_number = kwargs['line_number']
+        new_line = kwargs['new_line']
+
+        #Open and copy file
+        original_file = open(file_path,'r+')
+        original_file_lines = original_file.readlines()
+        new_file_lines = original_file_lines[:]
+       
+       #Modify copy at designated line
+        new_file_lines[line_number] = new_line + ' \n'
+
+        #Write copy onto original file and original file into a backup
+        backup_file = open('backup_' + file_path, 'w') 
+        backup_file.writelines(original_file_lines)
+        original_file.writelines(new_file_lines)
+
+    def insert_line_in_file(self, **kwargs):
+
+        file_path = kwargs['file_path']
+        line_number = kwargs['line_number']
+        new_line = kwargs['new_line']
+
+        #Get original file contents
+        original_file = open(file_path,'r+')
+        my_file_lines = original_file.readlines()
+        pre_contents = my_file_lines[:line_number]
+        post_contents = my_file_lines[line_number:]
+
+        #Write new line into file
+        original_file.seek(0)
+        original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
+
+    

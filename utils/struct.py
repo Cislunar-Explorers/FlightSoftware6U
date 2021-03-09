@@ -77,3 +77,13 @@ def unpack_str(buf, off):
     slen = struct.unpack_from(">H", buf, off)[0]
     sbytes = buf[off + 2: off + 2 + slen]
     return 2 + slen, str(sbytes, "utf-8")
+
+packer_dict = {
+'bool': (pack_bool,unpack_bool),
+'short': (pack_unsigned_short,unpack_unsigned_short),
+'int': (pack_unsigned_int,unpack_unsigned_int),
+'long': (pack_unsigned_long,unpack_unsigned_long),
+'float': (pack_float,unpack_float),
+'double': (pack_double,unpack_double),
+'string': (pack_str,unpack_str)
+}

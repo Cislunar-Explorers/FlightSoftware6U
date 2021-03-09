@@ -3,7 +3,7 @@ from time import sleep
 from datetime import datetime
 import os
 
-from utils.constants import (  # noqa F401
+"""from utils.constants import (  # noqa F401
     LOW_CRACKING_PRESSURE,
     EXIT_LOW_BATTERY_MODE_THRESHOLD,
     HIGH_CRACKING_PRESSURE,
@@ -25,26 +25,15 @@ from utils.constants import (  # noqa F401
     STATE,
     INTERVAL,
     DELAY,
-    NUM_BLOCKS
-)
+    NUM_BLOCKS,
+    RTC_TIME
+)"""
 
+from utils.constants import *
+from utils.parameters import *
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
-from utils.struct import (
-    pack_bool,
-    pack_unsigned_short,
-    pack_double,
-    pack_unsigned_int,
-    pack_str,
-    unpack_bool,
-    unpack_unsigned_short,
-    unpack_double,
-    unpack_unsigned_int,
-    unpack_str,
-    pack_float,
-    unpack_float
-)
 
 from communications.command_definitions import CommandDefinitions
 
@@ -70,9 +59,9 @@ class FlightMode:
 
     # Map argument names to (packer,unpacker) tuples
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
-    command_arg_unpackers = {}
+    command_arg_types = {}
     sensordata_arg_unpackers = {}
-    downlink_arg_unpackers = {}
+    downlink_arg_types = {}
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
@@ -153,7 +142,7 @@ class FlightMode:
 
                 bogus = False
                 try:
-                    command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
+                    mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
                     logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
@@ -170,6 +159,11 @@ class FlightMode:
                     method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
                     method_to_run(**command_kwargs)  # run that method
                 finished_commands.append(command)
+
+                #Prioritize downlinking: execute all necessary downlinks before
+                #Starting next command
+                #TODO: Execute downlinks before moving on to next command
+
             # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
             #  exception occurs in the above for loop
             for finished_command in finished_commands:
@@ -233,17 +227,19 @@ class TestMode(PauseBackgroundMode):
 
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
                       TestCommandEnum.ADCTest.value: ([], 0),
-                      TestCommandEnum.CommsDriver.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0)}
+                      TestCommandEnum.CommsDriver.value:([],0),
+                      TestCommandEnum.PiShutdown.value:([],0),
+                      TestCommandEnum.RTCTest.value: ([], 0)
+                      }
 
     command_arg_unpackers = {}
 
     downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
 
     downlink_arg_unpackers = {
-        'gyro1': (pack_float, unpack_float),
-        'gyro2': (pack_float, unpack_float),
-        'gyro3': (pack_float, unpack_float),
+        'gyro1': 'float',
+        'gyro2': 'float',
+        'gyro3': 'float',
         }
 
 
@@ -323,28 +319,61 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 16),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-        NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
+        NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
     }
 
-    command_arg_unpackers = {
-        AZIMUTH: (pack_double, unpack_double),
-        ELEVATION: (pack_double, unpack_double),
-        ACCELERATE: (pack_bool, unpack_bool),
-        NAME: (pack_str, unpack_str),
+    command_arg_types = {
+        AZIMUTH: 'double',
+        ELEVATION: 'double',
+        ACCELERATE: 'bool',
+        NAME: 'string',
         # TODO: can't use strings in current configuration b/c command_codecs requires a fixed number of bytes
-        VALUE: (pack_double, unpack_double),
-        STATE: (pack_bool, unpack_bool),
-        INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
-        DELAY: (pack_unsigned_short, unpack_unsigned_short),
-        NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short)
+        VALUE: 'double',
+        STATE: 'bool',
+        INTERVAL: 'int',
+        DELAY: 'short',
+        NUM_BLOCKS: 'short',
+        HARD_SET: 'bool'
     }
 
-    downlink_codecs = {}
+    downlink_codecs = {
+        NormalCommandEnum.BasicTelem.value: ([RTC_TIME,ATT_1,ATT_2,ATT_3,ATT_4,
+        HK_TEMP_1,HK_TEMP_2,HK_TEMP_3,HK_TEMP_4,GYRO_TEMP,THERMOCOUPLER_TEMP, CURRENT_IN_1,
+        CURRENT_IN_2,CURRENT_IN_3,VBOOST_1,VBOOST_2,VBOOST_3,SYSTEM_CURRENT,BATTERY_VOLTAGE,
+        PROP_TANK_PRESSURE], 216),
 
-    downlink_arg_unpackers = {}
+        NormalCommandEnum.SetParam.value:([SUCCESSFUL],1)
+    }
+
+    downlink_arg_types = {
+        RTC_TIME: 'double',
+        POSITION_X: 'double',
+        POSITION_Y: 'double',
+        POSITION_Z: 'double',
+        ATT_1: 'float',
+        ATT_2: 'float',
+        ATT_3: 'float',
+        ATT_4: 'float',
+        HK_TEMP_1: 'float',
+        HK_TEMP_2: 'float',
+        HK_TEMP_3: 'float',
+        HK_TEMP_4: 'float',
+        GYRO_TEMP: 'float',
+        THERMOCOUPLER_TEMP: 'float',
+        CURRENT_IN_1: 'float',
+        CURRENT_IN_2: 'float',
+        CURRENT_IN_3: 'float',
+        VBOOST_1: 'float',
+        VBOOST_2: 'float',
+        VBOOST_3: 'float',
+        SYSTEM_CURRENT: 'float',
+        BATTERY_VOLTAGE: 'float',
+        PROP_TANK_PRESSURE: 'float',
+        SUCCESSFUL: 'bool'
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -353,7 +382,7 @@ class NormalMode(FlightMode):
     def run_mode(self):
         time_since_last_run = datetime.now() - self.last_opnav_run
         minutes_since_last_run = time_since_last_run.total_seconds() / 60.0
-        minutes_until_next_run = self.parent.constants.OPNAV_INTERVAL - minutes_since_last_run
+        minutes_until_next_run = self.parent.parameters.OPNAV_INTERVAL - minutes_since_last_run
         if minutes_until_next_run < 0:
             CommandDefinitions(self.parent).run_opnav()
         logger.info(f"In NORMAL flight mode. Minutes until next OpNav run: {minutes_until_next_run}")

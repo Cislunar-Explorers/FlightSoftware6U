@@ -103,7 +103,10 @@ class Gomspace:
 
     def rf_switch(self, receive: bool):
         """Tells RF switch to either receive or transmit"""
-        self.pc.comms(receive)
+        self.pc.rf_switch(receive)
+
+    def set_PA(self, on: bool):
+        self.pc.set_PA(on)
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""

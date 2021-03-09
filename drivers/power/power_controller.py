@@ -80,6 +80,7 @@ OUT_SWITCH = 7
 # GPIO outputs
 RF_RX_EN = 19  # Physical pin 35
 RF_TX_EN = 26  # Physical pin 37
+PA_EN = 27  # Physical pin 13
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
 # Precomputed solenoid command bytearrays
@@ -104,7 +105,9 @@ class Power:
         self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
         # initialize GPIO outputs
-        self._pi.set_mode(OUT_PI_COMMS, pigpio.OUTPUT)
+        self._pi.set_mode(RF_RX_EN, pigpio.OUTPUT)
+        self._pi.set_mode(RF_TX_EN, pigpio.OUTPUT)
+        self._pi.set_mode(PA_EN, pigpio.OUTPUT)
         self._pi.set_mode(OUT_PI_SOLENOID_ENABLE, pigpio.OUTPUT)
 
         self.solenoid_wave = []
@@ -475,7 +478,7 @@ class Power:
         self.set_single_output("burnwire_2", 0, 0)
 
     # tell RF switch to either transmit or receive
-    def comms(self, receive: bool = True):
+    def rf_switch(self, receive: bool = True):
         if receive:
             # Set RF switch to receive
             self._pi.write(RF_TX_EN, pigpio.LOW)
@@ -485,13 +488,16 @@ class Power:
             self._pi.write(RF_RX_EN, pigpio.LOW)
             self._pi.write(RF_TX_EN, pigpio.HIGH)
 
+    def set_PA(self, on: bool):
+        self._pi.write(PA_EN, int(on))
+
     # Toggles receiving comms amp on/off
     # Input on is either True (on) or False (off)
     def comms_amplifier(self, on: bool):
         self.set_single_output("comms", int(on), 0)
 
     def set_GPIO_low(self):
-        self.comms()
+        self.rf_switch()
         self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)
 
     # Legacy stuff, may or may not be useful

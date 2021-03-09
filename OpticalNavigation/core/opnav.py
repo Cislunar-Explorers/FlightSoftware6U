@@ -165,6 +165,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
     frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
     print(frames)
+    print(len(frames))
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
@@ -177,6 +178,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
 
+    print("earth array: ", earthDetectionArray)
+
     # best___Tuple is tuple of file, distance and vector of best result
 
     print("Finding centers...")
@@ -185,22 +188,45 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     for e in range(earthDetectionArray.shape[0]):
         dist = math.sqrt(earthDetectionArray[e, 0]**2 + earthDetectionArray[e, 1]**2)
         earthCenterDistances.append(dist)
+    print("earth center distances: ", earthCenterDistances)
     earthFileDistVec = list(zip(frames, earthCenterDistances, earthDetectionArray))
-    bestEarthTuple = min(earthFileDistVec, key=lambda x:x[1])
+    bestEarthTuple = earthFileDistVec[0]
+    for e in earthFileDistVec:
+        if np.isnan(e[1]):
+            continue
+        if e[1] < bestEarthTuple[1] or np.isnan(bestEarthTuple[1]):
+            bestEarthTuple = e
+
+    #bestEarthTuple = np.nanmin(earthFileDistVec, key=lambda x:x[1])
+    print("best earth tuple: ", bestEarthTuple)
 
     moonCenterDistances = []
     for m in range(moonDetectionArray.shape[0]):
         dist = math.sqrt(moonDetectionArray[m, 0]**2 + moonDetectionArray[m, 1]**2)
         moonCenterDistances.append(dist)
     moonFileDistVec = list(zip(frames, moonCenterDistances, moonDetectionArray))
-    bestMoonTuple = min(moonFileDistVec, key=lambda x: x[1])
+    bestMoonTuple = moonFileDistVec[0]
+    for m in moonFileDistVec:
+        if np.isnan(m[1]):
+            continue
+        if m[1] < bestMoonTuple[1] or np.isnan(bestMoonTuple[1]):
+            bestMoonTuple = m
+
+    #bestMoonTuple = min(moonFileDistVec, key=lambda x: x[1])
 
     sunCenterDistances = []
     for s in range(sunDetectionArray.shape[0]):
         dist = math.sqrt(sunDetectionArray[s, 0]**2 + sunDetectionArray[s, 1]**2)
         sunCenterDistances.append(dist)
     sunFileDistVec = list(zip(frames, sunCenterDistances, sunDetectionArray))
-    bestSunTuple = min(sunFileDistVec, key=lambda x: x[1])
+    bestSunTuple = sunFileDistVec[0]
+    for s in sunFileDistVec:
+        if np.isnan(s[1]):
+            continue
+        if s[1] < bestSunTuple[1] or np.isnan(bestSunTuple[1]):
+            bestSunTuple = s
+
+    #bestSunTuple = min(sunFileDistVec, key=lambda x: x[1])
 
     # We now have the best result for earth, moon and sun; time to rotate vectors
 
@@ -235,6 +261,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         data[2][0] = coordArray[0]
         data[2][1] = coordArray[1]
         data[2][2] = coordArray[2]
+
+    print("Body best earth: ", bestEarthTuple)
 
     print("Gyro recording...")
     gyro_meas = record_gyro(count=gyro_count)
@@ -304,6 +332,9 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     best_s = (bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2], bestSunTuple[2][3])
     ######
 
+    print("Best Earth: ", best_e)
+    print("Best Moon: ", best_m)
+    print("Best Sun: ", best_s)
     # Calculate angular separation
     ang_em = __calculate_cam_measurements(body1=bestDetectedCircles.get_earth_detection(), body2=bestDetectedCircles.get_moon_detection())
 

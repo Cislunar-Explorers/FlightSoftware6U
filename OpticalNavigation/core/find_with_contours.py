@@ -1,6 +1,4 @@
 from OpticalNavigation.core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
-#from const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
-from utils.constants import DB_FILE
 from dataclasses import dataclass
 import cv2
 import numpy as np
@@ -228,7 +226,7 @@ def measureEarth(img):
     lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
     #cv2.imshow("low", lowThresh)
     percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
-    print("Earth white%", percentWhite)
+    #print("Earth white%", percentWhite)
     if percentWhite >= 0.20:
         highThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
         highThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
@@ -329,9 +327,10 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) is 0:
+        print("No contours")
         return result
 
-    print("Contour size", len(contours))
+    #print("Contour size", len(contours))
     cv2.drawContours(imgCopy, contours, -1, (0, 255, 0), 3)
     #cv2.imshow("Contours", imgCopy)
 
@@ -387,8 +386,8 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 sRho2 = sXst ** 2 + sYst ** 2
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
                 sSx, sSy, sSz = st_to_sph(sXst, sYst)
-                print("Sun")
-                print(sSx, sSy, sSz, sDia)
+                #print("Sun")
+                #print(sSx, sSy, sSz, sDia)
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
     else:
@@ -398,14 +397,14 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
             earth = measureEarth(f)
             if earth is not None:
                 (eX, eY), eR = earth
-                print("bbst.x0 + eX, bbst.y0 + eY", bbst.x0 + eX, bbst.y0 + eY)
+                #print("bbst.x0 + eX, bbst.y0 + eY", bbst.x0 + eX, bbst.y0 + eY)
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
-                print("eXst, eYst", eXst, eYst)
+                #print("eXst, eYst", eXst, eYst)
                 eRho2 = eXst ** 2 + eYst ** 2
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
-                print("Earth")
-                print(eSx, eSy, eSz, eDia)
+                #print("Earth")
+                #print(eSx, eSy, eSz, eDia)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
             if earth is None:
                 moon = measureMoon(f)
@@ -413,15 +412,15 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                     (mX, mY), mR = moon
                     # print("bbst2.m0 + eX, bbst2.y0 + mY", bbst2.x0 + mX, bbst2.y0 + mY)
                     mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)
-                    print("mXst,meYst", mXst, mYst)
+                    #print("mXst,meYst", mXst, mYst)
                     mRho2 = mXst ** 2 + mYst ** 2
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
-                    print("Moon")
-                    print(mSx, mSy, mSz, mDia)
+                    #print("Moon")
+                    #print(mSx, mSy, mSz, mDia)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
 
-    print("Result earth, moon, sun")
+    print("Result: earth, moon, sun")
     print(result.get_earth_detection(), result.get_moon_detection(), result.get_sun_detection())
     cv2.waitKey(0)
     return result
@@ -455,7 +454,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
-    print(DB_FILE)
     find(args["image"])
 
 # Notes

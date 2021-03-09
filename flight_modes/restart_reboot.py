@@ -2,7 +2,6 @@ import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
 from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
-from utils.parameters import BOOTUP_SEPARATION_DELAY
 from flight_modes.flight_mode import FlightMode
 import os
 from utils.log import get_log

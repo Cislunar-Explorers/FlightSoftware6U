@@ -2,7 +2,6 @@ import drivers.power.power_controller as power_controller
 import drivers.power.power_structs as ps
 from enum import Enum
 from utils.constants import GomOutputs 
-from utils.parameters import GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
 
 logger = ps.gom_logger
 
@@ -90,9 +89,9 @@ class Gomspace:
         """Turns on burnwire 1 for [duration] seconds after [delay] seconds. Does a display_all half way through"""
         self.pc.burnwire1(duration, delay)
 
-    def burnwire2(self, duration, delay=0):
-        """Turns on burnwire 2 for [duration] seconds after [delay] seconds. Does a display_all half way through"""
-        self.pc.burnwire2(duration, delay)
+    def glowplug2(self, duration, delay=0):
+        """Turns on glowplug 2 for [duration] milliseconds after [delay] seconds. Does a display_all half way through"""
+        self.pc.glowplug2(duration, delay)
 
     def set_electrolysis(self, status: bool, delay=0):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""

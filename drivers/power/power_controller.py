@@ -463,19 +463,19 @@ class Power:
 
     # turns both burnwire 2 on for [duration] seconds, with a
     # delay of [delay] seconds.
-    def burnwire2(self, duration, delay=0):
+    def glowplug2(self, duration, delay=0):
         ps.gom_logger.info(
-            "Turning on burnwire 2 for %s seconds after a delay of %s sec",
+            "Turning on glowplug 2 for %s seconds after a delay of %s sec",
             duration,
             delay,
         )
 
         sleep(delay)
-        self.set_single_output("burnwire_2", 1, 0)
-        sleep(duration / 2)
+        self.set_single_output("glowplug_2", 1, 0)
+        sleep(duration * 0.001 / 2)
         self.displayAll()
-        sleep(duration / 2)
-        self.set_single_output("burnwire_2", 0, 0)
+        sleep(duration * 0.001 / 2)
+        self.set_single_output("glowplug_2", 0, 0)
 
     # tell RF switch to either transmit or receive
     def rf_switch(self, receive: bool = True):

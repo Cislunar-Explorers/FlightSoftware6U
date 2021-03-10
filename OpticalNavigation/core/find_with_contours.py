@@ -252,8 +252,8 @@ def measureSun(img):
     highThresh = cv2.inRange(img, (230, 230, 230), (255, 255, 255))
     #cv2.imshow("Sun thresh", highThresh)
     percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
-    # print("Sun white%", percentWhite)
-    if percentWhite >= 0.23:
+    #print("Sun white%", percentWhite)
+    if percentWhite >= 0.20: #Changed from 23%
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
 

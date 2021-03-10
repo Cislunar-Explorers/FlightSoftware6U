@@ -1,7 +1,7 @@
 import os
 import sys
 from threading import Thread
-from time import sleep
+from time import sleep, time
 from datetime import datetime
 from queue import Queue
 import signal
@@ -112,7 +112,7 @@ class MainSatelliteThread(Thread):
             self.adc.read_temperature()
         except:
             self.adc = None
-            logger.error("ADC initalization failed")
+            logger.error("ADC initialization failed")
         else:
             logger.info("ADC initialized")
 
@@ -137,19 +137,27 @@ class MainSatelliteThread(Thread):
 
         # initialize the cameras, select a camera
 
+        # initialize camera mux, regardless of hard or soft bootup
         try:
             self.mux = camera.CameraMux()
-            self.camera = camera.Camera()
-            self.mux.selectCamera(random.choice([1, 2, 3]))
-            # to test camera:
-            # logger.info("Taking a raw observation...")
-            # self.camera.rawObservation("restart_cam_test.mjpeg")
+            self.mux.selectCamera(1)
         except:
             self.mux = None
-            self.camera = None
-            logger.error("Camera initialization failed")
+            logger.error("Mux initialization failed")
         else:
-            logger.info("Cameras initialized")
+            logger.info("Mux initialized")
+
+        if self.mux is not None:
+            # add logic here to determine whether its a hard or soft reboot
+            try:
+                self.camera = camera.Camera()
+                f, t = self.camera.rawObservation(f"initialization-{int(time())}")
+            except:
+                self.camera = None
+            else:
+                logger.info("Cameras initialized")
+        else:
+            self.camera = None
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

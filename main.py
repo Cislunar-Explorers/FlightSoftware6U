@@ -89,19 +89,17 @@ class MainSatelliteThread(Thread):
     def init_parameters(self):
         with open(PARAMETERS_JSON_PATH) as f:
             json_parameter_dict = load(f)
-        self.parameters = {}
+        self.parameters = json_parameter_dict
 
-        try:
-            for parameter in self.parameters.__dir__():
-                if parameter[0] != '_':
-                    self.parameters[parameter] = json_parameter_dict[parameter]
-        except:
-            raise Exception(
-                'Attempted to set parameter ' + str(parameter) +
-                ', which could not be found in parameters.json'
-            )
-
-    # TODO
+        # try:
+        #     for parameter in self.parameters.__dir__():
+        #         if parameter[0] != '_':
+        #             self.parameters[parameter] = json_parameter_dict[parameter]
+        # except:
+        #     raise Exception(
+        #         'Attempted to set parameter ' + str(parameter) +
+        #         ', which could not be found in parameters.json'
+        #     )
 
     def init_sensors(self):
         self.radio = Radio()

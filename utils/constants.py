@@ -110,7 +110,7 @@ ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
 BURN_WAIT_TIME = 15  # minutes
 
-MAX_GYRO_RATE = 250  # degrees/sec
+MAX_GYRO_RATE = 250  # degrees/sec # TODO
 
 NO_FM_CHANGE = -1
 

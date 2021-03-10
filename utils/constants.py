@@ -81,7 +81,7 @@ class ConstantsEnum(IntEnum):
 class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
-    burnwire_2 = 2
+    glowplug_2 = 2
     glowplug = 3
     solenoid = 4
     electrolyzer = 5

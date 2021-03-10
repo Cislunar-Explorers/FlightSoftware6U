@@ -153,7 +153,7 @@ class CommandDefinitions:
 
     def split(self):
         # for demo, delay of 0
-        self.parent.gom.burnwire2(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
+        self.parent.gom.glowplug2(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
         # Tell gom to power burnwires in five seconds
         # self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
@@ -199,7 +199,7 @@ class CommandDefinitions:
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
         gyro_threader.start()
-        self.parent.gom.burnwire2(2)
+        self.parent.gom.glowplug2(2)
         gyro_threader.join()
 
     def gyro_thread(self):

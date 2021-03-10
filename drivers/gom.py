@@ -18,8 +18,9 @@ class Hk(Enum):
 
 
 class Gomspace:
-    def __init__(self):
-        self.pc = power_controller.Power()
+    def __init__(self, params):
+        self.parameters = params
+        self.pc = power_controller.Power(params)
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
@@ -65,6 +66,7 @@ class Gomspace:
     def all_off(self):
         """Turns off all controllable outputs on the Gomspace"""
         logger.debug("Turning off all controllable outputs")
+        self.set_PA(False)
         self.pc.set_output(0)
 
     def hard_reset(self, passcode):
@@ -78,7 +80,7 @@ class Gomspace:
         self.pc.displayAll()
 
     def solenoid(self, hold):
-        """Spikes the solenoid at 12V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
+        """Spikes the solenoid at 12V for [ACS_SPIKE_DURATION] milliseconds, holds at 5V for [hold] milliseconds"""
         self.pc.solenoid_single_wave(hold)
 
     def glowplug(self, duration, delay=0):
@@ -117,5 +119,6 @@ class Gomspace:
     def read_battery_percentage(self):
         battery_data = self.get_health_data(level=Hk.VI.value)
         battery_voltage = battery_data.vbatt
-        return (battery_voltage - GOM_VOLTAGE_MIN) / (
-                GOM_VOLTAGE_MAX - GOM_VOLTAGE_MIN)
+        vmin = self.parameters['GOM_VOLTAGE_MIN']
+        vmax = self.parameters['GOM_VOLTAGE_MAX']
+        return (battery_voltage - vmin) / (vmax - vmin)

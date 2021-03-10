@@ -105,7 +105,7 @@ class MainSatelliteThread(Thread):
 
     def init_sensors(self):
         self.radio = Radio()
-        self.gom = Gomspace()
+        self.gom = Gomspace(self.parameters)
         self.gyro = GyroSensor()
         self.adc = ADC(self.gyro)
         self.rtc = RTC()
@@ -220,13 +220,13 @@ class MainSatelliteThread(Thread):
             os.remove(filename)
 
     # Run the current flight mode
-    # TODO ensure comms thread halts during realtime ops
     def run_mode(self):
         with self.flight_mode:
             self.flight_mode.run_mode()
 
     # Wrap in try finally block to ensure it stays live
     def run(self):
+        """This is the main loop of the Cislunar Explorers and runs constantly during flight."""
         try:
             while True:
                 sleep(5)  # TODO remove when flight modes execute real tasks
@@ -245,7 +245,8 @@ class MainSatelliteThread(Thread):
                 self.gom.all_off()
 
     def shutdown(self):
-        print("Shutting down...")
+        self.gom.all_off()
+        logger.critical("Shutting down...")
         # self.comms.stop()
 
 

@@ -13,7 +13,7 @@
 
 import pigpio
 import drivers.power.power_structs as ps
-from utils.constants import GomOutputs, ACS_SPIKE_DURATION
+from utils.constants import GomOutputs
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
 from time import time, sleep
 
@@ -94,7 +94,7 @@ _ = ps._
 
 class Power:
     # initializes power object with bus [bus] and device address [addr]
-    def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
+    def __init__(self, params, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
         ps.gom_logger.debug(
             "Initializing Power object with bus %s, device address %s, and flags %s",
             bus,
@@ -110,13 +110,13 @@ class Power:
         self._pi.set_mode(PA_EN, pigpio.OUTPUT)
         self._pi.set_mode(OUT_PI_SOLENOID_ENABLE, pigpio.OUTPUT)
 
+        self.ACS_SPIKE_DURATION = params['ACS_SPIKE_DURATION']
         self.solenoid_wave = []
         self.solenoid_wave_id = -1
 
         self.calculate_solenoid_wave()
         # initialize gom outputs (all off)
         self.set_output(0)
-
 
     # prints housekeeping/config/config2
     def displayAll(self):
@@ -427,7 +427,7 @@ class Power:
 
     def calculate_solenoid_wave(self):
         self.solenoid_wave = []
-        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, ACS_SPIKE_DURATION * 1000))
+        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, self.ACS_SPIKE_DURATION * 1000))
         self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
 
         self._pi.wave_clear()

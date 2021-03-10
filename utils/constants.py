@@ -117,6 +117,10 @@ NO_FM_CHANGE = -1
 ACS_SPIKE_DURATION = 4  # milliseconds
 GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
+# Gyro specific constants
+
+GYRO_RANGE = 250  # degrees per second
+
 
 @unique
 class ConstantsEnum(IntEnum):

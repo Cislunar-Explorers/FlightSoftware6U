@@ -38,7 +38,9 @@ from utils.constants import (  # noqa F401
     DELAY,
     NO_FM_CHANGE,
     GLOWPLUG_DURATION,
-    BURN_WAIT_TIME
+    BURN_WAIT_TIME,
+    SCHEDULED_BURN_TIME,
+    TIME
 )
 
 from utils.log import get_log
@@ -91,7 +93,6 @@ class FlightMode:
     def __init__(self, parent: MainSatelliteThread):
         self.parent = parent
         self.task_completed = False
-        self.burn_time = None
 
     def update_state(self) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
@@ -109,8 +110,7 @@ class FlightMode:
         # go to maneuver mode
         if not self.parent.maneuver_queue.empty():
             # TODO assign the time command to this var
-            self.burn_time = None
-            if self.burn_time - time() < (60.0*BURN_WAIT_TIME):
+            if SCHEDULED_BURN_TIME - time() < (60.0*BURN_WAIT_TIME):
                 return FMEnum.Maneuver.value
 
         # if battery is low, go to low battery mode
@@ -139,12 +139,6 @@ class FlightMode:
         if self.parent.pressure_sensor.need_to_burn():
             self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
             return
-
-        # Check if opnav needs to be run
-        curr_time = datetime.now()
-        time_diff = curr_time - self.parent.last_opnav_run
-        if time_diff.seconds * 60 > OPNAV_INTERVAL:
-            self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
         # TODO determine if I should delete this
         elif flight_mode_id == FMEnum.Safety.value:
@@ -357,7 +351,7 @@ class ManeuverMode(PauseBackgroundMode):
 
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
-        sleep((self.burn_time - time()) - 5)
+        sleep((SCHEDULED_BURN_TIME - time()) - 5)
         self.parent.gom.glowplug(GLOWPLUG_DURATION)
         self.task_completed = True
 
@@ -389,7 +383,8 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
-        NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
+        NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
+        NormalCommandEnum.ScheduleManeuever.value: ([TIME], 4)
     }
 
     command_arg_unpackers = {
@@ -402,7 +397,8 @@ class NormalMode(FlightMode):
         STATE: (pack_bool, unpack_bool),
         INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
         DELAY: (pack_unsigned_short, unpack_unsigned_short),
-        NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short)
+        NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short),
+        TIME: (pack_float, unpack_float)
     }
 
     downlink_codecs = {}

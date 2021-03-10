@@ -34,6 +34,7 @@ from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
+from utils.boot_cause import hard_boot
 
 FOR_FLIGHT = None
 
@@ -148,14 +149,16 @@ class MainSatelliteThread(Thread):
             logger.info("Mux initialized")
 
         if self.mux is not None:
-            # add logic here to determine whether its a hard or soft reboot
-            try:
-                self.camera = camera.Camera()
-                f, t = self.camera.rawObservation(f"initialization-{int(time())}")
-            except:
-                self.camera = None
+            if hard_boot():
+                try:
+                    self.camera = camera.Camera()
+                    f, t = self.camera.rawObservation(f"initialization-{int(time())}")
+                except:
+                    self.camera = None
+                else:
+                    logger.info("Cameras initialized")
             else:
-                logger.info("Cameras initialized")
+                pass  # Need to reboot (probably not here - don't want to enter a boot loop)
         else:
             self.camera = None
 

@@ -31,14 +31,15 @@ class TestCommandHandler:
         application_id = 78
         command_dict = {application_id: command_data_tuple}
         mode_id = 255
-        ch.register_mode_commands(mode_id, command_dict)
 
         kwargs = {
             arg1: 78.1,
             arg2: 99.5,
         }
 
+        ch.register_new_command(mode_id, application_id, **kwargs)
         command_buffer = ch.pack_command(mode_id, application_id, **kwargs)
+
         assert len(command_buffer) == ch.get_command_size(mode_id, application_id)
 
         unpacked_mode, unpacked_app, unpacked_args = ch.unpack_command(command_buffer)
@@ -48,6 +49,7 @@ class TestCommandHandler:
         assert unpacked_app == application_id
         assert unpacked_args[arg1] == kwargs[arg1]
         assert unpacked_args[arg2] == kwargs[arg2]
+
 
 tch = TestCommandHandler()
 tch.test_command_serialization()

@@ -89,8 +89,6 @@ class MainSatelliteThread(Thread):
         )
         self.comms.listen()
 
-    # TODO
-
     def init_sensors(self):
         try:
             self.gom = Gomspace()
@@ -148,13 +146,27 @@ class MainSatelliteThread(Thread):
         else:
             logger.info("Mux initialized")
 
+        cameras_ok = True
+
         if self.mux is not None:
-            if hard_boot():
+            if hard_boot() or not os.path.isdir(self.log_dir):
                 try:
                     self.camera = camera.Camera()
-                    f, t = self.camera.rawObservation(f"initialization-{int(time())}")
+                    for i in [1, 2, 3]:
+                        try:
+                            self.mux.selectCamera(i)
+                            f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
+                        except Exception as e:
+                            logger.error(f"Camera {i} initialization failed")
+                            cameras_ok = False
+                        else:
+                            logger.info(f"Camera {i} initialized")
+
+                    if not cameras_ok:
+                        raise e
                 except:
                     self.camera = None
+                    logger.error(f"Cameras initialization failed")
                 else:
                     logger.info("Cameras initialized")
             else:

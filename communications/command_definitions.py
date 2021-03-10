@@ -83,7 +83,8 @@ class CommandDefinitions:
             NormalCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
             NormalCommandEnum.Verification.value: self.verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
-            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval
+            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
+            NormalCommandEnum.ScheduleManeuever.value: self.schedule_maneuver
         }
 
         self.low_battery_commands = {
@@ -302,19 +303,26 @@ class CommandDefinitions:
         assert type(state) is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
-    def burn(self, **kwargs):
+    # def burn(self, **kwargs):
+    #     time_burn = kwargs['time']
+    #     absolute = kwargs['absolute']
+    #
+    #     if absolute:  # i.e. if we want to burn at a specific absolute time
+    #         delay = time_burn - datetime.now()
+    #     else:  # if we want to burn exactly x seconds from receiving the command
+    #         delay = time
+    #
+    #     if delay < 0:
+    #         self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
+    #     else:
+    #         self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
+
+    def schedule_maneuever(self, **kwargs):
+        # TODO make this a json parameter to be stored in a file
         time_burn = kwargs['time']
-        absolute = kwargs['absolute']
+        self.parent.constants.SCHEDULED_BURN_TIME = time_burn
+        self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
-        if absolute:  # i.e. if we want to burn at a specific absolute time
-            delay = time_burn - datetime.now()
-        else:  # if we want to burn exactly x seconds from receiving the command
-            delay = time
-
-        if delay < 0:
-            self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
-        else:
-            self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
 
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)

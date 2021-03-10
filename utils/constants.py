@@ -73,6 +73,8 @@ DELAY = "delay"
 
 NUM_BLOCKS = "num_blocks"
 
+TIME = "time"
+
 GOM_VOLTAGE_MAX = 8400  # mV
 GOM_VOLTAGE_MIN = 6000
 
@@ -89,6 +91,9 @@ GLOWPLUG_DURATION = 1  # SECOND
 BURN_WAIT_TIME = 15  # minutes
 
 MAX_GYRO_RATE = 250  # degrees/sec
+
+# This value is assigned and reassigned during each burn
+SCHEDULED_BURN_TIME = None
 
 NO_FM_CHANGE = -1
 

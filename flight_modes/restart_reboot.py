@@ -21,22 +21,17 @@ class BootUpMode(FlightMode):
 
     def run_mode(self):
         logger.info("Boot up beginning...")
-        logger.info("Time when sleep starts: " + str(datetime.now()))
         time.sleep(BOOTUP_SEPARATION_DELAY)
-        logger.info("Time when sleep stops: " + str(datetime.now()))
 
-        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
-        logger.info("Logging info to DB...")
         self.log()
 
         # deploy antennae
-        logger.info("Beginning burn wire...")
+        logger.info("Antennae deploy...")
         parent.gom.burnwire1(5)
 
-        logger.info("Transferring to RestartMode via sudo reboot")
         os.system("sudo reboot")
 
     def log(self):
@@ -46,10 +41,8 @@ class BootUpMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.info("Log to DB complete...")
 
     def update_state(self) -> int:
-        logger.info("updating state... doesnt do nothin")
         return 0
 
 
@@ -62,12 +55,10 @@ class RestartMode(FlightMode):
         super().__init__(parent)
 
         logger.info("Restarting...")
-        logger.info("Creating DB session...")
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
         # add info about restart to database
-        logger.debug("Logging to DB...")
         self.log()
 
     def log(self):
@@ -77,11 +68,9 @@ class RestartMode(FlightMode):
                                   reboot_at=reboot_at)
         self.session.add(new_bootup)
         self.session.commit()
-        logger.info("Logging to DB complete...")
 
     # TODO implement error handling for if camera not detected
     def run_mode(self):
-        logger.info("run_mode running (nothing happens)")
         pass
 
         # logger.debug("Taking raw observation to test")
@@ -93,5 +82,4 @@ class RestartMode(FlightMode):
             print(boot)"""
 
     def update_state(self) -> int:
-        logger.info("updating state... will now transfer to normal")
         return 2

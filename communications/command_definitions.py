@@ -199,7 +199,7 @@ class CommandDefinitions:
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
         gyro_threader.start()
-        self.parent.gom.glowplug2(2)
+        self.parent.gom.burnwire1(2)
         gyro_threader.join()
 
     def gyro_thread(self):

@@ -78,12 +78,12 @@ class MainSatelliteThread(Thread):
     def init_parameters(self):
         with open(PARAMETERS_JSON_PATH) as f:
             json_parameter_dict = load(f)
-        self.parameters = {}
+        self.parameters = utils.parameters
             
         try:
             for parameter in self.parameters.__dir__():
                 if parameter[0] != '_':
-                    self.parameters[parameter] = json_parameter_dict[parameter]
+                    self.parameters.__setattr__(parameter,json_parameter_dict[parameter])
         except:
             raise Exception(
                 'Attempted to set parameter ' + str(parameter) + 

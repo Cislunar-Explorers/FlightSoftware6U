@@ -239,7 +239,7 @@ class CommandDefinitions:
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
 
-        self.parent.parameters[name] = value
+        self.parent.parameters.__setattr__(name,value)
 
         #Hard sets new parameter value into JSON file
         if hard_set:

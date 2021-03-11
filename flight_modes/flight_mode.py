@@ -286,14 +286,8 @@ class OpNavMode(FlightMode):
         self.task_completed = True
 
     def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm
-
-        # check if opnav db has been updated, then set self.task_completed true
         if self.task_completed:
             return FMEnum.Normal.value
-
         return NO_FM_CHANGE
 
 

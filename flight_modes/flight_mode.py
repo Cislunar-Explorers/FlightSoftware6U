@@ -282,6 +282,10 @@ class OpNavMode(FlightMode):
         super().__init__(self, parent)
 
     def run_mode(self):
+        # if not p.isalive():
+        #     p.start()
+        #     self.task_completed = True
+        # pass
         p.start()
         self.task_completed = True
 

@@ -7,6 +7,7 @@ import numpy as np
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
 from utils.db import GyroModel
+from utils.constants import MAX_GYRO_RATE, GomOutputs
 
 
 def moving_average(x, w):
@@ -27,9 +28,9 @@ class GomSensor(SynchronousSensor):
         self.hk = self.parent.gom.get_health_data(level="eps")
         self.hkparam = self.parent.gom.get_health_data()
         battery_voltage = self.hk.vbatt  # mV
-        self.percent = (battery_voltage - self.parent.constants.GOM_VOLTAGE_MIN) / \
-                       (self.parent.constants.GOM_VOLTAGE_MAX - self.parent.constants.GOM_VOLTAGE_MIN)
-        self.is_electrolyzing = bool(self.hk.output[self.parent.constants.GomOutputs.electrolyzer.value])
+        self.percent = (battery_voltage - self.parent.parameters['GOM_VOLTAGE_MIN']) / \
+                       (self.parent.parameters['GOM_VOLTAGE_MAX'] - self.parent.parameters['GOM_VOLTAGE_MIN'])
+        self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
 
 
 class GyroSensor(SynchronousSensor):
@@ -141,9 +142,10 @@ class OpNavSensor(SynchronousSensor):
         super().__init__(parent)
         self.quat = tuple() * 4
         self.pos = tuple() * 3
+        self.acq_time = float()
 
     def poll(self):
-        pass  # TODO: Opnav interface
+        raise NotImplementedError  # TODO: Opnav interface
 
 
 class Telemetry(SynchronousSensor):
@@ -160,7 +162,7 @@ class Telemetry(SynchronousSensor):
         self.rtc = RtcSensor(parent)
         self.opn = OpNavSensor(parent)
 
-        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.opn]
+        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi]
 
         # initialize databases here if not init'd already
 
@@ -178,7 +180,7 @@ class Telemetry(SynchronousSensor):
         if (time() - self.poll_time) > 3600:
             self.poll()
 
-        if any(i > self.parent.constants.MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
+        if any(i > MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
             self.parent.logger.error("Gyro not functioning properly")
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
@@ -225,7 +227,7 @@ class Telemetry(SynchronousSensor):
                 self.gom.hk.cursys,
                 self.gom.hk.vbatt,
                 self.prs.pressure)
-    
+
     def standard_packet_dict(self):
         return {'rtc_time': self.rtc.rtc_time,
                 'position_x': 1,

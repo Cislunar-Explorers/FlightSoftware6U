@@ -64,3 +64,13 @@ class OpNavMode(PauseBackgroundMode):
     def run_mode(self):
         self.run_opnav()
         self.task_completed()
+
+    def update_state(self) -> int:
+        super_fm = super().update_state()
+
+        if super_fm != 0:
+            return super_fm
+
+        # return to normal mode if task completed
+        if self.task_completed:
+            return self.parent.constants.FMEnum.Normal.value

@@ -13,9 +13,9 @@
 
 import pigpio
 import drivers.power.power_structs as ps
-import RPi.GPIO as GPIO
-import time
 from utils.constants import GomOutputs
+from utils.exceptions import PowerException, PowerInputError, PowerReadError
+from time import time, sleep
 
 
 # power device address
@@ -78,28 +78,23 @@ OUT_SWITCH = 7
 #
 
 # GPIO outputs
-OUT_PI_COMMS = 17  # Physical pin 11
+RF_RX_EN = 19  # Physical pin 35
+RF_TX_EN = 26  # Physical pin 37
+PA_EN = 27  # Physical pin 13
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
-
-class PowerException(Exception):
-    pass
-
-
-class PowerInputError(PowerException):
-    pass
-
-
-class PowerReadError(PowerException):
-    pass
-
+# Precomputed solenoid command bytearrays
+SOLENOID_ON_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, 4, 1, 0, 0])
+SOLENOID_OFF_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, 4, 0, 0, 0])
+SOLENOID_ON_LIST = [SOLENOID_ON_COMMAND]
+SOLENOID_OFF_LIST = [SOLENOID_OFF_COMMAND]
 
 _ = ps._
 
 
 class Power:
     # initializes power object with bus [bus] and device address [addr]
-    def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
+    def __init__(self, params, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
         ps.gom_logger.debug(
             "Initializing Power object with bus %s, device address %s, and flags %s",
             bus,
@@ -109,14 +104,18 @@ class Power:
         self._pi = pigpio.pi()  # initialize pigpio object
         self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
 
-        # initialize pi outputs
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(OUT_PI_COMMS, GPIO.OUT)
-        GPIO.setup(OUT_PI_SOLENOID_ENABLE, GPIO.OUT)
-        GPIO.output(OUT_PI_COMMS, GPIO.LOW)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH)
+        # initialize GPIO outputs
+        self._pi.set_mode(RF_RX_EN, pigpio.OUTPUT)
+        self._pi.set_mode(RF_TX_EN, pigpio.OUTPUT)
+        self._pi.set_mode(PA_EN, pigpio.OUTPUT)
+        self._pi.set_mode(OUT_PI_SOLENOID_ENABLE, pigpio.OUTPUT)
 
-        # initialize eps outputs
+        self.ACS_SPIKE_DURATION = params['ACS_SPIKE_DURATION']
+        self.solenoid_wave = []
+        self.solenoid_wave_id = -1
+
+        self.calculate_solenoid_wave()
+        # initialize gom outputs (all off)
         self.set_output(0)
 
     # prints housekeeping/config/config2
@@ -140,7 +139,6 @@ class Power:
         (x, r) = self._pi.i2c_read_device(self._dev, num_bytes + 2)
         ps.gom_logger.debug("Read %s, and %s from device", x, r)
         if r[1] != 0:
-            # TODO: ask Aaron whether we want to raise an exception, or just log an error for cases like these:
             ps.gom_logger.error("Command %i failed with error code %i", r[0], r[1])
             raise PowerReadError(
                 "Read Error: Command %i failed with error code %i" % (r[0], r[1])
@@ -374,21 +372,21 @@ class Power:
     # [delay] seconds.
     def pulse(self, output, duration, delay=0):
         ps.gom_logger.debug("Pulsing Gom output %i on for %i ms after a %i sec delay")
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output(output, 1, 0)
-        time.sleep(duration * 0.001)
+        sleep(duration * 0.001)
         self.set_single_output(output, 0, 0)
 
     # output must be off before the function is called
     # pulses high for duration amount of milliseconds
     def pulse_pi(self, output, duration, delay=0):
         ps.gom_logger.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
-        time.sleep(delay)
+        sleep(delay)
         ps.gom_logger.debug("Setting GPIO channel %i HIGH", output)
-        GPIO.output(output, GPIO.HIGH)
-        time.sleep(duration * 0.001)
-        GPIO.output(output, GPIO.LOW)
-        ps.gom_logger.debug("Setting GPIO channel %i LOW", output)
+        self._pi.write(output, 1)
+        sleep(duration * 0.001)
+        self._pi.write(output, 0)
+        ps.gom_logger.debug("Set GPIO channel %i LOW", output)
 
     # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
@@ -403,23 +401,38 @@ class Power:
     # holds at 5v for [hold] milliseconds with a
     # delay of [delay] seconds.
     # output must be off before the function is called
-    def solenoid(self, spike, hold, delay=0):
+    def solenoid(self, spike, hold):
+        ps.gom_logger.warning("DEPRECATED FUNCTION Power().solenoid")
         ps.gom_logger.debug(
             "Spiking solenoid for %i ms, holding for %i ms, with a delay of %i sec",
             spike,
             hold,
-            delay,
         )
-        time.sleep(delay)
-        GPIO.output(
-            OUT_PI_SOLENOID_ENABLE, GPIO.HIGH
-        )  # Enable voltage boost for solenoid current spike
+
+        self._pi.write(OUT_PI_SOLENOID_ENABLE, 1)  # enable vboost
         self.set_single_output("solenoid", 1, 0)
-        time.sleep(0.001 * spike)
-        GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.LOW)  # Disable voltage boost
-        time.sleep(0.001 * hold)
-        # GPIO.output(OUT_PI_SOLENOID_ENABLE, GPIO.HIGH) <-- Why is this line needed????
+        sleep(0.001 * spike)
+        self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)  # disable vboost
+        sleep(0.001 * hold)
         self.set_single_output("solenoid", 0, 0)
+
+    # Experimental implementation of above functionality
+    def solenoid_single_wave(self, hold):
+        # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
+        pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
+        self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async
+        sleep(hold)
+        # self._pi.i2c_write_device(self._dev, SOLENOID_OFF_COMMAND)
+        pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_OFF_LIST)
+
+    def calculate_solenoid_wave(self):
+        self.solenoid_wave = []
+        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, self.ACS_SPIKE_DURATION * 1000))
+        self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
+
+        self._pi.wave_clear()
+        self._pi.wave_add_generic(self.solenoid_wave)
+        self.solenoid_wave_id = self._pi.wave_create()
 
     # pulses glowplug for [duration] milliseconds with
     # delay of [delay] seconds.
@@ -428,9 +441,9 @@ class Power:
         ps.gom_logger.debug(
             "Pulsing glowplug for %i ms with a delay of %i sec", duration, delay
         )
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output("glowplug", 1, 0)
-        time.sleep(0.001 * duration)
+        sleep(0.001 * duration)
         self.set_single_output("glowplug", 0, 0)
 
     # turns both burnwires on for [duration] seconds, with a
@@ -441,11 +454,11 @@ class Power:
             duration,
             delay,
         )
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output("burnwire_1", 1, 0)
-        time.sleep(duration / 2)
+        sleep(duration / 2)
         self.displayAll()
-        time.sleep(duration / 2)
+        sleep(duration / 2)
         self.set_single_output("burnwire_1", 0, 0)
 
     # turns both burnwire 2 on for [duration] seconds, with a
@@ -457,23 +470,35 @@ class Power:
             delay,
         )
 
-        time.sleep(delay)
+        sleep(delay)
         self.set_single_output("glowplug_2", 1, 0)
-        time.sleep(duration * 0.001 / 2)
+        sleep(duration * 0.001 / 2)
         self.displayAll()
-        time.sleep(duration * 0.001 / 2)
+        sleep(duration * 0.001 / 2)
         self.set_single_output("glowplug_2", 0, 0)
 
-    def comms(self, transmit):
-        if transmit:
-            GPIO.output(OUT_PI_COMMS, GPIO.HIGH)
+    # tell RF switch to either transmit or receive
+    def rf_switch(self, receive: bool = True):
+        if receive:
+            # Set RF switch to receive
+            self._pi.write(RF_TX_EN, pigpio.LOW)
+            self._pi.write(RF_RX_EN, pigpio.HIGH)
         else:
-            GPIO.output(OUT_PI_COMMS, GPIO.LOW)
+            # Set RF switch to transmit
+            self._pi.write(RF_RX_EN, pigpio.LOW)
+            self._pi.write(RF_TX_EN, pigpio.HIGH)
 
-    # Toggles comms amp on/off
+    def set_PA(self, on: bool):
+        self._pi.write(PA_EN, int(on))
+
+    # Toggles receiving comms amp on/off
     # Input on is either True (on) or False (off)
-    def comms_amplifier(self, on):
+    def comms_amplifier(self, on: bool):
         self.set_single_output("comms", int(on), 0)
+
+    def set_GPIO_low(self):
+        self.rf_switch()
+        self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)
 
     # Legacy stuff, may or may not be useful
 
@@ -488,7 +513,7 @@ class Power:
     # def nasa_demo(self):
     #     r = input("electrolyzers: ")
     #     self.electrolyzer(True)
-    #     time.sleep(float(r))
+    #     sleep(float(r))
     #     self.electrolyzer(False)
     #
     #     r = input("sparkplug:")
@@ -541,4 +566,4 @@ class Power:
     #             text_file.write(nxt)
     #         except:
     #             print("recovered from error")
-    #         time.sleep(t)
+    #         sleep(t)

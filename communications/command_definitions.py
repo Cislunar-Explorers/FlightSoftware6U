@@ -323,7 +323,6 @@ class CommandDefinitions:
         self.parent.constants.SCHEDULED_BURN_TIME = time_burn
         self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
-
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 

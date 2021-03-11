@@ -2,7 +2,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import MainSatelliteThread
+    from main import MainSatelliteThread, p
+
 # for an explanation of the above 4 lines of code, see
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 # It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
@@ -275,15 +276,14 @@ class CommsMode(FlightMode):
 
 
 class OpNavMode(FlightMode):
-    """dummy FM for now"""
     flight_mode_id = FMEnum.OpNav.value
 
     def __init__(self, parent):
         super().__init__(self, parent)
 
     def run_mode(self):
-        from core.opnav import start
-        start()
+        p.start()
+        self.task_completed = True
 
     def update_state(self) -> int:
         super_fm = super().update_state()

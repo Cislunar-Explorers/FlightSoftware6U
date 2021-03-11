@@ -248,12 +248,7 @@ class CommandDefinitions:
             self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
         self.parent.downlink_queue.put(acknowledgement)
 
-        # initial_value = getattr(self.parent.constants, name)
-        # setattr(self.parent.constants, name, value)
-        # changed_value = getattr(self.parent.constants, name)
         # self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
-
-        # TODO: implement "saving" and reading of parameters to a text file
 
     def set_exit_lowbatt_threshold(self, **kwargs):
         """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only

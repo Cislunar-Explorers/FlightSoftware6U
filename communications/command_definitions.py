@@ -9,8 +9,6 @@ from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HAR
 from telemetry.telemetry import Telemetry
 from json import load, dump
 import os
-from utils.parameters import *
-from satellite_radio import printTDT
 import utils.parameters as params
 
 def verification(**kwargs):

@@ -8,7 +8,10 @@ from threading import Thread
 from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HARD_SET, PARAMETERS_JSON_PATH, a, b, M, team_identifier
 from telemetry.telemetry import Telemetry
 from json import load, dump
-
+import os
+from utils.parameters import *
+from satellite_radio import printTDT
+import utils.parameters as params
 
 def verification(**kwargs):
     """CQC Comms Verification
@@ -239,7 +242,7 @@ class CommandDefinitions:
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
 
-        self.parent.parameters.__setattr__(name,value)
+        params.__setattr__(name,value)
 
         #Hard sets new parameter value into JSON file
         if hard_set:

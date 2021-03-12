@@ -154,31 +154,28 @@ class MainSatelliteThread(Thread):
 
         cameras_ok = True
 
-        if self.mux is not None:
-            if hard_boot() or not os.path.isdir(self.log_dir):
-                try:
-                    self.camera = camera.Camera()
-                    for i in [1, 2, 3]:
-                        try:
-                            self.mux.selectCamera(i)
-                            f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
-                        except Exception as e:
-                            logger.error(f"Camera {i} initialization failed")
-                            cameras_ok = False
-                        else:
-                            logger.info(f"Camera {i} initialized")
+        if not hard_boot() or os.path.isdir(self.log_dir):
+            try:
+                self.camera = camera.Camera()
+                for i in [1, 2, 3]:
+                    try:
+                        self.mux.selectCamera(i)
+                        f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
+                    except Exception as e:
+                        logger.error(f"Camera {i} initialization failed")
+                        cameras_ok = False
+                    else:
+                        logger.info(f"Camera {i} initialized")
 
-                    if not cameras_ok:
-                        raise e
-                except:
-                    self.camera = None
-                    logger.error(f"Cameras initialization failed")
-                else:
-                    logger.info("Cameras initialized")
+                if not cameras_ok:
+                    raise e
+            except:
+                self.camera = None
+                logger.error(f"Cameras initialization failed")
             else:
-                pass  # Need to reboot (probably not here - don't want to enter a boot loop)
+                logger.info("Cameras initialized")
         else:
-            self.camera = None
+            pass  # Need to reboot (probably not here - don't want to enter a boot loop)
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

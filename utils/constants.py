@@ -161,6 +161,7 @@ class NormalCommandEnum(IntEnum):
     WhenReorient = 13  # when we want to schedule a reorientation maneuver
                        # 2 args, unix time stamp and spin axis vector (2 floats)
     ScheduleReorientation = 14
+    ScheduleManeuver = 15
 
 
 

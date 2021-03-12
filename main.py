@@ -7,8 +7,6 @@ from queue import Queue
 import signal
 import random
 from utils.log import get_log
-import OpticalNavigation.core.camera as camera
-from communications.satellite_radio import Radio
 
 from utils.constants import (
     LOG_DIR,
@@ -19,11 +17,7 @@ from utils.constants import (
 
 import utils.constants
 from utils.db import create_sensor_tables_from_path
-from communications.comms_driver import CommunicationsSystem
-from drivers.gom import Gomspace
-from drivers.gyro import GyroSensor
-from drivers.ADCDriver import ADC
-from drivers.rtc import RTC
+
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -38,6 +32,14 @@ from utils.boot_cause import hard_boot
 
 from multiprocessing import Process, Queue
 import queue
+
+from communications.comms_driver import CommunicationsSystem
+from communications.satellite_radio import Radio
+from drivers.gom import Gomspace
+from drivers.gyro import GyroSensor
+from drivers.ADCDriver import ADC
+from drivers.rtc import RTC
+import OpticalNavigation.core.camera as camera
 
 FOR_FLIGHT = None
 

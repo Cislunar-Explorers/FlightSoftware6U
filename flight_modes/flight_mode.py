@@ -382,7 +382,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
-        NormalCommandEnum.ScheduleManeuever.value: ([TIME], 4)
+        NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4)
     }
 
     command_arg_unpackers = {

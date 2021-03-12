@@ -320,9 +320,11 @@ class CommandDefinitions:
     def schedule_maneuever(self, **kwargs):
         # TODO make this a json parameter to be stored in a file
         time_burn = kwargs['time']
-        self.parent.constants.SCHEDULED_BURN_TIME = time_burn
-        self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
+        # self.parent.constants.SCHEDULED_BURN_TIME = time_burn
 
+        # TODO use set parameter function for time_burn
+        # name=SCHEDULED_BURN_TIME, value=time_burn, hard_set=true
+        self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)

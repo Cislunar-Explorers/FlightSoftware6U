@@ -36,6 +36,9 @@ from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
 
+from multiprocessing import Process, Queue
+import queue
+
 FOR_FLIGHT = None
 
 logger = get_log()
@@ -53,6 +56,7 @@ class MainSatelliteThread(Thread):
         self.reorientation_queue = Queue()
         self.reorientation_list = []
         self.maneuver_queue = Queue()  # maneuver queue
+        self.opnav_queue = Queue()   # determine state of opnav success
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
@@ -61,6 +65,8 @@ class MainSatelliteThread(Thread):
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+
+        self.p = Process(target=self.opnav_subprocess())  # define the subprocess
 
         self.gom = None
         self.gyro = None
@@ -264,6 +270,10 @@ class MainSatelliteThread(Thread):
         self.gom.all_off()
         print("Shutting down...")
         # self.comms.stop()
+
+    def opnav_subprocess(self):
+        # TODO change from pytest to actual opnav
+        os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
 
 
 if __name__ == "__main__":

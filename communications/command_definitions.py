@@ -1,13 +1,14 @@
 from datetime import datetime
-
 from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import os
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HARD_SET, PARAMETERS_JSON_PATH, a, b, M, team_identifier
-from telemetry.telemetry import Telemetry
+from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HARD_SET, PARAMETERS_JSON_PATH, a, b, M, \
+    team_identifier, START, PULSE_DT, PULSE_NUM, PULSE_DURATION
 from json import load, dump
+from utils.exceptions import CommandArgException
+
 import os
 import utils.parameters as params
 
@@ -43,7 +44,7 @@ def verification(**kwargs):
 
         for i in range(1, prn_length + 1):
             # algorithm defined in sec 4.4.2 of CommsProc rev 4
-            xn = (a * prn[i - 1] + b) % 2 ** 32
+            xn = (a * prn[i - 1] + b) % M
             # if the mod operator above causes issues, anding with 32-bit 2**32 should do the trick
             prn[i] = xn
 
@@ -69,7 +70,7 @@ class CommandDefinitions:
         self.normal_commands = {
             # TODO: use CommandEnums instead of hardcoded values for all commands below
             NormalCommandEnum.RunOpNav.value: self.run_opnav,
-            NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
+            # NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
             NormalCommandEnum.SetElectrolysis.value: self.electrolysis,
             NormalCommandEnum.SetParam.value: self.set_parameter,
             NormalCommandEnum.CritTelem.value: self.gather_critical_telem,
@@ -77,7 +78,8 @@ class CommandDefinitions:
             NormalCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
             NormalCommandEnum.Verification.value: verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
-            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval
+            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
+            NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing
         }
 
         self.low_battery_commands = {
@@ -105,7 +107,7 @@ class CommandDefinitions:
 
         self.maneuver_commands = {
             1: self.run_opnav,
-            2: self.change_attitude,
+            # 2: self.change_attitude,
             9: self.burn}
 
         self.sensor_commands = {}
@@ -157,9 +159,9 @@ class CommandDefinitions:
 
     def split(self):
         # for demo, delay of 0
-        self.parent.gom.burnwire2(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
+        self.parent.gom.burnwire1(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
         # Tell gom to power burnwires in five seconds
-        # self.parent.gom.burnwire2(constants.SPLIT_BURNWIRE_DURATION, delay=5)
+        # self.parent.gom.burnwire1(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
 
@@ -203,7 +205,7 @@ class CommandDefinitions:
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
         gyro_threader.start()
-        self.parent.gom.burnwire2(2)
+        self.parent.gom.burnwire1(2)
         gyro_threader.join()
 
     def gyro_thread(self):
@@ -225,13 +227,8 @@ class CommandDefinitions:
             filehandle.writelines("%s\n" % line for line in gyro_data)
 
     def run_opnav(self):
-        self.parent.logger.info("Running OpNav Pipeline")
-        time.sleep(10)
-        self.parent.logger.info("OpNav calculations complete. Resulting attitude is [x, y, z, phi, theta]")
-        if self.parent.flight_mode.flight_mode_id == 2:
-            self.parent.flight_mode.last_opnav_run = datetime.now()
-        # self.parent.run_opnav
-        # raise NotImplementedError
+        """Schedules Opnav mode into the FM queue"""
+        self.parent.FMQueue.put(FMEnum.OpNav.value)
 
     def set_parameter(self, **kwargs):
         """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
@@ -239,26 +236,21 @@ class CommandDefinitions:
         name = kwargs[NAME]
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
+        initial_value = getattr(params, name)
+        params.__setattr__(name, value)
 
-        params.__setattr__(name,value)
-
-        #Hard sets new parameter value into JSON file
+        # Hard sets new parameter value into JSON file
         if hard_set:
             with open(PARAMETERS_JSON_PATH) as f:
                 json_parameter_dict = load(f)
             json_parameter_dict[name] = value
-            dump(json_parameter_dict, open(PARAMETERS_JSON_PATH,'w'),indent=0)
+            dump(json_parameter_dict, open(PARAMETERS_JSON_PATH, 'w'), indent=0)
 
         acknowledgement = self.parent.downlink_handler.pack_downlink(
-            self.parent.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.SetParam.value,successful=True)
+            self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
         self.parent.downlink_queue.put(acknowledgement)
 
-        #initial_value = getattr(self.parent.constants, name)
-        #setattr(self.parent.constants, name, value)
-        #changed_value = getattr(self.parent.constants, name)
-        #self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
-
-        # TODO: implement "saving" and reading of parameters to a text file
+        self.parent.logger.info(f"Changed constant {name} from {initial_value} to {value}")
 
     def set_exit_lowbatt_threshold(self, **kwargs):
         """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
@@ -284,14 +276,30 @@ class CommandDefinitions:
         except AssertionError:
             self.parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
-    def change_attitude(self, **kwargs):
-        azimuth = kwargs['theta']
-        elevation = kwargs['phi']
+    # def change_attitude(self, **kwargs):
+    #     theta = kwargs.get(AZIMUTH)
+    #     phi = kwargs.get(ELEVATION)  # angle down from z-axis of ECI frame
+    #
+    #     assert 0 <= theta < 6.28318530718
+    #     assert 0 <= phi < 3.14159265359
+    #
+    #     self.parent.reorientation_queue.put((theta, phi))
 
-        # current_theta = telemetry.latest.theta
-        # current_phi = telemetry.latest.phi
+    def acs_pulse_timing(self, **kwargs):
+        pulse_start_time = kwargs[START]  # float, seconds
+        pulse_duration = kwargs[PULSE_DURATION]  # ushort, milliseconds
+        pulse_num = kwargs[PULSE_NUM]  # ushort, number
+        pulse_dt = kwargs[PULSE_DT]  # ushort, milliseconds
 
-        raise NotImplementedError
+        try:
+            assert pulse_start_time > time.time()
+            assert pulse_duration > 0
+            assert pulse_num >= 0
+            assert pulse_dt >= 0
+        except AssertionError:
+            raise CommandArgException
+
+        self.parent.reorientation_queue.put((pulse_start_time, pulse_duration, pulse_num, pulse_dt))
 
     def gather_critical_telem(self):
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
@@ -329,7 +337,8 @@ class CommandDefinitions:
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
-    def reboot_pi(self):
+    @staticmethod
+    def reboot_pi():
         os.system("reboot")
         # add something here that adds to the restarts db that this restart was commanded
 
@@ -388,8 +397,9 @@ class CommandDefinitions:
 
         gyro = self.parent.gyro.get_gyro()
 
-        fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value, 
-        TestCommandEnum.CommsDriver.value, gyro1 = gyro[0], gyro2 = gyro[1], gyro3=gyro[2])
+        fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value,
+                                                             TestCommandEnum.CommsDriver.value,
+                                                             gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
 
         time.sleep(5)
         self.parent.radio.transmit(fx_data)
@@ -398,21 +408,21 @@ class CommandDefinitions:
         os.system('sudo poweroff')
 
     def edit_file_at_line(self, **kwargs):
-        
+
         file_path = kwargs['file_path']
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
-        #Open and copy file
-        original_file = open(file_path,'r+')
+        # Open and copy file
+        original_file = open(file_path, 'r+')
         original_file_lines = original_file.readlines()
         new_file_lines = original_file_lines[:]
-       
-       #Modify copy at designated line
+
+        # Modify copy at designated line
         new_file_lines[line_number] = new_line + ' \n'
 
-        #Write copy onto original file and original file into a backup
-        backup_file = open('backup_' + file_path, 'w') 
+        # Write copy onto original file and original file into a backup
+        backup_file = open('backup_' + file_path, 'w')
         backup_file.writelines(original_file_lines)
         original_file.writelines(new_file_lines)
 
@@ -422,14 +432,12 @@ class CommandDefinitions:
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
-        #Get original file contents
-        original_file = open(file_path,'r+')
+        # Get original file contents
+        original_file = open(file_path, 'r+')
         my_file_lines = original_file.readlines()
         pre_contents = my_file_lines[:line_number]
         post_contents = my_file_lines[line_number:]
 
-        #Write new line into file
+        # Write new line into file
         original_file.seek(0)
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
-
-    

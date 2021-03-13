@@ -2,28 +2,36 @@ from enum import IntEnum, unique
 import os
 import hashlib
 
-#Verification Key Parameters
+# unit conversions
+
+DEG2RAD = 3.14159265359 / 180
+
+# Delay to wait on BootUp
+# TODO change back to 30.0
+BOOTUP_SEPARATION_DELAY = 5.0
+
+# Verification Key Parameters
 MAC_LENGTH = 4
 MAC_DATA = b'Hello'
 MAC_KEY = b'World'
-MAC = hashlib.blake2s(MAC_DATA,digest_size=MAC_LENGTH,key=MAC_KEY).digest()
+MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
-#Serialization Sizes
+# Serialization Sizes
 MODE_SIZE = 1
 ID_SIZE = 1
 COUNTER_SIZE = 3
 DATA_LEN_SIZE = 2
-MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE 
+MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
 
-#Serializations Offsets
+# Serializations Offsets
 MAC_OFFSET = 0
 COUNTER_OFFSET = 0 + MAC_LENGTH
 MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
-ID_OFFSET = 1+ COUNTER_SIZE + MAC_LENGTH
+ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
 DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
-#Parameters.json path
+# Parameters.json path
 PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
@@ -43,11 +51,16 @@ STATE = "state"
 INTERVAL = "interval"
 DELAY = "delay"
 
+START = "pulse_start"
+PULSE_DURATION = "pulse_duration"
+PULSE_NUM = "pulse_num"
+PULSE_DT = "pulse_dt"
+
 NUM_BLOCKS = "num_blocks"
 
 HARD_SET = "hard_set"
 
-#Keyword argument definitions for downlink
+# Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
 
 ATT_1 = "attitude_1"
@@ -78,7 +91,7 @@ PROP_TANK_PRESSURE = "prs_pressure"
 
 SUCCESSFUL = "successful"
 
-#SQL Stuff
+# SQL Stuff
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
     os.path.expanduser("~"), ".cislunar-flight-software"
@@ -89,7 +102,25 @@ DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 a = 1664525
 b = 1013904223
 M = 2 ** 32
-team_identifier = 0xEB902D2D
+team_identifier = 0xEB902D2D  # Team 2
+
+# TODO: validate these values:
+SPLIT_BURNWIRE_DURATION = 1  # second
+ANTENNAE_BURNWIRE_DURATION = 1  # second
+GLOWPLUG_DURATION = 1  # SECOND
+BURN_WAIT_TIME = 15  # minutes
+
+MAX_GYRO_RATE = 250  # degrees/sec # TODO
+
+NO_FM_CHANGE = -1
+
+ACS_SPIKE_DURATION = 4  # milliseconds
+GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
+
+# Gyro specific constants
+
+GYRO_RANGE = 250  # degrees per second
+
 
 @unique
 class ConstantsEnum(IntEnum):
@@ -97,11 +128,12 @@ class ConstantsEnum(IntEnum):
 
 
 # GOMspace Channel designations:
+# TODO: re-evaluate and double check before flight for each satellite half
 @unique
 class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
-    burnwire_2 = 2
+    glowplug_2 = 2
     glowplug = 3
     solenoid = 4
     electrolyzer = 5
@@ -120,6 +152,7 @@ class FMEnum(IntEnum):
     TestMode = 8  # Execute specified test
     CommsMode = 9
     Command = 10
+    AttitudeAdjustment = 11
 
 
 @unique
@@ -149,6 +182,8 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
+    ACSPulsing = 13
+
 
 @unique
 class LowBatterySafetyCommandEnum(IntEnum):

@@ -4,12 +4,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import Float, DateTime, Boolean
 from drivers.power.power_structs import eps_hk_t
 
-
 create_session = sessionmaker()
-
 
 # declarative_base for WalletModel used by WalletManager
 SQLAlchemyTableBase = declarative_base()
+
 
 # NOTE do not use foreign key in any of these tables
 # TODO implement Model classes for all sensor data to be stored
@@ -26,9 +25,9 @@ class CommandModel(SQLAlchemyTableBase):
     executed_at = Column(DateTime, nullable=True)
 
     def __repr__(self):
-        return f"<CommandModel(Name={self.name}, app_code={self.app_code}, "
-        f"opcode={self.opcode} executed_at="
-        f"{str(self.executed_at) if self.executed_at is not None else 'NE'})>"
+        return f"<CommandModel(Name={self.name}, app_code={self.app_code}, " \
+               f"opcode={self.opcode} executed_at=" \
+               f"{str(self.executed_at) if self.executed_at is not None else 'NE'})>"
 
 
 class PressureModel(SQLAlchemyTableBase):
@@ -59,8 +58,8 @@ class RTCModel(SQLAlchemyTableBase):
     time_retrieved = Column(DateTime)
 
     def __repr__(self):
-        return f"<RTCModel(TimeRetrieved={str(self.time_retrieved)}, "
-        f"taken_at={str(self.time_retrieved)})>"
+        return (f"<RTCModel(TimeRetrieved={str(self.time_retrieved)}, "
+                f"taken_at={str(self.time_retrieved)})>")
 
 
 class OpNavCoordinatesModel(SQLAlchemyTableBase):
@@ -84,7 +83,7 @@ class OpNavCoordinatesModel(SQLAlchemyTableBase):
     attitude_b1 = Column(Float)
     attitude_b2 = Column(Float)
     attitude_b3 = Column(Float)
-    
+
     @staticmethod
     def from_tuples(opnav_tuple, time):
         position, velocity, attitude_quat, attitude_rod_bias = opnav_tuple
@@ -134,14 +133,14 @@ class RebootsModel(SQLAlchemyTableBase):
     reboot_at = Column(DateTime)
 
     def __repr__(self):
-        return f"<RebootsModel(is boot up?={self.is_bootup}, "f"reboot_at={str(self.reboot_at)})>"
+        return f"<RebootsModel(is boot up?={self.is_bootup}, reboot_at={str(self.reboot_at)})>"
 
 
 class GyroModel(SQLAlchemyTableBase):
     __tablename__ = "9DoF"
 
     id = Column(Integer, primary_key=True)
-    time_polled = Column(DateTime)
+    time_polled = Column(Float)
     gyr_x = Column(Float)
     gyr_y = Column(Float)
     gyr_z = Column(Float)

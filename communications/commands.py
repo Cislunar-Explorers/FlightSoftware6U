@@ -84,7 +84,7 @@ class CommandHandler:
         self.packers[arg] = packer
         self.unpackers[arg] = unpacker
 
-    def pack_command(self, counter:int, mode: int, command_id: int, **kwargs) -> bytes:
+    def pack_command(self, counter: int, mode: int, command_id: int, **kwargs) -> bytes:
         func_args, buffer_size = self.command_dict[mode][command_id]
         data_buffer = bytearray(buffer_size)
         offset = 0

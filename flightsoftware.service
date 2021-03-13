@@ -9,6 +9,7 @@ WorkingDirectory=/home/pi/FlightSoftware
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
+User=pi
 
 [Install]
 WantedBy=multi-user.target

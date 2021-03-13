@@ -1,6 +1,7 @@
 [Unit]
 Description=Cislunar Explorers Flight Software
 After=pigpiod.service
+Wants=pigpiod.service
 
 [Service]
 ExecStart=/usr/bin/python3 -u main.py
@@ -8,3 +9,6 @@ WorkingDirectory=/home/pi/FlightSoftware
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
+
+[Install]
+WantedBy=multi-user.target

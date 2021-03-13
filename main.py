@@ -68,7 +68,6 @@ class MainSatelliteThread(Thread):
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
 
-        self.p = Process(target=self.opnav_subprocess())  # define the subprocess
 
         self.gom = None
         self.gyro = None
@@ -253,6 +252,8 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 # sleep(5)
+                opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
+                opnav_process.start()
                 logger.info("Flight mode: " + repr(self.flight_mode))
                 self.poll_inputs()
                 self.update_state()

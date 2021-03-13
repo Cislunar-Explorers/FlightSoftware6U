@@ -94,10 +94,10 @@ class MainSatelliteThread(Thread):
         try:
             for parameter in utils.parameters.__dir__():
                 if parameter[0] != '_':
-                    utils.parameters.__setattr__(parameter,json_parameter_dict[parameter])
+                    utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
         except:
             raise Exception(
-                'Attempted to set parameter ' + str(parameter) + 
+                'Attempted to set parameter ' + str(parameter) +
                 ', which could not be found in parameters.json'
             )
 
@@ -154,7 +154,7 @@ class MainSatelliteThread(Thread):
                         self.command_counter += 1
                     else:
                         print('Command with Invalid Counter Received. '
-                        + 'Counter: ' + str(unpackedCommand[1]))
+                              + 'Counter: ' + str(unpackedCommand[1]))
                 else:
                     print('Unauthenticated Command Received')
 

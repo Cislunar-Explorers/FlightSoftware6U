@@ -23,6 +23,7 @@ from utils.constants import (
     NormalCommandEnum
 )
 
+import utils.parameters
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
@@ -89,21 +90,22 @@ class MainSatelliteThread(Thread):
     def init_parameters(self):
         with open(PARAMETERS_JSON_PATH) as f:
             json_parameter_dict = load(f)
-        self.parameters = json_parameter_dict
 
-        # try:
-        #     for parameter in self.parameters.__dir__():
-        #         if parameter[0] != '_':
-        #             self.parameters[parameter] = json_parameter_dict[parameter]
-        # except:
-        #     raise Exception(
-        #         'Attempted to set parameter ' + str(parameter) +
-        #         ', which could not be found in parameters.json'
-        #     )
+        try:
+            for parameter in utils.parameters.__dir__():
+                if parameter[0] != '_':
+                    utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
+        except:
+            raise Exception(
+                'Attempted to set parameter ' + str(parameter) +
+                ', which could not be found in parameters.json'
+            )
+
+    # TODO
 
     def init_sensors(self):
         self.radio = Radio()
-        self.gom = Gomspace(self.parameters)
+        self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC(self.gyro)
         self.rtc = RTC()
@@ -152,7 +154,7 @@ class MainSatelliteThread(Thread):
                         self.command_counter += 1
                     else:
                         print('Command with Invalid Counter Received. '
-                        + 'Counter: ' + str(unpackedCommand[1]))
+                              + 'Counter: ' + str(unpackedCommand[1]))
                 else:
                     print('Unauthenticated Command Received')
 
@@ -203,7 +205,7 @@ class MainSatelliteThread(Thread):
         while not self.downlink_queue.empty():
             self.radio.transmit(self.downlink_queue.get())
             self.downlink_counter += 1
-            sleep(self.parameters["DOWNLINK_BUFFER_TIME"])
+            sleep(utils.parameters.DOWNLINK_BUFFER_TIME)
 
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         """A temporary workaround to not having radio board access"""
@@ -240,7 +242,7 @@ class MainSatelliteThread(Thread):
             if FOR_FLIGHT is True:
                 self.run()
             else:
-                self.gom.all_off()
+                self.shutdown()
 
     def shutdown(self):
         self.gom.all_off()

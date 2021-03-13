@@ -1,7 +1,8 @@
 import drivers.power.power_controller as power_controller
 import drivers.power.power_structs as ps
 from enum import Enum
-from utils.constants import GomOutputs 
+from utils.constants import GomOutputs
+import utils.parameters as params
 
 logger = ps.gom_logger
 
@@ -18,9 +19,8 @@ class Hk(Enum):
 
 
 class Gomspace:
-    def __init__(self, params):
-        self.parameters = params
-        self.pc = power_controller.Power(params)
+    def __init__(self):
+        self.pc = power_controller.Power()
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
@@ -119,6 +119,6 @@ class Gomspace:
     def read_battery_percentage(self):
         battery_data = self.get_health_data(level=Hk.VI.value)
         battery_voltage = battery_data.vbatt
-        vmin = self.parameters['GOM_VOLTAGE_MIN']
-        vmax = self.parameters['GOM_VOLTAGE_MAX']
+        vmin = params.GOM_VOLTAGE_MIN
+        vmax = params.GOM_VOLTAGE_MAX
         return (battery_voltage - vmin) / (vmax - vmin)

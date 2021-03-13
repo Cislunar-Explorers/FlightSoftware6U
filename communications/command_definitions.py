@@ -9,6 +9,8 @@ from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HAR
 from json import load, dump
 from utils.exceptions import CommandArgException
 
+import os
+import utils.parameters as params
 
 def verification(**kwargs):
     """CQC Comms Verification
@@ -234,8 +236,8 @@ class CommandDefinitions:
         name = kwargs[NAME]
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
-
-        self.parent.parameters[name] = value
+        initial_value = getattr(params, name)
+        params.__setattr__(name, value)
 
         # Hard sets new parameter value into JSON file
         if hard_set:
@@ -248,7 +250,7 @@ class CommandDefinitions:
             self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
         self.parent.downlink_queue.put(acknowledgement)
 
-        # self.parent.logger.info(f"Changed constant {name} from {initial_value} to {changed_value}")
+        self.parent.logger.info(f"Changed constant {name} from {initial_value} to {value}")
 
     def set_exit_lowbatt_threshold(self, **kwargs):
         """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only

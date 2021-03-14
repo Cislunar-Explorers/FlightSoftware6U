@@ -95,9 +95,9 @@ class FlightMode:
 
         # go to maneuver mode if there is something in the maneuver queue
         if not self.parent.maneuver_queue.empty():
-            # TODO assign the time command to this var
-            if SCHEDULED_BURN_TIME - time() < (60.0*BURN_WAIT_TIME):
-                return FMEnum.Maneuver.value
+            if SCHEDULED_BURN_TIME is not None:
+                if SCHEDULED_BURN_TIME - time() < (60.0*BURN_WAIT_TIME):
+                    return FMEnum.Maneuver.value
 
         # go to reorientation mode if there is something in the reorientation queue
         if (not self.parent.reorientation_queue.empty()) or self.parent.reorientation_list:

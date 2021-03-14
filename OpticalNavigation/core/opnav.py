@@ -20,6 +20,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import session
 from time import sleep
 import re
+import glob
 
 """
 Entry point into OpNav. This method calls observe() and process().
@@ -144,7 +145,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # 2. record camera measurements
     # 3. record gyro measurements
     observeStart = datetime.now()
-    print("Recording videos...")
+    #print("Recording videos...")
     recordings = []
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
@@ -154,36 +155,39 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         recordings.append(filename_timestamp1)
         recordings.append(filename_timestamp2)
 
-
-    print(recordings)
-    print("Extracting frames...")
+    ##### Commented out for software demo
+    #print(recordings)
+    #print("Extracting frames...")
     # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
-    frames0 = extract_frames(vid_dir=recordings[0][0], endTimestamp = recordings[0][1])
-    frames1 = extract_frames(vid_dir=recordings[1][0], endTimestamp = recordings[1][1])
-    frames2 = extract_frames(vid_dir=recordings[2][0], endTimestamp = recordings[2][1])
-    frames3 = extract_frames(vid_dir=recordings[3][0], endTimestamp = recordings[3][1])
-    frames4 = extract_frames(vid_dir=recordings[4][0], endTimestamp = recordings[4][1])
-    frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
-    frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
-    print(frames)
-    print(len(frames))
+    #frames0 = extract_frames(vid_dir=recordings[0][0], endTimestamp = recordings[0][1])
+    #frames1 = extract_frames(vid_dir=recordings[1][0], endTimestamp = recordings[1][1])
+    #frames2 = extract_frames(vid_dir=recordings[2][0], endTimestamp = recordings[2][1])
+    #frames3 = extract_frames(vid_dir=recordings[3][0], endTimestamp = recordings[3][1])
+    #frames4 = extract_frames(vid_dir=recordings[4][0], endTimestamp = recordings[4][1])
+    #frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
+    #frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
+    #print(frames)
+    #print(len(frames))
+    #####
+    # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
+    # On HITL, path to images will be /home/pi/surrender_images/*.jpg
+    frames = glob.glob("/home/pi/surrender_images/*.jpg")
+    #print(frames)
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
-    print("Finding...")
+    #print("Finding...")
     for f in range(len(frames)):
         imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
 
-    #print("sun array: ", sunDetectionArray)
-
     # best___Tuple is tuple of file, distance and vector of best result
 
-    print("Finding centers...")
+    #print("Finding centers...")
     # Find the distance to center
     earthCenterDistances = []
     for e in range(earthDetectionArray.shape[0]):
@@ -197,8 +201,6 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         if e[1] < bestEarthTuple[1] or np.isnan(bestEarthTuple[1]):
             bestEarthTuple = e
 
-    #bestEarthTuple = np.nanmin(earthFileDistVec, key=lambda x:x[1])
-
     moonCenterDistances = []
     for m in range(moonDetectionArray.shape[0]):
         dist = math.sqrt(moonDetectionArray[m, 0]**2 + moonDetectionArray[m, 1]**2)
@@ -211,13 +213,10 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         if m[1] < bestMoonTuple[1] or np.isnan(bestMoonTuple[1]):
             bestMoonTuple = m
 
-    #bestMoonTuple = min(moonFileDistVec, key=lambda x: x[1])
-
     sunCenterDistances = []
     for s in range(sunDetectionArray.shape[0]):
         dist = math.sqrt(sunDetectionArray[s, 0]**2 + sunDetectionArray[s, 1]**2)
         sunCenterDistances.append(dist)
-    #print("sun center distances: ", sunCenterDistances)
     sunFileDistVec = list(zip(frames, sunCenterDistances, sunDetectionArray))
     bestSunTuple = sunFileDistVec[0]
     for s in sunFileDistVec:
@@ -226,30 +225,9 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         if s[1] < bestSunTuple[1] or np.isnan(bestSunTuple[1]):
             bestSunTuple = s
 
-    #print("best sun tuple: ", bestSunTuple)
-    #bestSunTuple = min(sunFileDistVec, key=lambda x: x[1])
-
     # We now have the best result for earth, moon and sun; time to rotate vectors
 
-    ''''# Camera to body rotation matrices --> Moved to const.py
-    c1az = math.radians(90)
-    c1ay = math.radians(60)
-    c1rz = np.array([math.cos(c1az), -1 * math.sin(c1az), 0, math.sin(c1az), math.cos(c1az), 0, 0, 0, 1]).reshape(3,3)
-    c1ry = np.array([math.cos(c1ay), 0, math.sin(c1ay), 0, 1, 0, -1 * math.sin(c1ay), 0, math.cos(c1ay)]).reshape(3, 3)
-    cam1Rotation = np.matmul(c1rz, c1ry)
-
-    c2az = math.radians(90)
-    c2ay = math.radians(-60)
-    c2rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
-    c2ry = np.array([math.cos(c2ay), 0, math.sin(c2ay), 0, 1, 0, -1 * math.sin(c2ay), 0, math.cos(c2ay)]).reshape(3, 3)
-    cam2Rotation = np.matmul(c2rz, c2ry)
-
-    # Use 53 degrees for now (used in surrender dataset)
-    c3az = math.radians(53)
-    c3rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
-    cam3Rotation = c3rz'''
-
-    print("Camera to body rotations...")
+    #print("Camera to body rotations...")
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
         coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
         camNum = int(re.search("[cam](\d+)", data[0]).group(1))
@@ -263,9 +241,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         data[2][1] = coordArray[1]
         data[2][2] = coordArray[2]
 
-    #print("Body best sun: ", bestSunTuple)
-
-    print("Gyro recording...")
+    #print("Gyro recording...")
     gyro_meas = record_gyro(count=gyro_count)
     for g in range(gyro_meas.shape[0]):
         omega = gyro_meas[g, ...]
@@ -278,12 +254,12 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         session.add(new_entry)
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
 
-    print("Body to tZero rotations...")
+    #print("Body to tZero rotations...")
     avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
     # Rotation is product of angular speed and time between frame and start of observation
     lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first() #TODO how to access time
     lastReboot = lastRebootRow.reboot_at
-    print("Last Reboot: ", lastReboot)
+    #print("Last Reboot: ", lastReboot)
 
     if not np.isnan(bestEarthTuple[1]):
         earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))
@@ -322,7 +298,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         bestSunTuple[2][2] = coordArray[2]
         bestSunTuple[2][0] = coordArray[0]
 
-    print("Setting best results...")
+    #print("Setting best results...")
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2], bestEarthTuple[2][3])
     bestDetectedCircles.set_moon_detection(bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2], bestMoonTuple[2][3])
@@ -333,9 +309,9 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     best_s = (bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2], bestSunTuple[2][3])
     ######
 
-    print("Best Earth: ", best_e)
-    print("Best Moon: ", best_m)
-    print("Best Sun: ", best_s)
+    #print("Best Earth: ", best_e)
+    #print("Best Moon: ", best_m)
+    #print("Best Sun: ", best_s)
     # Calculate angular separation
     ang_em = __calculate_cam_measurements(body1=bestDetectedCircles.get_earth_detection(), body2=bestDetectedCircles.get_moon_detection())
 
@@ -350,7 +326,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     )
     session.add(new_entry)
     session.commit()
-    print("Observe complete!")
+    #print("Observe complete!")
 
 
 def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EXIT_STATUS:

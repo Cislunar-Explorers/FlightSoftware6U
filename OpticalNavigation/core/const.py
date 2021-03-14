@@ -75,7 +75,7 @@ class CameraRecordingParameters:
         self.expHigh = expHigh
 
 
-CisLunarCamRecParams = CameraRecordingParameters(15.3, 0.981750, 0, 1)
+CisLunarCamRecParams = CameraRecordingParameters(15.3, 0.981750, 30000, 50000)
 
 class CameraAcquisionDirectoryNotFound(Exception):
     def __init__(self, camLoc):

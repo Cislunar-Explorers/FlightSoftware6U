@@ -1,7 +1,8 @@
 import drivers.power.power_controller as power_controller
 import drivers.power.power_structs as ps
 from enum import Enum
-from utils.constants import GomOutputs, GOM_VOLTAGE_MAX, GOM_VOLTAGE_MIN
+from utils.constants import GomOutputs
+import utils.parameters as params
 
 logger = ps.gom_logger
 
@@ -65,6 +66,7 @@ class Gomspace:
     def all_off(self):
         """Turns off all controllable outputs on the Gomspace"""
         logger.debug("Turning off all controllable outputs")
+        self.set_PA(False)
         self.pc.set_output(0)
 
     def hard_reset(self, passcode):
@@ -77,9 +79,9 @@ class Gomspace:
         logger.debug("Printing housekeeping, config and config2 data")
         self.pc.displayAll()
 
-    def solenoid(self, spike, hold, delay=0):
-        """Spikes the solenoid at 20V for [spike] milliseconds, holds at 5V for [hold] milliseconds"""
-        self.pc.solenoid(spike, hold, delay)
+    def solenoid(self, hold):
+        """Spikes the solenoid at 12V for [ACS_SPIKE_DURATION] milliseconds, holds at 5V for [hold] milliseconds"""
+        self.pc.solenoid_single_wave(hold)
 
     def glowplug(self, duration, delay=0):
         """Pulses the glowplug for [duration] milliseconds with after a delay of [delay] seconds"""
@@ -89,13 +91,25 @@ class Gomspace:
         """Turns on burnwire 1 for [duration] seconds after [delay] seconds. Does a display_all half way through"""
         self.pc.burnwire1(duration, delay)
 
-    def burnwire2(self, duration, delay=0):
-        """Turns on burnwire 2 for [duration] seconds after [delay] seconds. Does a display_all half way through"""
-        self.pc.burnwire2(duration, delay)
+    def glowplug2(self, duration, delay=0):
+        """Turns on glowplug 2 for [duration] milliseconds after [delay] seconds. Does a display_all half way through"""
+        self.pc.glowplug2(duration, delay)
 
     def set_electrolysis(self, status: bool, delay=0):
         """Switches on if [status] is true, off otherwise, with a delay of [delay] seconds."""
         self.pc.electrolyzer(status, delay=delay)
+
+    def lna(self, on: bool):
+        """Turns the receiving amplifier on (True)/off (False)"""
+        self.pc.comms_amplifier(on)
+
+    def rf_switch(self, receive: bool):
+        """Tells RF switch to either receive or transmit"""
+        self.pc.rf_switch(receive)
+
+    def set_PA(self, on: bool):
+        """Turns on/off the power circuit for the PA"""
+        self.pc.set_PA(on)
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""
@@ -105,5 +119,6 @@ class Gomspace:
     def read_battery_percentage(self):
         battery_data = self.get_health_data(level=Hk.VI.value)
         battery_voltage = battery_data.vbatt
-        return (battery_voltage - GOM_VOLTAGE_MIN) / (
-                GOM_VOLTAGE_MAX - GOM_VOLTAGE_MIN)
+        vmin = params.GOM_VOLTAGE_MIN
+        vmax = params.GOM_VOLTAGE_MAX
+        return (battery_voltage - vmin) / (vmax - vmin)

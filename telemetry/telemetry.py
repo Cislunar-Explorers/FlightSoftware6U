@@ -7,6 +7,7 @@ import numpy as np
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
 from utils.db import GyroModel
+from utils.constants import MAX_GYRO_RATE, GomOutputs
 
 
 def moving_average(x, w):
@@ -28,9 +29,9 @@ class GomSensor(SynchronousSensor):
             self.hk = self.parent.gom.get_health_data(level="eps")
             self.hkparam = self.parent.gom.get_health_data()
             battery_voltage = self.hk.vbatt  # mV
-            self.percent = (battery_voltage - self.parent.constants.GOM_VOLTAGE_MIN) / \
-                           (self.parent.constants.GOM_VOLTAGE_MAX - self.parent.constants.GOM_VOLTAGE_MIN)
-            self.is_electrolyzing = bool(self.hk.output[self.parent.constants.GomOutputs.electrolyzer.value])
+            self.percent = (battery_voltage - self.parent.parameters['GOM_VOLTAGE_MIN']) / \
+                           (self.parent.parameters['GOM_VOLTAGE_MAX'] - self.parent.parameters['GOM_VOLTAGE_MIN'])
+            self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
 
 
 class GyroSensor(SynchronousSensor):
@@ -185,7 +186,7 @@ class Telemetry(SynchronousSensor):
         if (time() - self.poll_time) > 3600:
             self.poll()
 
-        if any(i > self.parent.constants.MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
+        if any(i > MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
             self.parent.logger.error("Gyro not functioning properly")
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
@@ -201,7 +202,7 @@ class Telemetry(SynchronousSensor):
             self.parent.logger.error("Gom HK not functioning properly")
             raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
 
-        if any(i < 0 for i in self.rpi.all):
+        if any(i < 0 for i in self.rpi.all()):
             self.parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
 
@@ -232,6 +233,31 @@ class Telemetry(SynchronousSensor):
                 self.gom.hk.cursys,
                 self.gom.hk.vbatt,
                 self.prs.pressure)
+
+    def standard_packet_dict(self):
+        return {'rtc_time': self.rtc.rtc_time,
+                'position_x': 1,
+                'position_y': 2,
+                'position_z': 3,
+                'attitude_1': 4,
+                'attitude_2': 5,
+                'attitude_3': 6,
+                'attitude_4': 7,
+                'hk_temp_1': self.gom.hk.temp[0],
+                'hk_temp_2': self.gom.hk.temp[1],
+                'hk_temp_3': self.gom.hk.temp[2],
+                'hk_temp_4': self.gom.hk.temp[3],
+                'gyro_temp': self.gyr.tmp,
+                'thermo_temp': self.thm.tmp,
+                'curin_1': self.gom.hk.curin[0],
+                'curin_2': self.gom.hk.curin[1],
+                'curin_3': self.gom.hk.curin[2],
+                'vboost_1': self.gom.hk.vboost[0],
+                'vboost_2': self.gom.hk.vboost[1],
+                'vboost_3': self.gom.hk.vboost[2],
+                'cursys': self.gom.hk.cursys,
+                'vbatt': self.gom.hk.vbatt,
+                'prs_pressure': self.prs.pressure}
 
     def write_telem(self, telem):
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>

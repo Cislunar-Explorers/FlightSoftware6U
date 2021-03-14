@@ -13,25 +13,15 @@ from datetime import datetime
 import os
 
 from utils.constants import (  # noqa F401
-    LOW_CRACKING_PRESSURE,
-    EXIT_LOW_BATTERY_MODE_THRESHOLD,
-    HIGH_CRACKING_PRESSURE,
-    IDEAL_CRACKING_PRESSURE,
-    OPNAV_INTERVAL,
     BOOTUP_SEPARATION_DELAY,
     FMEnum,
     NormalCommandEnum,
     BootCommandEnum,
     TestCommandEnum,
     ManeuverCommandEnum,
-    POSITION_X,
-    POSITION_Y,
-    POSITION_Z,
-    ACCELERATE,
-    NAME,
-    VALUE,
-    AZIMUTH,
-    ELEVATION,
+    POSITION_X, POSITION_Y, POSITION_Z, ACCELERATE,
+    NAME, VALUE,
+    AZIMUTH, ELEVATION,
     STATE,
     INTERVAL,
     DELAY,
@@ -40,27 +30,19 @@ from utils.constants import (  # noqa F401
     NO_FM_CHANGE,
     GLOWPLUG_DURATION,
     BURN_WAIT_TIME,
-    SCHEDULED_BURN_TIME,
-    TIME
+    START, PULSE_NUM, PULSE_DT, PULSE_DURATION,
+    NUM_BLOCKS,
+    BURN_WAIT_TIME
 )
 
+from utils.parameters import SCHEDULED_BURN_TIME
+
+from utils.constants import *
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
-from utils.struct import (
-    pack_bool,
-    pack_unsigned_short,
-    pack_double,
-    pack_unsigned_int,
-    pack_str,
-    unpack_bool,
-    unpack_unsigned_short,
-    unpack_double,
-    unpack_unsigned_int,
-    unpack_str,
-    pack_float,
-    unpack_float
-)
+
+from communications.command_definitions import CommandDefinitions
 
 # Necessary modes to implement
 # BootUp, Restart, Normal, Eclipse, Safety, Propulsion,
@@ -85,9 +67,9 @@ class FlightMode:
 
     # Map argument names to (packer,unpacker) tuples
     # This tells CommandHandler how to serialize the arguments for commands to this flight mode
-    command_arg_unpackers = {}
+    command_arg_types = {}
     sensordata_arg_unpackers = {}
-    downlink_arg_unpackers = {}
+    downlink_arg_types = {}
 
     flight_mode_id = -1  # Value overridden in FM's implementation
 
@@ -102,32 +84,39 @@ class FlightMode:
         # Please do so!
         flight_mode_id = self.flight_mode_id
 
-        if self.task_completed and not self.parent.FMQueue.empty():
-            return self.parent.FMQueue.get()
+        if self.task_completed:
+            if self.parent.FMQueue.empty():
+                return FMEnum.Normal.value
+            else:
+                return self.parent.FMQueue.get()
 
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
-        # go to maneuver mode
+        # go to maneuver mode if there is something in the maneuver queue
         if not self.parent.maneuver_queue.empty():
             # TODO assign the time command to this var
             if SCHEDULED_BURN_TIME - time() < (60.0*BURN_WAIT_TIME):
                 return FMEnum.Maneuver.value
 
+        # go to reorientation mode if there is something in the reorientation queue
+        if (not self.parent.reorientation_queue.empty()) or self.parent.reorientation_list:
+            return FMEnum.AttitudeAdjustment.value
+
         # if battery is low, go to low battery mode
-        batt_percent = self.parent.tlm.gom.percent
-        if (batt_percent < self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
-                and not self.parent.constants.IGNORE_LOW_BATTERY:
+        batt_percent = self.parent.telemetry.gom.percent
+        if (batt_percent < self.parent.parameters["ENTER_LOW_BATTERY_MODE_THRESHOLD"]) \
+                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
             return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
-        if sum(self.parent.tlm.gom.hk.curin) < self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT \
-                and batt_percent < self.parent.constants.ENTER_ECLIPSE_MODE_THRESHOLD \
-                and not self.parent.constants.IGNORE_LOW_BATTERY:
+        if sum(self.parent.telemetry.gom.hk.curin) < self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"] \
+                and batt_percent < self.parent.parameters["ENTER_ECLIPSE_MODE_THRESHOLD"] \
+                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
             return FMEnum.LowBatterySafety.value
 
-        # go to comms mode
-        if not self.parent.communications_queue.empty():
+        # go to comms mode if there is something in the comms queue
+        if not self.parent.downlink_queue.empty():
             return FMEnum.CommsMode.value
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
@@ -141,7 +130,19 @@ class FlightMode:
             self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
             return
 
-        # TODO determine if I should delete this
+        # Check if opnav needs to be run
+        curr_time = datetime.now()
+        time_diff = curr_time - self.parent.last_opnav_run
+        if time_diff.seconds * 60 > OPNAV_INTERVAL:
+            self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
+
+        elif flight_mode_id == FMEnum.LowBatterySafety.value:
+            if (
+                self.gom.read_battery_percentage()
+                >= EXIT_LOW_BATTERY_MODE_THRESHOLD
+            ):
+                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+
         elif flight_mode_id == FMEnum.Safety.value:
             raise NotImplementedError  # TODO
 
@@ -169,7 +170,8 @@ class FlightMode:
 
                 bogus = False
                 try:
-                    command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(command)
+                    mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(
+                        command)
                     logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
@@ -186,6 +188,11 @@ class FlightMode:
                     method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
                     method_to_run(**command_kwargs)  # run that method
                 finished_commands.append(command)
+
+                # Prioritize downlinking: execute all necessary downlinks before
+                # Starting next command
+                # TODO: Execute downlinks before moving on to next command
+
             # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
             #  exception occurs in the above for loop
             for finished_command in finished_commands:
@@ -193,7 +200,7 @@ class FlightMode:
 
     def poll_inputs(self):
         self.parent.gom.tick_wdt()
-        self.parent.tlm.poll()
+        self.parent.telemetry.poll()
 
     def completed_task(self):
         self.task_completed = True
@@ -232,10 +239,12 @@ class PauseBackgroundMode(FlightMode):
     def __enter__(self):
         super().__enter__()
         gc.disable()
+        # TODO pause nemo thread
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
+        # TODO resume nemo thread
         super().__exit__(exc_type, exc_val, exc_tb)
 
 
@@ -254,17 +263,19 @@ class TestMode(PauseBackgroundMode):
     command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
                       TestCommandEnum.ADCTest.value: ([], 0),
                       TestCommandEnum.CommsDriver.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0)}
+                      TestCommandEnum.PiShutdown.value: ([], 0),
+                      TestCommandEnum.RTCTest.value: ([], 0)
+                      }
 
     command_arg_unpackers = {}
 
     downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
 
     downlink_arg_unpackers = {
-        'gyro1': (pack_float, unpack_float),
-        'gyro2': (pack_float, unpack_float),
-        'gyro3': (pack_float, unpack_float),
-        }
+        'gyro1': 'float',
+        'gyro2': 'float',
+        'gyro3': 'float',
+    }
 
 
 class CommsMode(FlightMode):
@@ -279,7 +290,7 @@ class OpNavMode(FlightMode):
     flight_mode_id = FMEnum.OpNav.value
 
     def __init__(self, parent):
-        super().__init__(self, parent)
+        super().__init__(parent)
 
     def run_mode(self):
         # if not p.isalive():
@@ -290,8 +301,14 @@ class OpNavMode(FlightMode):
         self.task_completed = True
 
     def update_state(self) -> int:
+        super_fm = super().update_state()
+        if super_fm != NO_FM_CHANGE:
+            return super_fm
+
+        # check if opnav db has been updated, then set self.task_completed true
         if self.task_completed:
             return FMEnum.Normal.value
+
         return NO_FM_CHANGE
 
 
@@ -316,15 +333,15 @@ class LowBatterySafetyMode(FlightMode):
     # TODO point solar panels directly at the sun
 
     def run_mode(self):
-        sleep(self.parent.constants.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
+        sleep(self.parent.parameters["LOW_BATT_MODE_SLEEP"])  # saves battery, maybe?
         raise NotImplementedError
 
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
-        if self.parent.tlm.gom.percent > self.parent.constants.EXIT_LOW_BATTERY_MODE_THRESHOLD:
-            self.parent.replace_flight_mode_by_id(self.parent.constants.FMEnum.Normal.value)
+        if self.parent.telemetry.gom.percent > self.parent.parameters["EXIT_LOW_BATTERY_MODE_THRESHOLD"]:
+            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
-        if sum(self.parent.tlm.gom.hk.curin) > self.parent.constants.ENTER_ECLIPSE_MODE_CURRENT:
+        if sum(self.parent.telemetry.gom.hk.curin) > self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"]:
             # If we do have some power coming in (i.e. we are not eclipsed by the moon/earth), reorient to face sun
             raise NotImplementedError
 
@@ -355,7 +372,6 @@ class ManeuverMode(PauseBackgroundMode):
 
 
 class SafeMode(FlightMode):
-
     flight_mode_id = FMEnum.Safety.value
 
     def __init__(self, parent):
@@ -375,33 +391,70 @@ class NormalMode(FlightMode):
     command_codecs = {
         NormalCommandEnum.Switch.value: ([], 0),
         NormalCommandEnum.RunOpNav.value: ([], 0),
-        NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 16),
+        NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
-        NormalCommandEnum.SetParam.value: ([NAME, VALUE], 12),
+        NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
-        NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4)
+        NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4),
+        NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 14),
     }
 
-    command_arg_unpackers = {
-        AZIMUTH: (pack_double, unpack_double),
-        ELEVATION: (pack_double, unpack_double),
-        ACCELERATE: (pack_bool, unpack_bool),
-        NAME: (pack_str, unpack_str),
-        # TODO: can't use strings in current configuration b/c command_codecs requires a fixed number of bytes
-        VALUE: (pack_double, unpack_double),
-        STATE: (pack_bool, unpack_bool),
-        INTERVAL: (pack_unsigned_int, unpack_unsigned_int),
-        DELAY: (pack_unsigned_short, unpack_unsigned_short),
-        NUM_BLOCKS: (pack_unsigned_short, unpack_unsigned_short),
-        TIME: (pack_float, unpack_float)
+    command_arg_types = {
+        AZIMUTH: 'float',
+        ELEVATION: 'float',
+        ACCELERATE: 'bool',
+        NAME: 'string',
+        VALUE: 'double',
+        STATE: 'bool',
+        INTERVAL: 'int',
+        DELAY: 'short',
+        NUM_BLOCKS: 'short',
+        HARD_SET: 'bool',
+        START: 'double',
+        PULSE_DURATION: 'short',
+        PULSE_NUM: 'short',
+        PULSE_DT: 'short'
     }
 
-    downlink_codecs = {}
+    downlink_codecs = {
+        NormalCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
+                                              HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
+                                              CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
+                                              VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
+                                              PROP_TANK_PRESSURE], 216),
 
-    downlink_arg_unpackers = {}
+        NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1)
+    }
+
+    downlink_arg_types = {
+        RTC_TIME: 'double',
+        POSITION_X: 'double',
+        POSITION_Y: 'double',
+        POSITION_Z: 'double',
+        ATT_1: 'float',
+        ATT_2: 'float',
+        ATT_3: 'float',
+        ATT_4: 'float',
+        HK_TEMP_1: 'float',
+        HK_TEMP_2: 'float',
+        HK_TEMP_3: 'float',
+        HK_TEMP_4: 'float',
+        GYRO_TEMP: 'float',
+        THERMOCOUPLER_TEMP: 'float',
+        CURRENT_IN_1: 'float',
+        CURRENT_IN_2: 'float',
+        CURRENT_IN_3: 'float',
+        VBOOST_1: 'float',
+        VBOOST_2: 'float',
+        VBOOST_3: 'float',
+        SYSTEM_CURRENT: 'float',
+        BATTERY_VOLTAGE: 'float',
+        PROP_TANK_PRESSURE: 'float',
+        SUCCESSFUL: 'bool'
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -412,13 +465,13 @@ class NormalMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self.parent.tlm.opn.poll_time) // 60 < self.parent.constants.OPNAV_INTERVAL
-        need_to_electrolyze = self.parent.tlm.prs.pressure < self.parent.constants.IDEAL_CRACKING_PRESSURE
-        currently_electrolyzing = self.parent.tlm.gom.is_electrolyzing
+        time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < self.parent.parameters["OPNAV_INTERVAL"]
+        need_to_electrolyze = self.parent.telemetry.prs.pressure < self.parent.parameters["IDEAL_CRACKING_PRESSURE"]
+        currently_electrolyzing = self.parent.telemetry.gom.is_electrolyzing
         seconds_to_electrolyze = 60  # TODO: actual calculation involving current pressure
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
-        need_to_electrolyze = need_to_electrolyze and self.parent.constants.WANT_TO_ELECTROLYZE
+        need_to_electrolyze = need_to_electrolyze and self.parent.parameters["WANT_TO_ELECTROLYZE"]
 
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
@@ -440,6 +493,7 @@ class NormalMode(FlightMode):
             if need_to_electrolyze:
                 # If it's time for opnav to run BUT we are below ideal pressure: turn off electrolysis after a delay
                 self.parent.gom.set_electrolysis(False, delay=seconds_to_electrolyze)
+                # may not be relevant anymore now that opnav is becoming a subprocess
 
             return FMEnum.OpNav.value
 

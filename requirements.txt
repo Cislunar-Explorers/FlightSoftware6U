@@ -14,4 +14,4 @@ psutil
 numpy-quaternion
 astropy
 numba
-
+uptime

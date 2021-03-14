@@ -2,11 +2,13 @@ import os
 import sys
 from threading import Thread
 from time import sleep, time
-from datetime import datetime
+from datetime import datetime, timedelta
 from queue import Queue
 import signal
 import random
 from utils.log import get_log
+from multiprocessing import Process, Queue
+import subprocess
 
 from utils.constants import (
     LOG_DIR,
@@ -68,7 +70,7 @@ class MainSatelliteThread(Thread):
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
 
-        self.p = Process(target=self.opnav_subprocess())  # define the subprocess
+        self.opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
 
         self.gom = None
         self.gyro = None
@@ -81,6 +83,10 @@ class MainSatelliteThread(Thread):
 
         # Telemetry
         self.tlm = Telemetry(self)
+
+        #Opnav subprocess variables
+        self.need_opnav = False
+        self.opnav_proc_queue = Queue()
 
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
@@ -256,6 +262,26 @@ class MainSatelliteThread(Thread):
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
+
+                #Opnav subprocess management
+                if datetime.now() > self.last_opnav_run + timedelta(minutes=4) and not self.opnav_process.is_alive():
+                    logger.info("[OPNAV]: Able to run next opnav")
+                    self.need_opnav = True
+                    self.last_opnav_run = datetime.now()
+
+                if not self.opnav_process.is_alive() and self.need_opnav is True:
+                    self.opnav_process = Process(target=self.opnav_subprocess, args=())
+                    self.need_opnav = False
+                    logger.info("[OPNAV]: Starting opnav subprocess")
+                    self.opnav_process.start()
+
+                if self.opnav_process.is_alive():
+                    try:
+                        self.opnav_process.join(timeout=1)
+                        result = self.opnav_proc_queue.get(timeout=1)
+                    except queue.Empty:
+                        if not self.opnav_process.is_alive():
+                            self.opnav_process.terminate()
         finally:
             self.replace_flight_mode_by_id(utils.constants.FMEnum.Safety.value)
             # TODO handle failure gracefully
@@ -271,7 +297,8 @@ class MainSatelliteThread(Thread):
         # TODO change from pytest to actual opnav
         # note: os.system should be replaced by subprocess.run("<insert shell command here>", shell=True)
         # for an example see utils/boot_cause.py
-        os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
+        #os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
+        subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
 
 
 if __name__ == "__main__":

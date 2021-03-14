@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import MainSatelliteThread, p
+    from main import MainSatelliteThread
 
 # for an explanation of the above 4 lines of code, see
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -125,7 +125,7 @@ class FlightMode:
         # The logic defined below isn't necessarily incorrect - it's just in an outdated format
 
         # Burn command queue logic
-        # TODO implment need_to_burn function in adc driver
+        # TODO implement need_to_burn function in adc driver
         if self.parent.pressure_sensor.need_to_burn():
             self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
             return
@@ -293,11 +293,7 @@ class OpNavMode(FlightMode):
         super().__init__(parent)
 
     def run_mode(self):
-        # if not p.isalive():
-        #     p.start()
-        #     self.task_completed = True
-        # pass
-        p.start()
+        self.parent.opnav_process.start()
         self.task_completed = True
 
     def update_state(self) -> int:

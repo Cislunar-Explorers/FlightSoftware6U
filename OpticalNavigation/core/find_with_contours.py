@@ -327,7 +327,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) is 0:
-        print("No contours")
+        #print("No contours")
         return result
 
     #print("Contour size", len(contours))

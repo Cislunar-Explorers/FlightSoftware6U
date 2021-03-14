@@ -338,7 +338,7 @@ class MainSatelliteThread(Thread):
                 self.run_mode()
 
                 #Opnav subprocess management
-                if datetime.now() > self.last_opnav_run + timedelta(minutes=4) and not self.opnav_process.is_alive():
+                if datetime.now() > self.last_opnav_run + timedelta(minutes=10) and not self.opnav_process.is_alive():
                     logger.info("[OPNAV]: Able to run next opnav")
                     self.need_opnav = True
                     self.last_opnav_run = datetime.now()

@@ -68,6 +68,7 @@ class MainSatelliteThread(Thread):
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
 
+        self.p = Process(target=self.opnav_subprocess())  # define the subprocess
 
         self.gom = None
         self.gyro = None
@@ -138,12 +139,8 @@ class MainSatelliteThread(Thread):
         else:
             logger.info("RTC initialized")
 
-        # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
-        # in pressure_sensor (to be made) can access burn queue"""
 
         # initialize the cameras, select a camera
-
-        # initialize camera mux, regardless of hard or soft bootup
         try:
             self.mux = camera.CameraMux()
             self.mux.selectCamera(1)
@@ -155,6 +152,7 @@ class MainSatelliteThread(Thread):
 
         cameras_ok = True
 
+        # initialize camera mux, regardless of hard or soft bootup
         if not hard_boot() or os.path.isdir(self.log_dir):
             try:
                 self.camera = camera.Camera()
@@ -193,9 +191,9 @@ class MainSatelliteThread(Thread):
                     self.command_handler.unpack_command(newCommand)  # Only for error checking
                     self.command_queue.put(bytes(newCommand))
                 except:
-                    print('Invalid Command Received')
+                    logger.warning('Invalid Command Received')
             else:
-                print('Not Received')
+                logger.debug('Not Received')
         # self.tlm.poll()
         self.flight_mode.poll_inputs()
 
@@ -216,7 +214,7 @@ class MainSatelliteThread(Thread):
     def clear_command_queue(self):
         while not self.command_queue.empty():
             command = self.command_queue.get()
-            print(f"Throwing away command: {command}")
+            logger.debug(f"Throwing away command: {command}")
 
     def reset_commands_to_execute(self):
         self.commands_to_execute = []
@@ -252,9 +250,7 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 # sleep(5)
-                opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
-                opnav_process.start()
-                logger.info("Flight mode: " + repr(self.flight_mode))
+                logger.info(f"Flight mode: {self.flight_mode.flight_mode_id}")
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()
@@ -273,6 +269,8 @@ class MainSatelliteThread(Thread):
 
     def opnav_subprocess(self):
         # TODO change from pytest to actual opnav
+        # note: os.system should be replaced by subprocess.run("<insert shell command here>", shell=True)
+        # for an example see utils/boot_cause.py
         os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
 
 

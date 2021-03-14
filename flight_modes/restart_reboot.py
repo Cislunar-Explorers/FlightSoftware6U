@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY
+from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
 from flight_modes.flight_mode import FlightMode
 import os
 from utils.log import get_log
@@ -43,7 +43,8 @@ class BootUpMode(FlightMode):
         self.session.commit()
 
     def update_state(self) -> int:
-        return 0
+        logger.info("updating state... doesnt do nothin")
+        return NO_FM_CHANGE
 
 
 class RestartMode(FlightMode):
@@ -82,4 +83,5 @@ class RestartMode(FlightMode):
             print(boot)"""
 
     def update_state(self) -> int:
-        return 2
+        logger.info("updating state... will now transfer to normal")
+        return FMEnum.Normal.value

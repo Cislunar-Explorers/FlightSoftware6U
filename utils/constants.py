@@ -1,58 +1,38 @@
 from enum import IntEnum, unique
 import os
+import hashlib
 
 # unit conversions
 
 DEG2RAD = 3.14159265359 / 180
 
-# TODO
-# Create method to set constants based on purpose of run
-
 # Delay to wait on BootUp
 # TODO change back to 30.0
 BOOTUP_SEPARATION_DELAY = 5.0
 
-# TODO determine correct values threshold values
-ENTER_LOW_BATTERY_MODE_THRESHOLD = 0.3
-EXIT_LOW_BATTERY_MODE_THRESHOLD = 0.5
+# Verification Key Parameters
+MAC_LENGTH = 4
+MAC_DATA = b'Hello'
+MAC_KEY = b'World'
+MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
-LOW_BATT_MODE_SLEEP = 10  # seconds
-
-ENTER_ECLIPSE_MODE_THRESHOLD = 0.5
-EXIT_ECLIPSE_MODE_THRESHOLD = 0.75
-
-# TODO change back to 50
-ENTER_ECLIPSE_MODE_CURRENT = -50  # mA
-
-IGNORE_LOW_BATTERY = False
-
-# Constants defining goal cracking pressures for electrolysis
-LOW_CRACKING_PRESSURE = 10.0
-HIGH_CRACKING_PRESSURE = 20.0
-IDEAL_CRACKING_PRESSURE = 15.0
-
-# Set behaviour of electrolysis:
-WANT_TO_ELECTROLYZE = True
-
-# OpNav timing interval in minutes
-OPNAV_INTERVAL = 60
-
-SQL_PREFIX = "sqlite:///"
-CISLUNAR_BASE_DIR = os.path.join(
-    os.path.expanduser("~"), ".cislunar-flight-software"
-)
-LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
-DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
-
+# Serialization Sizes
 MODE_SIZE = 1
 ID_SIZE = 1
+COUNTER_SIZE = 3
 DATA_LEN_SIZE = 2
-MIN_COMMAND_SIZE = MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
+MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
 
-MODE_OFFSET = 0
-ID_OFFSET = 1
-DATA_LEN_OFFSET = 2
-DATA_OFFSET = 4
+# Serializations Offsets
+MAC_OFFSET = 0
+COUNTER_OFFSET = 0 + MAC_LENGTH
+MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
+ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
+DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
+DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
+
+# Parameters.json path
+PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -71,14 +51,56 @@ STATE = "state"
 INTERVAL = "interval"
 DELAY = "delay"
 
+START = "pulse_start"
+PULSE_DURATION = "pulse_duration"
+PULSE_NUM = "pulse_num"
+PULSE_DT = "pulse_dt"
+
 NUM_BLOCKS = "num_blocks"
 
 TIME = "time"
 
-GOM_VOLTAGE_MAX = 8400  # mV
-GOM_VOLTAGE_MIN = 6000
+HARD_SET = "hard_set"
 
-# Random data generation constants:
+# Keyword argument definitions for downlink
+RTC_TIME = "rtc_time"
+
+ATT_1 = "attitude_1"
+ATT_2 = "attitude_2"
+ATT_3 = "attitude_3"
+ATT_4 = "attitude_4"
+
+HK_TEMP_1 = "hk_temp_1"
+HK_TEMP_2 = "hk_temp_2"
+HK_TEMP_3 = "hk_temp_3"
+HK_TEMP_4 = "hk_temp_4"
+GYRO_TEMP = "gyro_temp"
+
+THERMOCOUPLER_TEMP = "thermo_temp"
+
+CURRENT_IN_1 = "curin_1"
+CURRENT_IN_2 = "curin_2"
+CURRENT_IN_3 = "curin_3"
+
+VBOOST_1 = "vboost_1"
+VBOOST_2 = "vboost_2"
+VBOOST_3 = "vboost_3"
+
+SYSTEM_CURRENT = "cursys"
+BATTERY_VOLTAGE = "vbatt"
+
+PROP_TANK_PRESSURE = "prs_pressure"
+
+SUCCESSFUL = "successful"
+
+# SQL Stuff
+SQL_PREFIX = "sqlite:///"
+CISLUNAR_BASE_DIR = os.path.join(
+    os.path.expanduser("~"), ".cislunar-flight-software"
+)
+LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
+DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
+
 a = 1664525
 b = 1013904223
 M = 2 ** 32
@@ -90,12 +112,16 @@ ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
 BURN_WAIT_TIME = 15  # minutes
 
-MAX_GYRO_RATE = 250  # degrees/sec
-
-# This value is assigned and reassigned during each burn
-SCHEDULED_BURN_TIME = None
+MAX_GYRO_RATE = 250  # degrees/sec # TODO
 
 NO_FM_CHANGE = -1
+
+ACS_SPIKE_DURATION = 4  # milliseconds
+GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
+
+# Gyro specific constants
+
+GYRO_RANGE = 250  # degrees per second
 
 
 @unique
@@ -109,7 +135,7 @@ class ConstantsEnum(IntEnum):
 class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
-    burnwire_2 = 2
+    glowplug_2 = 2
     glowplug = 3
     solenoid = 4
     electrolyzer = 5
@@ -162,6 +188,7 @@ class NormalCommandEnum(IntEnum):
                        # 2 args, unix time stamp and spin axis vector (2 floats)
     ScheduleReorientation = 14
     ScheduleManeuver = 15
+    ACSPulsing = 16
 
 
 
@@ -226,6 +253,7 @@ class TestCommandEnum(IntEnum):
     SeparationTest = 5
     GomPin = 6
     CommsDriver = 7
+    PiShutdown = 11
     RTCTest = 8
 
 

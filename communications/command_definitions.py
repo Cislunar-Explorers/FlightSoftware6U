@@ -345,12 +345,8 @@ class CommandDefinitions:
     #         self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
 
     def schedule_maneuever(self, **kwargs):
-        # TODO make this a json parameter to be stored in a file
         time_burn = kwargs['time']
-        # self.parent.constants.SCHEDULED_BURN_TIME = time_burn
-
-        # TODO use set parameter function for time_burn
-        # name=SCHEDULED_BURN_TIME, value=time_burn, hard_set=true
+        self.set_parameter(name="SCHEDULED_BURN_TIME", value=time_burn, hard_set=True)
         self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
     def return_to_normal(self):

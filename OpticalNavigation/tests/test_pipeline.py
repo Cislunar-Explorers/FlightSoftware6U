@@ -17,6 +17,7 @@ from OpticalNavigation.tests.const import CesiumTestCameraParameters
 
 from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
 from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
+from utils.constants import DB_FILE
 
 # from core.ukf import runTrajUKF
 # from tests.const import POS_ERROR, VEL_ERROR
@@ -25,7 +26,9 @@ from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavProp
 # from tests.animations import LiveTrajectoryPlot
 
 SQL_PREFIX = "sqlite:///"
-sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
+#sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
+sql_path = DB_FILE
+
 def setup_function(function):
     print("setup...")
     # Reset databases

@@ -158,6 +158,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
         recordings.append(filename_timestamp1)
         recordings.append(filename_timestamp2)
+    print(recordings)
 
     ##### Commented out for software demo
     #print(recordings)

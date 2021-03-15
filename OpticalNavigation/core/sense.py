@@ -17,7 +17,7 @@ def record_video(filename, framerate, recTime, exposure):
     [exposure]: exposure level for camera
     """
     cam = Camera()
-    filename_timestamp = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterspeed=exposure)
+    filename_timestamp = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterSpeed=exposure)
     return filename_timestamp
     #pass
 

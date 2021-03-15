@@ -14,7 +14,7 @@ import pandas as pd
 from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
 from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
 from utils.constants import DB_FILE
-from utils.log import get_log
+from utils.log import *
 from datetime import datetime, timedelta
 import math
 from sqlalchemy import desc
@@ -176,7 +176,9 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
+    #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
     frames = glob.glob("/home/pi/surrender_images/*.jpg")
+    #print(frames)
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
     #print(frames)
 

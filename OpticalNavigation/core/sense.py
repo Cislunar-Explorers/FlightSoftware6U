@@ -9,6 +9,7 @@ def select_camera(id):
     """
     mux = CameraMux()
     mux.selectCamera(id)
+    #pass
 
 def record_video(filename, framerate, recTime, exposure):
     """
@@ -18,7 +19,8 @@ def record_video(filename, framerate, recTime, exposure):
     cam = Camera()
     filename_timestamp = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterspeed=exposure)
     return filename_timestamp
-    
+    #pass
+
 def record_gyro(count):
     """
     Records angular velocity from gyroscope

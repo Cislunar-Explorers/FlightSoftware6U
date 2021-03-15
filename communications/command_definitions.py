@@ -169,7 +169,7 @@ class CommandDefinitions:
 
     def split(self):
         # for demo, delay of 0
-        self.parent.gom.burnwire1(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
+        self.parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION, delay=0)
         # Tell gom to power burnwires in five seconds
         # self.parent.gom.burnwire1(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
@@ -220,7 +220,7 @@ class CommandDefinitions:
 
     def gyro_thread(self):
         freq = 250  # Hz
-        duration = 4  # sec
+        duration = 3  # sec
         gyro_data = []
         self.parent.logger.info("Reading Gyro data (rad/s)")
         for i in range(int(duration * freq)):
@@ -268,7 +268,7 @@ class CommandDefinitions:
         value = kwargs['value']
         try:
             assert 0 < value < 1.0 and float(value) is float
-            if value >= self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+            if value >= params.ENTER_LOW_BATTERY_MODE_THRESHOLD:
                 self.parent.logger.error(
                     f"New value for Exit LB thresh must be less than current Enter LB thresh value")
                 assert False
@@ -342,7 +342,7 @@ class CommandDefinitions:
     #     if delay < 0:
     #         self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
     #     else:
-    #         self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
+    #         self.parent.gom.glowplug(params.GLOWPLUG_DURATION, delay=delay)
 
     def schedule_maneuever(self, **kwargs):
         time_burn = kwargs['time']
@@ -371,7 +371,7 @@ class CommandDefinitions:
 
     def print_parameter(self, **kwargs):
         index = kwargs["index"]
-        value = getattr(self.parent.constants, str(index))
+        value = getattr(params, str(index))
         self.parent.logger.info(f"{index}:{value}")
 
     def reboot_gom(self):

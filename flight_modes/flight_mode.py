@@ -32,12 +32,15 @@ from utils.constants import (  # noqa F401
     BURN_WAIT_TIME,
     START, PULSE_NUM, PULSE_DT, PULSE_DURATION,
     NUM_BLOCKS,
-    BURN_WAIT_TIME
+    BURN_WAIT_TIME,
+    RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
+    HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
+    CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
+    VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
+    PROP_TANK_PRESSURE, HARD_SET, TIME, SUCCESSFUL
 )
 
-from utils.parameters import SCHEDULED_BURN_TIME
-
-from utils.constants import *
+import utils.parameters as params
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
@@ -95,8 +98,8 @@ class FlightMode:
 
         # go to maneuver mode if there is something in the maneuver queue
         if not self.parent.maneuver_queue.empty():
-            if SCHEDULED_BURN_TIME is not None:
-                if SCHEDULED_BURN_TIME - time() < (60.0*BURN_WAIT_TIME):
+            if params.SCHEDULED_BURN_TIME is not None:
+                if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
                     return FMEnum.Maneuver.value
 
         # go to reorientation mode if there is something in the reorientation queue
@@ -105,14 +108,14 @@ class FlightMode:
 
         # if battery is low, go to low battery mode
         batt_percent = self.parent.telemetry.gom.percent
-        if (batt_percent < self.parent.parameters["ENTER_LOW_BATTERY_MODE_THRESHOLD"]) \
-                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
+        if (batt_percent < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
+                and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
-        if sum(self.parent.telemetry.gom.hk.curin) < self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"] \
-                and batt_percent < self.parent.parameters["ENTER_ECLIPSE_MODE_THRESHOLD"] \
-                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
+        if sum(self.parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT \
+                and batt_percent < params.ENTER_ECLIPSE_MODE_THRESHOLD \
+                and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
         # go to comms mode if there is something in the comms queue
@@ -326,18 +329,17 @@ class LowBatterySafetyMode(FlightMode):
         super().__init__(parent)
         raise NotImplementedError
 
-    # TODO point solar panels directly at the sun
 
     def run_mode(self):
-        sleep(self.parent.parameters["LOW_BATT_MODE_SLEEP"])  # saves battery, maybe?
+        sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         raise NotImplementedError
 
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
-        if self.parent.telemetry.gom.percent > self.parent.parameters["EXIT_LOW_BATTERY_MODE_THRESHOLD"]:
+        if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
-        if sum(self.parent.telemetry.gom.hk.curin) > self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"]:
+        if sum(self.parent.telemetry.gom.hk.curin) > params.ENTER_ECLIPSE_MODE_CURRENT:
             # If we do have some power coming in (i.e. we are not eclipsed by the moon/earth), reorient to face sun
             raise NotImplementedError
 
@@ -362,7 +364,7 @@ class ManeuverMode(PauseBackgroundMode):
 
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
-        sleep((SCHEDULED_BURN_TIME - time()) - 5)
+        sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
         self.parent.gom.glowplug(GLOWPLUG_DURATION)
         self.task_completed = True
 
@@ -461,13 +463,13 @@ class NormalMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < self.parent.parameters["OPNAV_INTERVAL"]
-        need_to_electrolyze = self.parent.telemetry.prs.pressure < self.parent.parameters["IDEAL_CRACKING_PRESSURE"]
+        time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < params.OPNAV_INTERVAL
+        need_to_electrolyze = self.parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self.parent.telemetry.gom.is_electrolyzing
         seconds_to_electrolyze = 60  # TODO: actual calculation involving current pressure
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
-        need_to_electrolyze = need_to_electrolyze and self.parent.parameters["WANT_TO_ELECTROLYZE"]
+        need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
 
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
@@ -494,7 +496,7 @@ class NormalMode(FlightMode):
             return FMEnum.OpNav.value
 
         # if we have data to downlink, change to comms mode
-        if not (self.parent.communications_queue.empty()):
+        if not (self.parent.downlink_queue.empty()):
             return FMEnum.CommsMode.value
 
     def run_mode(self):

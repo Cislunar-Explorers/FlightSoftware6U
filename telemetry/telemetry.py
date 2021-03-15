@@ -8,6 +8,7 @@ from drivers.power.power_structs import eps_hk_t, hkparam_t
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
 from utils.db import GyroModel
 from utils.constants import MAX_GYRO_RATE, GomOutputs
+import utils.parameters as params
 
 
 def moving_average(x, w):
@@ -29,8 +30,8 @@ class GomSensor(SynchronousSensor):
             self.hk = self.parent.gom.get_health_data(level="eps")
             self.hkparam = self.parent.gom.get_health_data()
             battery_voltage = self.hk.vbatt  # mV
-            self.percent = (battery_voltage - self.parent.parameters['GOM_VOLTAGE_MIN']) / \
-                           (self.parent.parameters['GOM_VOLTAGE_MAX'] - self.parent.parameters['GOM_VOLTAGE_MIN'])
+            self.percent = (battery_voltage - params.GOM_VOLTAGE_MIN) / \
+                           (params.GOM_VOLTAGE_MAX - params.GOM_VOLTAGE_MIN)
             self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
 
 
@@ -202,7 +203,7 @@ class Telemetry(SynchronousSensor):
             self.parent.logger.error("Gom HK not functioning properly")
             raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
 
-        if any(i < 0 for i in self.rpi.all()):
+        if any(i < 0 for i in self.rpi.all):
             self.parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
 

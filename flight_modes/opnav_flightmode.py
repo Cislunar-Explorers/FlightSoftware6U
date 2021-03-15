@@ -73,4 +73,4 @@ class OpNavMode(PauseBackgroundMode):
 
         # return to normal mode if task completed
         if self.task_completed:
-            return self.parent.constants.FMEnum.Normal.value
+            return FMEnum.Normal.value

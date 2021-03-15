@@ -13,9 +13,7 @@
 # https://cornell.app.box.com/file/664230352636
 
 import ADS1115
-import adafruit_fxas21002c
-import busio
-import board
+from drivers.gyro import GyroSensor
 
 
 class ADC:
@@ -47,10 +45,9 @@ class ADC:
     Q1T = -1.3948675e-3
     Q2T = -6.7976627e-5
 
-    def __init__(self):
+    def __init__(self, gyro: GyroSensor):
         self.ads = ADS1115.ADS1115()
-        i2c = busio.I2C(board.SCL, board.SDA)
-        self.gyro = adafruit_fxas21002c.FXAS21002C(i2c)
+        self.gyro = gyro
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):  # psi
@@ -71,7 +68,7 @@ class ADC:
         return temperature
 
     def get_gyro_temp(self):
-        return self.gyro._read_u8(0x12)  # Temperature register address on gyro
+        return self.gyro.get_temp()
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

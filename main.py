@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 import utils.constants
 from utils.constants import *
-from utils.parameters import *
+import utils.parameters as params
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
@@ -112,8 +112,7 @@ class MainSatelliteThread(Thread):
     def poll_inputs(self):
         
         #Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds()/60 >= TELEM_DOWNLINK_TIME:
-            self.enter_transmit_safe_mode()
+        if (datetime.today() - self.radio.last_telemetry_time).total_seconds()/60 >= params.TELEM_DOWNLINK_TIME:
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (
                 self.downlink_handler.pack_downlink(self.downlink_counter,FMEnum.Normal.value,NormalCommandEnum.BasicTelem.value,**telemetry))
@@ -171,13 +170,6 @@ class MainSatelliteThread(Thread):
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
         self.flight_mode.execute_commands()
-
-    def execute_downlinks(self):
-        self.enter_transmit_safe_mode()
-        while not self.downlink_queue.empty():
-            self.radio.transmit(self.downlink_queue.get())
-            self.downlink_counter += 1
-            sleep(DOWNLINK_BUFFER_TIME)
 
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         # check if file exists

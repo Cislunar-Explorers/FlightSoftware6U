@@ -30,7 +30,7 @@ import os
 )"""
 
 from utils.constants import *
-from utils.parameters import *
+import utils.parameters as params
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
@@ -248,8 +248,27 @@ class CommsMode(FlightMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        raise NotImplementedError
+        self.electrolyzing = False
+        self.enter_transmit_safe_mode()
+    
+    def enter_transmit_safe_mode(self):
+        
+        #Stop electrolyzing
+        if self.parent.gom.is_electrolyzing():
+            self.electrolyzing = True
+            self.parent.gom.set_electrolysis(False)
+        
+        #Set RF switch to transmit
+        self.parent.gom.rf_switch(False)
 
+        #Turn off LNA
+        self.parent.gom.lna(False)
+    
+    def execute_downlinks(self):
+        while not self.parent.downlink_queue.empty():
+            self.parent.radio.transmit(self.parent.downlink_queue.get())
+            self.parent.downlink_counter += 1
+            sleep(params.DOWNLINK_BUFFER_TIME)
 
 class SensorMode(FlightMode):
 

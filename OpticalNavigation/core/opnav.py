@@ -193,6 +193,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
+        logger.info("[OPNAV]: single find done")
 
     # best___Tuple is tuple of file, distance and vector of best result
 

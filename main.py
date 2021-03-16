@@ -79,7 +79,7 @@ class MainSatelliteThread(Thread):
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
 
-        self.opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
+        # self.opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
 
         self.gom = None
         self.gyro = None
@@ -93,7 +93,7 @@ class MainSatelliteThread(Thread):
         # Telemetry
         self.tlm = Telemetry(self)
 
-        #Opnav subprocess variables
+        # Opnav subprocess variables
         self.need_opnav = False
         self.opnav_proc_queue = Queue()
 
@@ -124,7 +124,6 @@ class MainSatelliteThread(Thread):
                 'Attempted to set parameter ' + str(parameter) +
                 ', which could not be found in parameters.json'
             )
-
 
     def init_sensors(self):
         try:

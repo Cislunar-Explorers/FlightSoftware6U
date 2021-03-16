@@ -118,7 +118,8 @@ class CommandDefinitions:
         self.maneuver_commands = {
             1: self.run_opnav,
             # 2: self.change_attitude,
-            9: self.burn}
+            # 9: self.burn
+        }
 
         self.sensor_commands = {}
 

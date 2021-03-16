@@ -132,8 +132,7 @@ class MainSatelliteThread(Thread):
         self.flight_mode.poll_inputs()
 
         # Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= self.parameters[
-            "TELEM_DOWNLINK_TIME"]:
+        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= utils.parameters.TELEM_DOWNLINK_TIME:
             self.enter_transmit_safe_mode()
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (

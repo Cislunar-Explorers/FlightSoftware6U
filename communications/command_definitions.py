@@ -88,7 +88,7 @@ class CommandDefinitions:
             NormalCommandEnum.Verification.value: verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
             NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
-            NormalCommandEnum.ScheduleManeuever.value: self.schedule_maneuver,
+            NormalCommandEnum.ScheduleManeuver.value: self.schedule_maneuver,
             NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing
         }
 
@@ -344,7 +344,7 @@ class CommandDefinitions:
     #     else:
     #         self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
 
-    def schedule_maneuever(self, **kwargs):
+    def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
         self.set_parameter(name="SCHEDULED_BURN_TIME", value=time_burn, hard_set=True)
         self.parent.maneuver_queue.put(FMEnum.Maneuver.value)

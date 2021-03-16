@@ -412,7 +412,8 @@ class NormalMode(FlightMode):
         START: 'double',
         PULSE_DURATION: 'short',
         PULSE_NUM: 'short',
-        PULSE_DT: 'short'
+        PULSE_DT: 'short',
+        TIME: 'float'
     }
 
     downlink_codecs = {

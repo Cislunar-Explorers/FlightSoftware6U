@@ -74,14 +74,6 @@ class RestartMode(FlightMode):
     def run_mode(self):
         pass
 
-        # logger.debug("Taking raw observation to test")
-        # cam_object.rawObservation("restart_cam_test.mjpeg")
-
-        """how to see the DB...
-        boots = self.session.query(RebootsModel).all()
-        for boot in boots:
-            print(boot)"""
-
     def update_state(self) -> int:
         logger.info("updating state... will now transfer to normal")
         return FMEnum.Normal.value

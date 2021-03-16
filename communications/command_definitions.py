@@ -441,3 +441,27 @@ class CommandDefinitions:
         # Write new line into file
         original_file.seek(0)
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
+
+    def nemo_write_register(self, **kwargs):
+        reg_address = kwargs['reg_address']
+        values = kwargs['values']
+
+        self.parent.nemo_manager.write_register(reg_address, values)
+
+    def nemo_read_register(self, **kwargs):
+        reg_address = kwargs['reg_address']
+        size = kwargs['size']
+
+        self.parent.nemo_manager.read_register(reg_address, size)
+
+    def nemo_set_config(self, **kwargs):
+        self.parent.nemo_manager.set_config(kwargs)
+
+    def nemo_power_off(self):
+        self.parent.nemo_manager.power_off()
+
+    def nemo_power_on(self):
+        self.parent.nemo_manager.power_on()
+
+    def nemo_reboot(self):
+        self.parent.nemo_manager.reboot()

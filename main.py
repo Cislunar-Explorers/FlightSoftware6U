@@ -16,6 +16,7 @@ from utils.constants import (
     LOG_DIR,
     CISLUNAR_BASE_DIR,
     DB_FILE,
+    NEMO_DIR,
     NO_FM_CHANGE,
     PARAMETERS_JSON_PATH,
     MAC,
@@ -30,6 +31,7 @@ from drivers.gom import Gomspace
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from drivers.rtc import RTC
+from drivers.nemo.nemo_manager import NemoManager
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -76,7 +78,7 @@ class MainSatelliteThread(Thread):
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
         else:
-            os.makedirs(CISLUNAR_BASE_DIR)
+            os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
@@ -111,6 +113,7 @@ class MainSatelliteThread(Thread):
         self.rtc = RTC()
         # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
         # in pressure_sensor (to be made) can access burn queue"""
+        self.nemo_manager = NemoManager(data_dir=NEMO_DIR)
 
         # initialize the cameras, select a camera
         logger.info("Creating camera mux...")
@@ -246,6 +249,7 @@ class MainSatelliteThread(Thread):
 
     def shutdown(self):
         self.gom.all_off()
+        self.nemo_manager.close()
         logger.critical("Shutting down...")
         # self.comms.stop()
 

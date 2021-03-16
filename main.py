@@ -191,7 +191,7 @@ class MainSatelliteThread(Thread):
                         logger.error(f"CAM{i} initialization failed")
                         cameras_ok = False
                     else:
-                        logger.info(f"Camera {i} initialized")
+                        logger.info(f"Cam{i} initialized")
 
                 if not cameras_ok:
                     raise e
@@ -215,36 +215,37 @@ class MainSatelliteThread(Thread):
         self.flight_mode.poll_inputs()
 
         # Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= self.parameters[
-            "TELEM_DOWNLINK_TIME"]:
-            self.enter_transmit_safe_mode()
-            telemetry = self.command_definitions.gather_basic_telem()
-            telem_downlink = (
-                self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
-                                                    NormalCommandEnum.BasicTelem.value, **telemetry))
-            self.downlink_queue.put(telem_downlink)
+        if self.radio is not None:
+            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 \
+                    >= utils.parameters.TELEM_DOWNLINK_TIME:
+                self.enter_transmit_safe_mode()
+                telemetry = self.command_definitions.gather_basic_telem()
+                telem_downlink = (
+                    self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
+                                                        NormalCommandEnum.BasicTelem.value, **telemetry))
+                self.downlink_queue.put(telem_downlink)
 
-        # Listening for new commands
-        newCommand = self.radio.receiveSignal()
-        if newCommand is not None:
-            try:
-                unpackedCommand = self.command_handler.unpack_command(newCommand)
+            # Listening for new commands
+            newCommand = self.radio.receiveSignal()
+            if newCommand is not None:
+                try:
+                    unpackedCommand = self.command_handler.unpack_command(newCommand)
 
-                if unpackedCommand[0] == MAC:
-                    if unpackedCommand[1] == self.command_counter + 1:
-                        print('hello')
-                        self.command_queue.put(bytes(newCommand))
-                        self.command_counter += 1
+                    if unpackedCommand[0] == MAC:
+                        if unpackedCommand[1] == self.command_counter + 1:
+                            print('hello')
+                            self.command_queue.put(bytes(newCommand))
+                            self.command_counter += 1
+                        else:
+                            print('Command with Invalid Counter Received. '
+                                  + 'Counter: ' + str(unpackedCommand[1]))
                     else:
-                        print('Command with Invalid Counter Received. '
-                              + 'Counter: ' + str(unpackedCommand[1]))
-                else:
-                    print('Unauthenticated Command Received')
+                        print('Unauthenticated Command Received')
 
-            except:
-                print('Invalid Command Received')
-        else:
-            print('Not Received')
+                except:
+                    print('Invalid Command Received')
+            else:
+                print('Not Received')
 
     def enter_transmit_safe_mode(self):
         # TODO: Make sure that everything else is turned off before transmitting
@@ -349,8 +350,9 @@ class MainSatelliteThread(Thread):
                 self.shutdown()
 
     def shutdown(self):
-        self.gom.all_off()
-        logger.critical("Shutting down...")
+        if self.gom is not None:
+            self.gom.all_off()
+        logger.critical("Shutting down flight software")
         # self.comms.stop()
 
     def opnav_subprocess(self):

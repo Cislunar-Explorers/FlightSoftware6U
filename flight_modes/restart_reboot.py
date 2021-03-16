@@ -30,7 +30,7 @@ class BootUpMode(FlightMode):
 
         # deploy antennae
         logger.info("Antennae deploy...")
-        parent.gom.burnwire1(5)
+        self.parent.gom.burnwire1(5)
 
         os.system("sudo reboot")
 

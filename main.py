@@ -5,15 +5,10 @@ from time import sleep, time
 from datetime import datetime, timedelta
 from queue import Queue
 import signal
-import random
 from utils.log import get_log
-from multiprocessing import Process, Queue
 import subprocess
 from json import load
-from communications.satellite_radio import Radio
-import OpticalNavigation.core.camera as camera
 from time import sleep
-from dotenv import load_dotenv
 
 from utils.constants import (
     LOG_DIR,
@@ -79,13 +74,12 @@ class MainSatelliteThread(Thread):
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
 
-        self.opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
+        # self.opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
 
         self.gom = None
         self.gyro = None
@@ -99,7 +93,7 @@ class MainSatelliteThread(Thread):
         # Telemetry
         self.tlm = Telemetry(self)
 
-        #Opnav subprocess variables
+        # Opnav subprocess variables
         self.need_opnav = False
         self.opnav_proc_queue = Queue()
 
@@ -131,22 +125,12 @@ class MainSatelliteThread(Thread):
                 ', which could not be found in parameters.json'
             )
 
-    # TODO
-
-    def init_sensors(self):
-        self.radio = Radio()
-        self.gom = Gomspace()
-        self.gyro = GyroSensor()
-        self.adc = ADC(self.gyro)
-        self.rtc = RTC()
-        # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
-        # in pressure_sensor (to be made) can access burn queue"""
     def init_sensors(self):
         try:
             self.gom = Gomspace()
         except:
             self.gom = None
-            logger.error("Gom initialization failed")
+            logger.error("GOM initialization failed")
         else:
             logger.info("Gom initialized")
 
@@ -154,7 +138,7 @@ class MainSatelliteThread(Thread):
             self.gyro = GyroSensor()
         except:
             self.gyro = None
-            logger.error("Gyro initialization failed")
+            logger.error("GYRO initialization failed")
         else:
             logger.info("Gyro initialized")
 
@@ -168,14 +152,6 @@ class MainSatelliteThread(Thread):
             logger.info("ADC initialized")
 
         try:
-            self.radio = Radio()
-        except:
-            self.radio = None
-            logger.error("Radio initialization failed")
-        else:
-            logger.info("Radio initialized")
-
-        try:
             self.rtc = RTC()
         except:
             self.rtc = None
@@ -183,14 +159,21 @@ class MainSatelliteThread(Thread):
         else:
             logger.info("RTC initialized")
 
+        try:
+            self.radio = Radio()
+        except:
+            self.radio = None
+            logger.error("RADIO initialization failed")
+        else:
+            logger.info("Radio initialized")
 
-        # initialize the cameras, select a camera
+        # initialize the Mux, select a camera
         try:
             self.mux = camera.CameraMux()
             self.mux.selectCamera(1)
         except:
             self.mux = None
-            logger.error("Mux initialization failed")
+            logger.error("MUX initialization failed")
         else:
             logger.info("Mux initialized")
 
@@ -205,10 +188,10 @@ class MainSatelliteThread(Thread):
                         self.mux.selectCamera(i)
                         f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
                     except Exception as e:
-                        logger.error(f"Camera {i} initialization failed")
+                        logger.error(f"CAM{i} initialization failed")
                         cameras_ok = False
                     else:
-                        logger.info(f"Camera {i} initialized")
+                        logger.info(f"Cam{i} initialized")
 
                 if not cameras_ok:
                     raise e
@@ -232,36 +215,37 @@ class MainSatelliteThread(Thread):
         self.flight_mode.poll_inputs()
 
         # Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= self.parameters[
-            "TELEM_DOWNLINK_TIME"]:
-            self.enter_transmit_safe_mode()
-            telemetry = self.command_definitions.gather_basic_telem()
-            telem_downlink = (
-                self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
-                                                    NormalCommandEnum.BasicTelem.value, **telemetry))
-            self.downlink_queue.put(telem_downlink)
+        if self.radio is not None:
+            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 \
+                    >= utils.parameters.TELEM_DOWNLINK_TIME:
+                self.enter_transmit_safe_mode()
+                telemetry = self.command_definitions.gather_basic_telem()
+                telem_downlink = (
+                    self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
+                                                        NormalCommandEnum.BasicTelem.value, **telemetry))
+                self.downlink_queue.put(telem_downlink)
 
-        # Listening for new commands
-        newCommand = self.radio.receiveSignal()
-        if newCommand is not None:
-            try:
-                unpackedCommand = self.command_handler.unpack_command(newCommand)
+            # Listening for new commands
+            newCommand = self.radio.receiveSignal()
+            if newCommand is not None:
+                try:
+                    unpackedCommand = self.command_handler.unpack_command(newCommand)
 
-                if unpackedCommand[0] == MAC:
-                    if unpackedCommand[1] == self.command_counter + 1:
-                        print('hello')
-                        self.command_queue.put(bytes(newCommand))
-                        self.command_counter += 1
+                    if unpackedCommand[0] == MAC:
+                        if unpackedCommand[1] == self.command_counter + 1:
+                            print('hello')
+                            self.command_queue.put(bytes(newCommand))
+                            self.command_counter += 1
+                        else:
+                            print('Command with Invalid Counter Received. '
+                                  + 'Counter: ' + str(unpackedCommand[1]))
                     else:
-                        print('Command with Invalid Counter Received. '
-                              + 'Counter: ' + str(unpackedCommand[1]))
-                else:
-                    print('Unauthenticated Command Received')
+                        print('Unauthenticated Command Received')
 
-            except:
-                print('Invalid Command Received')
-        else:
-            print('Not Received')
+                except:
+                    print('Invalid Command Received')
+            else:
+                print('Not Received')
 
     def enter_transmit_safe_mode(self):
         # TODO: Make sure that everything else is turned off before transmitting
@@ -337,7 +321,8 @@ class MainSatelliteThread(Thread):
                 self.execute_downlinks()
                 self.run_mode()
 
-                #Opnav subprocess management
+                # Opnav subprocess management
+                # TODO: This all needs to be moved to the OpNav Flight mode, and should not be in main!!!
                 if datetime.now() > self.last_opnav_run + timedelta(minutes=10) and not self.opnav_process.is_alive():
                     logger.info("[OPNAV]: Able to run next opnav")
                     self.need_opnav = True
@@ -365,8 +350,9 @@ class MainSatelliteThread(Thread):
                 self.shutdown()
 
     def shutdown(self):
-        self.gom.all_off()
-        logger.critical("Shutting down...")
+        if self.gom is not None:
+            self.gom.all_off()
+        logger.critical("Shutting down flight software")
         # self.comms.stop()
 
     def opnav_subprocess(self):

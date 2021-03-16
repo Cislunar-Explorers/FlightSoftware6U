@@ -13,12 +13,16 @@ from adafruit_bus_device.spi_device import SPIDevice
 from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 
+from datetime import datetime
+
 class Radio():
 
     def __init__(self):
 
         self.driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
         self.mgr = Manager(self.driver)
+        self.last_transmit_time = datetime.today()
+        self.last_telemetry_time = datetime.today()
 
     # Monitor radio health, request reset if faulted
     def monitorHealth(self):
@@ -53,12 +57,14 @@ class Radio():
             self.monitorHealth()
 
             cycles += 1
-            # After 10s, break for clean shutdown
+            # After 5s, break for clean shutdown
             # (TODO: use interrupt handler to ensure clean shutdown when killed,
             # or monitor transmitting state and exit when complete)
-            if cycles >= 10: break
+            if cycles >= 5: break
             time.sleep(1)
 
         self.mgr.tx_enabled = False
         self.mgr.rx_enabled = False
         self.mgr.dispatch()
+        
+        self.last_transmit_time = datetime.today()

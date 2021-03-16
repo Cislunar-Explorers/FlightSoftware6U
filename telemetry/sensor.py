@@ -1,5 +1,5 @@
 from threading import Thread
-
+from time import time
 
 # What functionality should my sensor have?
 # Does it need to maintain its own state or should it take inputs?
@@ -12,12 +12,13 @@ from threading import Thread
 class SynchronousSensor:
 
     # Initialize sensor
-    def __init__(self, callback):
-        pass
+    def __init__(self, parent):
+        self.parent = parent
+        self.poll_time = -1.0
 
     # poll should poll the sensor and update all of the sensors fields
-    def poll():
-        raise NotImplementedError
+    def poll(self):
+        self.poll_time = time()
 
 
 class AsynchronousSensor(Thread):

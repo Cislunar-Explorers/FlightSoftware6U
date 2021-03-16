@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+
+"""
+Interface between Cislunar FSW and Nemo v3.0
+"""
+
+import os
+from threading import Thread, Event
+import time
+import datetime
+from pathlib import Path
+
+import logging
+
+from .nemo import Nemo
+from .util import Configuration, RotatingFileManager, ConfigPacket, RateDataPacket, HistogramPacket
+
+
+class NemoManager(Thread):
+    """
+    Object to manage NEMO instrument
+    Saves NEMO data to files and provides high level command interface.
+    """
+
+    def __init__(self, data_dir='.'):
+        """NemoManager class constructor"""
+        self._data_dir = data_dir
+
+        self._nemo = Nemo(log=False)
+
+        self._config = Configuration(config_fname=os.path.join(self._data_dir, 'config.json'))
+
+        self._shutdown = Event()
+        self._run = Event()
+
+        Path(self._data_dir).mkdir(parents=True, exist_ok=True)
+
+        self._config_file = RotatingFileManager(
+            os.path.join(self._data_dir, 'config'),
+            self._config.config_rotate_period)
+
+        self._rate_data_file = RotatingFileManager(
+            os.path.join(self._data_dir, 'rate_data'),
+            self._config.rate_data_rotate_period)
+
+        self._histogram_file = RotatingFileManager(
+            os.path.join(self._data_dir, 'histogram'),
+            self._config.histogram_rotate_period)
+
+        self.set_config(**self._config.get_public_dict())
+
+        self._t_last_config = None
+        self._t_last_data = None
+
+        Thread.__init__(self)
+        self._run.set()
+        self.start()
+
+    @property
+    def _sec_since_last_config(self):
+        """
+        Elapsed time in seconds since config was last written
+        Returns None if unknown.
+        """
+        if self._t_last_config is not None:
+            return (datetime.datetime.now() - self._t_last_config).total_seconds()
+        return None
+
+    @property
+    def _sec_since_last_data(self):
+        """
+        Elapsed time in seconds since data (rate & histograms) were last written
+        Returns None if unknown.
+        """
+        if self._t_last_data is not None:
+            return (datetime.datetime.now() - self._t_last_data).total_seconds()
+        return None
+
+    def close(self):
+        """Cleanly close the object"""
+        self._shutdown.set()
+
+    def pause(self):
+        """
+        Pause work in the main thread.
+        Any work in progress will be completed first.
+        """
+        self._run.clear()
+
+    def resume(self):
+        """
+        Resume work in the main thread.
+        """
+        self._run.set()
+
+    def run(self):
+        """
+        Method representing the thread's activity.
+        Overrides the Thread class' run() method.
+        """
+        while not self._shutdown.is_set():
+            if self._run.wait(timeout=10.0):
+                # if time to write config to file
+                if (self._sec_since_last_config is None
+                        or (self._sec_since_last_config > self._config.config_write_period)):
+                    self._config_file.write(bytes(ConfigPacket(self._nemo)))
+                    self._t_last_config = datetime.datetime.now()
+                    logging.info('Wrote config')
+
+                # if time to write rate data and histogram to file
+                if (self._sec_since_last_data is None
+                        or (self._sec_since_last_data > self._config.data_write_period)):
+                    self._rate_data_file.write(bytes(RateDataPacket(self._nemo)))
+                    self._histogram_file.write(bytes(HistogramPacket(self._nemo)))
+                    self._t_last_data = datetime.datetime.now()
+                    logging.info('Wrote rate data and histogram')
+
+                time.sleep(0.25)
+
+    def write_register(self, reg_address, values):
+        """Direct write of register on NEMO. Allows low-level diagnostics on-orbit."""
+        self._nemo._write_register(reg_address, values)
+
+    def read_register(self, reg_address, size):
+        """
+        Direct read of register on NEMO. Allows low-level diagnostics on-orbit.
+        Results are writen to file config_{datetime}_{reg_address}_{size}
+        """
+        result = self._nemo._read_register(reg_address, size)
+
+        dt_str = datetime.datetime.now().strftime('%Y%m%dT%H%M%SZ')
+        fname = os.path.join(
+            self._data_dir,
+            f'read_register_{dt_str}_{reg_address:02X}_{size:02X}')
+
+        with open(fname, 'ab+') as file:
+            file.write(bytes(result))
+
+    def set_config(self, **kwargs):
+        """Set writeable configuration parameters."""
+        if 'det_enable' in kwargs:
+            self._config.set(det_enable=kwargs['det_enable'])
+            self._nemo.det_enable = kwargs['det_enable']
+
+        if 'det0_bias_uint8' in kwargs:
+            self._config.set(det0_bias_uint8=kwargs['det0_bias_uint8'])
+            self._nemo.det0.bias_uint8 = kwargs['det0_bias_uint8']
+
+        if 'det1_bias_uint8' in kwargs:
+            self._config.set(det1_bias_uint8=kwargs['det1_bias_uint8'])
+            self._nemo.det1.bias_uint8 = kwargs['det1_bias_uint8']
+
+        if 'det0_threshold_uint8' in kwargs:
+            self._config.set(det0_threshold_uint8=kwargs['det0_threshold_uint8'])
+            self._nemo.det0.threshold_uint8 = kwargs['det0_threshold_uint8']
+
+        if 'det1_threshold_uint8' in kwargs:
+            self._config.set(det1_threshold_uint8=kwargs['det1_threshold_uint8'])
+            self._nemo.det1.threshold_uint8 = kwargs['det1_threshold_uint8']
+
+        if 'rate_width_min' in kwargs:
+            self._config.set(rate_width_min=kwargs['rate_width_min'])
+            self._nemo.rate_width_min = kwargs['rate_width_min']
+
+        if 'rate_width_max' in kwargs:
+            self._config.set(rate_width_max=kwargs['rate_width_max'])
+            self._nemo.rate_width_max = kwargs['rate_width_max']
+
+        if 'bin_width' in kwargs:
+            self._config.set(bin_width=kwargs['bin_width'])
+            self._nemo.bin_width = kwargs['bin_width']
+
+        if 'bin_0_min_width' in kwargs:
+            self._config.set(bin_0_min_width=kwargs['bin_0_min_width'])
+            self._nemo.bin_0_min_width = kwargs['bin_0_min_width']
+
+        if 'rate_interval' in kwargs:
+            self._config.set(rate_interval=kwargs['rate_interval'])
+            self._nemo.rate_interval = kwargs['rate_interval']
+
+        if 'veto_threshold_min' in kwargs:
+            self._config.set(veto_threshold_min=kwargs['veto_threshold_min'])
+            self._nemo.veto_threshold_min = kwargs['veto_threshold_min']
+
+        if 'veto_threshold_max' in kwargs:
+            self._config.set(veto_threshold_max=kwargs['veto_threshold_max'])
+            self._nemo.veto_threshold_max = kwargs['veto_threshold_max']
+
+        if 'config_write_period' in kwargs:
+            self._config.set(config_write_period=kwargs['config_write_period'])
+
+        if 'config_rotate_period' in kwargs:
+            self._config.set(config_rotate_period=kwargs['config_rotate_period'])
+            self._config_file.period = kwargs['config_rotate_period']
+
+        if 'data_write_period' in kwargs:
+            self._config.set(data_write_period=kwargs['data_write_period'])
+
+        if 'rate_data_rotate_period' in kwargs:
+            self._config.set(rate_data_rotate_period=kwargs['rate_data_rotate_period'])
+            self._config_file.period = kwargs['rate_data_rotate_period']
+
+        if 'histogram_rotate_period' in kwargs:
+            self._config.set(histogram_rotate_period=kwargs['histogram_rotate_period'])
+            self._config_file.period = kwargs['histogram_rotate_period']
+
+        self._config.save()
+
+    def power_off(self):
+        """Turn power off to Nemo (really just holds it in reset"""
+        self._nemo.hold_in_reset()
+
+    def power_on(self):
+        """Turn power on to Nemo (really just release from reset"""
+        self._nemo.release_from_reset()
+
+    def reboot(self):
+        """Reboot and reconfigure Nemo"""
+        self._nemo.software_reboot()
+        time.sleep(0.05)
+        self.set_config(**self._config.get_public_dict())
+
+
+if __name__ == "__main__":
+
+    nemo_mgr = NemoManager(os.path.expanduser('~/nemo_data/'))

@@ -304,11 +304,10 @@ class OpNavMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        # check if opnav db has been updated, then set self.task_completed true
         if self.task_completed:
             return FMEnum.Normal.value
-
-        return NO_FM_CHANGE
+        else:
+            return NO_FM_CHANGE
 
 
 class SensorMode(FlightMode):
@@ -414,7 +413,8 @@ class NormalMode(FlightMode):
         START: 'double',
         PULSE_DURATION: 'short',
         PULSE_NUM: 'short',
-        PULSE_DT: 'short'
+        PULSE_DT: 'short',
+        TIME: 'float'
     }
 
     downlink_codecs = {

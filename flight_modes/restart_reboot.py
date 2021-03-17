@@ -82,13 +82,5 @@ class RestartMode(FlightMode):
 
         self.completed_task()
 
-        # logger.debug("Taking raw observation to test")
-        # cam_object.rawObservation("restart_cam_test.mjpeg")
-
-        """how to see the DB...
-        boots = self.session.query(RebootsModel).all()
-        for boot in boots:
-            print(boot)"""
-
     def update_state(self) -> int:
         return super().update_state()

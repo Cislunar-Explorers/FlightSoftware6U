@@ -211,7 +211,7 @@ class MainSatelliteThread(Thread):
         sensor_functioning_list.extend(cameras_list)
         logger.info(f"Sensors: {sensor_functioning_list}")
         sensor_bitmask = ''.join(map(str, sensor_functioning_list))
-        logger.info(f"Sensors: {sensor_functioning_list}")
+        logger.info(f"Sensors: {sensor_bitmask}")
         return int(sensor_bitmask, 2)
 
     def handle_sigint(self, signal, frame):

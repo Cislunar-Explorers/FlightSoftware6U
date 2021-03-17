@@ -79,7 +79,14 @@ class CommandDefinitions:
             NormalCommandEnum.Verification.value: verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
             NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
-            NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing
+            NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing,
+            NormalCommandEnum.NemoWriteRegister.value: self.nemo_write_register,
+            NormalCommandEnum.NemoReadRegister.value: self.nemo_read_register,
+            NormalCommandEnum.NemoPowerOff.value: self.nemo_power_off,
+            NormalCommandEnum.NemoPowerOn.value: self.nemo_power_on,
+            NormalCommandEnum.NemoReboot.value: self.nemo_reboot,
+            NormalCommandEnum.NemoProcessRateData.value: self.nemo_process_rate_data,
+            NormalCommandEnum.NemoProcessHistograms.value: self.nemo_process_histograms,
         }
 
         self.low_battery_commands = {
@@ -465,3 +472,17 @@ class CommandDefinitions:
 
     def nemo_reboot(self):
         self.parent.nemo_manager.reboot()
+
+    def nemo_process_rate_data(self, **kwargs):
+        t_start = kwargs['t_start']
+        t_stop = kwargs['t_stop']
+        decimation_factor = kwargs['decimation_factor']
+
+        self.parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+
+    def nemo_process_histograms(self, **kwargs):
+        t_start = kwargs['t_start']
+        t_stop = kwargs['t_stop']
+        decimation_factor = kwargs['decimation_factor']
+
+        self.parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)

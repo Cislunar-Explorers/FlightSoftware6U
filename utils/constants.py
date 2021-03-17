@@ -184,6 +184,13 @@ class NormalCommandEnum(IntEnum):
     GetParam = 11
     SetOpnavInterval = 12
     ACSPulsing = 13
+    NemoWriteRegister = 14
+    NemoReadRegister = 15
+    NemoPowerOff = 16
+    NemoPowerOn = 17
+    NemoReboot = 18
+    NemoProcessRateData = 19
+    NemoProcessHistograms = 20
 
 
 @unique

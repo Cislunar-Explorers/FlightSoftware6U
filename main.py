@@ -78,6 +78,7 @@ class MainSatelliteThread(Thread):
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+        self.need_to_reboot = False
 
         # self.opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
 
@@ -177,9 +178,9 @@ class MainSatelliteThread(Thread):
         else:
             logger.info("Mux initialized")
 
-        cameras_ok = True
+        cameras_list = [0, 0, 0]
 
-        # initialize camera mux, regardless of hard or soft bootup
+        # initialize cameras only if not a hard boot (or first boot)
         if not hard_boot() or os.path.isdir(self.log_dir):
             try:
                 self.camera = camera.Camera()
@@ -189,11 +190,12 @@ class MainSatelliteThread(Thread):
                         f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
                     except Exception as e:
                         logger.error(f"CAM{i} initialization failed")
-                        cameras_ok = False
+                        cameras_list[i] = 0
                     else:
                         logger.info(f"Cam{i} initialized")
+                        cameras_list[i] = 1
 
-                if not cameras_ok:
+                if 0 in cameras_list:
                     raise e
             except:
                 self.camera = None
@@ -201,7 +203,16 @@ class MainSatelliteThread(Thread):
             else:
                 logger.info("Cameras initialized")
         else:
-            pass  # Need to reboot (probably not here - don't want to enter a boot loop)
+            self.need_to_reboot = True
+
+        # make a bitmask of the initialized sensors for downlinking
+        sensors = [self.gom, self.radio, self.gyro, self.adc, self.rtc, self.mux, self.camera]
+        sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
+        sensor_functioning_list.extend(cameras_list)
+        logger.info(f"Sensors: {sensor_functioning_list}")
+        sensor_bitmask = ''.join(map(str, sensor_functioning_list))
+        logger.info(f"Sensors: {sensor_functioning_list}")
+        return int(sensor_bitmask, 2)
 
     def handle_sigint(self, signal, frame):
         self.shutdown()

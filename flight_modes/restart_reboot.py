@@ -32,7 +32,10 @@ class BootUpMode(FlightMode):
         logger.info("Antennae deploy...")
         self.parent.gom.burnwire1(5)
 
-        os.system("sudo reboot")
+        if self.parent.need_to_reboot:
+            # TODO: double check the boot db history to make sure we aren't going into a boot loop
+            # TODO: downlink something to let ground station know we're alive
+            os.system("sudo reboot")
 
     def log(self):
         is_bootup = True
@@ -72,7 +75,12 @@ class RestartMode(FlightMode):
 
     # TODO implement error handling for if camera not detected
     def run_mode(self):
-        pass
+        if self.parent.need_to_reboot:
+            # TODO double check the boot db history to make sure we aren't going into a boot loop
+            # TODO: downlink something to let ground station know we're alive and going to reboot
+            os.system("sudo reboot")
+
+        self.completed_task()
 
         # logger.debug("Taking raw observation to test")
         # cam_object.rawObservation("restart_cam_test.mjpeg")
@@ -83,5 +91,4 @@ class RestartMode(FlightMode):
             print(boot)"""
 
     def update_state(self) -> int:
-        logger.info("updating state... will now transfer to normal")
-        return FMEnum.Normal.value
+        return super().update_state()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Interface between Cislunar FSW and Nemo v3.0
+Interface between Cislunar FSW and Nemo v3.1
 """
 
 import os
@@ -12,8 +12,8 @@ from pathlib import Path
 
 import logging
 
-from .nemo import Nemo
-from .util import Configuration, RotatingFileManager, ConfigPacket, RateDataPacket, HistogramPacket
+from . import nemo
+from . import util
 
 
 class NemoManager(Thread):
@@ -22,28 +22,28 @@ class NemoManager(Thread):
     Saves NEMO data to files and provides high level command interface.
     """
 
-    def __init__(self, data_dir='.'):
+    def __init__(self, data_dir='.', reset_gpio_ch=5):
         """NemoManager class constructor"""
         self._data_dir = data_dir
 
-        self._nemo = Nemo(log=False)
+        self._nemo = nemo.Nemo(log=False, reset_gpio_ch=reset_gpio_ch)
 
-        self._config = Configuration(config_fname=os.path.join(self._data_dir, 'config.json'))
+        self._config = util.Configuration(config_fname=os.path.join(self._data_dir, 'config.json'))
 
         self._shutdown = Event()
         self._run = Event()
 
         Path(self._data_dir).mkdir(parents=True, exist_ok=True)
 
-        self._config_file = RotatingFileManager(
+        self._config_file = util.RotatingFileManager(
             os.path.join(self._data_dir, 'config'),
             self._config.config_rotate_period)
 
-        self._rate_data_file = RotatingFileManager(
+        self._rate_data_file = util.RotatingFileManager(
             os.path.join(self._data_dir, 'rate_data'),
             self._config.rate_data_rotate_period)
 
-        self._histogram_file = RotatingFileManager(
+        self._histogram_file = util.RotatingFileManager(
             os.path.join(self._data_dir, 'histogram'),
             self._config.histogram_rotate_period)
 
@@ -103,15 +103,15 @@ class NemoManager(Thread):
                 # if time to write config to file
                 if (self._sec_since_last_config is None
                         or (self._sec_since_last_config > self._config.config_write_period)):
-                    self._config_file.write(bytes(ConfigPacket(self._nemo)))
+                    self._config_file.write(bytes(util.ConfigPacket(self._nemo)))
                     self._t_last_config = datetime.datetime.now()
                     logging.info('Wrote config')
 
                 # if time to write rate data and histogram to file
                 if (self._sec_since_last_data is None
                         or (self._sec_since_last_data > self._config.data_write_period)):
-                    self._rate_data_file.write(bytes(RateDataPacket(self._nemo)))
-                    self._histogram_file.write(bytes(HistogramPacket(self._nemo)))
+                    self._rate_data_file.write(bytes(util.RateDataPacket(self._nemo)))
+                    self._histogram_file.write(bytes(util.HistogramPacket(self._nemo)))
                     self._t_last_data = datetime.datetime.now()
                     logging.info('Wrote rate data and histogram')
 
@@ -220,7 +220,41 @@ class NemoManager(Thread):
         time.sleep(0.05)
         self.set_config(**self._config.get_public_dict())
 
+    def process_rate_data(self, t_start, t_stop, decimation_factor):
+        """Process already saved rate data into a lower resultion."""
+        input_packets = util.RateDataPacket.from_file(
+            os.path.join(self._data_dir, 'rate_data_*'),
+            sc_time_min=t_start,
+            sc_time_max=t_stop,
+            sort=True)
+
+        fname = f'lores_rate_data_{t_start}_{t_stop}_{decimation_factor}'
+        with open(os.path.join(self._data_dir, fname), 'wb') as file:
+            for i in range(0, len(input_packets), decimation_factor):
+                output_packet = util.LoResRateDataPacket(input_packets[i:i + decimation_factor])
+                file.write(bytes(output_packet))
+
+    def process_histograms(self, t_start, t_stop, decimation_factor):
+        """Process already saved histograms into a lower resultion."""
+        input_packets = util.HistogramPacket.from_file(
+            os.path.join(self._data_dir, 'histogram_*'),
+            sc_time_min=t_start,
+            sc_time_max=t_stop,
+            sort=True)
+
+        fname = f'lores_histogram_{t_start}_{t_stop}_{decimation_factor}'
+        with open(os.path.join(self._data_dir, fname), 'wb') as file:
+            for i in range(0, len(input_packets), decimation_factor):
+                output_packet = util.LoResHistogramPacket(input_packets[i:i + decimation_factor])
+                file.write(bytes(output_packet))
+
 
 if __name__ == "__main__":
 
-    nemo_mgr = NemoManager(os.path.expanduser('~/nemo_data/'))
+    try:
+        nemo_mgr = NemoManager(os.path.expanduser('~/.cislunar-flight-software/nemo/'))
+
+        # test_packets = nemo_mgr.process_rate_data(1615935708, 1615936381, 2)
+        # test_packets = nemo_mgr.process_histograms(1615935708, 1615936381, 3)
+    finally:
+        nemo_mgr.close()

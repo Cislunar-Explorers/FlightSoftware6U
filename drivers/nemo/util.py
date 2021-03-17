@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Utilities for working with Nemo data v3.0
+Utilities for working with Nemo data v3.1
 """
 
 import os
@@ -141,17 +141,32 @@ class NemoPacketBase:
         return Nemo.serial_number_to_assembly_name(self.serial_number)
 
     @classmethod
-    def from_file(cls, filename):
+    def from_file(cls, filename, sc_time_min=None, sc_time_max=None, sort=False):
         """
         Return a list of Packet objects read from the given filename.
         :param: filename: Can contain wildcards to parse multiple files
+        :para: sc_time_min: Minimum sc_time of packets to return (inclusive)
+        :para: sc_time_max: Maximum sc_time of packets to return (inclusive)
+        :para: sort: If true, return list of packets sorted by sc_time ascending
         """
+        if sc_time_min is None:
+            sc_time_min = 0
+
+        if sc_time_max is None:
+            sc_time_max = (2**32) - 1
+
         packets = []
         for name in glob.glob(filename):
             with open(name, 'rb') as file:
                 data = file.read()
                 for i in range(0, len(data), cls.PACKET_SIZE):
-                    packets.append(cls(data[i:(i + cls.PACKET_SIZE)]))
+                    packet = cls(data[i:(i + cls.PACKET_SIZE)])
+                    if packet.sc_time >= sc_time_min and packet.sc_time <= sc_time_max:
+                        packets.append(packet)
+
+        if sort:
+            packets.sort(key=lambda x: x.sc_time)
+
         return packets
 
 

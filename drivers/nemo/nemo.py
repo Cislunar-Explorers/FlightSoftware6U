@@ -2,7 +2,7 @@
 
 """
 Python interface to NEMO (Netron Experiment in Moon Orbit). Intended for use on Raspberry Pi.
-(c) 2020-2021 Los Alamos National Laboratory v3.0
+(c) 2020-2021 Los Alamos National Laboratory v3.1
 """
 
 import logging
@@ -15,7 +15,8 @@ from adafruit_blinka.agnostic import board_id
 if board_id != 'GENERIC_LINUX_PC':
     import board
     import busio
-    import RPi.GPIO as GPIO
+
+import pigpio
 
 
 class I2CDevice:
@@ -312,8 +313,14 @@ class Nemo(I2CDevice):
     }
 
     def __init__(self, dev_addr=0x13, reset_gpio_ch=5, log=True):
-        I2CDevice.__init__(self, dev_addr, log=log)
         self._reset_gpio_ch = reset_gpio_ch
+        self._pi = pigpio.pi()
+
+        # setup reset line GPIO
+        self._pi.set_mode(self._reset_gpio_ch, pigpio.OUTPUT)
+        self.release_from_reset()
+
+        I2CDevice.__init__(self, dev_addr, log=log)
 
         # setup detectors
         self.det0 = Domino(self._dev_addr, self.REG_D0_SN0, self.REG_D0_TEMP_L, self.REG_D0_BIAS,
@@ -321,11 +328,6 @@ class Nemo(I2CDevice):
 
         self.det1 = Domino(self._dev_addr, self.REG_D1_SN0, self.REG_D1_TEMP_L, self.REG_D1_BIAS,
                            self.REG_D1_THRESHOLD, self.REG_D1_BIN_0, log=log)
-
-        # setup reset line GPIO
-        if board_id != 'GENERIC_LINUX_PC':
-            GPIO.setmode(GPIO.BCM)
-            GPIO.setup(self._reset_gpio_ch, GPIO.OUT, initial=GPIO.HIGH)
 
     @classmethod
     def serial_number_to_assembly_name(cls, serial_number):
@@ -337,13 +339,11 @@ class Nemo(I2CDevice):
 
     def release_from_reset(self):
         """De-assert reset GPIO pin to allow NEMO PIC to run"""
-        if board_id != 'GENERIC_LINUX_PC':
-            GPIO.output(self._reset_gpio_ch, GPIO.HIGH)
+        self._pi.write(self._reset_gpio_ch, 1)
 
     def hold_in_reset(self):
         """Assert reset GPIO pin to NEMO PIC in reset"""
-        if board_id != 'GENERIC_LINUX_PC':
-            GPIO.output(self._reset_gpio_ch, GPIO.LOW)
+        self._pi.write(self._reset_gpio_ch, 0)
 
     def software_reboot(self):
         """Initiates a reboot of the NEMO microcontroller

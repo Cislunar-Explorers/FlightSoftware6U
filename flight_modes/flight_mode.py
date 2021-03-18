@@ -339,6 +339,7 @@ class CommsMode(FlightMode):
             self.enter_transmit_safe_mode()
             self.execute_downlinks()
             self.exit_transmit_safe_mode()
+            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
 class OpNavMode(FlightMode):
     """dummy FM for now"""

@@ -131,13 +131,13 @@ class FlightMode:
         # Check if opnav needs to be run
         curr_time = datetime.now()
         time_diff = curr_time - self.parent.last_opnav_run
-        if time_diff.seconds * 60 > OPNAV_INTERVAL:
+        if time_diff.seconds * 60 > params.OPNAV_INTERVAL:
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
         elif flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
                     self.gom.read_battery_percentage()
-                    >= EXIT_LOW_BATTERY_MODE_THRESHOLD
+                    >= params.EXIT_LOW_BATTERY_MODE_THRESHOLD
             ):
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 

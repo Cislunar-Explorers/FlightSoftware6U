@@ -127,6 +127,7 @@ class MainSatelliteThread(Thread):
                 self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
                                                     NormalCommandEnum.BasicTelem.value, **telemetry))
             self.downlink_queue.put(telem_downlink)
+            self.radio.last_telemetry_time = datetime.today()
 
         # Listening for new commands
         newCommand = self.radio.receiveSignal()

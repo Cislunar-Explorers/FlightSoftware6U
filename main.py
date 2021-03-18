@@ -126,6 +126,7 @@ class MainSatelliteThread(Thread):
             telem_downlink = (
                 self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
                                                     NormalCommandEnum.BasicTelem.value, **telemetry))
+            print(telem_downlink)
             self.downlink_queue.put(telem_downlink)
             self.radio.last_telemetry_time = datetime.today()
 
@@ -137,7 +138,6 @@ class MainSatelliteThread(Thread):
 
                 if unpackedCommand[0] == MAC:
                     if unpackedCommand[1] == self.command_counter + 1:
-                        print('hello')
                         self.command_queue.put(bytes(newCommand))
                         self.command_counter += 1
                     else:

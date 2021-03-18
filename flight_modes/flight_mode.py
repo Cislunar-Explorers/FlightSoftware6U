@@ -103,14 +103,14 @@ class FlightMode:
 
         # if battery is low, go to low battery mode
         batt_percent = self.parent.telemetry.gom.percent
-        if (batt_percent < self.parent.parameters["ENTER_LOW_BATTERY_MODE_THRESHOLD"]) \
-                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
+        if (batt_percent < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
+                and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
-        if sum(self.parent.telemetry.gom.hk.curin) < self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"] \
-                and batt_percent < self.parent.parameters["ENTER_ECLIPSE_MODE_THRESHOLD"] \
-                and not self.parent.parameters["IGNORE_LOW_BATTERY"]:
+        if sum(self.parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT \
+                and batt_percent < params.ENTER_ECLIPSE_MODE_THRESHOLD \
+                and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
         # go to comms mode if there is something in the comms queue
@@ -384,15 +384,15 @@ class LowBatterySafetyMode(FlightMode):
     # TODO point solar panels directly at the sun
 
     def run_mode(self):
-        sleep(self.parent.parameters["LOW_BATT_MODE_SLEEP"])  # saves battery, maybe?
+        sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         raise NotImplementedError
 
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
-        if self.parent.telemetry.gom.percent > self.parent.parameters["EXIT_LOW_BATTERY_MODE_THRESHOLD"]:
+        if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
-        if sum(self.parent.telemetry.gom.hk.curin) > self.parent.parameters["ENTER_ECLIPSE_MODE_CURRENT"]:
+        if sum(self.parent.telemetry.gom.hk.curin) > params.ENTER_ECLIPSE_MODE_CURRENT:
             # If we do have some power coming in (i.e. we are not eclipsed by the moon/earth), reorient to face sun
             raise NotImplementedError
 
@@ -515,13 +515,13 @@ class NormalMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < self.parent.parameters["OPNAV_INTERVAL"]
-        need_to_electrolyze = self.parent.telemetry.prs.pressure < self.parent.parameters["IDEAL_CRACKING_PRESSURE"]
+        time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < params.OPNAV_INTERVAL
+        need_to_electrolyze = self.parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self.parent.telemetry.gom.is_electrolyzing
         seconds_to_electrolyze = 60  # TODO: actual calculation involving current pressure
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
-        need_to_electrolyze = need_to_electrolyze and self.parent.parameters["WANT_TO_ELECTROLYZE"]
+        need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
 
         # There's probably some super-optimized branchless way of implementing this logic, but oh well:
 

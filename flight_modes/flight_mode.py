@@ -338,6 +338,7 @@ class CommsMode(FlightMode):
         if not self.parent.downlink_queue.empty():
             self.enter_transmit_safe_mode()
             self.execute_downlinks()
+            print(self.parent.downlink_queue.empty())
             self.exit_transmit_safe_mode()
             self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 

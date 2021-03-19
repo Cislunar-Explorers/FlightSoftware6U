@@ -475,7 +475,7 @@ class NormalMode(FlightMode):
                                               HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
                                               CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
                                               VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
-                                              PROP_TANK_PRESSURE], 216),
+                                              PROP_TANK_PRESSURE], 108),
 
         NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1)
     }

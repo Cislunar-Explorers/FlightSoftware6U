@@ -60,7 +60,7 @@ class Radio():
             # After 5s, break for clean shutdown
             # (TODO: use interrupt handler to ensure clean shutdown when killed,
             # or monitor transmitting state and exit when complete)
-            if cycles >= 10: break
+            if cycles >= 5: break
             time.sleep(1)
 
         self.mgr.tx_enabled = False

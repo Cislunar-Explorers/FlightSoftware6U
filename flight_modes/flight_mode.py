@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
+    # for an explanation of the above 4 lines of code, see
+    # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+    # It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
 
-# for an explanation of the above 4 lines of code, see
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-# It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
 import gc
 from time import sleep, time
 from datetime import datetime
@@ -25,8 +25,6 @@ from utils.constants import (  # noqa F401
     STATE,
     INTERVAL,
     DELAY,
-    NUM_BLOCKS,
-    DELAY,
     NO_FM_CHANGE,
     GLOWPLUG_DURATION,
     BURN_WAIT_TIME,
@@ -40,6 +38,8 @@ from utils.constants import (  # noqa F401
     PROP_TANK_PRESSURE, HARD_SET, TIME, SUCCESSFUL
 )
 
+import utils.parameters as params
+from utils.constants import *
 import utils.parameters as params
 from utils.log import get_log
 
@@ -136,13 +136,13 @@ class FlightMode:
         # Check if opnav needs to be run
         curr_time = datetime.now()
         time_diff = curr_time - self.parent.last_opnav_run
-        if time_diff.seconds * 60 > OPNAV_INTERVAL:
+        if time_diff.seconds * 60 > params.OPNAV_INTERVAL:
             self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
 
         elif flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
                 self.gom.read_battery_percentage()
-                >= EXIT_LOW_BATTERY_MODE_THRESHOLD
+                >= params.EXIT_LOW_BATTERY_MODE_THRESHOLD
             ):
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
@@ -286,8 +286,58 @@ class CommsMode(FlightMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        raise NotImplementedError
+        self.electrolyzing = False
 
+    def enter_transmit_safe_mode(self):
+
+        #Stop electrolyzing
+        if self.parent.gom.is_electrolyzing():
+            self.electrolyzing = True
+            self.parent.gom.set_electrolysis(False)
+
+        #Set RF receiving side to low
+        self.parent.gom.rf_receiving_switch(receive=False)
+
+        #Turn off LNA
+        self.parent.gom.lna(False)
+
+        #Set RF transmitting side to high
+        self.parent.gom.rf_transmitting_switch(receive=False)
+
+        #Turn on power amplifier
+        self.parent.gom.set_PA(on=True)
+
+    def exit_transmit_safe_mode(self):
+
+        #Turn off power amplifier
+        self.parent.gom.set_PA(on=False)
+
+        #Set RF transmitting side to low
+        self.parent.gom.rf_transmitting_switch(receive=True)
+
+        #Turn on LNA
+        self.parent.gom.lna(True)
+
+        #Set RF receiving side to high
+        self.parent.gom.rf_receiving_switch(receive=True)
+
+        #Resume electrolysis if we paused it to transmit
+        if self.electrolyzing:
+            self.parent.gom.set_electrolysis(True,delay = params.DEFAULT_ELECTROLYSIS_DELAY)
+
+    def execute_downlinks(self):
+        while not self.parent.downlink_queue.empty():
+            self.parent.radio.transmit(self.parent.downlink_queue.get())
+            self.parent.downlink_counter += 1
+            sleep(params.DOWNLINK_BUFFER_TIME)
+
+    def run_mode(self):
+        if not self.parent.downlink_queue.empty():
+            self.enter_transmit_safe_mode()
+            self.execute_downlinks()
+            self.exit_transmit_safe_mode()
+            # TODO replace functionality in update_state
+            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
 class OpNavMode(FlightMode):
     flight_mode_id = FMEnum.OpNav.value
@@ -304,10 +354,11 @@ class OpNavMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
+        # check if opnav db has been updated, then set self.task_completed true
         if self.task_completed:
             return FMEnum.Normal.value
-        else:
-            return NO_FM_CHANGE
+
+        return NO_FM_CHANGE
 
 
 class SensorMode(FlightMode):
@@ -336,6 +387,7 @@ class LowBatterySafetyMode(FlightMode):
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
         if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
+            #TODO: return value instead of replacing FMID
             self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
         if sum(self.parent.telemetry.gom.hk.curin) > params.ENTER_ECLIPSE_MODE_CURRENT:
@@ -422,7 +474,7 @@ class NormalMode(FlightMode):
                                               HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
                                               CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
                                               VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
-                                              PROP_TANK_PRESSURE], 216),
+                                              PROP_TANK_PRESSURE], 108),
 
         NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1)
     }

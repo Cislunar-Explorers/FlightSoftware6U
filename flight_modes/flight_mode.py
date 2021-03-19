@@ -37,6 +37,7 @@ import utils.parameters as params
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
+import utils.parameters as params
 
 from communications.command_definitions import CommandDefinitions
 

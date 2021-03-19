@@ -478,15 +478,21 @@ class Power:
         self.set_single_output("glowplug_2", 0, 0)
 
     # tell RF switch to either transmit or receive
-    def rf_switch(self, receive: bool = True):
+    def rf_transmitting_switch(self, receive: bool = True):
         if receive:
-            # Set RF switch to receive
+            # Set transmitting side of RF switch to receive
             self._pi.write(RF_TX_EN, pigpio.LOW)
+        else:
+            # Set transmitting side of RF switch to transmit
+            self._pi.write(RF_TX_EN, pigpio.HIGH)
+
+    def rf_receiving_switch(self,receive:bool = True):
+        if receive:
+            # Set receiving RF switch to receive
             self._pi.write(RF_RX_EN, pigpio.HIGH)
         else:
-            # Set RF switch to transmit
+            # Set receiving RF switch to transmit
             self._pi.write(RF_RX_EN, pigpio.LOW)
-            self._pi.write(RF_TX_EN, pigpio.HIGH)
 
     def set_PA(self, on: bool):
         self._pi.write(PA_EN, int(on))

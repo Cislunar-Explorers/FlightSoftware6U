@@ -236,15 +236,13 @@ class MainSatelliteThread(Thread):
                         self.command_queue.put(bytes(newCommand))
                         self.command_counter += 1
                     else:
-                        print('Command with Invalid Counter Received. '
-                              + 'Counter: ' + str(unpackedCommand[1]))
+                        logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
                 else:
-                    print('Unauthenticated Command Received')
-
+                    logger.warning('Unauthenticated Command Received')
             except:
-                print('Invalid Command Received')
+                logger.error('Invalid Command Received')
         else:
-            print('Not Received')
+            logger.debug('Not Received')
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -306,9 +304,6 @@ class MainSatelliteThread(Thread):
                 self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
-                # TODO: replace with update_state functionality
-                if not self.downlink_queue.empty():
-                    self.replace_flight_mode_by_id(FMEnum.CommsMode.value)
                 self.run_mode()
 
                 # Opnav subprocess management
@@ -332,9 +327,9 @@ class MainSatelliteThread(Thread):
                         if not self.opnav_process.is_alive():
                             self.opnav_process.terminate()
         finally:
-            self.replace_flight_mode_by_id(FMEnum.Safety.value)
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:
+                self.replace_flight_mode_by_id(FMEnum.Safety.value)
                 self.run()
             else:
                 self.shutdown()

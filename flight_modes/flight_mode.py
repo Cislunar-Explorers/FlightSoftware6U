@@ -55,7 +55,6 @@ from communications.command_definitions import CommandDefinitions
 no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
-    FMEnum.CommsMode.value,
     FMEnum.Command.value
 ]
 
@@ -141,8 +140,8 @@ class FlightMode:
 
         elif flight_mode_id == FMEnum.LowBatterySafety.value:
             if (
-                self.gom.read_battery_percentage()
-                >= params.EXIT_LOW_BATTERY_MODE_THRESHOLD
+                    self.gom.read_battery_percentage()
+                    >= params.EXIT_LOW_BATTERY_MODE_THRESHOLD
             ):
                 self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
@@ -290,40 +289,40 @@ class CommsMode(FlightMode):
 
     def enter_transmit_safe_mode(self):
 
-        #Stop electrolyzing
+        # Stop electrolyzing
         if self.parent.gom.is_electrolyzing():
             self.electrolyzing = True
             self.parent.gom.set_electrolysis(False)
 
-        #Set RF receiving side to low
+        # Set RF receiving side to low
         self.parent.gom.rf_receiving_switch(receive=False)
 
-        #Turn off LNA
+        # Turn off LNA
         self.parent.gom.lna(False)
 
-        #Set RF transmitting side to high
+        # Set RF transmitting side to high
         self.parent.gom.rf_transmitting_switch(receive=False)
 
-        #Turn on power amplifier
+        # Turn on power amplifier
         self.parent.gom.set_PA(on=True)
 
     def exit_transmit_safe_mode(self):
 
-        #Turn off power amplifier
+        # Turn off power amplifier
         self.parent.gom.set_PA(on=False)
 
-        #Set RF transmitting side to low
+        # Set RF transmitting side to low
         self.parent.gom.rf_transmitting_switch(receive=True)
 
-        #Turn on LNA
+        # Turn on LNA
         self.parent.gom.lna(True)
 
-        #Set RF receiving side to high
+        # Set RF receiving side to high
         self.parent.gom.rf_receiving_switch(receive=True)
 
-        #Resume electrolysis if we paused it to transmit
+        # Resume electrolysis if we paused it to transmit
         if self.electrolyzing:
-            self.parent.gom.set_electrolysis(True,delay = params.DEFAULT_ELECTROLYSIS_DELAY)
+            self.parent.gom.set_electrolysis(True, delay=params.DEFAULT_ELECTROLYSIS_DELAY)
 
     def execute_downlinks(self):
         while not self.parent.downlink_queue.empty():
@@ -331,13 +330,19 @@ class CommsMode(FlightMode):
             self.parent.downlink_counter += 1
             sleep(params.DOWNLINK_BUFFER_TIME)
 
+    def update_state(self) -> int:
+        super_fm = super().update_state()
+        if super_fm != NO_FM_CHANGE:
+            return super_fm
+
     def run_mode(self):
         if not self.parent.downlink_queue.empty():
             self.enter_transmit_safe_mode()
             self.execute_downlinks()
             self.exit_transmit_safe_mode()
-            # TODO replace functionality in update_state
-            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+
+        self.completed_task()
+
 
 class OpNavMode(FlightMode):
     flight_mode_id = FMEnum.OpNav.value
@@ -379,7 +384,6 @@ class LowBatterySafetyMode(FlightMode):
         super().__init__(parent)
         raise NotImplementedError
 
-
     def run_mode(self):
         sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         raise NotImplementedError
@@ -387,7 +391,7 @@ class LowBatterySafetyMode(FlightMode):
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
         if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
-            #TODO: return value instead of replacing FMID
+            # TODO: return value instead of replacing FMID
             self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
         if sum(self.parent.telemetry.gom.hk.curin) > params.ENTER_ECLIPSE_MODE_CURRENT:

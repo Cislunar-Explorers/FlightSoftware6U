@@ -223,14 +223,18 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
 # Threshold based primarily on blue and green channels
 # Percent of white pixels determines if earth detected
 def measureEarth(img):
+    print("[OPNAV_find_contours.226]: Start cv2.inRange()")
     lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
+    print("[OPNAV_find_contours.228]: Done cv2.inRange()")
     #cv2.imshow("low", lowThresh)
     percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
     #print("Earth white%", percentWhite)
     if percentWhite >= 0.20:
+        print("[OPNAV_find_contours.233]: Start cv2.inRange()")
         highThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
         highThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
         highThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
+        print("[OPNAV_find_contours.237]: Done cv2.inRange()")
         highThresh = highThreshRed + highThreshGreen + highThreshBlue
         # highthresh = cv2.mean(img, img > 70)
         # highThresh = cv2.inRange(img, (5, 5, 0), (255, 255, 255))
@@ -249,7 +253,9 @@ def measureEarth(img):
 
 # Measure white pixels
 def measureSun(img):
+    print("[OPNAV_find_contours.256]: Start cv2.inRange()")
     highThresh = cv2.inRange(img, (230, 230, 230), (255, 255, 255))
+    print("[OPNAV_find_contours.258]: Done cv2.inRange()")
     #cv2.imshow("Sun thresh", highThresh)
     percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
     #print("Sun white%", percentWhite)
@@ -266,7 +272,9 @@ def measureSun(img):
 
 
 def measureMoon(img):
+    print("[OPNAV_find_contours.275]: Start cv2.inRange()")
     thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
+    print("[OPNAV_find_contours.277]: Done cv2.inRange()")
     #cv2.imshow("Moon thresh", thresh)
     # percentWhite = cv2.countNonZero(thresh) / (thresh.shape[0] * thresh.shape[1])
     # print("Moon white%", percentWhite)
@@ -300,23 +308,26 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     # omega = 0
     dt = 18.904e-6
     rot = CameraRotation(u, -omega * dt)
+    print("[OPNAV_find_contours.311]: Done calculating CameraRotation")
 
     result = ImageDetectionCircles()
 
     # img = cv2.imread('sun1.jpg')
+    print("[OPNAV_find_contours.316]: Start reading image ", src)
     img = cv2.imread(src)
-    imgCopy = img.copy()
+    print("[OPNAV_find_contours.318]: Done reading image")
+    #imgCopy = img.copy()
 
     # In-place blur to reduce noise, avoid hot pixels
     img = cv2.GaussianBlur(img, (5, 5), 0, dst=img)
 
-    # Extract and threshold blue channel (least sensitive)
-
+    # Extract and threshold channels
+    print("[OPNAV_find_contours.325]: Start cv2.inRange()")
     bwThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
     bwThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
     bwThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
+    print("[OPNAV_find_contours.329]: Done cv2.inRange()")
     bw = bwThreshRed + bwThreshGreen + bwThreshBlue
-    ##cv2.imshow("Blue channel threshold", bw)
 
     ## thresh = 64 # 245
     ## bw = cv2.threshold(img[:,:,0], thresh, 255, cv2.THRESH_BINARY)[1]
@@ -327,11 +338,11 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) is 0:
-        #print("No contours")
+        print("[OPNAV_find_contours.341]: No contours")
         return result
 
     #print("Contour size", len(contours))
-    cv2.drawContours(imgCopy, contours, -1, (0, 255, 0), 3)
+    #cv2.drawContours(imgCopy, contours, -1, (0, 255, 0), 3)
     #cv2.imshow("Contours", imgCopy)
 
     areas = [cv2.contourArea(c) for c in contours]
@@ -341,7 +352,6 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     x, y, w, h = cv2.boundingRect(c)
 
-    full_contour = cv2.rectangle(imgCopy, (x, y), (x + w, y + h), (0, 255, 0), 2)
     #cv2.imshow("full_contour", full_contour)
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)
     # print(x, y, w, h)
@@ -353,6 +363,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     c2 = None
     x2, y2, w2, h2 = 0, 0, 0, 0
     out2 = None
+    print("[OPNAV_find_contours.366]: Iterating over contours")
     for con in contours:
         area = cv2.contourArea(con)
         if area >= 100:  # TODO: Placeholder
@@ -364,7 +375,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     # print(x2, y2, w2, h2)
 
     # if w2 is not 0 and h2 is not 0:
-    full_contour2 = cv2.rectangle(imgCopy, (x2, y2), (x2 + w2, y2 + h2), (0, 255, 0), 2)
+    #full_contour2 = cv2.rectangle(imgCopy, (x2, y2), (x2 + w2, y2 + h2), (0, 255, 0), 2)
     #cv2.imshow("full_contour2", full_contour2)
     x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
     # print(x, y, w, h)
@@ -378,6 +389,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     moon = None
 
     if "Low" in src:
+        print("[OPNAV_find_contours.392]: Checking sun")
         for f in [out]:
             sun = measureSun(f)
             if sun is not None:
@@ -391,6 +403,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
     else:
+        print("[OPNAV_find_contours.406]: Checking earth")
         for f in [out, out2]:
             if cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
                 continue
@@ -407,6 +420,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 #print(eSx, eSy, eSz, eDia)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
             if earth is None:
+                print("[OPNAV_find_contours.423]: Checking moon")
                 moon = measureMoon(f)
                 if moon is not None:
                     (mX, mY), mR = moon
@@ -420,7 +434,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                     #print(mSx, mSy, mSz, mDia)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
 
-    print("Result: earth, moon, sun")
+    print("[OPNAV_find_contours.437]: Result: earth, moon, sun")
     print(result.get_earth_detection(), result.get_moon_detection(), result.get_sun_detection())
     cv2.waitKey(0)
     return result

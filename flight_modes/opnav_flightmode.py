@@ -86,9 +86,4 @@ class OpNavMode(PauseBackgroundMode):
             return FMEnum.Normal.value
 
 
-    def opnav_subprocess(self):
-        # TODO change from pytest to actual opnav
-        # note: os.system should be replaced by subprocess.run("<insert shell command here>", shell=True)
-        # for an example see utils/boot_cause.py
-        # os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
-        subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
+

@@ -1,6 +1,7 @@
 import os
 import sys
 from threading import Thread
+from multiprocessing import Process
 from time import sleep, time
 from datetime import datetime, timedelta
 from queue import Queue
@@ -70,8 +71,6 @@ class MainSatelliteThread(Thread):
         self.attach_sigint_handler()  # FIXME
         self.need_to_reboot = False
 
-        # self.opnav_process = Process(target=self.opnav_subprocess())  # define the subprocess
-
         self.gom = None
         self.gyro = None
         self.adc = None
@@ -85,8 +84,8 @@ class MainSatelliteThread(Thread):
         self.tlm = Telemetry(self)
 
         # Opnav subprocess variables
-        self.need_opnav = False
         self.opnav_proc_queue = Queue()
+        self.opnav_process = Process()  # define the subprocess
 
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
@@ -309,13 +308,6 @@ class MainSatelliteThread(Thread):
                 # TODO: This all needs to be moved to the OpNav Flight mode, and should not be in main!!!
 
 
-                if self.opnav_process.is_alive():
-                    try:
-                        self.opnav_process.join(timeout=1)
-                        result = self.opnav_proc_queue.get(timeout=1)
-                    except queue.Empty:
-                        if not self.opnav_process.is_alive():
-                            self.opnav_process.terminate()
         finally:
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:

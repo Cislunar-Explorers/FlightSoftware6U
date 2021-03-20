@@ -12,17 +12,9 @@ import OpticalNavigation.core.camera as camera
 from time import sleep
 from dotenv import load_dotenv
 
-from utils.constants import (
-    LOG_DIR,
-    CISLUNAR_BASE_DIR,
-    DB_FILE,
-    NO_FM_CHANGE,
-    PARAMETERS_JSON_PATH,
-    MAC,
-    FMEnum,
-    NormalCommandEnum
-)
-
+import utils.constants
+from utils.constants import *
+import utils.parameters as params
 from utils.db import create_sensor_tables_from_path
 from communications.comms_driver import CommunicationsSystem
 from drivers.gom import Gomspace
@@ -89,21 +81,22 @@ class MainSatelliteThread(Thread):
     def init_parameters(self):
         with open(PARAMETERS_JSON_PATH) as f:
             json_parameter_dict = load(f)
-        self.parameters = json_parameter_dict
 
-        # try:
-        #     for parameter in self.parameters.__dir__():
-        #         if parameter[0] != '_':
-        #             self.parameters[parameter] = json_parameter_dict[parameter]
-        # except:
-        #     raise Exception(
-        #         'Attempted to set parameter ' + str(parameter) +
-        #         ', which could not be found in parameters.json'
-        #     )
+        try:
+            for parameter in utils.parameters.__dir__():
+                if parameter[0] != '_':
+                    utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
+        except:
+            raise Exception(
+                'Attempted to set parameter ' + str(parameter) +
+                ', which could not be found in parameters.json'
+            )
+
+    # TODO
 
     def init_sensors(self):
         self.radio = Radio()
-        self.gom = Gomspace(self.parameters)
+        self.gom = Gomspace()
         self.gyro = GyroSensor()
         self.adc = ADC(self.gyro)
         self.rtc = RTC()
@@ -126,18 +119,17 @@ class MainSatelliteThread(Thread):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def poll_inputs(self):
-        # self.tlm.poll()
+        
         self.flight_mode.poll_inputs()
 
-        # Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= self.parameters[
-            "TELEM_DOWNLINK_TIME"]:
-            self.enter_transmit_safe_mode()
+        #Telemetry downlink
+        if (datetime.today() - self.radio.last_telemetry_time).total_seconds()/60 >= params.TELEM_DOWNLINK_TIME:
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (
                 self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
                                                     NormalCommandEnum.BasicTelem.value, **telemetry))
             self.downlink_queue.put(telem_downlink)
+            self.radio.last_telemetry_time = datetime.today()
 
         # Listening for new commands
         newCommand = self.radio.receiveSignal()
@@ -147,12 +139,11 @@ class MainSatelliteThread(Thread):
 
                 if unpackedCommand[0] == MAC:
                     if unpackedCommand[1] == self.command_counter + 1:
-                        print('hello')
                         self.command_queue.put(bytes(newCommand))
                         self.command_counter += 1
                     else:
                         print('Command with Invalid Counter Received. '
-                        + 'Counter: ' + str(unpackedCommand[1]))
+                              + 'Counter: ' + str(unpackedCommand[1]))
                 else:
                     print('Unauthenticated Command Received')
 
@@ -160,10 +151,6 @@ class MainSatelliteThread(Thread):
                 print('Invalid Command Received')
         else:
             print('Not Received')
-
-    def enter_transmit_safe_mode(self):
-        # TODO: Make sure that everything else is turned off before transmitting
-        pass
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -198,13 +185,6 @@ class MainSatelliteThread(Thread):
             self.commands_to_execute.append(self.command_queue.get())
         self.flight_mode.execute_commands()
 
-    def execute_downlinks(self):
-        self.enter_transmit_safe_mode()
-        while not self.downlink_queue.empty():
-            self.radio.transmit(self.downlink_queue.get())
-            self.downlink_counter += 1
-            sleep(self.parameters["DOWNLINK_BUFFER_TIME"])
-
     def read_command_queue_from_file(self, filename="communications/command_queue.txt"):
         """A temporary workaround to not having radio board access"""
         # check if file exists
@@ -232,7 +212,8 @@ class MainSatelliteThread(Thread):
                 self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
-                self.execute_downlinks()
+                if not self.downlink_queue.empty():
+                    self.replace_flight_mode_by_id(FMEnum.CommsMode.value)
                 self.run_mode()
         finally:
             self.replace_flight_mode_by_id(FMEnum.Safety.value)
@@ -240,7 +221,7 @@ class MainSatelliteThread(Thread):
             if FOR_FLIGHT is True:
                 self.run()
             else:
-                self.gom.all_off()
+                self.shutdown()
 
     def shutdown(self):
         self.gom.all_off()

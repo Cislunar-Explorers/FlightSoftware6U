@@ -171,6 +171,3 @@ class CommandHandler:
 
         except:
             raise SerializationException()
-
-ch = CommandHandler()
-buf = ch.pack_command(1,2,5,name='TELEM_DOWNLINK_TIME',value=7,hard_set=False)

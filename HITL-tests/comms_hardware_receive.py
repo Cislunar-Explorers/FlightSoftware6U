@@ -8,3 +8,4 @@ while True:
     message = radio.receiveSignal()
     if message is not None:
         print('Transmission #' + transmissionCounter + ' Received: ' + str(message))
+        transmissionCounter += 1

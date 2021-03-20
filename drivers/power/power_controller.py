@@ -14,6 +14,7 @@
 import pigpio
 import drivers.power.power_structs as ps
 from utils.constants import GomOutputs
+import utils.parameters as params
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
 from time import time, sleep
 
@@ -84,8 +85,8 @@ PA_EN = 27  # Physical pin 13
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
 # Precomputed solenoid command bytearrays
-SOLENOID_ON_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, 4, 1, 0, 0])
-SOLENOID_OFF_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, 4, 0, 0, 0])
+SOLENOID_ON_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, OUT_5, 1, 0, 0])
+SOLENOID_OFF_COMMAND = bytearray([CMD_SET_SINGLE_OUTPUT, OUT_5, 0, 0, 0])
 SOLENOID_ON_LIST = [SOLENOID_ON_COMMAND]
 SOLENOID_OFF_LIST = [SOLENOID_OFF_COMMAND]
 
@@ -94,7 +95,7 @@ _ = ps._
 
 class Power:
     # initializes power object with bus [bus] and device address [addr]
-    def __init__(self, params, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
+    def __init__(self, bus=PI_BUS, addr=POWER_ADDRESS, flags=0):
         ps.gom_logger.debug(
             "Initializing Power object with bus %s, device address %s, and flags %s",
             bus,
@@ -110,7 +111,6 @@ class Power:
         self._pi.set_mode(PA_EN, pigpio.OUTPUT)
         self._pi.set_mode(OUT_PI_SOLENOID_ENABLE, pigpio.OUTPUT)
 
-        self.ACS_SPIKE_DURATION = params['ACS_SPIKE_DURATION']
         self.solenoid_wave = []
         self.solenoid_wave_id = -1
 
@@ -427,7 +427,7 @@ class Power:
 
     def calculate_solenoid_wave(self):
         self.solenoid_wave = []
-        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, self.ACS_SPIKE_DURATION * 1000))
+        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, params.ACS_SPIKE_DURATION * 1000))
         self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
 
         self._pi.wave_clear()
@@ -478,15 +478,21 @@ class Power:
         self.set_single_output("glowplug_2", 0, 0)
 
     # tell RF switch to either transmit or receive
-    def rf_switch(self, receive: bool = True):
+    def rf_transmitting_switch(self, receive: bool = True):
         if receive:
-            # Set RF switch to receive
+            # Set transmitting side of RF switch to receive
             self._pi.write(RF_TX_EN, pigpio.LOW)
+        else:
+            # Set transmitting side of RF switch to transmit
+            self._pi.write(RF_TX_EN, pigpio.HIGH)
+
+    def rf_receiving_switch(self,receive:bool = True):
+        if receive:
+            # Set receiving RF switch to receive
             self._pi.write(RF_RX_EN, pigpio.HIGH)
         else:
-            # Set RF switch to transmit
+            # Set receiving RF switch to transmit
             self._pi.write(RF_RX_EN, pigpio.LOW)
-            self._pi.write(RF_TX_EN, pigpio.HIGH)
 
     def set_PA(self, on: bool):
         self._pi.write(PA_EN, int(on))

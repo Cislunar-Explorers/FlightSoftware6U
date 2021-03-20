@@ -438,7 +438,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     print("[OPNAV_find_contours.437]: Result: earth, moon, sun")
     print(result.get_earth_detection(), result.get_moon_detection(), result.get_sun_detection())
-    cv2.waitKey(0)
+    #cv2.waitKey(0)
     return result
 
 

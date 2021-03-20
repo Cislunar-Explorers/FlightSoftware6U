@@ -176,8 +176,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
-    frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
-    #frames = glob.glob("/home/pi/surrender_images/*.jpg")
+    #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
+    frames = glob.glob("/home/pi/surrender_images/*.jpg")
     #print(frames)
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
     #print(frames)
@@ -188,12 +188,15 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     #print("Finding...")
     logger.info("[OPNAV]: Finding...")
+    progress = 1
     for f in range(len(frames)):
+        logger.info(f"[OPNAV]: Image {progress}/96")
         imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
-        #logger.info("[OPNAV]: single find done")
+        progress += 1
+
 
     # best___Tuple is tuple of file, distance and vector of best result
 

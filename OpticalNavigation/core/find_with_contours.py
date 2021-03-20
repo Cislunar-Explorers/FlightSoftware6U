@@ -356,7 +356,9 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)
     # print(x, y, w, h)
     box = BoundingBox(x, y, w, h)
+    print("[OPNAV_find_contours.359]: Start remap_roi")
     out, bbst = remap_roi(img, box, cam, rot)
+    print("[OPNAV_find_contours.361]: Done remap_roi")
     #cv2.imshow("roi", out)
 
     # Gets the next largest body that doesn't overlap with first body

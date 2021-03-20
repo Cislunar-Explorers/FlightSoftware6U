@@ -88,14 +88,14 @@ class FlightMode:
         # Please do so!
 
         # I am not sure this will properly work, but shuld have little impact for software demo
-        if self.opnav_process.is_alive():
+        if self.parent.opnav_process.is_alive():
             try:
-                self.opnav_process.join(timeout=1)
-                result = self.opnav_proc_queue.get(timeout=1)
+                self.parent.opnav_process.join(timeout=1)
+                result = self.parent.opnav_proc_queue.get(timeout=1)
                 logger.info("[OPNAV]: ", result)
             except self.parent.opnav_proc_queue.empty():
-                if not self.opnav_process.is_alive():
-                    self.opnav_process.terminate()
+                if not self.parent.opnav_process.is_alive():
+                    self.parent.opnav_process.terminate()
                     logger.info("[OPNAV]: Process Terminated")
 
         flight_mode_id = self.flight_mode_id
@@ -365,13 +365,12 @@ class OpNavMode(FlightMode):
         super().__init__(parent)
 
     def run_mode(self):
-        if not self.opnav_process.is_alive():
+        if not self.parent.opnav_process.is_alive():
             logger.info("[OPNAV]: Able to run next opnav")
             self.parent.last_opnav_run = datetime.now()
             logger.info("[OPNAV]: Starting opnav subprocess")
-            self.opnav_process = Process(target=self.opnav_subprocess, args=(self.parent.opnav_proc_queue))
-            self.opnav_process.start()
-        self.parent.opnav_process.start()
+            self.parent.opnav_process = Process(target=self.opnav_subprocess, args=(self.parent.opnav_proc_queue))
+            self.parent.opnav_process.start()
         self.task_completed = True
 
     def update_state(self) -> int:
@@ -380,8 +379,6 @@ class OpNavMode(FlightMode):
             return super_fm
 
         # check if opnav db has been updated, then set self.task_completed true
-        if self.task_completed:
-            return FMEnum.Normal.value
 
         return NO_FM_CHANGE
 

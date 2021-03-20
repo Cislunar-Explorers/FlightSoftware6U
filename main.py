@@ -170,7 +170,7 @@ class MainSatelliteThread(Thread):
         cameras_list = [0, 0, 0]
 
         # initialize cameras only if not a hard boot (or first boot)
-        if not hard_boot() or os.path.isdir(self.log_dir):
+        if not hard_boot() or not os.path.isdir(self.log_dir):
             try:
                 self.camera = camera.Camera()
                 for i in [1, 2, 3]:
@@ -198,9 +198,8 @@ class MainSatelliteThread(Thread):
         sensors = [self.gom, self.radio, self.gyro, self.adc, self.rtc, self.mux, self.camera]
         sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
         sensor_functioning_list.extend(cameras_list)
-        logger.info(f"Sensors: {sensor_functioning_list}")
         sensor_bitmask = ''.join(map(str, sensor_functioning_list))
-        logger.info(f"Sensors: {sensor_bitmask}")
+        logger.debug(f"Sensors: {sensor_bitmask}")
         return int(sensor_bitmask, 2)
 
     def handle_sigint(self, signal, frame):

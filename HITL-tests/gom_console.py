@@ -9,6 +9,7 @@ gom = Gomspace()
 
 while True:
     choice = int(input("Choose an option:\n"
+                       "0: Display Housekeeping Data"
                        "1: Receiving Amplifier (LNA)\n"
                        "2: Glowplug 1\n"
                        "3: Glowplug 2\n"
@@ -16,10 +17,13 @@ while True:
                        "5: Solenoid\n"
                        "6: Electrolyzer\n"
                        "7: Transmitting Amplifier (PA)\n"
-                       "999: All Off\n"))
+                       "999: Turn OFF all controllable outputs\n"))
     if choice == 999:
         gom.all_off()
         ps.displayHk2(gom.get_health_data(level="eps"))
+
+    if choice == 0:
+        ps.displayHk2(gom.get_health_data(level='eps'))
 
     if choice in [1, 5, 6, 7]:
         duration = int(input("Duration (seconds):\n"))

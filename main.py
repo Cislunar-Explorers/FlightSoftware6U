@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from queue import Queue
 import signal
 from utils.log import get_log
-import subprocess
+
 from json import load
 from time import sleep
 
@@ -27,7 +27,6 @@ from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
 
-from multiprocessing import Process, Queue
 import queue
 
 from communications.comms_driver import CommunicationsSystem
@@ -308,16 +307,7 @@ class MainSatelliteThread(Thread):
 
                 # Opnav subprocess management
                 # TODO: This all needs to be moved to the OpNav Flight mode, and should not be in main!!!
-                if datetime.now() > self.last_opnav_run + timedelta(minutes=10) and not self.opnav_process.is_alive():
-                    logger.info("[OPNAV]: Able to run next opnav")
-                    self.need_opnav = True
-                    self.last_opnav_run = datetime.now()
 
-                if not self.opnav_process.is_alive() and self.need_opnav is True:
-                    self.opnav_process = Process(target=self.opnav_subprocess, args=())
-                    self.need_opnav = False
-                    logger.info("[OPNAV]: Starting opnav subprocess")
-                    self.opnav_process.start()
 
                 if self.opnav_process.is_alive():
                     try:
@@ -339,13 +329,6 @@ class MainSatelliteThread(Thread):
             self.gom.all_off()
         logger.critical("Shutting down flight software")
         # self.comms.stop()
-
-    def opnav_subprocess(self):
-        # TODO change from pytest to actual opnav
-        # note: os.system should be replaced by subprocess.run("<insert shell command here>", shell=True)
-        # for an example see utils/boot_cause.py
-        #os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
-        subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
 
 
 if __name__ == "__main__":

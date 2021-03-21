@@ -347,7 +347,8 @@ class CommandDefinitions:
 
     def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
-        self.set_parameter(name="SCHEDULED_BURN_TIME", value=time_burn, hard_set=True)
+        self.parent.logger.info("Scheduling a maneuver at:", float(time_burn))
+        self.set_parameter(name="SCHEDULED_BURN_TIME", value=float(time_burn), hard_set=True)
         self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
     def return_to_normal(self):

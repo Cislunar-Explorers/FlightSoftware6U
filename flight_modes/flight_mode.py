@@ -440,12 +440,14 @@ class ManeuverMode(PauseBackgroundMode):
 
     def update_state(self) -> int:
         if self.task_completed is True:
+            logger.info("Maneuver complete. Exiting maneuver mode...")
             return FMEnum.Normal.value
         return NO_FM_CHANGE
 
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
         sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
+        logger.info("Glowplug maneuver...")
         self.parent.gom.glowplug(GLOWPLUG_DURATION)
         self.task_completed = True
 

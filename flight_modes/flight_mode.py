@@ -13,6 +13,7 @@ from datetime import datetime
 import os
 from multiprocessing import Process, Queue
 import subprocess
+from queue import Empty
 
 from utils.constants import (  # noqa F401
     BOOTUP_SEPARATION_DELAY,
@@ -93,7 +94,7 @@ class FlightMode:
                 self.parent.opnav_process.join(timeout=1)
                 result = self.parent.opnav_proc_queue.get(timeout=1)
                 logger.info("[OPNAV]: ", result)
-            except self.parent.opnav_proc_queue.empty():
+            except Empty:
                 if not self.parent.opnav_process.is_alive():
                     self.parent.opnav_process.terminate()
                     logger.info("[OPNAV]: Process Terminated")

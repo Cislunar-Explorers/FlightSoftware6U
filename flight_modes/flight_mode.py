@@ -141,12 +141,6 @@ class FlightMode:
         # everything in update_state below this comment should be implemented in their respective flight mode
         # The logic defined below isn't necessarily incorrect - it's just in an outdated format
 
-        # Burn command queue logic
-        # TODO implement need_to_burn function in adc driver
-        if self.parent.pressure_sensor.need_to_burn():
-            self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
-            return
-
         # Check if opnav needs to be run
         curr_time = datetime.now()
         time_diff = curr_time - self.parent.last_opnav_run

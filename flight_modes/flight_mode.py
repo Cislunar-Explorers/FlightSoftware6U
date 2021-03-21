@@ -111,7 +111,7 @@ class FlightMode:
 
         # go to maneuver mode if there is something in the maneuver queue
         if not self.parent.maneuver_queue.empty():
-            if params.SCHEDULED_BURN_TIME is not None:
+            if params.SCHEDULED_BURN_TIME is not None and params.SCHEDULED_BURN_TIME > time():
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
                     return FMEnum.Maneuver.value
 

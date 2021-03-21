@@ -50,11 +50,6 @@ from utils.exceptions import UnknownFlightModeException
 
 from communications.command_definitions import CommandDefinitions
 
-# Necessary modes to implement
-# BootUp, Restart, Normal, Eclipse, Safety, Propulsion,
-# Attitude Adjustment, Transmitting, OpNav (image processing)
-# TestModes
-
 no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
@@ -85,8 +80,6 @@ class FlightMode:
     def update_state(self) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode """
-        # currently a mess and needs revisiting. Formal logic for switching FMs has not been defined/documented.
-        # Please do so!
 
         # I am not sure this will properly work, but shuld have little impact for software demo
         if self.parent.opnav_process.is_alive():

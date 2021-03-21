@@ -179,10 +179,10 @@ class MainSatelliteThread(Thread):
                         f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
                     except Exception as e:
                         logger.error(f"CAM{i} initialization failed")
-                        cameras_list[i] = 0
+                        cameras_list[i - 1] = 0
                     else:
                         logger.info(f"Cam{i} initialized")
-                        cameras_list[i] = 1
+                        cameras_list[i - 1] = 1
 
                 if 0 in cameras_list:
                     raise e

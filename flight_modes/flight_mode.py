@@ -449,6 +449,7 @@ class ManeuverMode(PauseBackgroundMode):
         sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
         logger.info("Glowplug maneuver...")
         self.parent.gom.glowplug(GLOWPLUG_DURATION)
+        self.parent.maneuver_queue.get()
         self.task_completed = True
 
 

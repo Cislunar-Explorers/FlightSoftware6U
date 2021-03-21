@@ -170,7 +170,7 @@ class MainSatelliteThread(Thread):
         cameras_list = [0, 0, 0]
 
         # initialize cameras only if not a hard boot (or first boot)
-        if not hard_boot() or not os.path.isdir(self.log_dir):
+        if not hard_boot() and os.path.isdir(self.log_dir):
             try:
                 self.camera = camera.Camera()
                 for i in [1, 2, 3]:
@@ -179,10 +179,10 @@ class MainSatelliteThread(Thread):
                         f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
                     except Exception as e:
                         logger.error(f"CAM{i} initialization failed")
-                        cameras_list[i] = 0
+                        cameras_list[i - 1] = 0
                     else:
                         logger.info(f"Cam{i} initialized")
-                        cameras_list[i] = 1
+                        cameras_list[i - 1] = 1
 
                 if 0 in cameras_list:
                     raise e

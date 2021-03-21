@@ -369,7 +369,7 @@ class OpNavMode(FlightMode):
             logger.info("[OPNAV]: Able to run next opnav")
             self.parent.last_opnav_run = datetime.now()
             logger.info("[OPNAV]: Starting opnav subprocess")
-            self.parent.opnav_process = Process(target=self.opnav_subprocess, args=(self.parent.opnav_proc_queue))
+            self.parent.opnav_process = Process(target=self.opnav_subprocess, args=(self.parent.opnav_proc_queue,))
             self.parent.opnav_process.start()
         self.task_completed = True
 

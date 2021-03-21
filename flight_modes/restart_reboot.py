@@ -10,7 +10,6 @@ import psutil
 
 logger = get_log()
 
-
 class BootUpMode(FlightMode):
     flight_mode_id = FMEnum.Boot.value
     command_codecs = {BootCommandEnum.Split.value: ([], 0)}
@@ -46,7 +45,6 @@ class BootUpMode(FlightMode):
         self.session.commit()
 
     def update_state(self) -> int:
-        logger.info("updating state... doesnt do nothin")
         return NO_FM_CHANGE
 
 
@@ -62,7 +60,6 @@ class RestartMode(FlightMode):
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()
 
-        # add info about restart to database
         self.log()
 
     def log(self):

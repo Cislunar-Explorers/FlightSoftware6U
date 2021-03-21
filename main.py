@@ -170,7 +170,7 @@ class MainSatelliteThread(Thread):
         cameras_list = [0, 0, 0]
 
         # initialize cameras only if not a hard boot (or first boot)
-        if not hard_boot() or not os.path.isdir(self.log_dir):
+        if not hard_boot() and os.path.isdir(self.log_dir):
             try:
                 self.camera = camera.Camera()
                 for i in [1, 2, 3]:

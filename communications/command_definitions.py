@@ -514,7 +514,7 @@ class CommandDefinitions:
             t_stop = kwargs['t_stop']
             decimation_factor = kwargs['decimation_factor']
 
-        self.parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+            self.parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
         else:
             self.parent.logger.error("CMD: nemo_process_rate_data() failed, nemo_manager not initialized")
 

@@ -189,8 +189,8 @@ class NormalCommandEnum(IntEnum):
     NemoPowerOff = 19
     NemoPowerOn = 20
     NemoReboot = 21
-    NemoProcessRateData = 21
-    NemoProcessHistograms = 22
+    NemoProcessRateData = 22
+    NemoProcessHistograms = 23
 
 
 @unique

@@ -56,7 +56,7 @@ class CameraParameters:
         c2rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
         c2ry = np.array([math.cos(c2ay), 0, math.sin(c2ay), 0, 1, 0, -1 * math.sin(c2ay), 0, math.cos(c2ay)]).reshape(3, 3)
 
-        c3rz = np.array([math.cos(c2az), -1 * math.sin(c2az), 0, math.sin(c2az), math.cos(c2az), 0, 0, 0, 1]).reshape(3,3)
+        c3rz = np.array([math.cos(c3az), -1 * math.sin(c3az), 0, math.sin(c3az), math.cos(c3az), 0, 0, 0, 1]).reshape(3,3)
 
         self.cam1Rotation = np.matmul(c1rz, c1ry)
         self.cam2Rotation = np.matmul(c2rz, c2ry)

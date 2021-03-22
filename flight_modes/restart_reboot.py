@@ -28,6 +28,7 @@ class BootUpMode(FlightMode):
         self.log()
 
         # deploy antennae
+        # FIXME: differentiate between Hydrogen and Oxygen. Each satellite now has different required Bootup behaviors
         logger.info("Antennae deploy...")
         self.parent.gom.burnwire1(5)
 

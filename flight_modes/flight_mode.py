@@ -105,6 +105,7 @@ class FlightMode:
             return flight_mode_id
 
         # go to maneuver mode if there is something in the maneuver queue
+        # TODO check existence/value of BURN TIME paramter, rather than only checking the queue
         if not self.parent.maneuver_queue.empty():
             if params.SCHEDULED_BURN_TIME is not None and params.SCHEDULED_BURN_TIME > time():
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
@@ -379,8 +380,7 @@ class LowBatterySafetyMode(FlightMode):
 
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
-        if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD or \
-                sum(self.parent.telemetry.gom.hk.curin) > params.ENTER_ECLIPSE_MODE_CURRENT:
+        if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
     def __enter__(self):
@@ -405,8 +405,10 @@ class ManeuverMode(PauseBackgroundMode):
 
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
+        # TODO: clear value of params.SCHEDULE_BURN_TIME after completion of burn
         sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
         logger.info("Glowplug maneuver...")
+        # TODO: poll and check accelerometer values. If not acceleration seen, try other glowplug
         self.parent.gom.glowplug(GLOWPLUG_DURATION)
         self.parent.maneuver_queue.get()
         self.task_completed = True

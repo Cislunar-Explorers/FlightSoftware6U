@@ -28,8 +28,6 @@ from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
 
-import queue
-
 from communications.comms_driver import CommunicationsSystem
 from communications.satellite_radio import Radio
 from drivers.gom import Gomspace

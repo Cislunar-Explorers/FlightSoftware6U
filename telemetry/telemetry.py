@@ -237,7 +237,7 @@ class Telemetry(SynchronousSensor):
 
     def standard_packet_dict(self):
         return {'rtc_time': self.rtc.rtc_time,
-                'position_x': 1,
+                'position_x': 1,  # FIXME Opnav results interface
                 'position_y': 2,
                 'position_z': 3,
                 'attitude_1': 4,
@@ -261,10 +261,12 @@ class Telemetry(SynchronousSensor):
                 'prs_pressure': self.prs.pressure}
 
     def write_telem(self, telem):
+        # FIXME
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>
         # functions above, or a list of all of them.
         raise NotImplementedError
 
     def query_telem(self):
+        # FIXME
         # querys telemetry from database
         raise NotImplementedError

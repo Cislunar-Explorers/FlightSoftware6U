@@ -1,6 +1,5 @@
 picamera
 pigpio
-RPi.GPIO
 SQLalchemy
 adafruit-circuitpython-busdevice
 vcgencmd

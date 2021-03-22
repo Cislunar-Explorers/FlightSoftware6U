@@ -23,6 +23,8 @@ class SynchronousSensor:
 
     # Initialize sensor
     def __init__(self, parent: MainSatelliteThread):
+        # TODO: instead of initializing with parent, only use parent's driver object for each sensor.
+        #  i.e. __init__(self, sensor: GyroSensor); self.sensor = sensor
         self.parent = parent
         self.poll_time = -1.0
 

@@ -103,9 +103,13 @@ class Gomspace:
         """Turns the receiving amplifier on (True)/off (False)"""
         self.pc.comms_amplifier(on)
 
-    def rf_switch(self, receive: bool):
-        """Tells RF switch to either receive or transmit"""
-        self.pc.rf_switch(receive)
+    def rf_receiving_switch(self, receive: bool):
+        """Tells receiving side of RF switch to either receive or transmit"""
+        self.pc.rf_receiving_switch(receive)
+
+    def rf_transmitting_switch(self, receive: bool):
+        """Tells transmitting side of RF switch to either receive or transmit"""
+        self.pc.rf_transmitting_switch(receive)
 
     def set_PA(self, on: bool):
         """Turns on/off the power circuit for the PA"""

@@ -1,3 +1,4 @@
+from OpticalNavigation.core.const import ImageDetectionCircles
 import numpy as np
 #import scipy as sp
 import cv2
@@ -159,7 +160,7 @@ def create_circular_mask(h, w, center=None, radius=None):
     return mask
 
 # H: 0-179, S: 0-255, V: 0-255
-def find(true_image, visualize=False):
+def findHough(true_image, visualize=False):
     original_with_circles = copy.copy(true_image)
     orig_copy = copy.copy(true_image)
     (origH, origW, origC) = true_image.shape
@@ -229,6 +230,25 @@ def find(true_image, visualize=False):
 
     return sunCircle, earthCircle, moonCircle, np.hstack([original_with_circles])
     
+def find(img) -> ImageDetectionCircles:
+    """
+    Locates the Earth, Moon and Sun in image [img] in spherical coordinates.
+    @returns
+    [circles]: tuple of 3 tuples containing circle center for each body
+        Format: ((ex, ey, ez, edia), (mx, my, mz, mdia), (sx, sy, sz, sdia))
+        Returns None if a body is not detected instead of its tuple
+    """
+    # Location of circle center in spherical coordinates,
+    # Angular diameter of circle in radians
+    sx, sy, sz, sdia = 0., 0., 0., 0. # Sun
+    mx, my, mz, mdia = 0., 0., 0., 0. # Moon
+    ex, ey, ez, edia = 0., 0., 0., 0. # Earth
+    imageDetectionCircles = ImageDetectionCircles()
+    imageDetectionCircles.set_earth_detection(ex, ey, ez, edia)
+    imageDetectionCircles.set_moon_detection(mx, my, mz, mdia)
+    imageDetectionCircles.set_earth_detection(sx, sy, sz, sdia)
+    return imageDetectionCircles
+
 if __name__ == "__main__":
     """
     Run "python3 find.py -i=<IMAGE>" to test this module

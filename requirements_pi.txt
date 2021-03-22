@@ -1,6 +1,5 @@
 picamera
 pigpio
-RPi.GPIO
 SQLalchemy
 adafruit-circuitpython-busdevice
 vcgencmd
@@ -15,3 +14,4 @@ uptime
 opencv-python-headless
 numpy-quaternion
 astropy
+adafruit-circuitpython-ds3231

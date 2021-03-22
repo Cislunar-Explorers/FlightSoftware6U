@@ -2,11 +2,15 @@ from datetime import datetime
 from time import sleep
 import sqlite3
 from sqlalchemy.exc import SQLAlchemyError
+from multiprocessing import Process, Queue
+import subprocess
 
 from utils.constants import FMEnum
 from utils.db import OpNavCoordinatesModel
+from utils.log import get_log
 from .flight_mode import PauseBackgroundMode
 
+logger = get_log()
 
 class OpNavMode(PauseBackgroundMode):
 
@@ -62,6 +66,12 @@ class OpNavMode(PauseBackgroundMode):
                 raise Exception("Error while reading most recent OpNav result")
 
     def run_mode(self):
+        if not self.opnav_process.is_alive():
+            logger.info("[OPNAV]: Able to run next opnav")
+            self.parent.last_opnav_run = datetime.now()
+            logger.info("[OPNAV]: Starting opnav subprocess")
+            self.opnav_process = Process(target=self.opnav_subprocess, args=())
+            self.opnav_process.start()
         self.run_opnav()
         self.task_completed()
 
@@ -73,4 +83,7 @@ class OpNavMode(PauseBackgroundMode):
 
         # return to normal mode if task completed
         if self.task_completed:
-            return self.parent.constants.FMEnum.Normal.value
+            return FMEnum.Normal.value
+
+
+

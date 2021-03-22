@@ -5,7 +5,6 @@ from OpticalNavigation.core.cam_meas import cameraMeasurements
 import OpticalNavigation.core.ukf as traj_ukf
 import OpticalNavigation.core.attitude as attitude
 from OpticalNavigation.core.sense import select_camera, record_video, record_gyro
-from OpticalNavigation.core.preprocess import rolling_shutter, rect_to_stereo_proj, extract_frames
 from OpticalNavigation.core.find_with_contours import *
 from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
 import numpy as np
@@ -19,7 +18,6 @@ from datetime import datetime, timedelta
 import math
 from sqlalchemy import desc
 from sqlalchemy.orm import session
-from time import sleep
 import re
 import glob
 
@@ -53,15 +51,15 @@ def __process_propulsion_events(session: session.Session) -> OPNAV_EXIT_STATUS:
     """
     entries = session.query(OpNavPropulsionModel).all()
     num_entries = len(entries)
-    print("process propulsion...")
+    logger.info("[OPNAV]: process propulsion...")
     for entry_index, entry in enumerate(entries):
-        print(f'propulsion event: {entry_index+1}/{num_entries}')
-        print(f'----------PROPULSION EVENT----------')
-        print(entry)
+        logger.info(f'[OPNAV]: propulsion event: {entry_index+1}/{num_entries}')
+        logger.info(f'[OPNAV]: ----------PROPULSION EVENT----------')
+        logger.info(entry)
         exit_status = __process_propulsion(session, entry)
         if exit_status is not OPNAV_EXIT_STATUS.SUCCESS:
             return exit_status
-        print(f'-------------------------------------')
+        logger.info(f'[OPNAV] -------------------------------------')
     # clear table
     try:
         num_rows_deleted = session.query(OpNavPropulsionModel).delete()
@@ -148,7 +146,6 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # 2. record camera measurements
     # 3. record gyro measurements
     observeStart = datetime.now()
-    #print("Recording videos...")
     recordings = []
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
@@ -158,11 +155,9 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         filename_timestamp2 = record_video(f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
         recordings.append(filename_timestamp1)
         recordings.append(filename_timestamp2)
-    print(recordings)
 
     ##### Commented out for software demo
-    #print(recordings)
-    #print("Extracting frames...")
+    #logger.info("[OPNAV]: Extracting frames...")
     # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
     #frames0 = extract_frames(vid_dir=recordings[0][0], endTimestamp = recordings[0][1])
     #frames1 = extract_frames(vid_dir=recordings[1][0], endTimestamp = recordings[1][1])
@@ -171,36 +166,31 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     #frames4 = extract_frames(vid_dir=recordings[4][0], endTimestamp = recordings[4][1])
     #frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
     #frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
-    #print(frames)
-    #print(len(frames))
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
     #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
     frames = glob.glob("/home/pi/surrender_images/*.jpg")
-    #print(frames)
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
-    #print(frames)
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
     sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
-    #print("Finding...")
     logger.info("[OPNAV]: Finding...")
     progress = 1
     for f in range(len(frames)):
-        logger.info(f"[OPNAV]: Image {progress}/96")
+        logger.info(f"[OPNAV]: Image {progress}/96: {frames[f]}")
         imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
+        logger.info(f"[OPNAV]: Result: Earth: {imageDetectionCircles.get_earth_detection()}, Moon: {imageDetectionCircles.get_moon_detection()}, Sun: {imageDetectionCircles.get_sun_detection()}")
         progress += 1
 
 
     # best___Tuple is tuple of file, distance and vector of best result
 
-    #print("Finding centers...")
     # Find the distance to center
     logger.info("[OPNAV]: Finding best frames...")
     earthCenterDistances = []
@@ -241,8 +231,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
 
     # We now have the best result for earth, moon and sun; time to rotate vectors
 
-    #print("Camera to body rotations...")
-    logger.info("[OPNAV]: Performing camera to body rotations")
+    logger.info("[OPNAV]: Performing camera to body rotations...")
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
         coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
         camNum = int(re.search("[cam](\d+)", data[0]).group(1))
@@ -256,8 +245,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         data[2][1] = coordArray[1]
         data[2][2] = coordArray[2]
 
-    #print("Gyro recording...")
-    logger.info("[OPNAV]: Gyro measurements...")
+    logger.info("[OPNAV]: Gathering gyro measurements...")
     gyro_meas = record_gyro(count=gyro_count)
     for g in range(gyro_meas.shape[0]):
         omega = gyro_meas[g, ...]
@@ -270,13 +258,11 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         session.add(new_entry)
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
 
-    #print("Body to tZero rotations...")
     logger.info("[OPNAV]: Body to T0 rotation...")
     avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
     # Rotation is product of angular speed and time between frame and start of observation
     lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first()
     lastReboot = lastRebootRow.reboot_at
-    #print("Last Reboot: ", lastReboot)
 
     if not np.isnan(bestEarthTuple[1]):
         earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))
@@ -314,7 +300,6 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         bestSunTuple[2][2] = coordArray[2]
         bestSunTuple[2][0] = coordArray[0]
 
-    #print("Setting best results...")
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2], bestEarthTuple[2][3])
     bestDetectedCircles.set_moon_detection(bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2], bestMoonTuple[2][3])
@@ -325,9 +310,6 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     best_s = (bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2], bestSunTuple[2][3])
     ######
 
-    #print("Best Earth: ", best_e)
-    #print("Best Moon: ", best_m)
-    #print("Best Sun: ", best_s)
     logger.info(f"[OPNAV]: Best Earth {best_e}")
     logger.info(f"[OPNAV]: Best Sun {best_s}")
     logger.info(f"[OPNAV]: Best Moon {best_m}")
@@ -345,7 +327,6 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     )
     session.add(new_entry)
     session.commit()
-    #print("Observe complete!")
     logger.info("[OPNAV]: Observe Complete!")
 
 
@@ -401,6 +382,7 @@ def __process_propulsion(session: session.Session, propulsion_entry) -> OPNAV_EX
     session.bulk_save_objects(entries)
     session.commit()
     # TODO: Check for any failures and return fail status
+    logger.info("[OPNAV]: process_propulsion complete!")
     return OPNAV_EXIT_STATUS.SUCCESS
     
 def __process_propagation(session:session.Session, gyro_vars:GyroVars, camera_params:CameraParameters) -> OPNAV_EXIT_STATUS:
@@ -521,4 +503,5 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars, camera_pa
     session.bulk_save_objects(entries)
     session.commit()
     # TODO: Check for any failures and return fail status
+    logger.info("[OPNAV]: process_propagation complete!")
     return OPNAV_EXIT_STATUS.SUCCESS

@@ -30,7 +30,6 @@ SQL_PREFIX = "sqlite:///"
 sql_path = DB_FILE
 
 def setup_function(function):
-    print("setup...")
     # Reset databases
     create_session = create_sensor_tables_from_path(sql_path)
     session = create_session()

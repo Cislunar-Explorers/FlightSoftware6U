@@ -3,13 +3,11 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 from math import pi, radians, tan, floor, ceil
-import os
-import copy
 import argparse
 import re
+from utils.log import get_log
 
-
-# from core.find_with_kmeans import getkmeans
+logger = get_log()
 
 class Camera:
     """Encapsulate field-of-view and resolution of a camera."""
@@ -223,22 +221,13 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
 # Threshold based primarily on blue and green channels
 # Percent of white pixels determines if earth detected
 def measureEarth(img):
-    print("[OPNAV_find_contours.226]: Start cv2.inRange()")
     lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
-    print("[OPNAV_find_contours.228]: Done cv2.inRange()")
-    #cv2.imshow("low", lowThresh)
     percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
-    #print("Earth white%", percentWhite)
     if percentWhite >= 0.20:
-        print("[OPNAV_find_contours.233]: Start cv2.inRange()")
         highThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
         highThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
         highThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
-        print("[OPNAV_find_contours.237]: Done cv2.inRange()")
         highThresh = highThreshRed + highThreshGreen + highThreshBlue
-        # highthresh = cv2.mean(img, img > 70)
-        # highThresh = cv2.inRange(img, (5, 5, 0), (255, 255, 255))
-        #cv2.imshow("Earth thresh", highThresh)
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
 
@@ -253,12 +242,8 @@ def measureEarth(img):
 
 # Measure white pixels
 def measureSun(img):
-    print("[OPNAV_find_contours.256]: Start cv2.inRange()")
     highThresh = cv2.inRange(img, (230, 230, 230), (255, 255, 255))
-    print("[OPNAV_find_contours.258]: Done cv2.inRange()")
-    #cv2.imshow("Sun thresh", highThresh)
     percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
-    #print("Sun white%", percentWhite)
     if percentWhite >= 0.20: #Changed from 23%
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
@@ -272,13 +257,7 @@ def measureSun(img):
 
 
 def measureMoon(img):
-    print("[OPNAV_find_contours.275]: Start cv2.inRange()")
     thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
-    print("[OPNAV_find_contours.277]: Done cv2.inRange()")
-    #cv2.imshow("Moon thresh", thresh)
-    # percentWhite = cv2.countNonZero(thresh) / (thresh.shape[0] * thresh.shape[1])
-    # print("Moon white%", percentWhite)
-    # if percentWhite >= 0.23:
     contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) is not 0:
@@ -303,47 +282,30 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     elif camNum == 3:
         u = np.linalg.inv(camera_params.cam3Rotation).dot(u)
     # u is now in the camera frame
-    # omega = 78/60 * 2 * pi
     omega = -5
-    # omega = 0
     dt = 18.904e-6
     rot = CameraRotation(u, -omega * dt)
-    print("[OPNAV_find_contours.311]: Done calculating CameraRotation")
 
     result = ImageDetectionCircles()
 
-    # img = cv2.imread('sun1.jpg')
-    print("[OPNAV_find_contours.316]: Start reading image ", src)
     img = cv2.imread(src)
-    print("[OPNAV_find_contours.318]: Done reading image")
-    #imgCopy = img.copy()
 
     # In-place blur to reduce noise, avoid hot pixels
     img = cv2.GaussianBlur(img, (5, 5), 0, dst=img)
 
     # Extract and threshold channels
-    print("[OPNAV_find_contours.325]: Start cv2.inRange()")
     bwThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
     bwThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
     bwThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
-    print("[OPNAV_find_contours.329]: Done cv2.inRange()")
     bw = bwThreshRed + bwThreshGreen + bwThreshBlue
-
-    ## thresh = 64 # 245
-    ## bw = cv2.threshold(img[:,:,0], thresh, 255, cv2.THRESH_BINARY)[1]
-
 
     contours = cv2.findContours(bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) is 0:
-        print("[OPNAV_find_contours.341]: No contours")
+        logger.info("[OPNAV]: No countours found")
         return result
-
-    #print("Contour size", len(contours))
-    #cv2.drawContours(imgCopy, contours, -1, (0, 255, 0), 3)
-    #cv2.imshow("Contours", imgCopy)
 
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
@@ -352,20 +314,14 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     x, y, w, h = cv2.boundingRect(c)
 
-    #cv2.imshow("full_contour", full_contour)
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)
-    # print(x, y, w, h)
     box = BoundingBox(x, y, w, h)
-    print("[OPNAV_find_contours.359]: Start remap_roi")
     out, bbst = remap_roi(img, box, cam, rot)
-    print("[OPNAV_find_contours.361]: Done remap_roi")
-    #cv2.imshow("roi", out)
 
     # Gets the next largest body that doesn't overlap with first body
     c2 = None
     x2, y2, w2, h2 = 0, 0, 0, 0
     out2 = None
-    print("[OPNAV_find_contours.366]: Iterating over contours")
     for con in contours:
         area = cv2.contourArea(con)
         if area >= 100:  # TODO: Placeholder
@@ -374,16 +330,10 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
             if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y + h > y:
                 c2 = con
                 break
-    # print(x2, y2, w2, h2)
 
-    # if w2 is not 0 and h2 is not 0:
-    #full_contour2 = cv2.rectangle(imgCopy, (x2, y2), (x2 + w2, y2 + h2), (0, 255, 0), 2)
-    #cv2.imshow("full_contour2", full_contour2)
     x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
-    # print(x, y, w, h)
     box2 = BoundingBox(x2, y2, w2, h2)
     out2, bbst2 = remap_roi(img, box2, cam, rot)
-    #cv2.imshow("roi2", out2)
 
     # Measure body in region-of-interest
     sun = None
@@ -391,7 +341,6 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     moon = None
 
     if "Low" in src:
-        print("[OPNAV_find_contours.392]: Checking sun")
         for f in [out]:
             sun = measureSun(f)
             if sun is not None:
@@ -400,45 +349,29 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 sRho2 = sXst ** 2 + sYst ** 2
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
                 sSx, sSy, sSz = st_to_sph(sXst, sYst)
-                #print("Sun")
-                #print(sSx, sSy, sSz, sDia)
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
     else:
-        print("[OPNAV_find_contours.406]: Checking earth")
         for f in [out, out2]:
             if cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
                 continue
             earth = measureEarth(f)
             if earth is not None:
                 (eX, eY), eR = earth
-                #print("bbst.x0 + eX, bbst.y0 + eY", bbst.x0 + eX, bbst.y0 + eY)
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
-                #print("eXst, eYst", eXst, eYst)
                 eRho2 = eXst ** 2 + eYst ** 2
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
-                #print("Earth")
-                #print(eSx, eSy, eSz, eDia)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
             if earth is None:
-                print("[OPNAV_find_contours.423]: Checking moon")
                 moon = measureMoon(f)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    # print("bbst2.m0 + eX, bbst2.y0 + mY", bbst2.x0 + mX, bbst2.y0 + mY)
                     mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)
-                    #print("mXst,meYst", mXst, mYst)
                     mRho2 = mXst ** 2 + mYst ** 2
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
-                    #print("Moon")
-                    #print(mSx, mSy, mSz, mDia)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
-
-    print("[OPNAV_find_contours.437]: Result: earth, moon, sun")
-    print(result.get_earth_detection(), result.get_moon_detection(), result.get_sun_detection())
-    #cv2.waitKey(0)
     return result
 
 

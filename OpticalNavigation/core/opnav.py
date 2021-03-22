@@ -5,6 +5,7 @@ from OpticalNavigation.core.cam_meas import cameraMeasurements
 import OpticalNavigation.core.ukf as traj_ukf
 import OpticalNavigation.core.attitude as attitude
 from OpticalNavigation.core.sense import select_camera, record_video, record_gyro
+from OpticalNavigation.core.preprocess import extract_frames
 from OpticalNavigation.core.find_with_contours import *
 from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
 import numpy as np

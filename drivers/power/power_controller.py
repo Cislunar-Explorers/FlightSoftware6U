@@ -503,7 +503,7 @@ class Power:
         self.set_single_output("comms", int(on), 0)
 
     def set_GPIO_low(self):
-        self.rf_switch()
+        self.rf_transmitting_switch()
         self._pi.write(OUT_PI_SOLENOID_ENABLE, 0)
 
     # Legacy stuff, may or may not be useful

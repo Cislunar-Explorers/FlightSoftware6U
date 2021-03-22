@@ -244,20 +244,20 @@ class Telemetry(SynchronousSensor):
                 'attitude_2': 5,
                 'attitude_3': 6,
                 'attitude_4': 7,
-                'hk_temp_1': self.gom.hk.temp[0],
-                'hk_temp_2': self.gom.hk.temp[1],
-                'hk_temp_3': self.gom.hk.temp[2],
-                'hk_temp_4': self.gom.hk.temp[3],
+                'hk_temp_1': self.gom.hk.temp[0],  # ushort
+                'hk_temp_2': self.gom.hk.temp[1],  # ushort
+                'hk_temp_3': self.gom.hk.temp[2],  # ushort
+                'hk_temp_4': self.gom.hk.temp[3],  # ushort
                 'gyro_temp': self.gyr.tmp,
                 'thermo_temp': self.thm.tmp,
-                'curin_1': self.gom.hk.curin[0],
-                'curin_2': self.gom.hk.curin[1],
-                'curin_3': self.gom.hk.curin[2],
-                'vboost_1': self.gom.hk.vboost[0],
-                'vboost_2': self.gom.hk.vboost[1],
-                'vboost_3': self.gom.hk.vboost[2],
-                'cursys': self.gom.hk.cursys,
-                'vbatt': self.gom.hk.vbatt,
+                'curin_1': self.gom.hk.curin[0],  # ushort
+                'curin_2': self.gom.hk.curin[1],  # ushort
+                'curin_3': self.gom.hk.curin[2],  # ushort
+                'vboost_1': self.gom.hk.vboost[0],  # ushort
+                'vboost_2': self.gom.hk.vboost[1],  # ushort
+                'vboost_3': self.gom.hk.vboost[2],  # ushort
+                'cursys': self.gom.hk.cursys,  # ushort
+                'vbatt': self.gom.hk.vbatt,  # ushort
                 'prs_pressure': self.prs.pressure}
 
     def write_telem(self, telem):

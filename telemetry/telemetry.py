@@ -26,12 +26,13 @@ class GomSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.hk = self.parent.gom.get_health_data(level="eps")
-        self.hkparam = self.parent.gom.get_health_data()
-        battery_voltage = self.hk.vbatt  # mV
-        self.percent = (battery_voltage - params.GOM_VOLTAGE_MIN) / \
-                       (params.GOM_VOLTAGE_MAX - params.GOM_VOLTAGE_MIN)
-        self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
+        if self.parent.gom is not None:
+            self.hk = self.parent.gom.get_health_data(level="eps")
+            self.hkparam = self.parent.gom.get_health_data()
+            battery_voltage = self.hk.vbatt  # mV
+            self.percent = (battery_voltage - params.GOM_VOLTAGE_MIN) / \
+                           (params.GOM_VOLTAGE_MAX - params.GOM_VOLTAGE_MIN)
+            self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
 
 
 class GyroSensor(SynchronousSensor):
@@ -44,10 +45,11 @@ class GyroSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.rot = self.parent.gyro.get_gyro()
-        self.mag = self.parent.gyro.get_mag()
-        self.acc = self.parent.gyro.get_acceleration()
-        self.tmp = self.parent.gyro.get_temp()
+        if self.parent.gyro is not None:
+            self.rot = self.parent.gyro.get_gyro()
+            self.mag = self.parent.gyro.get_mag()
+            self.acc = self.parent.gyro.get_acceleration()
+            self.tmp = self.parent.gyro.get_temp()
 
     def poll_smoothed(self, freq=10, duration=3, samples=5):
         # poll and smooth gyro data
@@ -88,7 +90,8 @@ class PressureSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.pressure = self.parent.adc.read_pressure()
+        if self.parent.adc is not None:
+            self.pressure = self.parent.adc.read_pressure()
 
 
 class ThermocoupleSensor(SynchronousSensor):
@@ -98,7 +101,8 @@ class ThermocoupleSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.tmp = self.parent.adc.read_temperature()
+        if self.parent.adc is not None:
+            self.tmp = self.parent.adc.read_temperature()
 
 
 class PiSensor(SynchronousSensor):
@@ -132,10 +136,12 @@ class PiSensor(SynchronousSensor):
 class RtcSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.rtc_time = float()
+        self.rtc_time = int()
 
     def poll(self):
-        raise NotImplementedError
+        super().poll()
+        if self.parent.rtc is not None:
+            self.rtc_time = self.parent.rtc.get_time()
 
 
 class OpNavSensor(SynchronousSensor):
@@ -163,7 +169,7 @@ class Telemetry(SynchronousSensor):
         self.rtc = RtcSensor(parent)
         self.opn = OpNavSensor(parent)
 
-        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi]
+        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc]
 
         # initialize databases here if not init'd already
 
@@ -197,7 +203,7 @@ class Telemetry(SynchronousSensor):
             self.parent.logger.error("Gom HK not functioning properly")
             raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
 
-        if any(i < 0 for i in self.rpi.all()):
+        if any(i < 0 for i in self.rpi.all):
             self.parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
 
@@ -231,34 +237,36 @@ class Telemetry(SynchronousSensor):
 
     def standard_packet_dict(self):
         return {'rtc_time': self.rtc.rtc_time,
-                'position_x': 1,
+                'position_x': 1,  # FIXME Opnav results interface
                 'position_y': 2,
                 'position_z': 3,
                 'attitude_1': 4,
                 'attitude_2': 5,
                 'attitude_3': 6,
                 'attitude_4': 7,
-                'hk_temp_1': self.gom.hk.temp[0],
-                'hk_temp_2': self.gom.hk.temp[1],
-                'hk_temp_3': self.gom.hk.temp[2],
-                'hk_temp_4': self.gom.hk.temp[3],
+                'hk_temp_1': self.gom.hk.temp[0],  # ushort
+                'hk_temp_2': self.gom.hk.temp[1],  # ushort
+                'hk_temp_3': self.gom.hk.temp[2],  # ushort
+                'hk_temp_4': self.gom.hk.temp[3],  # ushort
                 'gyro_temp': self.gyr.tmp,
                 'thermo_temp': self.thm.tmp,
-                'curin_1': self.gom.hk.curin[0],
-                'curin_2': self.gom.hk.curin[1],
-                'curin_3': self.gom.hk.curin[2],
-                'vboost_1': self.gom.hk.vboost[0],
-                'vboost_2': self.gom.hk.vboost[1],
-                'vboost_3': self.gom.hk.vboost[2],
-                'cursys': self.gom.hk.cursys,
-                'vbatt': self.gom.hk.vbatt,
+                'curin_1': self.gom.hk.curin[0],  # ushort
+                'curin_2': self.gom.hk.curin[1],  # ushort
+                'curin_3': self.gom.hk.curin[2],  # ushort
+                'vboost_1': self.gom.hk.vboost[0],  # ushort
+                'vboost_2': self.gom.hk.vboost[1],  # ushort
+                'vboost_3': self.gom.hk.vboost[2],  # ushort
+                'cursys': self.gom.hk.cursys,  # ushort
+                'vbatt': self.gom.hk.vbatt,  # ushort
                 'prs_pressure': self.prs.pressure}
 
     def write_telem(self, telem):
+        # FIXME
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>
         # functions above, or a list of all of them.
         raise NotImplementedError
 
     def query_telem(self):
+        # FIXME
         # querys telemetry from database
         raise NotImplementedError

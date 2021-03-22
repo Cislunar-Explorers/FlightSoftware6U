@@ -1,26 +1,21 @@
 import os
 import sys
 from threading import Thread
-from datetime import datetime
+from multiprocessing import Process
+from time import sleep, time
+from datetime import datetime, timedelta
 from queue import Queue
 import signal
-import random
 from utils.log import get_log
+
 from json import load
-from communications.satellite_radio import Radio
-import OpticalNavigation.core.camera as camera
 from time import sleep
-from dotenv import load_dotenv
 
 import utils.constants
 from utils.constants import *
 import utils.parameters as params
 from utils.db import create_sensor_tables_from_path
-from communications.comms_driver import CommunicationsSystem
-from drivers.gom import Gomspace
-from drivers.gyro import GyroSensor
-from drivers.ADCDriver import ADC
-from drivers.rtc import RTC
+
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import (
     RestartMode,
@@ -31,6 +26,15 @@ from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
+from utils.boot_cause import hard_boot
+
+from communications.comms_driver import CommunicationsSystem
+from communications.satellite_radio import Radio
+from drivers.gom import Gomspace
+from drivers.gyro import GyroSensor
+from drivers.ADCDriver import ADC
+from drivers.rtc import RTC
+import OpticalNavigation.core.camera as camera
 
 FOR_FLIGHT = None
 
@@ -52,17 +56,34 @@ class MainSatelliteThread(Thread):
         self.reorientation_queue = Queue()
         self.reorientation_list = []
         self.maneuver_queue = Queue()  # maneuver queue
+        self.opnav_queue = Queue()   # determine state of opnav success
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self.init_sensors()
         self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+        self.need_to_reboot = False
+
+        self.gom = None
+        self.gyro = None
+        self.adc = None
+        self.rtc = None
+        self.radio = None
+        self.mux = None
+        self.camera = None
+        self.init_sensors()
+
+        # Telemetry
+        self.tlm = Telemetry(self)
+
+        # Opnav subprocess variables
+        self.opnav_proc_queue = Queue()
+        self.opnav_process = Process()  # define the subprocess
 
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
@@ -92,24 +113,92 @@ class MainSatelliteThread(Thread):
                 ', which could not be found in parameters.json'
             )
 
-    # TODO
-
     def init_sensors(self):
-        self.radio = Radio()
-        self.gom = Gomspace()
-        self.gyro = GyroSensor()
-        self.adc = ADC(self.gyro)
-        self.rtc = RTC()
-        # self.pressure_sensor = PressureSensor() # pass through self so need_to_burn boolean function
-        # in pressure_sensor (to be made) can access burn queue"""
+        try:
+            self.gom = Gomspace()
+        except:
+            self.gom = None
+            logger.error("GOM initialization failed")
+        else:
+            logger.info("Gom initialized")
 
-        # initialize the cameras, select a camera
-        logger.info("Creating camera mux...")
-        self.mux = camera.CameraMux()
-        self.camera = camera.Camera()
-        logger.info("Selecting a camera...")
-        # select camera before reboot so that we will detect cam on reboot
-        self.mux.selectCamera(random.choice([1, 2, 3]))
+        try:
+            self.gyro = GyroSensor()
+        except:
+            self.gyro = None
+            logger.error("GYRO initialization failed")
+        else:
+            logger.info("Gyro initialized")
+
+        try:
+            self.adc = ADC(self.gyro)
+            self.adc.read_temperature()
+        except:
+            self.adc = None
+            logger.error("ADC initialization failed")
+        else:
+            logger.info("ADC initialized")
+
+        try:
+            self.rtc = RTC()
+        except:
+            self.rtc = None
+            logger.error("RTC initialization failed")
+        else:
+            logger.info("RTC initialized")
+
+        try:
+            self.radio = Radio()
+        except:
+            self.radio = None
+            logger.error("RADIO initialization failed")
+        else:
+            logger.info("Radio initialized")
+
+        # initialize the Mux, select a camera
+        try:
+            self.mux = camera.CameraMux()
+            self.mux.selectCamera(1)
+        except:
+            self.mux = None
+            logger.error("MUX initialization failed")
+        else:
+            logger.info("Mux initialized")
+
+        cameras_list = [0, 0, 0]
+
+        # initialize cameras only if not a hard boot (or first boot)
+        if not hard_boot() and os.path.isdir(self.log_dir):
+            try:
+                self.camera = camera.Camera()
+                for i in [1, 2, 3]:
+                    try:
+                        self.mux.selectCamera(i)
+                        f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
+                    except Exception as e:
+                        logger.error(f"CAM{i} initialization failed")
+                        cameras_list[i - 1] = 0
+                    else:
+                        logger.info(f"Cam{i} initialized")
+                        cameras_list[i - 1] = 1
+
+                if 0 in cameras_list:
+                    raise e
+            except:
+                self.camera = None
+                logger.error(f"Cameras initialization failed")
+            else:
+                logger.info("Cameras initialized")
+        else:
+            self.need_to_reboot = True
+
+        # make a bitmask of the initialized sensors for downlinking
+        sensors = [self.gom, self.radio, self.gyro, self.adc, self.rtc, self.mux, self.camera]
+        sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
+        sensor_functioning_list.extend(cameras_list)
+        sensor_bitmask = ''.join(map(str, sensor_functioning_list))
+        logger.debug(f"Sensors: {sensor_bitmask}")
+        return int(sensor_bitmask, 2)
 
     def handle_sigint(self, signal, frame):
         self.shutdown()
@@ -119,7 +208,7 @@ class MainSatelliteThread(Thread):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def poll_inputs(self):
-        
+
         self.flight_mode.poll_inputs()
 
         #Telemetry downlink
@@ -142,15 +231,13 @@ class MainSatelliteThread(Thread):
                         self.command_queue.put(bytes(newCommand))
                         self.command_counter += 1
                     else:
-                        print('Command with Invalid Counter Received. '
-                              + 'Counter: ' + str(unpackedCommand[1]))
+                        logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
                 else:
-                    print('Unauthenticated Command Received')
-
+                    logger.warning('Unauthenticated Command Received')
             except:
-                print('Invalid Command Received')
+                logger.error('Invalid Command Received')
         else:
-            print('Not Received')
+            logger.debug('Not Received')
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -171,7 +258,7 @@ class MainSatelliteThread(Thread):
     def clear_command_queue(self):
         while not self.command_queue.empty():
             command = self.command_queue.get()
-            print(f"Throwing away command: {command}")
+            logger.debug(f"Throwing away command: {command}")
 
     def reset_commands_to_execute(self):
         self.commands_to_execute = []
@@ -212,25 +299,28 @@ class MainSatelliteThread(Thread):
                 self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
-                if not self.downlink_queue.empty():
-                    self.replace_flight_mode_by_id(FMEnum.CommsMode.value)
                 self.run_mode()
+
+                # Opnav subprocess management
+                # TODO: This all needs to be moved to the OpNav Flight mode, and should not be in main!!!
+
+
         finally:
-            self.replace_flight_mode_by_id(FMEnum.Safety.value)
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:
+                self.replace_flight_mode_by_id(FMEnum.Safety.value)
                 self.run()
             else:
                 self.shutdown()
 
     def shutdown(self):
-        self.gom.all_off()
-        logger.critical("Shutting down...")
+        if self.gom is not None:
+            self.gom.all_off()
+        logger.critical("Shutting down flight software")
         # self.comms.stop()
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    FOR_FLIGHT = os.getenv("FOR_FLIGHT") == "FLIGHT"
+    FOR_FLIGHT = False
     main = MainSatelliteThread()
     main.run()

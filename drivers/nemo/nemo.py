@@ -2,7 +2,7 @@
 
 """
 Python interface to NEMO (Netron Experiment in Moon Orbit). Intended for use on Raspberry Pi.
-(c) 2020-2021 Los Alamos National Laboratory v3.1
+(c) 2020-2021 Los Alamos National Laboratory v3.2
 """
 
 import logging
@@ -11,12 +11,15 @@ import datetime
 from pathlib import Path
 from time import sleep
 
+import pigpio
 from adafruit_blinka.agnostic import board_id
 if board_id != 'GENERIC_LINUX_PC':
     import board
     import busio
 
-import pigpio
+
+class I2CTransactionFailure(Exception):
+    pass
 
 
 class I2CDevice:
@@ -56,8 +59,16 @@ class I2CDevice:
         values = bytearray(size)
         while not self._bus.try_lock():
             pass
-        self._bus.writeto_then_readfrom(self._dev_addr, bytes([reg_address]), values)
+        try:
+            self._bus.writeto_then_readfrom(self._dev_addr, bytes([reg_address]), values)
+        except OSError as error:
+            self._bus.unlock()
+            if error.errno == 121:
+                raise I2CTransactionFailure('Read failure')
+            else:
+                raise
         self._bus.unlock()
+
         if self._log is not None:
             self._log.info(f'_read_register(0x{reg_address:02X}, {size}): {values}')
         return list(values)
@@ -68,7 +79,14 @@ class I2CDevice:
             self._log.info(f'_write_register(0x{reg_address:02X}, {values})')
         while not self._bus.try_lock():
             pass
-        self._bus.writeto(self._dev_addr, bytes([reg_address] + values))
+        try:
+            self._bus.writeto(self._dev_addr, bytes([reg_address] + values))
+        except OSError as error:
+            self._bus.unlock()
+            if error.errno == 121:
+                raise I2CTransactionFailure('Write failure')
+            else:
+                raise
         self._bus.unlock()
 
 

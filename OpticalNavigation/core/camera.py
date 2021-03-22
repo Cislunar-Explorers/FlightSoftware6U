@@ -116,7 +116,7 @@ class Camera:
             lastTimestamp = camera.timestamp
             lastIndex = -1
             # Loop over expected frames
-            for n in range(video_time * frame_rate): # 2 seconds
+            for n in range(video_time * frame_rate): # {video_time} seconds
                 f = camera.frame
                 # If no new frame yet, sleep for half a frame
                 while f is None or f.index == lastIndex or f.frame_type == PiVideoFrameType.sps_header:

@@ -467,39 +467,63 @@ class CommandDefinitions:
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
 
     def nemo_write_register(self, **kwargs):
-        reg_address = kwargs['reg_address']
-        values = kwargs['values']
+        if self.parent.nemo_manager is not None:
+            reg_address = kwargs['reg_address']
+            values = kwargs['values']
 
-        self.parent.nemo_manager.write_register(reg_address, values)
+            self.parent.nemo_manager.write_register(reg_address, values)
+        else:
+            self.parent.logger.error("CMD: nemo_write_register() failed, nemo_manager not initialized")
 
     def nemo_read_register(self, **kwargs):
-        reg_address = kwargs['reg_address']
-        size = kwargs['size']
+        if self.parent.nemo_manager is not None:
+            reg_address = kwargs['reg_address']
+            size = kwargs['size']
 
-        self.parent.nemo_manager.read_register(reg_address, size)
+            self.parent.nemo_manager.read_register(reg_address, size)
+        else:
+            self.parent.logger.error("CMD: nemo_read_register() failed, nemo_manager not initialized")
 
     def nemo_set_config(self, **kwargs):
-        self.parent.nemo_manager.set_config(kwargs)
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.set_config(kwargs)
+        else:
+            self.parent.logger.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
 
     def nemo_power_off(self):
-        self.parent.nemo_manager.power_off()
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.power_off()
+        else:
+            self.parent.logger.error("CMD: nemo_power_off() failed, nemo_manager not initialized")
 
     def nemo_power_on(self):
-        self.parent.nemo_manager.power_on()
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.power_on()
+        else:
+            self.parent.logger.error("CMD: nemo_power_on() failed, nemo_manager not initialized")
 
     def nemo_reboot(self):
-        self.parent.nemo_manager.reboot()
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.reboot()
+        else:
+            self.parent.logger.error("CMD: nemo_reboot() failed, nemo_manager not initialized")
 
     def nemo_process_rate_data(self, **kwargs):
-        t_start = kwargs['t_start']
-        t_stop = kwargs['t_stop']
-        decimation_factor = kwargs['decimation_factor']
+        if self.parent.nemo_manager is not None:
+            t_start = kwargs['t_start']
+            t_stop = kwargs['t_stop']
+            decimation_factor = kwargs['decimation_factor']
 
         self.parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+        else:
+            self.parent.logger.error("CMD: nemo_process_rate_data() failed, nemo_manager not initialized")
 
     def nemo_process_histograms(self, **kwargs):
-        t_start = kwargs['t_start']
-        t_stop = kwargs['t_stop']
-        decimation_factor = kwargs['decimation_factor']
+        if self.parent.nemo_manager is not None:
+            t_start = kwargs['t_start']
+            t_stop = kwargs['t_stop']
+            decimation_factor = kwargs['decimation_factor']
 
-        self.parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
+            self.parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
+        else:
+            self.parent.logger.error("CMD: nemo_process_histograms() failed, nemo_manager not initialized")

@@ -10,6 +10,9 @@ pytest-mock
 tqdm
 sqlalchemy
 Adafruit-Blinka
+psutil
 # OpNav end
-
-
+numpy-quaternion
+astropy
+numba
+uptime

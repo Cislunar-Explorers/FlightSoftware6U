@@ -7,7 +7,7 @@ import time
 HITL_test = pc.Power()
 
 ps.gom_logger.debug("Turning off all outputs")
-OUTPUTS = ["comms", "burnwire_1", "burnwire_2", "glowplug", "solenoid", "electrolyzer"]
+OUTPUTS = ["comms", "burnwire_1", "glowplug_2", "glowplug", "solenoid", "electrolyzer"]
 for i in range(0, 6):
     HITL_test.set_single_output(OUTPUTS[i], 0, 0)
 

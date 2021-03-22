@@ -17,63 +17,65 @@ from utils.constants import (
 )
 from utils.exceptions import (
     SerializationException,
-    CommandPackingException,
-    CommandUnpackingException,
+    DownlinkPackingException,
+    DownlinkUnpackingException,
 )
 from utils.struct import (
     pack_unsigned_short,
     unpack_unsigned_short,
-    pack_unsigned_int,
     packer_dict
 )
 
-def calc_command_size(data: bytes):
+
+def calc_downlink_size(data: bytes):
     return MIN_COMMAND_SIZE + len(data)
 
-def pack_command_bytes(counter: int, mode: int, command_id: int, data: bytes):
-    buf = bytearray(calc_command_size(data))
+
+def pack_downlink_bytes(counter: int, mode: int, downlink_id: int, data: bytes):
+    buf = bytearray(calc_downlink_size(data))
     buf[COUNTER_OFFSET - MAC_LENGTH: COUNTER_OFFSET - MAC_LENGTH + COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE,'big')
     buf[MODE_OFFSET - MAC_LENGTH] = mode
-    buf[ID_OFFSET- MAC_LENGTH] = command_id
+    buf[ID_OFFSET- MAC_LENGTH] = downlink_id
     pack_unsigned_short(buf, DATA_LEN_OFFSET- MAC_LENGTH, len(data))
     buf[DATA_OFFSET- MAC_LENGTH:] = data
     return MAC + bytes(buf)
 
 
-def unpack_command_bytes(data: bytes):
+def unpack_downlink_bytes(data: bytes):
     mac = data[:MAC_LENGTH]
     counter = int.from_bytes(data[COUNTER_OFFSET:COUNTER_OFFSET + COUNTER_SIZE],'big')
     mode = data[MODE_OFFSET]
-    command_id = data[ID_OFFSET]
+    downlink_id = data[ID_OFFSET]
     data_len = unpack_unsigned_short(data, DATA_LEN_OFFSET)[1]
     if data_len + DATA_OFFSET != len(data):
-        raise CommandUnpackingException(
+        raise DownlinkUnpackingException(
             f"Incorrect data buffer size: {len(data)}, expected "
-            f"{data_len + DATA_OFFSET} for command with Mode: {mode}"
-            f"CommandID: {command_id}"
+            f"{data_len + DATA_OFFSET} for downlink with Mode: {mode}"
+            f"DownlinkID: {downlink_id}"
         )
-    return mac, counter, mode, command_id, data[DATA_OFFSET:]
+    return mac, counter, mode, downlink_id, data[DATA_OFFSET:]
 
-
-class CommandHandler:
+ 
+class DownlinkHandler:
     def __init__(self):
-        self.command_dict = dict()
+        self.downlink_dict = dict()
         self.packers = dict()
         self.unpackers = dict()
         # Packers and unpackers will always have identical set of keys
         # Enforced in practice
         self.register_codecs()
-        self.register_commands()
+        self.register_downlinks()
     
     def register_codecs(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
-            for argname, arg_type in mode_name.command_arg_types.items():
+            for argname, arg_type in mode_name.downlink_arg_types.items():
                 pack_tuple = packer_dict[arg_type]
                 packer, unpacker = pack_tuple
                 self.register_new_codec(argname, packer, unpacker)
 
-    def get_command_size(self, mode: int, application_id: int):
-        return self.command_dict[mode][application_id][1] + DATA_OFFSET
+
+    def get_downlink_size(self, mode: int, application_id: int):
+        return self.downlink_dict[mode][application_id][1] + DATA_OFFSET
 
     def register_new_codec(self, arg: str, packer, unpacker):
         if arg in self.packers:
@@ -84,42 +86,42 @@ class CommandHandler:
         self.packers[arg] = packer
         self.unpackers[arg] = unpacker
 
-    def pack_command(self, counter: int, mode: int, command_id: int, **kwargs) -> bytes:
-        func_args, buffer_size = self.command_dict[mode][command_id]
+    def pack_downlink(self, counter:int, mode: int, downlink_id: int, **kwargs) -> bytes:
+        func_args, buffer_size = self.downlink_dict[mode][downlink_id]
         data_buffer = bytearray(buffer_size)
         offset = 0
         try:
             for arg in func_args:
                 off = self.packers[arg](data_buffer, offset, kwargs[arg])
                 offset += off
-            return pack_command_bytes(counter, mode, command_id, data_buffer)
+            return pack_downlink_bytes(counter, mode, downlink_id, data_buffer)
         except StructError as exc:
-            raise CommandPackingException(str(exc))
+            raise DownlinkPackingException(str(exc))
         except KeyError as exc:
             if arg is not None:
-                raise CommandPackingException(
-                    f"KeyError occured for arg: {arg}, using Mode: {mode}; CommandID: {command_id} "
+                raise DownlinkPackingException(
+                    f"KeyError occured for arg: {arg}, using Mode: {mode}; DownlinkID: {downlink_id} "
                     f"KeyError was: {str(exc)}"
                 )
             else:
-                raise CommandPackingException(
-                    f"KeyError occurred, no such command: {command_id} for mode: {mode} "
+                raise DownlinkPackingException(
+                    f"KeyError occurred, no such downlink: {downlink_id} for mode: {mode} "
                     f"KeyError was: {str(exc)}"
                 )
 
-    def unpack_command(self, data: bytes):
+    def unpack_downlink(self, data: bytes):
         
         try:
-            mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
-            func_args, buffer_size = self.command_dict[mode][command_id]
+            mac, counter, mode, downlink_id, arg_data = unpack_downlink_bytes(data)
+            func_args, buffer_size = self.downlink_dict[mode][downlink_id]
         except:
-            raise CommandUnpackingException(
-                'Unknown command received.'
+            raise DownlinkUnpackingException(
+                f'Unknown downlink received. Mode: {mode}, Downlink ID: {downlink_id}'
             )
         if (buffer_size + DATA_OFFSET) != len(data):
-            raise CommandUnpackingException(
-                f"Received command with data len: {len(data)}, but expected length: {buffer_size}; "
-                f"for command with Mode: {mode}, CommandID: {command_id}"
+            raise DownlinkUnpackingException(
+                f"Received downlink with data len: {len(data)}, but expected length: {buffer_size}; "
+                f"for command with Mode: {mode}, DownlinkID: {downlink_id}"
             )
         offset = 0
         kwargs = dict()
@@ -127,20 +129,20 @@ class CommandHandler:
             off, value = self.unpackers[arg](arg_data, offset)
             kwargs[arg] = value
             offset += off
-        return mac, counter, mode, command_id, kwargs
+        return mac, counter, mode, downlink_id, kwargs
     
-    def register_commands(self):
+    def register_downlinks(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
             
-            command_dict = {}
+            downlink_dict = {}
 
-            for command_id, command_data_tuple in mode_name.command_codecs.items():
+            for downlink_id, downlink_data_tuple in mode_name.downlink_codecs.items():
                 
-                command_dict[command_id] = command_data_tuple
-                self.command_dict[mode_id] = command_dict 
+                downlink_dict[downlink_id] = downlink_data_tuple
+                self.downlink_dict[mode_id] = downlink_dict 
 
     #Used only for testing
-    def register_new_command(self, mode_id:int, command_id:int, **kwargs):
+    def register_new_downlink(self, mode_id:int, downlink_id:int, **kwargs):
         
         totalBytes = 0
 
@@ -161,13 +163,10 @@ class CommandHandler:
                 elif isinstance(kwargs[arg], float): #double
                     self.register_new_codec(arg,us.pack_double, us.unpack_double)
                     totalBytes += 8
-                elif isinstance(kwargs[arg], str): #string
-                    self.register_new_codec(arg,us.pack_str, us.unpack_str)
-                    totalBytes += 195
             
-            command_args = list(kwargs.keys())
-            command_data_tuple = (command_args, totalBytes)
-            self.command_dict[mode_id][command_id] = (command_args, totalBytes)
+            downlink_args = list(kwargs.keys())
+            downlink_data_tuple = (downlink_args, totalBytes)
+            self.downlink_dict[mode_id][downlink_id] = downlink_data_tuple
 
         except:
             raise SerializationException()

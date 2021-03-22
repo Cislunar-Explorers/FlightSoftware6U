@@ -1,41 +1,38 @@
 from enum import IntEnum, unique
 import os
+import hashlib
 
+# unit conversions
 
-# TODO
-# Create method to set constants based on purpose of run
+DEG2RAD = 3.14159265359 / 180
 
 # Delay to wait on BootUp
-BOOTUP_SEPARATION_DELAY = 30.0
+# TODO change back to 30.0
+BOOTUP_SEPARATION_DELAY = 5.0
 
-# TODO determine correct values threshold values
-ENTER_LOW_BATTERY_MODE_THRESHOLD = 0.3
-EXIT_LOW_BATTERY_MODE_THRESHOLD = 0.5
+# Verification Key Parameters
+MAC_LENGTH = 4
+MAC_DATA = b'Hello'
+MAC_KEY = b'World'
+MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
-# Constants defining goal cracking pressures for electrolysis
-LOW_CRACKING_PRESSURE = 10.0
-HIGH_CRACKING_PRESSURE = 20.0
-IDEAL_CRACKING_PRESSURE = 15.0
-
-# OpNav timing interval in minutes
-OPNAV_INTERVAL = 60
-
-SQL_PREFIX = "sqlite:///"
-CISLUNAR_BASE_DIR = os.path.join(
-    os.path.expanduser("~"), ".cislunar-flight-software"
-)
-LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
-DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
-
+# Serialization Sizes
 MODE_SIZE = 1
 ID_SIZE = 1
+COUNTER_SIZE = 3
 DATA_LEN_SIZE = 2
-MIN_COMMAND_SIZE = MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
+MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
 
-MODE_OFFSET = 0
-ID_OFFSET = 1
-DATA_LEN_OFFSET = 2
-DATA_OFFSET = 4
+# Serializations Offsets
+MAC_OFFSET = 0
+COUNTER_OFFSET = 0 + MAC_LENGTH
+MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
+ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
+DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
+DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
+
+# Parameters.json path
+PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -54,13 +51,75 @@ STATE = "state"
 INTERVAL = "interval"
 DELAY = "delay"
 
-GOM_VOLTAGE_MAX = 8400  # mV
-GOM_VOLTAGE_MIN = 6000
+START = "pulse_start"
+PULSE_DURATION = "pulse_duration"
+PULSE_NUM = "pulse_num"
+PULSE_DT = "pulse_dt"
+
+NUM_BLOCKS = "num_blocks"
+
+HARD_SET = "hard_set"
+
+# Keyword argument definitions for downlink
+RTC_TIME = "rtc_time"
+
+ATT_1 = "attitude_1"
+ATT_2 = "attitude_2"
+ATT_3 = "attitude_3"
+ATT_4 = "attitude_4"
+
+HK_TEMP_1 = "hk_temp_1"
+HK_TEMP_2 = "hk_temp_2"
+HK_TEMP_3 = "hk_temp_3"
+HK_TEMP_4 = "hk_temp_4"
+GYRO_TEMP = "gyro_temp"
+
+THERMOCOUPLER_TEMP = "thermo_temp"
+
+CURRENT_IN_1 = "curin_1"
+CURRENT_IN_2 = "curin_2"
+CURRENT_IN_3 = "curin_3"
+
+VBOOST_1 = "vboost_1"
+VBOOST_2 = "vboost_2"
+VBOOST_3 = "vboost_3"
+
+SYSTEM_CURRENT = "cursys"
+BATTERY_VOLTAGE = "vbatt"
+
+PROP_TANK_PRESSURE = "prs_pressure"
+
+SUCCESSFUL = "successful"
+
+# SQL Stuff
+SQL_PREFIX = "sqlite:///"
+CISLUNAR_BASE_DIR = os.path.join(
+    os.path.expanduser("~"), ".cislunar-flight-software"
+)
+LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
+DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
+
+a = 1664525
+b = 1013904223
+M = 2 ** 32
+team_identifier = 0xEB902D2D  # Team 2
 
 # TODO: validate these values:
 SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
+BURN_WAIT_TIME = 15  # minutes
+
+MAX_GYRO_RATE = 250  # degrees/sec # TODO
+
+NO_FM_CHANGE = -1
+
+ACS_SPIKE_DURATION = 4  # milliseconds
+GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
+
+# Gyro specific constants
+
+GYRO_RANGE = 250  # degrees per second
 
 
 @unique
@@ -69,11 +128,12 @@ class ConstantsEnum(IntEnum):
 
 
 # GOMspace Channel designations:
+# TODO: re-evaluate and double check before flight for each satellite half
 @unique
 class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
-    burnwire_2 = 2
+    glowplug_2 = 2
     glowplug = 3
     solenoid = 4
     electrolyzer = 5
@@ -92,6 +152,7 @@ class FMEnum(IntEnum):
     TestMode = 8  # Execute specified test
     CommsMode = 9
     Command = 10
+    AttitudeAdjustment = 11
 
 
 @unique
@@ -121,7 +182,7 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
-
+    ACSPulsing = 13
 
 
 @unique
@@ -181,8 +242,12 @@ class TestCommandEnum(IntEnum):
     SetTestMode = 1  # no args
     TriggerBurnWire = 2  # no args
     RunOpNav = 3  # no args
+    ADCTest = 4
     SeparationTest = 5
     GomPin = 6
+    CommsDriver = 7
+    PiShutdown = 11
+    RTCTest = 8
 
 
 @unique

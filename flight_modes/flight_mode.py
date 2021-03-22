@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 import gc
 from time import sleep, time
 from datetime import datetime
-import os
+from multiprocessing import Process
+import subprocess
+from queue import Empty
 
 from utils.constants import (  # noqa F401
     BOOTUP_SEPARATION_DELAY,
@@ -29,29 +31,27 @@ from utils.constants import (  # noqa F401
     GLOWPLUG_DURATION,
     BURN_WAIT_TIME,
     START, PULSE_NUM, PULSE_DT, PULSE_DURATION,
-    NUM_BLOCKS
+    NUM_BLOCKS,
+    BURN_WAIT_TIME,
+    RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
+    HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
+    CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
+    VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
+    PROP_TANK_PRESSURE, HARD_SET, TIME, SUCCESSFUL
 )
 
-from utils.constants import *
 import utils.parameters as params
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
-import utils.parameters as params
-
-from communications.command_definitions import CommandDefinitions
-
-# Necessary modes to implement
-# BootUp, Restart, Normal, Eclipse, Safety, Propulsion,
-# Attitude Adjustment, Transmitting, OpNav (image processing)
-# TestModes
 
 no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
-    FMEnum.CommsMode.value,
     FMEnum.Command.value
 ]
+# this line of code brought to you by https://stackoverflow.com/questions/29503339/
+all_modes = list(map(int, FMEnum))
 
 logger = get_log()
 
@@ -73,14 +73,27 @@ class FlightMode:
     def __init__(self, parent: MainSatelliteThread):
         self.parent = parent
         self.task_completed = False
-        self.burn_time = None
 
     def update_state(self) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
-        update_state to update our flight mode """
-        # currently a mess and needs revisiting. Formal logic for switching FMs has not been defined/documented.
-        # Please do so!
+        update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
+         serves as a basis for which most other flight modes can build off of."""
+
+        # I am not sure this will properly work, but shuld have little impact for software demo
+        if self.parent.opnav_process.is_alive():
+            try:
+                self.parent.opnav_process.join(timeout=1)
+                result = self.parent.opnav_proc_queue.get(timeout=1)
+                logger.info("[OPNAV]: ", result)
+            except Empty:
+                if not self.parent.opnav_process.is_alive():
+                    self.parent.opnav_process.terminate()
+                    logger.info("[OPNAV]: Process Terminated")
+
         flight_mode_id = self.flight_mode_id
+
+        if flight_mode_id not in all_modes:
+            raise UnknownFlightModeException(flight_mode_id)
 
         if self.task_completed:
             if self.parent.FMQueue.empty():
@@ -92,11 +105,11 @@ class FlightMode:
             return flight_mode_id
 
         # go to maneuver mode if there is something in the maneuver queue
+        # TODO check existence/value of BURN TIME paramter, rather than only checking the queue
         if not self.parent.maneuver_queue.empty():
-            # TODO assign the time command to this var
-            self.burn_time = None
-            if self.burn_time - time() < (60.0 * BURN_WAIT_TIME):
-                return FMEnum.Maneuver.value
+            if params.SCHEDULED_BURN_TIME is not None and params.SCHEDULED_BURN_TIME > time():
+                if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
+                    return FMEnum.Maneuver.value
 
         # go to reorientation mode if there is something in the reorientation queue
         if (not self.parent.reorientation_queue.empty()) or self.parent.reorientation_list:
@@ -119,45 +132,6 @@ class FlightMode:
             return FMEnum.CommsMode.value
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
-
-        # everything in update_state below this comment should be implemented in their respective flight mode
-        # The logic defined below isn't necessarily incorrect - it's just in an outdated format
-
-        # Burn command queue logic
-        # TODO implment need_to_burn function in adc driver
-        if self.parent.pressure_sensor.need_to_burn():
-            self.parent.replace_flight_mode_by_id(FMEnum.Maneuver.value)
-            return
-
-        # Check if opnav needs to be run
-        curr_time = datetime.now()
-        time_diff = curr_time - self.parent.last_opnav_run
-        if time_diff.seconds * 60 > params.OPNAV_INTERVAL:
-            self.parent.replace_flight_mode_by_id(FMEnum.OpNav.value)
-
-        elif flight_mode_id == FMEnum.LowBatterySafety.value:
-            if (
-                    self.gom.read_battery_percentage()
-                    >= params.EXIT_LOW_BATTERY_MODE_THRESHOLD
-            ):
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
-        elif flight_mode_id == FMEnum.Safety.value:
-            raise NotImplementedError  # TODO
-
-        elif flight_mode_id == FMEnum.Maneuver.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
-        elif flight_mode_id == FMEnum.OpNav.value:
-            if self.task_completed is True:
-                self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
-        elif flight_mode_id in no_transition_modes:
-            pass
-
-        else:
-            raise UnknownFlightModeException(flight_mode_id)
 
     def register_commands(cls):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
@@ -183,7 +157,7 @@ class FlightMode:
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
                 except AssertionError:
-                    self.parent.logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
+                    logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
                     bogus = True
 
                 if bogus is not True:
@@ -220,14 +194,14 @@ class FlightMode:
         pass
 
     def __enter__(self):
-        self.parent.logger.info(f"Starting flight mode {self.flight_mode_id}")
+        logger.info(f"Starting flight mode {self.flight_mode_id}")
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        self.parent.logger.info(f"Finishing flight mode {self.flight_mode_id}")
+        logger.info(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
-            self.parent.logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
-            self.parent.logger.error(f"Failed with traceback:\n {tb}")
+            logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
+            logger.error(f"Failed with traceback:\n {tb}")
 
 
 # Model for FlightModes that require precise timing
@@ -291,43 +265,43 @@ class CommsMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
         self.electrolyzing = False
-    
+
     def enter_transmit_safe_mode(self):
-        
-        #Stop electrolyzing
+
+        # Stop electrolyzing
         if self.parent.gom.is_electrolyzing():
             self.electrolyzing = True
             self.parent.gom.set_electrolysis(False)
-        
-        #Set RF receiving side to low
+
+        # Set RF receiving side to low
         self.parent.gom.rf_receiving_switch(receive=False)
 
-        #Turn off LNA
+        # Turn off LNA
         self.parent.gom.lna(False)
 
-        #Set RF transmitting side to high
+        # Set RF transmitting side to high
         self.parent.gom.rf_transmitting_switch(receive=False)
 
-        #Turn on power amplifier
+        # Turn on power amplifier
         self.parent.gom.set_PA(on=True)
-    
+
     def exit_transmit_safe_mode(self):
 
-        #Turn off power amplifier
+        # Turn off power amplifier
         self.parent.gom.set_PA(on=False)
 
-        #Set RF transmitting side to low
+        # Set RF transmitting side to low
         self.parent.gom.rf_transmitting_switch(receive=True)
 
-        #Turn on LNA
+        # Turn on LNA
         self.parent.gom.lna(True)
 
-        #Set RF receiving side to high
+        # Set RF receiving side to high
         self.parent.gom.rf_receiving_switch(receive=True)
 
-        #Resume electrolysis if we paused it to transmit
+        # Resume electrolysis if we paused it to transmit
         if self.electrolyzing:
-            self.parent.gom.set_electrolysis(True,delay = params.DEFAULT_ELECTROLYSIS_DELAY)
+            self.parent.gom.set_electrolysis(True, delay=params.DEFAULT_ELECTROLYSIS_DELAY)
 
     def execute_downlinks(self):
         while not self.parent.downlink_queue.empty():
@@ -335,23 +309,35 @@ class CommsMode(FlightMode):
             self.parent.downlink_counter += 1
             sleep(params.DOWNLINK_BUFFER_TIME)
 
+    def update_state(self) -> int:
+        super_fm = super().update_state()
+        if super_fm != NO_FM_CHANGE:
+            return super_fm
+
     def run_mode(self):
         if not self.parent.downlink_queue.empty():
             self.enter_transmit_safe_mode()
             self.execute_downlinks()
             self.exit_transmit_safe_mode()
-            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+
+        self.completed_task()
+
 
 class OpNavMode(FlightMode):
-    """dummy FM for now"""
     flight_mode_id = FMEnum.OpNav.value
 
     def __init__(self, parent):
         super().__init__(parent)
 
     def run_mode(self):
-        from core.opnav import start
-        start()
+        # TODO: overhaul so opnav calculation only occur while in opnav mode
+        if not self.parent.opnav_process.is_alive():
+            logger.info("[OPNAV]: Able to run next opnav")
+            self.parent.last_opnav_run = datetime.now()
+            logger.info("[OPNAV]: Starting opnav subprocess")
+            self.parent.opnav_process = Process(target=self.opnav_subprocess, args=(self.parent.opnav_proc_queue,))
+            self.parent.opnav_process.start()
+        self.completed_task()
 
     def update_state(self) -> int:
         super_fm = super().update_state()
@@ -359,10 +345,15 @@ class OpNavMode(FlightMode):
             return super_fm
 
         # check if opnav db has been updated, then set self.task_completed true
-        if self.task_completed:
-            return FMEnum.Normal.value
 
         return NO_FM_CHANGE
+
+    def opnav_subprocess(self, q):
+        # TODO change from pytest to actual opnav
+        # os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
+        # subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
+        subprocess.run('echo [OPNAV]: Subprocess Start; sleep 1m; echo [OPNAV]: Subprocess end', shell=True)
+        q.put("Opnav Finished")
 
 
 class SensorMode(FlightMode):
@@ -383,8 +374,6 @@ class LowBatterySafetyMode(FlightMode):
         super().__init__(parent)
         raise NotImplementedError
 
-    # TODO point solar panels directly at the sun
-
     def run_mode(self):
         sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         raise NotImplementedError
@@ -392,11 +381,7 @@ class LowBatterySafetyMode(FlightMode):
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
         if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
-            self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
-
-        if sum(self.parent.telemetry.gom.hk.curin) > params.ENTER_ECLIPSE_MODE_CURRENT:
-            # If we do have some power coming in (i.e. we are not eclipsed by the moon/earth), reorient to face sun
-            raise NotImplementedError
+            return FMEnum.Normal.value
 
     def __enter__(self):
         super().__enter__()
@@ -414,16 +399,22 @@ class ManeuverMode(PauseBackgroundMode):
 
     def update_state(self) -> int:
         if self.task_completed is True:
+            logger.info("Maneuver complete. Exiting maneuver mode...")
             return FMEnum.Normal.value
         return NO_FM_CHANGE
 
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
-        sleep((self.burn_time - time()) - 5)
+        # TODO: clear value of params.SCHEDULE_BURN_TIME after completion of burn
+        sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
+        logger.info("Glowplug maneuver...")
+        # TODO: poll and check accelerometer values. If not acceleration seen, try other glowplug
         self.parent.gom.glowplug(GLOWPLUG_DURATION)
+        self.parent.maneuver_queue.get()
         self.task_completed = True
 
 
+# TODO
 class SafeMode(FlightMode):
     flight_mode_id = FMEnum.Safety.value
 
@@ -450,8 +441,9 @@ class NormalMode(FlightMode):
         NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
+        NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
+        NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4),
         NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 14),
-        NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2)
     }
 
     command_arg_types = {
@@ -468,7 +460,8 @@ class NormalMode(FlightMode):
         START: 'double',
         PULSE_DURATION: 'short',
         PULSE_NUM: 'short',
-        PULSE_DT: 'short'
+        PULSE_DT: 'short',
+        TIME: 'float'
     }
 
     downlink_codecs = {
@@ -476,7 +469,7 @@ class NormalMode(FlightMode):
                                               HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
                                               CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
                                               VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
-                                              PROP_TANK_PRESSURE], 108),
+                                              PROP_TANK_PRESSURE], 84),
 
         NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1)
     }
@@ -490,20 +483,20 @@ class NormalMode(FlightMode):
         ATT_2: 'float',
         ATT_3: 'float',
         ATT_4: 'float',
-        HK_TEMP_1: 'float',
-        HK_TEMP_2: 'float',
-        HK_TEMP_3: 'float',
-        HK_TEMP_4: 'float',
+        HK_TEMP_1: 'short',
+        HK_TEMP_2: 'short',
+        HK_TEMP_3: 'short',
+        HK_TEMP_4: 'short',
         GYRO_TEMP: 'float',
         THERMOCOUPLER_TEMP: 'float',
-        CURRENT_IN_1: 'float',
-        CURRENT_IN_2: 'float',
-        CURRENT_IN_3: 'float',
-        VBOOST_1: 'float',
-        VBOOST_2: 'float',
-        VBOOST_3: 'float',
-        SYSTEM_CURRENT: 'float',
-        BATTERY_VOLTAGE: 'float',
+        CURRENT_IN_1: 'short',
+        CURRENT_IN_2: 'short',
+        CURRENT_IN_3: 'short',
+        VBOOST_1: 'short',
+        VBOOST_2: 'short',
+        VBOOST_3: 'short',
+        SYSTEM_CURRENT: 'short',
+        BATTERY_VOLTAGE: 'short',
         PROP_TANK_PRESSURE: 'float',
         SUCCESSFUL: 'bool'
     }
@@ -520,12 +513,9 @@ class NormalMode(FlightMode):
         time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < params.OPNAV_INTERVAL
         need_to_electrolyze = self.parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self.parent.telemetry.gom.is_electrolyzing
-        seconds_to_electrolyze = 60  # TODO: actual calculation involving current pressure
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
-
-        # There's probably some super-optimized branchless way of implementing this logic, but oh well:
 
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
@@ -544,16 +534,16 @@ class NormalMode(FlightMode):
         # note: at this point, the variable "need_to_electrolyze" is equivalent to the new state of the electrolyzer
 
         if time_for_opnav:
-            if need_to_electrolyze:
-                # If it's time for opnav to run BUT we are below ideal pressure: turn off electrolysis after a delay
-                self.parent.gom.set_electrolysis(False, delay=seconds_to_electrolyze)
-                # may not be relevant anymore now that opnav is becoming a subprocess
-
+            logger.info("Time to run Opnav")
             return FMEnum.OpNav.value
 
+        # if we have data to downlink, change to comms mode
+        if not (self.parent.downlink_queue.empty()):
+            return FMEnum.CommsMode.value
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
+        self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):
@@ -576,4 +566,5 @@ class CommandMode(PauseBackgroundMode):
         pass  # intentional
 
     def poll_inputs(self):
+        # TODO
         raise NotImplementedError  # only check the comms queue

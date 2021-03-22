@@ -26,8 +26,8 @@ from utils.constants import DB_FILE
 # from tests.animations import LiveTrajectoryPlot
 
 SQL_PREFIX = "sqlite:///"
-#sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
-sql_path = DB_FILE
+sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
+#sql_path = DB_FILE
 
 def setup_function(function):
     # Reset databases
@@ -99,7 +99,7 @@ def test_start(mocker):
         return
 
     #Don't use select_camera_mock for software demo
-    #mocker.patch('OpticalNavigation.core.opnav.select_camera', side_effect=select_camera_mock)
+    mocker.patch('OpticalNavigation.core.opnav.select_camera', side_effect=select_camera_mock)
 
     idx = [0]
     timestamps = [981750, 981750, 2028950, 2028950, 3010700, 3010700]
@@ -115,7 +115,7 @@ def test_start(mocker):
         return (filename, time)
 
     #Don't use record_video mock for software demo
-    #mocker.patch('OpticalNavigation.core.opnav.record_video', side_effect=record_video_mock)
+    mocker.patch('OpticalNavigation.core.opnav.record_video', side_effect=record_video_mock)
 
     def record_gyro_mock(count):
         print("gyro_mock")

@@ -1,5 +1,4 @@
 from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
-from utils.constants import OPNAV_INTERVAL
 from OpticalNavigation.core.acquisition import startAcquisition, readOmega
 from OpticalNavigation.core.cam_meas import cameraMeasurements
 import OpticalNavigation.core.ukf as traj_ukf
@@ -15,6 +14,7 @@ from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, 
 from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
 from utils.constants import DB_FILE
 from utils.log import *
+import utils.parameters as params
 from datetime import datetime, timedelta
 import math
 from sqlalchemy import desc
@@ -170,8 +170,8 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
-    #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
-    frames = glob.glob("/home/pi/surrender_images/*.jpg")
+    frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
+    #frames = glob.glob("/home/pi/surrender_images/*.jpg")
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]

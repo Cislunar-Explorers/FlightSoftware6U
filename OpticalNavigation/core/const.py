@@ -1,3 +1,5 @@
+import utils.parameters as params
+
 import os
 import numpy as np
 from enum import Enum
@@ -75,7 +77,7 @@ class CameraRecordingParameters:
         self.expHigh = expHigh
 
 
-CisLunarCamRecParams = CameraRecordingParameters(15, 1, 30000, 50000)
+CisLunarCamRecParams = CameraRecordingParameters(params.CAMERA_FPS, params.CAMERA_RECORDING_TIME, params.CAMERA_LOW_EXPOSURE, params.CAMERA_HIGH_EXPOSURE)
 
 class CameraAcquisionDirectoryNotFound(Exception):
     def __init__(self, camLoc):

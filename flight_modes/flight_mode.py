@@ -156,7 +156,7 @@ class FlightMode:
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
                 except AssertionError:
-                    self.parent.logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
+                    logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
                     bogus = True
 
                 if bogus is not True:
@@ -193,14 +193,14 @@ class FlightMode:
         pass
 
     def __enter__(self):
-        self.parent.logger.info(f"Starting flight mode {self.flight_mode_id}")
+        logger.info(f"Starting flight mode {self.flight_mode_id}")
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        self.parent.logger.info(f"Finishing flight mode {self.flight_mode_id}")
+        logger.info(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
-            self.parent.logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
-            self.parent.logger.error(f"Failed with traceback:\n {tb}")
+            logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
+            logger.error(f"Failed with traceback:\n {tb}")
 
 
 # Model for FlightModes that require precise timing
@@ -532,7 +532,7 @@ class NormalMode(FlightMode):
         # note: at this point, the variable "need_to_electrolyze" is equivalent to the new state of the electrolyzer
 
         if time_for_opnav:
-            self.parent.logger.info("Time to run Opnav")
+            logger.info("Time to run Opnav")
             return FMEnum.OpNav.value
 
         # if we have data to downlink, change to comms mode

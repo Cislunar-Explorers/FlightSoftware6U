@@ -13,6 +13,7 @@ from datetime import datetime
 import os
 
 from utils.constants import (  # noqa F401
+    MIN_COMMAND_SIZE,
     BOOTUP_SEPARATION_DELAY,
     FMEnum,
     NormalCommandEnum,
@@ -579,7 +580,7 @@ class CommandMode(PauseBackgroundMode):
 
     downlink_codecs = {
         CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195)
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195 - MIN_COMMAND_SIZE)
     }
 
     downlink_arg_types = {

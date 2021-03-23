@@ -8,7 +8,7 @@ groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4
-file_path = FLIGHT_SOFTWARE_PATH+'main.py'
+file_path = FLIGHT_SOFTWARE_PATH+'FlightSoftware/HITL-tests/test_upload_file.py'
 
 #Get file
 max_string_size = 190 - 50 - 2 - MIN_COMMAND_SIZE

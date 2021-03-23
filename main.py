@@ -148,8 +148,8 @@ class MainSatelliteThread(Thread):
                 else:
                     print('Unauthenticated Command Received')
 
-            except:
-                print('Invalid Command Received')
+            #except:
+                #print('Invalid Command Received')
         else:
             print('Not Received')
 

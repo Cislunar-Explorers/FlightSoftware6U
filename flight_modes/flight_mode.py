@@ -601,4 +601,5 @@ class CommandMode(PauseBackgroundMode):
         pass  # intentional
 
     def poll_inputs(self):
-        raise NotImplementedError  # only check the comms queue
+        #raise NotImplementedError  # only check the comms queue
+        pass

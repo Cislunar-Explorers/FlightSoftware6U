@@ -1,20 +1,21 @@
 from utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum
-from communications.satellite_radio import Radio
+#from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
 import hashlib
 import time
 
-groundstation = Radio()
+#groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4
-file_path = 'main.py'
+file_path = 'HITL-tests/test_upload_file.py'
 
 #Get file
 max_string_size = 190 - 50 - 2 - MIN_COMMAND_SIZE
 file = open(file_path)
 file_string = file.read()
 file_blocks = []
+print(file_string)
 
 #Determine number of blocks
 number_of_blocks = len(file_string)//max_string_size

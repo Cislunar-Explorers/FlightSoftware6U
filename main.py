@@ -208,7 +208,7 @@ class MainSatelliteThread(Thread):
         """This is the main loop of the Cislunar Explorers and runs constantly during flight."""
         try:
             while True:
-                sleep(2)  # TODO remove when flight modes execute real tasks
+                #sleep(2)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()

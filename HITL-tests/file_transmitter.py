@@ -41,3 +41,4 @@ for block in file_blocks:
     groundstation.transmit(block_command)
     print('Transmitted Block #' + str(block[0]))
     time.sleep(transmission_interval)
+    command_counter+=1

@@ -458,7 +458,7 @@ class CommandDefinitions:
         self.parent.downlink_counter, FMEnum.Command.value, 
         CommandCommandEnum.AddFileBlock.value, successful=True, 
         block_number = block_number)
-        self.parent.downlink_queue.put(acknowledgement)
+        #self.parent.downlink_queue.put(acknowledgement)
 
 
     def get_file_blocks_info(self, **kwargs):

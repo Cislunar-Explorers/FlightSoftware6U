@@ -567,7 +567,7 @@ class CommandMode(PauseBackgroundMode):
     flight_mode_id = FMEnum.Command.value
 
     command_codecs = {
-        CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],180 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52)
         }
 

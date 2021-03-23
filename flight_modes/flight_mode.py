@@ -580,7 +580,7 @@ class CommandMode(PauseBackgroundMode):
 
     downlink_codecs = {
         CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195 - MIN_COMMAND_SIZE)
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 180 - MIN_COMMAND_SIZE)
     }
 
     downlink_arg_types = {

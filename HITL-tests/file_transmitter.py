@@ -1,10 +1,10 @@
 from utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum
-#from communications.satellite_radio import Radio
+from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
 import hashlib
 import time
 
-#groundstation = Radio()
+groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4

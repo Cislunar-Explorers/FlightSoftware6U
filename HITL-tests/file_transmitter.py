@@ -14,7 +14,7 @@ file_path = 'HITL-tests/test_upload_file.py'
 #Get file
 #Max transmission size - space alotted for file name - block number - 
 # min command size - 2*(2 bytes for string length)
-max_string_size = 100 - len(file_path) - 2 - MIN_COMMAND_SIZE - 4
+max_string_size = 80 - len(file_path) - 2 - MIN_COMMAND_SIZE - 4
 file = open(file_path_for_opening)
 file_string = file.read()
 file_blocks = []

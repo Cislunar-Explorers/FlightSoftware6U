@@ -1,4 +1,4 @@
-from utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum
+from utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum, FLIGHT_SOFTWARE_PATH
 from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
 import hashlib
@@ -8,7 +8,7 @@ groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4
-file_path = 'HITL-tests/test_upload_file.py'
+file_path = FLIGHT_SOFTWARE_PATH + 'HITL-tests/test_upload_file.py'
 
 #Get file
 max_string_size = 190 - 50 - 2 - MIN_COMMAND_SIZE

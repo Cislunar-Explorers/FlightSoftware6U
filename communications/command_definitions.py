@@ -448,8 +448,8 @@ class CommandDefinitions:
     def add_file_block(self, **kwargs):
 
         file_path = kwargs['file_path']
-        block_number = kwargs['block number']
-        block_text = kwargs['block text']
+        block_number = kwargs['block_number']
+        block_text = kwargs['block_text']
 
         self.parent.file_block_bank[block_number] = (file_path,block_text)
 

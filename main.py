@@ -135,18 +135,18 @@ class MainSatelliteThread(Thread):
         # Listening for new commands
         newCommand = self.radio.receiveSignal()
         if newCommand is not None:
-            try:
-                unpackedCommand = self.command_handler.unpack_command(newCommand)
+            
+            unpackedCommand = self.command_handler.unpack_command(newCommand)
 
-                if unpackedCommand[0] == MAC:
-                    if unpackedCommand[1] == self.command_counter + 1:
-                        self.command_queue.put(bytes(newCommand))
-                        self.command_counter += 1
-                    else:
-                        print('Command with Invalid Counter Received. '
-                              + 'Counter: ' + str(unpackedCommand[1]))
+            if unpackedCommand[0] == MAC:
+                if unpackedCommand[1] == self.command_counter + 1:
+                    self.command_queue.put(bytes(newCommand))
+                    self.command_counter += 1
                 else:
-                    print('Unauthenticated Command Received')
+                    print('Command with Invalid Counter Received. '
+                            + 'Counter: ' + str(unpackedCommand[1]))
+            else:
+                print('Unauthenticated Command Received')
 
             #except:
                 #print('Invalid Command Received')

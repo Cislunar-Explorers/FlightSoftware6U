@@ -42,3 +42,8 @@ for block in file_blocks:
     print('Transmitted Block #' + str(block[0]))
     time.sleep(transmission_interval)
     command_counter+=1
+
+#Request info
+print('Checksum: ' + str(hashlib.md5(file_string.encode('utf-8')).hexdigest()))
+info_request = ch.pack_command(command_counter,FMEnum.Command.value,
+CommandCommandEnum.GetFileBlocksInfo,file_path=file_path,total_blocks=number_of_blocks)

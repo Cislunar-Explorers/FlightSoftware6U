@@ -8,11 +8,12 @@ groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4
-file_path = FLIGHT_SOFTWARE_PATH+'FlightSoftware/HITL-tests/test_upload_file.py'
+file_path_for_opening = FLIGHT_SOFTWARE_PATH+'FlightSoftware/HITL-tests/test_upload_file.py'
+file_path = 'HITL-tests/test_upload_file.py'
 
 #Get file
-max_string_size = 190 - 50 - 2 - MIN_COMMAND_SIZE
-file = open(file_path)
+max_string_size = 195 - 50 - 2 - MIN_COMMAND_SIZE
+file = open(file_path_for_opening)
 file_string = file.read()
 file_blocks = []
 

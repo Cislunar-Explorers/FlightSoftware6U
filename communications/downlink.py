@@ -78,10 +78,10 @@ class DownlinkHandler:
         return self.downlink_dict[mode][application_id][1] + DATA_OFFSET
 
     def register_new_codec(self, arg: str, packer, unpacker):
-        if arg in self.packers:
-            raise SerializationException(
-                "Trying to register a codec for an existing argument"
-            )
+        #if arg in self.packers:
+            #raise SerializationException(
+            #    "Trying to register a codec for an existing argument"
+            #)
 
         self.packers[arg] = packer
         self.unpackers[arg] = unpacker

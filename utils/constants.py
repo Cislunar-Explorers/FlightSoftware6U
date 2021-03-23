@@ -31,8 +31,9 @@ ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
 DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
-# Parameters.json path
-PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
+# Important paths
+FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
+PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -59,6 +60,11 @@ PULSE_DT = "pulse_dt"
 NUM_BLOCKS = "num_blocks"
 
 HARD_SET = "hard_set"
+
+FILE_PATH = "file_path"
+BLOCK_NUMBER = "block_number"
+BLOCK_TEXT = "block_text"
+TOTAL_BLOCKS = "total_blocks"
 
 # Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
@@ -90,6 +96,9 @@ BATTERY_VOLTAGE = "vbatt"
 PROP_TANK_PRESSURE = "prs_pressure"
 
 SUCCESSFUL = "successful"
+
+MISSING_BLOCKS = "missing_blocks"
+CHECKSUM = "checksum"
 
 # SQL Stuff
 SQL_PREFIX = "sqlite:///"
@@ -268,4 +277,6 @@ class CommandCommandEnum(IntEnum):
     GomPin = 6  # 1 arg: which gom pin to toggle
     GomGeneralCmd = 7
     GeneralCmd = 8
+    AddFileBlock = 9
+    GetFileBlocksInfo = 10
     CeaseComms = 170

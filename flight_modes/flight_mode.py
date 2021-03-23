@@ -19,6 +19,7 @@ from utils.constants import (  # noqa F401
     BootCommandEnum,
     TestCommandEnum,
     ManeuverCommandEnum,
+    CommandCommandEnum,
     POSITION_X, POSITION_Y, POSITION_Z, ACCELERATE,
     NAME, VALUE,
     AZIMUTH, ELEVATION,
@@ -29,7 +30,10 @@ from utils.constants import (  # noqa F401
     GLOWPLUG_DURATION,
     BURN_WAIT_TIME,
     START, PULSE_NUM, PULSE_DT, PULSE_DURATION,
-    NUM_BLOCKS
+    NUM_BLOCKS,
+    FILE_PATH,
+    BLOCK_NUMBER,
+    BLOCK_TEXT
 )
 
 from utils.constants import *
@@ -561,9 +565,29 @@ class CommandMode(PauseBackgroundMode):
 
     flight_mode_id = FMEnum.Command.value
 
-    command_codecs = {}
+    command_codecs = {
+        CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],195),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52)
+        }
 
-    command_arg_unpackers = {}
+    command_arg_types = {
+        FILE_PATH: 'string',
+        BLOCK_NUMBER: 'short',
+        BLOCK_TEXT: 'string',
+        TOTAL_BLOCKS: 'short'
+    }
+
+    downlink_codecs = {
+        CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195)
+    }
+
+    downlink_arg_types = {
+        SUCCESSFUL: 'bool',
+        BLOCK_NUMBER: 'short',
+        CHECKSUM: 'string',
+        MISSING_BLOCKS: 'string'
+    }
 
     def __init__(self, parent):
         super().__init__(parent)

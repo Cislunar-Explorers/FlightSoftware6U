@@ -493,6 +493,7 @@ class CommandDefinitions:
         
         file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         total_blocks = kwargs['total_blocks']
+        local_file_name = kwargs['file_path'] 
 
         assert(total_blocks == len(self.parent.file_block_bank))
 
@@ -509,7 +510,7 @@ class CommandDefinitions:
         if os.path.exists(file_path):
             original_file = open(file_path, 'r+')
             original_file_lines = original_file.readlines()
-            backup_file = open('backup_' + file_path, 'w')
+            backup_file = open(FLIGHT_SOFTWARE_PATH + 'backup_' + local_file_name, 'w')
             backup_file.writelines(original_file_lines)
 
         #Write chained file blocks to the target file path

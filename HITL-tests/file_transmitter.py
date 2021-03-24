@@ -49,7 +49,7 @@ print('Checksum: ' + str(hashlib.md5(file_string.encode('utf-8')).hexdigest()))
 info_request = ch.pack_command(command_counter,FMEnum.Command.value,
 CommandCommandEnum.GetFileBlocksInfo,file_path=file_path,total_blocks=number_of_blocks)
 groundstation.transmit(info_request)
-time.sleep(transmission_interval)
+time.sleep(20)
 
 #Activate file
 command_counter += 1

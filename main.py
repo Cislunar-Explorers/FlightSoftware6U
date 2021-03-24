@@ -149,7 +149,7 @@ class MainSatelliteThread(Thread):
             logger.info("RTC initialized")
 
         try:
-            self.nemo_manager = NemoManager(data_dir=NEMO_DIR)
+            self.nemo_manager = NemoManager(data_dir=NEMO_DIR, reset_gpio_ch=16)
         except:
             self.nemo_manager = None
             logger.error("NEMO initialization failed")

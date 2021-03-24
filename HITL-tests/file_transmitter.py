@@ -1,6 +1,7 @@
 from utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum, FLIGHT_SOFTWARE_PATH
 from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
+from communications.downlink import DownlinkHandler
 import hashlib
 import time
 
@@ -47,3 +48,11 @@ for block in file_blocks:
 print('Checksum: ' + str(hashlib.md5(file_string.encode('utf-8')).hexdigest()))
 info_request = ch.pack_command(command_counter,FMEnum.Command.value,
 CommandCommandEnum.GetFileBlocksInfo,file_path=file_path,total_blocks=number_of_blocks)
+groundstation.transmit(info_request)
+print('Receiving...')
+dh= DownlinkHandler()
+while True:
+    downlink = groundstation.receiveSignal()
+    if downlink is not None:
+        print('Downlink Received')
+        print(dh.unpack_downlink(downlink))

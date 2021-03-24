@@ -100,6 +100,7 @@ CISLUNAR_BASE_DIR = os.path.join(
 )
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
+NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
 
 a = 1664525
 b = 1013904223
@@ -183,7 +184,13 @@ class NormalCommandEnum(IntEnum):
     ScheduleReorientation = 14
     ScheduleManeuver = 15
     ACSPulsing = 16
-
+    NemoWriteRegister = 17
+    NemoReadRegister = 18
+    NemoPowerOff = 19
+    NemoPowerOn = 20
+    NemoReboot = 21
+    NemoProcessRateData = 22
+    NemoProcessHistograms = 23
 
 
 @unique

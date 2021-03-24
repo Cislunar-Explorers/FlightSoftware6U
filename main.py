@@ -34,6 +34,7 @@ from drivers.gom import Gomspace
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from drivers.rtc import RTC
+from drivers.nemo.nemo_manager import NemoManager
 import OpticalNavigation.core.camera as camera
 
 FOR_FLIGHT = None
@@ -88,7 +89,7 @@ class MainSatelliteThread(Thread):
         if os.path.isdir(self.log_dir):
             self.flight_mode = RestartMode(self)
         else:
-            os.makedirs(CISLUNAR_BASE_DIR)
+            os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
@@ -146,6 +147,14 @@ class MainSatelliteThread(Thread):
             logger.error("RTC initialization failed")
         else:
             logger.info("RTC initialized")
+
+        try:
+            self.nemo_manager = NemoManager(data_dir=NEMO_DIR, reset_gpio_ch=16)
+        except:
+            self.nemo_manager = None
+            logger.error("NEMO initialization failed")
+        else:
+            logger.info("NEMO initialized")
 
         try:
             self.radio = Radio()
@@ -316,6 +325,8 @@ class MainSatelliteThread(Thread):
     def shutdown(self):
         if self.gom is not None:
             self.gom.all_off()
+        if self.nemo_manager is not None:
+            self.nemo_manager.close()
         logger.critical("Shutting down flight software")
         # self.comms.stop()
 

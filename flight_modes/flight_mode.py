@@ -568,7 +568,8 @@ class CommandMode(PauseBackgroundMode):
 
     command_codecs = {
         CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],80 - MIN_COMMAND_SIZE),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52)
+        CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
+        CommandCommandEnum.ActivateFile.value:([FILE_PATH,TOTAL_BLOCKS],52)
         }
 
     command_arg_types = {

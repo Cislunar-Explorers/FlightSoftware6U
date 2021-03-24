@@ -279,4 +279,5 @@ class CommandCommandEnum(IntEnum):
     GeneralCmd = 8
     AddFileBlock = 9
     GetFileBlocksInfo = 10
+    ActivateFile = 11
     CeaseComms = 170

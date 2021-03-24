@@ -484,6 +484,8 @@ class CommandDefinitions:
         file_block_info = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
         FMEnum.Command.value, CommandCommandEnum.GetFileBlocksInfo.value,
         checksum=checksum,missing_blocks=missing_blocks)
+        print(checksum)
+        print(missing_blocks)
         self.parent.downlink_queue.put(file_block_info)
 
     def activateFile(self, **kwargs):

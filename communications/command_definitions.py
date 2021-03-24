@@ -489,7 +489,7 @@ class CommandDefinitions:
         print(missing_blocks)
         self.parent.downlink_queue.put(file_block_info)
 
-    def activateFile(self, **kwargs):
+    def activate_file(self, **kwargs):
         
         file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         total_blocks = kwargs['total_blocks']

@@ -63,7 +63,7 @@ class CameraParameters:
         self.cam1Rotation = np.matmul(c1rz, c1ry)
         self.cam2Rotation = np.matmul(c2rz, c2ry)
         self.cam3Rotation = c3rz
-
+#TODO change rotation angles to params
 CisLunarCameraParameters = CameraParameters(62.2, 48.8, 1685, 813, 60, -60, -120, 90, 60, 90, -60, 53)
 
 class CameraRecordingParameters:

@@ -165,6 +165,7 @@ class MainSatelliteThread(Thread):
         else:
             logger.info("Mux initialized")
 
+        #TODO make a parameter
         cameras_list = [0, 0, 0]
 
         # initialize cameras only if not a hard boot (or first boot)

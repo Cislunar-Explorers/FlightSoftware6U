@@ -510,7 +510,8 @@ class CommandDefinitions:
         if os.path.exists(file_path):
             original_file = open(file_path, 'r+')
             original_file_lines = original_file.readlines()
-            backup_file = open(FLIGHT_SOFTWARE_PATH + 'backup_' + local_file_name, 'w')
+            backup_name = FLIGHT_SOFTWARE_PATH + local_file_name[:local_file_name.index('.py')] + '_backup.py'
+            backup_file = open(backup_name, 'w')
             backup_file.writelines(original_file_lines)
 
         #Write chained file blocks to the target file path

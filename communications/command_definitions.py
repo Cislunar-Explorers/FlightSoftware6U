@@ -137,7 +137,8 @@ class CommandDefinitions:
             CommandCommandEnum.GeneralCmd.value: self.general_command,
             CommandCommandEnum.CeaseComms.value: self.cease_comms,
             CommandCommandEnum.AddFileBlock.value: self.add_file_block,
-            CommandCommandEnum.GetFileBlocksInfo.value:self.get_file_blocks_info
+            CommandCommandEnum.GetFileBlocksInfo.value:self.get_file_blocks_info,
+            CommandCommandEnum.ActivateFile.value:self.activate_file
         }
 
         self.COMMAND_DICT = {

@@ -135,21 +135,21 @@ class MainSatelliteThread(Thread):
         # Listening for new commands
         newCommand = self.radio.receiveSignal()
         if newCommand is not None:
-            print(newCommand)
-            unpackedCommand = self.command_handler.unpack_command(newCommand)
+            try:
+                unpackedCommand = self.command_handler.unpack_command(newCommand)
 
-            if unpackedCommand[0] == MAC:
-                if unpackedCommand[1] == self.command_counter + 1:
-                    self.command_queue.put(bytes(newCommand))
-                    self.command_counter += 1
+                if unpackedCommand[0] == MAC:
+                    if unpackedCommand[1] == self.command_counter + 1:
+                        self.command_queue.put(bytes(newCommand))
+                        self.command_counter += 1
+                    else:
+                        print('Command with Invalid Counter Received. '
+                              + 'Counter: ' + str(unpackedCommand[1]))
                 else:
-                    print('Command with Invalid Counter Received. '
-                            + 'Counter: ' + str(unpackedCommand[1]))
-            else:
-                print('Unauthenticated Command Received')
+                    print('Unauthenticated Command Received')
 
-            #except:
-                #print('Invalid Command Received')
+            except:
+                print('Invalid Command Received')
         else:
             print('Not Received')
 
@@ -208,7 +208,7 @@ class MainSatelliteThread(Thread):
         """This is the main loop of the Cislunar Explorers and runs constantly during flight."""
         try:
             while True:
-                #sleep(2)  # TODO remove when flight modes execute real tasks
+                #sleep(5)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()

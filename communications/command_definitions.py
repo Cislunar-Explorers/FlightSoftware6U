@@ -461,7 +461,6 @@ class CommandDefinitions:
         block_number = block_number)
         #self.parent.downlink_queue.put(acknowledgement)
 
-
     def get_file_blocks_info(self, **kwargs):
         """Downlink checksum of file blocks and any missing block numbers"""
         file_path = kwargs['file_path']
@@ -485,8 +484,6 @@ class CommandDefinitions:
         file_block_info = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
         FMEnum.Command.value, CommandCommandEnum.GetFileBlocksInfo.value,
         checksum=checksum,missing_blocks=missing_blocks)
-        print(checksum)
-        print(missing_blocks)
         self.parent.downlink_queue.put(file_block_info)
 
     def activate_file(self, **kwargs):

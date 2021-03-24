@@ -179,7 +179,7 @@ def tile_transform_bb(src, cam, rot, dst):
     c = np.linalg.lstsq(a, b, rcond=None)[0].T
     return c, bb
 
-#src:BoundingBox
+
 def remap_roi(img, src, cam, rot):
     _, bb0 = tile_transform_bb(src, cam, rot, BoundingBox(0, 0, 0, 0))
     out = np.zeros((bb0.h, bb0.w, 3), dtype=np.uint8)
@@ -220,14 +220,13 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
 
 # Threshold based primarily on blue and green channels
 # Percent of white pixels determines if earth detected
-#TODO add parameters
 def measureEarth(img):
     lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
     percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
-    if percentWhite >= 0.20:
-        highThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
-        highThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
-        highThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
+    if percentWhite >= 0.2:
+        highThreshRed = cv2.inRange(img, (0, 0, 5), (255, 255, 255))
+        highThreshGreen = cv2.inRange(img, (0, 5, 0), (255, 255, 255))
+        highThreshBlue = cv2.inRange(img, (5, 0, 0), (255, 255, 255))
         highThresh = highThreshRed + highThreshGreen + highThreshBlue
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
@@ -241,12 +240,11 @@ def measureEarth(img):
         return None
 
 
-#TODO add parameters
 # Measure white pixels
 def measureSun(img):
-    highThresh = cv2.inRange(img, (230, 230, 230), (255, 255, 255))
+    highThresh = cv2.inRange(img, (225, 225, 225), (255, 255, 255))
     percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
-    if percentWhite >= 0.20: #Changed from 23%
+    if percentWhite >= 0.18: #Changed from 23%
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
 
@@ -257,8 +255,7 @@ def measureSun(img):
     else:
         return None
 
-#TODO add parameters
-#TODO add code for %white, but parameterize if we want to use it
+
 def measureMoon(img):
     thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
     contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -273,10 +270,9 @@ def measureMoon(img):
 
 
 def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
-    cam = Camera(radians(camera_params.hFov), radians(camera_params.vFov), 3280, 2464)
+    cam = Camera(radians(camera_params.hFov), radians(camera_params.vFov), camera_params.hPix, camera_params.vPix)
 
     # u is in body frame here
-    # Assumes only spinning about y-axis
     u = np.array([0, 1, 0], dtype=np.float32)
     camNum = int(re.search("[cam](\d+)", src).group(1))
     if camNum == 1:
@@ -286,9 +282,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     elif camNum == 3:
         u = np.linalg.inv(camera_params.cam3Rotation).dot(u)
     # u is now in the camera frame
-    #TODO switch to gyro database
     omega = -5
-    # Single row readout time
     dt = 18.904e-6
     rot = CameraRotation(u, -omega * dt)
 
@@ -300,7 +294,6 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     img = cv2.GaussianBlur(img, (5, 5), 0, dst=img)
 
     # Extract and threshold channels
-    #TODO make all thresholds parameters
     bwThreshRed = cv2.inRange(img, (0, 0, 50), (255, 255, 255))
     bwThreshGreen = cv2.inRange(img, (0, 50, 0), (255, 255, 255))
     bwThreshBlue = cv2.inRange(img, (50, 0, 0), (255, 255, 255))
@@ -325,7 +318,6 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     box = BoundingBox(x, y, w, h)
     out, bbst = remap_roi(img, box, cam, rot)
 
-    #TODO make sure to handle eclipse edge case
     # Gets the next largest body that doesn't overlap with first body
     c2 = None
     x2, y2, w2, h2 = 0, 0, 0, 0
@@ -424,4 +416,3 @@ if __name__ == "__main__":
 # * For Moon, blurry edges and non-uniform surface make picking threshold value difficult
 #   * Consider analyzing ROI of original, unblurred image
 # * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image, then scaling ROI
-

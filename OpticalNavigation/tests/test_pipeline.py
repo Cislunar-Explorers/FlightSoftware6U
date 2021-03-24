@@ -26,8 +26,8 @@ from utils.constants import DB_FILE
 # from tests.animations import LiveTrajectoryPlot
 
 SQL_PREFIX = "sqlite:///"
-sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
-#sql_path = DB_FILE
+#sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
+sql_path = DB_FILE
 
 def setup_function(function):
     # Reset databases
@@ -46,7 +46,7 @@ def setup_function(function):
     session.query(OpNavGyroMeasurementModel).delete()
     assert len(session.query(OpNavGyroMeasurementModel).all()) == 0
 
-    new_bootup = RebootsModel(is_bootup=False, reboot_at=datetime.now())
+    new_bootup = RebootsModel(is_bootup=False, reboot_at=datetime(2020, 7, 28, 22, 8, 3))
     session.add(new_bootup)
     session.commit()
 
@@ -58,33 +58,33 @@ def test_start(mocker):
     create_session = create_sensor_tables_from_path(sql_path)
     session = create_session()
     # entries = session.query(OpNavPropulsionModel).all()
-    time = datetime.now()
+    time = datetime(2020, 7, 28, 22, 8, 3)
     entries = [
-        OpNavPropulsionModel.from_tuples(
-        0.0001, time_start=time+timedelta(0,-110), time_end=time+timedelta(0,-100)), # 10 second propulsion that occured 100 seconds ago
+        #OpNavPropulsionModel.from_tuples(
+        #0.0001, time_start=time+timedelta(0,-110), time_end=time+timedelta(0,-100)), # 10 second propulsion that occured 100 seconds ago
         OpNavTrajectoryStateModel.from_tuples(
         (0.,2.,3.), (2.,2.,3.), opnav_constants.TrajUKFConstants.P0.reshape(6,6), time=time+timedelta(0,-200)), # initial state used by propulsion step, output used by propagation step
         OpNavAttitudeStateModel.from_tuples(
             (0., 0., 0., 1.), (0., 1., 0.), (0.,2.,0.,), opnav_constants.AttitudeUKFConstants.P0.reshape(6,6), time=time+timedelta(0,-200)),
 
-        OpNavEphemerisModel.from_tuples(
-            sun_eph=(1111., 1111., 1111., 124., 24., 4.), moon_eph=(4244., 42424., 4244., 42., 42., 42.), time=time+timedelta(0,20)),
-        OpNavEphemerisModel.from_tuples(
-            sun_eph=(2222., 2222., 2222., 124., 24., 4.), moon_eph=(4244., 42424., 4244., 42., 42., 42.), time=time+timedelta(0,-3)),
-        OpNavEphemerisModel.from_tuples(
-            sun_eph=(3333., 3333., 3333., 124., 24., 4.), moon_eph=(4244., 42424., 4244., 42., 42., 42.), time=time+timedelta(1,0)),
+        #OpNavEphemerisModel.from_tuples(
+        #    sun_eph=(1111., 1111., 1111., 124., 24., 4.), moon_eph=(4244., 42424., 4244., 42., 42., 42.), time=time+timedelta(0,20)),
+        #OpNavEphemerisModel.from_tuples(
+         #   sun_eph=(2222., 2222., 2222., 124., 24., 4.), moon_eph=(4244., 42424., 4244., 42., 42., 42.), time=time+timedelta(0,-3)),
+        #OpNavEphemerisModel.from_tuples(
+          #  sun_eph=(3333., 3333., 3333., 124., 24., 4.), moon_eph=(4244., 42424., 4244., 42., 42., 42.), time=time+timedelta(1,0)),
 
         #OpNavCameraMeasurementModel.from_tuples(
         #    measurement=(0.2, 0.1, 0.2, 0.1, 0.11, 0.22), time=time), # camera measurement taken now, uses state
 
-        OpNavGyroMeasurementModel.from_tuples(
-            measurement=(0., 2., 1.), time=time+timedelta(0,-50)), # Not picked because gyro was read before this run's corresponding cam meas
-        OpNavGyroMeasurementModel.from_tuples(
-            measurement=(2., 1., 1.), time=time+timedelta(0,0.1)),
-        OpNavGyroMeasurementModel.from_tuples(
-            measurement=(2., 1., 1.), time=time+timedelta(0,0.21234)),
-        OpNavGyroMeasurementModel.from_tuples(
-            measurement=(2., 1., 1.), time=time+timedelta(0,0.31244)),
+        #OpNavGyroMeasurementModel.from_tuples(
+        #    measurement=(0., 2., 1.), time=time+timedelta(0,-50)), # Not picked because gyro was read before this run's corresponding cam meas
+        #OpNavGyroMeasurementModel.from_tuples(
+        #    measurement=(2., 1., 1.), time=time+timedelta(0,0.1)),
+        #OpNavGyroMeasurementModel.from_tuples(
+        #    measurement=(2., 1., 1.), time=time+timedelta(0,0.21234)),
+        #OpNavGyroMeasurementModel.from_tuples(
+        #    measurement=(2., 1., 1.), time=time+timedelta(0,0.31244)),
     ]
     session.bulk_save_objects(entries)
     session.commit()
@@ -111,7 +111,7 @@ def test_start(mocker):
         print("video_mock")
         time = timestamps[idx[0]]
         filename = videos[idx[0]]
-        idx[0] += 1
+        #idx[0] += 1
         return (filename, time)
 
     #Don't use record_video mock for software demo
@@ -122,6 +122,22 @@ def test_start(mocker):
         return np.array([[0, 5, 0]])
     mocker.patch('OpticalNavigation.core.opnav.record_gyro', side_effect=record_gyro_mock)
 
+
+    path = '../../../../Downloads/surrender-case-1b/'
+    idx = [0]
+    names = ['cam1_expLow_f', 'cam1_expHigh_f',
+              'cam2_expLow_f', 'cam2_expHigh_f',
+              'cam3_expLow_f', 'cam3_expHigh_f']
+    timestamps = [0, 0, 2094400, 2094400, 4188800, 4188800]
+    interval = [65450]
+    def extract_frames_mock(vid_dir, endTimestamp):
+        frames = []
+        for i in range(0,16):
+            frames.append(path + names[idx[0]] + str(i) + "_t" + str(timestamps[idx[0]] + interval[0]*i) + ".jpg")
+        print("frames_mock")
+        idx[0] += 1
+        return frames
+    mocker.patch('OpticalNavigation.core.opnav.extract_frames', side_effect=extract_frames_mock)
 
     # start opnav system
     opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)

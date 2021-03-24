@@ -503,11 +503,13 @@ class CommandDefinitions:
         for i in range(total_blocks):
             full_file_text += self.parent.file_block_bank[i][1]
 
+        file_already_exists = os.path.exists(file_path)
+
         #Opens target file, creates one with the given path if it doesn't exist yet
         original_file = open(file_path, 'w')
 
         #Create backup with the original if the file already exists
-        if os.path.exists(file_path):
+        if file_already_exists:
             original_file = open(file_path, 'r+')
             original_file_lines = original_file.readlines()
             backup_name = FLIGHT_SOFTWARE_PATH + local_file_name[:local_file_name.index('.py')] + '_backup.py'

@@ -1,4 +1,5 @@
 from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
+#from utils.constants import OPNAV_INTERVAL
 from OpticalNavigation.core.acquisition import startAcquisition, readOmega
 from OpticalNavigation.core.cam_meas import cameraMeasurements
 import OpticalNavigation.core.ukf as traj_ukf
@@ -14,7 +15,6 @@ from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, 
 from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
 from utils.constants import DB_FILE
 from utils.log import *
-import utils.parameters as params
 from datetime import datetime, timedelta
 import math
 from sqlalchemy import desc
@@ -146,7 +146,9 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # 1. select camera
     # 2. record camera measurements
     # 3. record gyro measurements
-    observeStart = datetime.now()
+    
+    observeStart = datetime(2020, 7, 28, 22, 8, 3)
+    #observeStart = datetime(2020, 7, 28, 22, 8, 3) #TEMPORARY TESTING START TIME
     recordings = []
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
@@ -160,19 +162,20 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     ##### Commented out for software demo
     #logger.info("[OPNAV]: Extracting frames...")
     # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
-    #frames0 = extract_frames(vid_dir=recordings[0][0], endTimestamp = recordings[0][1])
-    #frames1 = extract_frames(vid_dir=recordings[1][0], endTimestamp = recordings[1][1])
-    #frames2 = extract_frames(vid_dir=recordings[2][0], endTimestamp = recordings[2][1])
-    #frames3 = extract_frames(vid_dir=recordings[3][0], endTimestamp = recordings[3][1])
-    #frames4 = extract_frames(vid_dir=recordings[4][0], endTimestamp = recordings[4][1])
-    #frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
-    #frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
+    frames0 = extract_frames(vid_dir=recordings[0][0], endTimestamp = recordings[0][1])
+    frames1 = extract_frames(vid_dir=recordings[1][0], endTimestamp = recordings[1][1])
+    frames2 = extract_frames(vid_dir=recordings[2][0], endTimestamp = recordings[2][1])
+    frames3 = extract_frames(vid_dir=recordings[3][0], endTimestamp = recordings[3][1])
+    frames4 = extract_frames(vid_dir=recordings[4][0], endTimestamp = recordings[4][1])
+    frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
+    frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
-    frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
+    #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
+    
     #frames = glob.glob("/home/pi/surrender_images/*.jpg")
-    logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
+    #logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
@@ -205,6 +208,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
             continue
         if e[1] < bestEarthTuple[1] or np.isnan(bestEarthTuple[1]):
             bestEarthTuple = e
+
 
     moonCenterDistances = []
     for m in range(moonDetectionArray.shape[0]):
@@ -260,10 +264,11 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
 
     logger.info("[OPNAV]: Body to T0 rotation...")
-    avgGyroY = np.mean(gyro_meas, axis = 0)[1] * 180 / math.pi
+    avgGyroY = np.mean(gyro_meas, axis = 0)[1]
     # Rotation is product of angular speed and time between frame and start of observation
     lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first()
     lastReboot = lastRebootRow.reboot_at
+    lastReboot = datetime(2020, 7, 28, 22, 8, 3)
 
     if not np.isnan(bestEarthTuple[1]):
         earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))
@@ -314,6 +319,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     logger.info(f"[OPNAV]: Best Earth {best_e}")
     logger.info(f"[OPNAV]: Best Sun {best_s}")
     logger.info(f"[OPNAV]: Best Moon {best_m}")
+
     # Calculate angular separation
     ang_em = __calculate_cam_measurements(body1=bestDetectedCircles.get_earth_detection(), body2=bestDetectedCircles.get_moon_detection())
 

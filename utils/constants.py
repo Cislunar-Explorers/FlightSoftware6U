@@ -62,6 +62,33 @@ TIME = "time"
 
 HARD_SET = "hard_set"
 
+REG_ADDRESS = "reg_address"
+REG_VALUE = "reg_value"
+REG_SIZE = "reg_size"
+
+DET_ENABLE_UINT8 = "det_enable_uint8"
+DET0_BIAS_UINT8 = "det0_bias_uint8"
+DET1_BIAS_UINT8 = "det1_bias_uint8"
+DET0_THRESHOLD_UINT8 = "det0_threshold_uint8"
+DET1_THRESHOLD_UINT8 = "det1_threshold_uint8"
+RATE_WIDTH_MIN = "rate_width_min"
+RATE_WIDTH_MAX = "rate_width_max"
+BIN_WIDTH = "bin_width"
+BIN_0_MIN_WIDTH = "bin_0_min_width"
+RATE_INTERVAL = "rate_interval"
+VETO_THRESHOLD_MIN = "veto_threshold_min"
+VETO_THRESHOLD_MAX = "veto_threshold_max"
+CONFIG_WRITE_PERIOD = "config_write_period"
+CONFIG_ROTATE_PERIOD = "config_rotate_period"
+DATE_WRITE_PERIOD = "data_write_period"
+RATE_DATA_ROTATE_PERIOD = "rate_data_rotate_period"
+HISTOGRAM_ROTATE_PERIOD = "histogram_rotate_period"
+
+T_START = "t_start"
+T_STOP = "t_stop"
+
+DECIMATION_FACTOR = "decimation_factor"
+
 # Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
 
@@ -186,11 +213,12 @@ class NormalCommandEnum(IntEnum):
     ACSPulsing = 16
     NemoWriteRegister = 17
     NemoReadRegister = 18
-    NemoPowerOff = 19
-    NemoPowerOn = 20
-    NemoReboot = 21
-    NemoProcessRateData = 22
-    NemoProcessHistograms = 23
+    NemoSetConfig = 19
+    NemoPowerOff = 20
+    NemoPowerOn = 21
+    NemoReboot = 22
+    NemoProcessRateData = 23
+    NemoProcessHistograms = 24
 
 
 @unique

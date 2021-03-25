@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Utilities for working with Nemo data v3.2
+Utilities for working with Nemo data v3.3
 """
 
 import os
@@ -16,7 +16,7 @@ from .nemo import Nemo, Domino
 class Configuration:
     """Stores configurable parameters"""
     _argdefaults = {
-        "det_enable": [True, True],
+        "det_enable_uint8": 0b00000011,
 
         "det0_bias_uint8": 255,
         "det1_bias_uint8": 255,

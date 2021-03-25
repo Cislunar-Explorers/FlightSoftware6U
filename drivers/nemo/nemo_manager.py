@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Interface between Cislunar FSW and Nemo v3.2
+Interface between Cislunar FSW and Nemo v3.3
 """
 
 import os
@@ -149,9 +149,9 @@ class NemoManager(Thread):
     def set_config(self, **kwargs):
         """Set writeable configuration parameters."""
         try:
-            if 'det_enable' in kwargs:
-                self._config.set(det_enable=kwargs['det_enable'])
-                self._nemo.det_enable = kwargs['det_enable']
+            if 'det_enable_uint8' in kwargs:
+                self._config.set(det_enable_uint8=kwargs['det_enable_uint8'])
+                self._nemo.det_enable_uint8 = kwargs['det_enable_uint8']
 
             if 'det0_bias_uint8' in kwargs:
                 self._config.set(det0_bias_uint8=kwargs['det0_bias_uint8'])
@@ -243,7 +243,7 @@ class NemoManager(Thread):
             logging.error('Nemo I2C transaction failure in NemoManager.reboot')
 
     def process_rate_data(self, t_start, t_stop, decimation_factor):
-        """Process already saved rate data into a lower resultion."""
+        """Process already saved rate data into a lower resolution."""
         input_packets = util.RateDataPacket.from_file(
             os.path.join(self._data_dir, 'rate_data_*'),
             sc_time_min=t_start,
@@ -257,7 +257,7 @@ class NemoManager(Thread):
                 file.write(bytes(output_packet))
 
     def process_histograms(self, t_start, t_stop, decimation_factor):
-        """Process already saved histograms into a lower resultion."""
+        """Process already saved histograms into a lower resolution."""
         input_packets = util.HistogramPacket.from_file(
             os.path.join(self._data_dir, 'histogram_*'),
             sc_time_min=t_start,

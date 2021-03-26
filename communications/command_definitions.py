@@ -503,7 +503,7 @@ class CommandDefinitions:
         file_already_exists = os.path.exists(file_path)
 
         #Opens target file, creates one with the given path if it doesn't exist yet
-        original_file = open(file_path, 'w')
+        original_file = open(file_path, 'w+')
 
         #Create backup with the original if the file already exists
         if file_already_exists:

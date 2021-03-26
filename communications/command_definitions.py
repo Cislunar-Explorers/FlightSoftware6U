@@ -471,7 +471,7 @@ class CommandDefinitions:
     def nemo_write_register(self, **kwargs):
         if self.parent.nemo_manager is not None:
             reg_address = kwargs[REG_ADDRESS]
-            values = kwargs[REG_VALUE]
+            values = [kwargs[REG_VALUE]]
 
             self.parent.nemo_manager.write_register(reg_address, values)
         else:
@@ -488,7 +488,7 @@ class CommandDefinitions:
 
     def nemo_set_config(self, **kwargs):
         if self.parent.nemo_manager is not None:
-            self.parent.nemo_manager.set_config(kwargs)
+            self.parent.nemo_manager.set_config(**kwargs)
         else:
             self.parent.logger.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
 

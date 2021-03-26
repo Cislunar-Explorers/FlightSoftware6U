@@ -469,7 +469,10 @@ class NormalMode(FlightMode):
             DATE_WRITE_PERIOD,
             RATE_DATA_ROTATE_PERIOD,
             HISTOGRAM_ROTATE_PERIOD,
-        ], 31),
+        ], 32),
+        NormalCommandEnum.NemoPowerOff.value: ([], 0),
+        NormalCommandEnum.NemoPowerOn.value: ([], 0),
+        NormalCommandEnum.NemoReboot.value: ([], 0),
         NormalCommandEnum.NemoProcessRateData.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
         NormalCommandEnum.NemoProcessHistograms.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
     }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Interface between Cislunar FSW and Nemo v3.3
+Interface between Cislunar FSW and Nemo v3.4
 """
 
 import os
@@ -245,7 +245,7 @@ class NemoManager(Thread):
     def process_rate_data(self, t_start, t_stop, decimation_factor):
         """Process already saved rate data into a lower resolution."""
         input_packets = util.RateDataPacket.from_file(
-            os.path.join(self._data_dir, 'rate_data_*'),
+            os.path.join(self._data_dir, 'rate_data_*T*Z'),
             sc_time_min=t_start,
             sc_time_max=t_stop,
             sort=True)
@@ -259,7 +259,7 @@ class NemoManager(Thread):
     def process_histograms(self, t_start, t_stop, decimation_factor):
         """Process already saved histograms into a lower resolution."""
         input_packets = util.HistogramPacket.from_file(
-            os.path.join(self._data_dir, 'histogram_*'),
+            os.path.join(self._data_dir, 'histogram_*T*Z'),
             sc_time_min=t_start,
             sc_time_max=t_stop,
             sort=True)

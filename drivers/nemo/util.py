@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Utilities for working with Nemo data v3.3
+Utilities for working with Nemo data v3.4
 """
 
 import os
@@ -160,9 +160,11 @@ class NemoPacketBase:
             with open(name, 'rb') as file:
                 data = file.read()
                 for i in range(0, len(data), cls.PACKET_SIZE):
-                    packet = cls(data[i:(i + cls.PACKET_SIZE)])
-                    if packet.sc_time >= sc_time_min and packet.sc_time <= sc_time_max:
-                        packets.append(packet)
+                    packet_bytes = data[i:(i + cls.PACKET_SIZE)]
+                    if len(packet_bytes) == cls.PACKET_SIZE:
+                        packet = cls(packet_bytes)
+                        if packet.sc_time >= sc_time_min and packet.sc_time <= sc_time_max:
+                            packets.append(packet)
 
         if sort:
             packets.sort(key=lambda x: x.sc_time)

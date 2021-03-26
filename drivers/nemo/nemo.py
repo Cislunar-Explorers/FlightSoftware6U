@@ -2,7 +2,7 @@
 
 """
 Python interface to NEMO (Netron Experiment in Moon Orbit). Intended for use on Raspberry Pi.
-(c) 2020-2021 Los Alamos National Laboratory v3.3
+(c) 2020-2021 Los Alamos National Laboratory v3.4
 """
 
 import logging

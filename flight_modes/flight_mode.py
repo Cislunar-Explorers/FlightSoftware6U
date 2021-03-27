@@ -14,31 +14,7 @@ from multiprocessing import Process
 import subprocess
 from queue import Empty
 
-from utils.constants import (  # noqa F401
-    BOOTUP_SEPARATION_DELAY,
-    FMEnum,
-    NormalCommandEnum,
-    BootCommandEnum,
-    TestCommandEnum,
-    ManeuverCommandEnum,
-    POSITION_X, POSITION_Y, POSITION_Z, ACCELERATE,
-    NAME, VALUE,
-    AZIMUTH, ELEVATION,
-    STATE,
-    INTERVAL,
-    DELAY,
-    NO_FM_CHANGE,
-    GLOWPLUG_DURATION,
-    BURN_WAIT_TIME,
-    START, PULSE_NUM, PULSE_DT, PULSE_DURATION,
-    NUM_BLOCKS,
-    BURN_WAIT_TIME,
-    RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
-    HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
-    CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
-    VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
-    PROP_TANK_PRESSURE, HARD_SET, TIME, SUCCESSFUL
-)
+from utils.constants import *
 
 import utils.parameters as params
 from utils.log import get_log
@@ -444,6 +420,13 @@ class NormalMode(FlightMode):
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
         NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4),
         NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 14),
+        NormalCommandEnum.GomConf1Set.value: ([PPT_MODE, BATTHEATERMODE, BATTHEATERLOW, BATTHEATERHIGH, OUTPUT_NORMAL1,
+                                               OUTPUT_NORMAL2, OUTPUT_NORMAL3, OUTPUT_NORMAL4, OUTPUT_NORMAL5,
+                                               OUTPUT_NORMAL6, OUTPUT_NORMAL7, OUTPUT_NORMAL8,
+                                               OUTPUT_SAFE1,
+                                               OUTPUT_SAFE2, OUTPUT_SAFE3, OUTPUT_SAFE4, OUTPUT_SAFE5, OUTPUT_SAFE6,
+                                               OUTPUT_SAFE7, OUTPUT_SAFE8, OUTPUT_ON_DELAY, OUTPUT_OFF_DELAY, VBOOST1,
+                                               VBOOST2, VBOOST3], 30)
     }
 
     command_arg_types = {
@@ -461,7 +444,29 @@ class NormalMode(FlightMode):
         PULSE_DURATION: 'short',
         PULSE_NUM: 'short',
         PULSE_DT: 'short',
-        TIME: 'float'
+        TIME: 'float',
+        PPT_MODE: "uint8",
+        BATTHEATERMODE: "bool",
+        BATTHEATERLOW: "uint8",
+        BATTHEATERHIGH: "uint8",
+        OUTPUT_NORMAL1: "bool",
+        OUTPUT_NORMAL2: "bool",
+        OUTPUT_NORMAL3: "bool",
+        OUTPUT_NORMAL4: "bool",
+        OUTPUT_NORMAL5: "bool",
+        OUTPUT_NORMAL6: "bool",
+        OUTPUT_NORMAL7: "bool",
+        OUTPUT_NORMAL8: "bool",
+        OUTPUT_SAFE1: "bool",
+        OUTPUT_SAFE2: "bool",
+        OUTPUT_SAFE3: "bool",
+        OUTPUT_SAFE4: "bool",
+        OUTPUT_SAFE5: "bool",
+        OUTPUT_SAFE6: "bool",
+        OUTPUT_SAFE7: "bool",
+        OUTPUT_SAFE8: "bool",
+        OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
+        VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
     }
 
     downlink_codecs = {
@@ -471,34 +476,45 @@ class NormalMode(FlightMode):
                                               VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
                                               PROP_TANK_PRESSURE], 84),
 
-        NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1)
+        NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1),
+        NormalCommandEnum.GomConf1Set.value: command_codecs.get(NormalCommandEnum.GomConf1Set.value),
     }
 
     downlink_arg_types = {
         RTC_TIME: 'double',
-        POSITION_X: 'double',
-        POSITION_Y: 'double',
-        POSITION_Z: 'double',
-        ATT_1: 'float',
-        ATT_2: 'float',
-        ATT_3: 'float',
-        ATT_4: 'float',
-        HK_TEMP_1: 'short',
-        HK_TEMP_2: 'short',
-        HK_TEMP_3: 'short',
-        HK_TEMP_4: 'short',
+        POSITION_X: 'double', POSITION_Y: 'double', POSITION_Z: 'double',
+        ATT_1: 'float', ATT_2: 'float', ATT_3: 'float', ATT_4: 'float',
+        HK_TEMP_1: 'short', HK_TEMP_2: 'short', HK_TEMP_3: 'short', HK_TEMP_4: 'short',
         GYRO_TEMP: 'float',
         THERMOCOUPLER_TEMP: 'float',
-        CURRENT_IN_1: 'short',
-        CURRENT_IN_2: 'short',
-        CURRENT_IN_3: 'short',
-        VBOOST_1: 'short',
-        VBOOST_2: 'short',
-        VBOOST_3: 'short',
+        CURRENT_IN_1: 'short', CURRENT_IN_2: 'short', CURRENT_IN_3: 'short',
+        VBOOST_1: 'short', VBOOST_2: 'short', VBOOST_3: 'short',
         SYSTEM_CURRENT: 'short',
         BATTERY_VOLTAGE: 'short',
         PROP_TANK_PRESSURE: 'float',
-        SUCCESSFUL: 'bool'
+        SUCCESSFUL: 'bool',
+        PPT_MODE: "uint8",
+        BATTHEATERMODE: "bool",
+        BATTHEATERLOW: "uint8",
+        BATTHEATERHIGH: "uint8",
+        OUTPUT_NORMAL1: "bool",
+        OUTPUT_NORMAL2: "bool",
+        OUTPUT_NORMAL3: "bool",
+        OUTPUT_NORMAL4: "bool",
+        OUTPUT_NORMAL5: "bool",
+        OUTPUT_NORMAL6: "bool",
+        OUTPUT_NORMAL7: "bool",
+        OUTPUT_NORMAL8: "bool",
+        OUTPUT_SAFE1: "bool",
+        OUTPUT_SAFE2: "bool",
+        OUTPUT_SAFE3: "bool",
+        OUTPUT_SAFE4: "bool",
+        OUTPUT_SAFE5: "bool",
+        OUTPUT_SAFE6: "bool",
+        OUTPUT_SAFE7: "bool",
+        OUTPUT_SAFE8: "bool",
+        OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
+        VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
     }
 
     def __init__(self, parent):

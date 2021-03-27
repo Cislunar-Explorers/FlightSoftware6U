@@ -12,7 +12,7 @@ BOOTUP_SEPARATION_DELAY = 5.0
 
 # Verification Key Parameters
 MAC_LENGTH = 4
-MAC_DATA = b'Hello'
+MAC_DATA = b'Hello'  # FIXME for flight
 MAC_KEY = b'World'
 MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
@@ -58,6 +58,8 @@ PULSE_DT = "pulse_dt"
 
 NUM_BLOCKS = "num_blocks"
 
+TIME = "time"
+
 HARD_SET = "hard_set"
 
 # Keyword argument definitions for downlink
@@ -98,6 +100,7 @@ CISLUNAR_BASE_DIR = os.path.join(
 )
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
+NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
 
 a = 1664525
 b = 1013904223
@@ -114,17 +117,11 @@ MAX_GYRO_RATE = 250  # degrees/sec # TODO
 
 NO_FM_CHANGE = -1
 
-ACS_SPIKE_DURATION = 4  # milliseconds
 GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 # Gyro specific constants
-
+# TODO: make sure that we change this to 500 if need be
 GYRO_RANGE = 250  # degrees per second
-
-
-@unique
-class ConstantsEnum(IntEnum):
-    GOM_VOLTAGE_MAX = 1
 
 
 # GOMspace Channel designations:
@@ -182,7 +179,18 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
-    ACSPulsing = 13
+    WhenReorient = 13  # when we want to schedule a reorientation maneuver
+                       # 2 args, unix time stamp and spin axis vector (2 floats)
+    ScheduleReorientation = 14
+    ScheduleManeuver = 15
+    ACSPulsing = 16
+    NemoWriteRegister = 17
+    NemoReadRegister = 18
+    NemoPowerOff = 19
+    NemoPowerOn = 20
+    NemoReboot = 21
+    NemoProcessRateData = 22
+    NemoProcessHistograms = 23
 
 
 @unique

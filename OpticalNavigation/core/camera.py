@@ -32,30 +32,31 @@ class CameraMux:
         if id == 1:
             with self.mux:
                 self.mux.write(bytes([0x04]))
-                self.sel_pin.value = False
-                self.oe1_pin.value = False
-                self.oe2_pin.value = True
+            self.sel_pin.value = False
+            self.oe1_pin.value = False
+            self.oe2_pin.value = True
         elif id == 2:
             with self.mux:
                 self.mux.write(bytes([0x05]))
-                self.sel_pin.value = True
-                self.oe1_pin.value = False
-                self.oe2_pin.value = True
+            self.sel_pin.value = True
+            self.oe1_pin.value = False
+            self.oe2_pin.value = True
         elif id == 3:
             with self.mux:
                 self.mux.write(bytes([0x06]))
-                self.sel_pin.value = False
-                self.oe1_pin.value = True
-                self.oe2_pin.value = False
+            self.sel_pin.value = False
+            self.oe1_pin.value = True
+            self.oe2_pin.value = False
         elif id == 4:
             with self.mux:
                 self.mux.write(bytes([0x07]))
-                self.sel_pin.value = True
-                self.oe1_pin.value = True
-                self.oe2_pin.value = False
+            self.sel_pin.value = True
+            self.oe1_pin.value = True
+            self.oe2_pin.value = False
         else:
             assert False
 
+    #Not Used
     def detect(self):
         vcgm = Vcgencmd()
         status = vcgm.get_camera()
@@ -78,7 +79,7 @@ class Camera:
 
 
     # Code from video-timing.py
-    def rawObservation(self, filename, frame_rate=15, shutterSpeed = 30000):
+    def rawObservation(self, filename, frame_rate=15, video_time=1, shutterSpeed = 30000):
 
         # Analog and digital gain parameters (not exposed in picamera-1.13)
         MMAL_PARAMETER_ANALOG_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x59
@@ -86,7 +87,7 @@ class Camera:
 
         # Full resolution
         with PiCamera(resolution=(3280, 2464),
-                      framerate=15,
+                      framerate=frame_rate,
                       sensor_mode=2,
                       clock_mode='raw') as camera:
             # Set fixed white balance
@@ -115,7 +116,7 @@ class Camera:
             lastTimestamp = camera.timestamp
             lastIndex = -1
             # Loop over expected frames
-            for n in range(2 * frame_rate):
+            for n in range(video_time * frame_rate): # {video_time} seconds
                 f = camera.frame
                 # If no new frame yet, sleep for half a frame
                 while f is None or f.index == lastIndex or f.frame_type == PiVideoFrameType.sps_header:
@@ -124,4 +125,5 @@ class Camera:
                 lastIndex = f.index
                 lastTimestamp = f.timestamp
             camera.stop_recording()
-            return {filename: lastTimestamp}
+            # Timestamp is in microseconds, relative to last system reboot (default clock_mode='raw')
+            return (filename, lastTimestamp)

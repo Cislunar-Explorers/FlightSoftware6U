@@ -1,3 +1,12 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from main import MainSatelliteThread
+# for an explanation of the above 4 lines of code, see
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+# It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
+
 from datetime import datetime
 from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
@@ -63,7 +72,7 @@ def verification(**kwargs):
 
 
 class CommandDefinitions:
-    def __init__(self, parent):
+    def __init__(self, parent: MainSatelliteThread):
         self.parent = parent
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}
@@ -79,7 +88,15 @@ class CommandDefinitions:
             NormalCommandEnum.Verification.value: verification,
             NormalCommandEnum.GetParam.value: self.print_parameter,
             NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
-            NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing
+            NormalCommandEnum.ScheduleManeuver.value: self.schedule_maneuver,
+            NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing,
+            NormalCommandEnum.NemoWriteRegister.value: self.nemo_write_register,
+            NormalCommandEnum.NemoReadRegister.value: self.nemo_read_register,
+            NormalCommandEnum.NemoPowerOff.value: self.nemo_power_off,
+            NormalCommandEnum.NemoPowerOn.value: self.nemo_power_on,
+            NormalCommandEnum.NemoReboot.value: self.nemo_reboot,
+            NormalCommandEnum.NemoProcessRateData.value: self.nemo_process_rate_data,
+            NormalCommandEnum.NemoProcessHistograms.value: self.nemo_process_histograms,
         }
 
         self.low_battery_commands = {
@@ -108,7 +125,8 @@ class CommandDefinitions:
         self.maneuver_commands = {
             1: self.run_opnav,
             # 2: self.change_attitude,
-            9: self.burn}
+            # 9: self.burn
+        }
 
         self.sensor_commands = {}
 
@@ -159,7 +177,7 @@ class CommandDefinitions:
 
     def split(self):
         # for demo, delay of 0
-        self.parent.gom.burnwire1(self.parent.constants.SPLIT_BURNWIRE_DURATION, delay=0)
+        self.parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION, delay=0)
         # Tell gom to power burnwires in five seconds
         # self.parent.gom.burnwire1(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
@@ -210,7 +228,7 @@ class CommandDefinitions:
 
     def gyro_thread(self):
         freq = 250  # Hz
-        duration = 4  # sec
+        duration = 3  # sec
         gyro_data = []
         self.parent.logger.info("Reading Gyro data (rad/s)")
         for i in range(int(duration * freq)):
@@ -258,7 +276,7 @@ class CommandDefinitions:
         value = kwargs['value']
         try:
             assert 0 < value < 1.0 and float(value) is float
-            if value >= self.parent.constants.ENTER_LOW_BATTERY_MODE_THRESHOLD:
+            if value >= params.ENTER_LOW_BATTERY_MODE_THRESHOLD:
                 self.parent.logger.error(
                     f"New value for Exit LB thresh must be less than current Enter LB thresh value")
                 assert False
@@ -320,19 +338,25 @@ class CommandDefinitions:
         assert type(state) is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
-    def burn(self, **kwargs):
+    # def burn(self, **kwargs):
+    #     time_burn = kwargs['time']
+    #     absolute = kwargs['absolute']
+    #
+    #     if absolute:  # i.e. if we want to burn at a specific absolute time
+    #         delay = time_burn - datetime.now()
+    #     else:  # if we want to burn exactly x seconds from receiving the command
+    #         delay = time
+    #
+    #     if delay < 0:
+    #         self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
+    #     else:
+    #         self.parent.gom.glowplug(params.GLOWPLUG_DURATION, delay=delay)
+
+    def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
-        absolute = kwargs['absolute']
-
-        if absolute:  # i.e. if we want to burn at a specific absolute time
-            delay = time_burn - datetime.now()
-        else:  # if we want to burn exactly x seconds from receiving the command
-            delay = time
-
-        if delay < 0:
-            self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
-        else:
-            self.parent.gom.glowplug(self.parent.constants.GLOWPLUG_DURATION, delay=delay)
+        self.parent.logger.info("Scheduling a maneuver at: " + str(float(time_burn)))
+        self.set_parameter(name="SCHEDULED_BURN_TIME", value=float(time_burn), hard_set=True)
+        self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
@@ -356,7 +380,7 @@ class CommandDefinitions:
 
     def print_parameter(self, **kwargs):
         index = kwargs["index"]
-        value = getattr(self.parent.constants, str(index))
+        value = getattr(params, str(index))
         self.parent.logger.info(f"{index}:{value}")
 
     def reboot_gom(self):
@@ -441,3 +465,65 @@ class CommandDefinitions:
         # Write new line into file
         original_file.seek(0)
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
+
+    def nemo_write_register(self, **kwargs):
+        if self.parent.nemo_manager is not None:
+            reg_address = kwargs['reg_address']
+            values = kwargs['values']
+
+            self.parent.nemo_manager.write_register(reg_address, values)
+        else:
+            self.parent.logger.error("CMD: nemo_write_register() failed, nemo_manager not initialized")
+
+    def nemo_read_register(self, **kwargs):
+        if self.parent.nemo_manager is not None:
+            reg_address = kwargs['reg_address']
+            size = kwargs['size']
+
+            self.parent.nemo_manager.read_register(reg_address, size)
+        else:
+            self.parent.logger.error("CMD: nemo_read_register() failed, nemo_manager not initialized")
+
+    def nemo_set_config(self, **kwargs):
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.set_config(kwargs)
+        else:
+            self.parent.logger.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
+
+    def nemo_power_off(self):
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.power_off()
+        else:
+            self.parent.logger.error("CMD: nemo_power_off() failed, nemo_manager not initialized")
+
+    def nemo_power_on(self):
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.power_on()
+        else:
+            self.parent.logger.error("CMD: nemo_power_on() failed, nemo_manager not initialized")
+
+    def nemo_reboot(self):
+        if self.parent.nemo_manager is not None:
+            self.parent.nemo_manager.reboot()
+        else:
+            self.parent.logger.error("CMD: nemo_reboot() failed, nemo_manager not initialized")
+
+    def nemo_process_rate_data(self, **kwargs):
+        if self.parent.nemo_manager is not None:
+            t_start = kwargs['t_start']
+            t_stop = kwargs['t_stop']
+            decimation_factor = kwargs['decimation_factor']
+
+            self.parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+        else:
+            self.parent.logger.error("CMD: nemo_process_rate_data() failed, nemo_manager not initialized")
+
+    def nemo_process_histograms(self, **kwargs):
+        if self.parent.nemo_manager is not None:
+            t_start = kwargs['t_start']
+            t_stop = kwargs['t_stop']
+            decimation_factor = kwargs['decimation_factor']
+
+            self.parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
+        else:
+            self.parent.logger.error("CMD: nemo_process_histograms() failed, nemo_manager not initialized")

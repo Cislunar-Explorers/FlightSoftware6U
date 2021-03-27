@@ -1,9 +1,8 @@
-import os
 import sys
 from threading import Thread
 from multiprocessing import Process
-from time import sleep, time
-from datetime import datetime, timedelta
+from time import time
+from datetime import datetime
 from queue import Queue
 import signal
 from utils.log import get_log
@@ -57,7 +56,7 @@ class MainSatelliteThread(Thread):
         self.reorientation_queue = Queue()
         self.reorientation_list = []
         self.maneuver_queue = Queue()  # maneuver queue
-        self.opnav_queue = Queue()   # determine state of opnav success
+        self.opnav_queue = Queue()  # determine state of opnav success
         # self.init_comms()
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
@@ -117,7 +116,7 @@ class MainSatelliteThread(Thread):
     def init_sensors(self):
         try:
             self.gom = Gomspace()
-        except:
+        except Exception:
             self.gom = None
             logger.error("GOM initialization failed")
         else:
@@ -125,7 +124,7 @@ class MainSatelliteThread(Thread):
 
         try:
             self.gyro = GyroSensor()
-        except:
+        except Exception:
             self.gyro = None
             logger.error("GYRO initialization failed")
         else:
@@ -134,7 +133,7 @@ class MainSatelliteThread(Thread):
         try:
             self.adc = ADC(self.gyro)
             self.adc.read_temperature()
-        except:
+        except Exception:
             self.adc = None
             logger.error("ADC initialization failed")
         else:
@@ -142,7 +141,7 @@ class MainSatelliteThread(Thread):
 
         try:
             self.rtc = RTC()
-        except:
+        except Exception:
             self.rtc = None
             logger.error("RTC initialization failed")
         else:
@@ -150,7 +149,7 @@ class MainSatelliteThread(Thread):
 
         try:
             self.nemo_manager = NemoManager(data_dir=NEMO_DIR, reset_gpio_ch=16)
-        except:
+        except Exception:
             self.nemo_manager = None
             logger.error("NEMO initialization failed")
         else:
@@ -158,7 +157,7 @@ class MainSatelliteThread(Thread):
 
         try:
             self.radio = Radio()
-        except:
+        except Exception:
             self.radio = None
             logger.error("RADIO initialization failed")
         else:
@@ -168,7 +167,7 @@ class MainSatelliteThread(Thread):
         try:
             self.mux = camera.CameraMux()
             self.mux.selectCamera(1)
-        except:
+        except Exception:
             self.mux = None
             logger.error("MUX initialization failed")
         else:
@@ -184,7 +183,7 @@ class MainSatelliteThread(Thread):
                     try:
                         self.mux.selectCamera(i)
                         f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
-                    except Exception as e:
+                    except Exception:
                         logger.error(f"CAM{i} initialization failed")
                         cameras_list[i - 1] = 0
                     else:
@@ -192,8 +191,8 @@ class MainSatelliteThread(Thread):
                         cameras_list[i - 1] = 1
 
                 if 0 in cameras_list:
-                    raise e
-            except:
+                    raise Exception
+            except Exception:
                 self.camera = None
                 logger.error(f"Cameras initialization failed")
             else:
@@ -220,8 +219,8 @@ class MainSatelliteThread(Thread):
 
         self.flight_mode.poll_inputs()
 
-        #Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds()/60 >= params.TELEM_DOWNLINK_TIME:
+        # Telemetry downlink
+        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:
             telemetry = self.command_definitions.gather_basic_telem()
             telem_downlink = (
                 self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
@@ -309,11 +308,6 @@ class MainSatelliteThread(Thread):
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
-
-                # Opnav subprocess management
-                # TODO: This all needs to be moved to the OpNav Flight mode, and should not be in main!!!
-
-
         finally:
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:

@@ -517,6 +517,7 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE8: "bool",
         OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
         VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
+        CMD: 'string'
     }
 
     downlink_codecs = {
@@ -528,6 +529,7 @@ class NormalMode(FlightMode):
 
         NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1),
         NormalCommandEnum.GomConf1Set.value: command_codecs.get(NormalCommandEnum.GomConf1Set.value),
+        NormalCommandEnum.ShellCommand.value: ([RETURN_CODE], 1)
     }
 
     downlink_arg_types = {
@@ -577,6 +579,7 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE8: "bool",
         OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
         VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
+        RETURN_CODE: "uint8"
     }
 
     def __init__(self, parent):
@@ -629,9 +632,11 @@ class CommandMode(PauseBackgroundMode):
 
     flight_mode_id = FMEnum.Command.value
 
+    # TODO
     command_codecs = {}
-
     command_arg_unpackers = {}
+    downlink_codecs = {}
+    downlink_arg_types = {}
 
     def __init__(self, parent):
         super().__init__(parent)

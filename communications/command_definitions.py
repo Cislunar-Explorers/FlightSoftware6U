@@ -14,6 +14,7 @@ from threading import Thread
 from utils.constants import *
 from json import load, dump
 from utils.exceptions import CommandArgException
+import subprocess
 
 import os
 import utils.parameters as params
@@ -243,8 +244,7 @@ class CommandDefinitions:
         self.parent.FMQueue.put(FMEnum.OpNav.value)
 
     def set_parameter(self, **kwargs):
-        """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
-        string which we can't pack/unpack """
+        """Changes the values of a parameter in utils/parameters.py or .json if hard_set"""
         name = kwargs[NAME]
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
@@ -545,6 +545,17 @@ class CommandDefinitions:
                     successful=False)
 
             self.parent.downlink_queue.put(acknowledgement)
+
+    def shell_command(self, **kwargs):
+        cmd: str = kwargs.get(CMD)
+        self.parent.logger.info(f"Running {cmd}")
+        output = subprocess.run(cmd, shell=True)
+
+        response = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+                                                              self.parent.flight_mode.flight_mode_id,
+                                                              NormalCommandEnum.ShellCommand.value,
+                                                              return_code=output.returncode)
+        self.parent.downlink_queue.put(response)
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:

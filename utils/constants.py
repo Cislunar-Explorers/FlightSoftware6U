@@ -177,6 +177,9 @@ VBOOST1 = "vboost1"
 VBOOST2 = "vboost2"
 VBOOST3 = "vboost3"
 
+CMD = 'cmd'
+RETURN_CODE = 'return_code'
+
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -250,6 +253,8 @@ class NormalCommandEnum(IntEnum):
     GomConf1Get = 31
     GomConf2Set = 32
     GomConf2Get = 33
+
+    ShellCommand = 50
 
     CommandStatus = 99
 
@@ -337,4 +342,6 @@ class CommandCommandEnum(IntEnum):
     GomPin = 6  # 1 arg: which gom pin to toggle
     GomGeneralCmd = 7
     GeneralCmd = 8
+
+    ShellCommand = 50
     CeaseComms = 170

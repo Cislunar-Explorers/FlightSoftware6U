@@ -613,8 +613,43 @@ def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     new_config.battheater_mode = heater_mode
     new_config.battheater_low = heater_low
     new_config.battheater_high = heater_high
-    new_config.output_normal_value = normal_output
-    new_config.output_safe_value = safe_output
-    new_config.output_initial_on_delay = initial_on_delay
-    new_config.output_initial_off_delay = initial_off_delay
-    new_config.vboost = vboost
+
+    new_config.output_normal_value[0] = normal_output[0]
+    new_config.output_normal_value[1] = normal_output[1]
+    new_config.output_normal_value[2] = normal_output[2]
+    new_config.output_normal_value[3] = normal_output[3]
+    new_config.output_normal_value[4] = normal_output[4]
+    new_config.output_normal_value[5] = normal_output[5]
+    new_config.output_normal_value[6] = normal_output[6]
+    new_config.output_normal_value[7] = normal_output[7]
+
+    new_config.output_safe_value[0] = safe_output[0]
+    new_config.output_safe_value[1] = safe_output[1]
+    new_config.output_safe_value[2] = safe_output[2]
+    new_config.output_safe_value[3] = safe_output[3]
+    new_config.output_safe_value[4] = safe_output[4]
+    new_config.output_safe_value[5] = safe_output[5]
+    new_config.output_safe_value[6] = safe_output[6]
+    new_config.output_safe_value[7] = safe_output[7]
+
+    new_config.output_initial_on_delay[0] = initial_on_delay[0]
+    new_config.output_initial_on_delay[1] = initial_on_delay[1]
+    new_config.output_initial_on_delay[2] = initial_on_delay[2]
+    new_config.output_initial_on_delay[3] = initial_on_delay[3]
+    new_config.output_initial_on_delay[4] = initial_on_delay[4]
+    new_config.output_initial_on_delay[5] = initial_on_delay[5]
+    new_config.output_initial_on_delay[6] = initial_on_delay[6]
+    new_config.output_initial_on_delay[7] = initial_on_delay[7]
+
+    new_config.output_initial_off_delay[0] = initial_off_delay[0]
+    new_config.output_initial_off_delay[1] = initial_off_delay[1]
+    new_config.output_initial_off_delay[2] = initial_off_delay[2]
+    new_config.output_initial_off_delay[3] = initial_off_delay[3]
+    new_config.output_initial_off_delay[4] = initial_off_delay[4]
+    new_config.output_initial_off_delay[5] = initial_off_delay[5]
+    new_config.output_initial_off_delay[6] = initial_off_delay[6]
+    new_config.output_initial_off_delay[7] = initial_off_delay[7]
+
+    new_config.vboost[0] = vboost[0]
+    new_config.vboost[1] = vboost[1]
+    new_config.vboost[2] = vboost[2]

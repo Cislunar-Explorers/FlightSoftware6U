@@ -1,5 +1,6 @@
 import struct
 
+
 # All packing is done in Big Endian as specified by > argument to struct module
 
 
@@ -88,13 +89,14 @@ def unpack_str(buf, off):
     sbytes = buf[off + 2: off + 2 + slen]
     return 2 + slen, str(sbytes, "utf-8")
 
+
 packer_dict = {
-'bool': (pack_bool,unpack_bool),
-'uint8': (pack_unsigned_int8,unpack_unsigned_int8),
-'short': (pack_unsigned_short,unpack_unsigned_short),
-'int': (pack_unsigned_int,unpack_unsigned_int),
-'long': (pack_unsigned_long,unpack_unsigned_long),
-'float': (pack_float,unpack_float),
-'double': (pack_double,unpack_double),
-'string': (pack_str,unpack_str)
+    'bool': (pack_bool, unpack_bool),
+    'uint8': (pack_unsigned_int8, unpack_unsigned_int8),
+    'short': (pack_unsigned_short, unpack_unsigned_short),
+    'int': (pack_unsigned_int, unpack_unsigned_int),
+    'long': (pack_unsigned_long, unpack_unsigned_long),
+    'float': (pack_float, unpack_float),
+    'double': (pack_double, unpack_double),
+    'string': (pack_str, unpack_str)
 }

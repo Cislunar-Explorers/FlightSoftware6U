@@ -654,3 +654,5 @@ def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     new_config.vboost[0] = vboost[0]
     new_config.vboost[1] = vboost[1]
     new_config.vboost[2] = vboost[2]
+
+    return new_config

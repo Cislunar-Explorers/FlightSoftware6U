@@ -100,7 +100,10 @@ class CommandDefinitions:
             NormalCommandEnum.GomConf1Set.value: self.set_gom_conf1,
             NormalCommandEnum.GomConf1Get.value: self.get_gom_conf1,
             NormalCommandEnum.GomConf2Set.value: self.set_gom_conf2,
-            NormalCommandEnum.GomConf2Get.value: self.get_gom_conf2
+            NormalCommandEnum.GomConf2Get.value: self.get_gom_conf2,
+            NormalCommandEnum.ShellCommand.value: self.shell_command,
+            NormalCommandEnum.SudoCommand.value: self.sudo_command,
+            NormalCommandEnum.Picberry.value: self.picberry,
         }
 
         self.low_battery_commands = {
@@ -556,6 +559,17 @@ class CommandDefinitions:
                                                               NormalCommandEnum.ShellCommand.value,
                                                               return_code=output.returncode)
         self.parent.downlink_queue.put(response)
+
+    def sudo_command(self, **kwargs):
+        """Same as shell_command, but prepends 'sudo ' to the command"""
+        cmd: str = kwargs.get(CMD)
+        command = 'sudo ' + cmd
+        self.shell_command(cmd=command)
+
+    def picberry(self, **kwargs):
+        cmd: str = kwargs.get(CMD)
+        base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx"
+        subprocess.run(base_command + cmd, shell=True)
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:

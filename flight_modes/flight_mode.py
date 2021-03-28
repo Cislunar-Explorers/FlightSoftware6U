@@ -452,7 +452,11 @@ class NormalMode(FlightMode):
                                                OUTPUT_SAFE1,
                                                OUTPUT_SAFE2, OUTPUT_SAFE3, OUTPUT_SAFE4, OUTPUT_SAFE5, OUTPUT_SAFE6,
                                                OUTPUT_SAFE7, OUTPUT_SAFE8, OUTPUT_ON_DELAY, OUTPUT_OFF_DELAY, VBOOST1,
-                                               VBOOST2, VBOOST3], 30)
+                                               VBOOST2, VBOOST3], 30),
+        # TODO: clarify how many bytes go into string here
+        NormalCommandEnum.ShellCommand.value: ([CMD], 24),
+        NormalCommandEnum.SudoCommand.value: ([CMD], 24),
+        NormalCommandEnum.Picberry.value: ([CMD], 24),
     }
 
     command_arg_types = {
@@ -494,7 +498,6 @@ class NormalMode(FlightMode):
         T_START: 'int',
         T_STOP: 'int',
         DECIMATION_FACTOR: 'uint8',
-        TIME: 'float',
         PPT_MODE: "uint8",
         BATTHEATERMODE: "bool",
         BATTHEATERLOW: "uint8",

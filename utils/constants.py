@@ -237,7 +237,7 @@ class NormalCommandEnum(IntEnum):
     GetParam = 11
     SetOpnavInterval = 12
     WhenReorient = 13  # when we want to schedule a reorientation maneuver
-                       # 2 args, unix time stamp and spin axis vector (2 floats)
+    # 2 args, unix time stamp and spin axis vector (2 floats)
     ScheduleReorientation = 14
     ScheduleManeuver = 15
     ACSPulsing = 16
@@ -255,6 +255,8 @@ class NormalCommandEnum(IntEnum):
     GomConf2Get = 33
 
     ShellCommand = 50
+    SudoCommand = 51
+    Picberry = 52
 
     CommandStatus = 99
 

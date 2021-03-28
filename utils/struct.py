@@ -13,6 +13,16 @@ def unpack_bool(buf, off):
     return 1, val
 
 
+def pack_unsigned_int8(buf, off, val):
+    struct.pack_into(">B", buf, off, val)
+    return 1
+
+
+def unpack_unsigned_int8(buf, off):
+    val = struct.unpack_from(">B", buf, off)[0]
+    return 1, val
+
+
 def pack_unsigned_short(buf, off, val):
     struct.pack_into(">H", buf, off, val)
     return 2
@@ -80,6 +90,7 @@ def unpack_str(buf, off):
 
 packer_dict = {
 'bool': (pack_bool,unpack_bool),
+'uint8': (pack_unsigned_int8,unpack_unsigned_int8),
 'short': (pack_unsigned_short,unpack_unsigned_short),
 'int': (pack_unsigned_int,unpack_unsigned_int),
 'long': (pack_unsigned_long,unpack_unsigned_long),

@@ -2,7 +2,7 @@
 
 """
 Python interface to NEMO (Netron Experiment in Moon Orbit). Intended for use on Raspberry Pi.
-(c) 2020-2021 Los Alamos National Laboratory v3.2
+(c) 2020-2021 Los Alamos National Laboratory v3.4
 """
 
 import logging
@@ -478,9 +478,19 @@ class Nemo(I2CDevice):
         return vals[0] + (vals[1] << 8)
 
     @property
+    def det_enable_uint8(self):
+        """Detector enable status as uint8 bitfield, bit number corresponds to detector number"""
+        return self._read_register(self.REG_DET_ENABLE, 1)[0] & 0b00000011
+
+    @det_enable_uint8.setter
+    def det_enable_uint8(self, det_en_uint8):
+        det_en_uint8 &= 0b00000011
+        self._write_register(self.REG_DET_ENABLE, [det_en_uint8])
+
+    @property
     def det_enable(self):
         """list of detector enable status, starting with detector 0."""
-        val = self._read_register(self.REG_DET_ENABLE, 1)[0] & 0b00000011
+        val = self.det_enable_uint8
         det0_en = ((val & 0b00000001) == 0b00000001)
         det1_en = ((val & 0b00000010) == 0b00000010)
         return [det0_en, det1_en]
@@ -492,7 +502,7 @@ class Nemo(I2CDevice):
             val |= 0b00000001
         if det_en[1]:
             val |= 0b00000010
-        self._write_register(self.REG_DET_ENABLE, [val])
+        self.det_enable_uint8 = val
 
     @property
     def clock(self):

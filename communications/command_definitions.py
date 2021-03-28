@@ -90,6 +90,7 @@ class CommandDefinitions:
             NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing,
             NormalCommandEnum.NemoWriteRegister.value: self.nemo_write_register,
             NormalCommandEnum.NemoReadRegister.value: self.nemo_read_register,
+            NormalCommandEnum.NemoSetConfig.value: self.nemo_set_config,
             NormalCommandEnum.NemoPowerOff.value: self.nemo_power_off,
             NormalCommandEnum.NemoPowerOn.value: self.nemo_power_on,
             NormalCommandEnum.NemoReboot.value: self.nemo_reboot,
@@ -461,8 +462,8 @@ class CommandDefinitions:
 
     def nemo_write_register(self, **kwargs):
         if self.parent.nemo_manager is not None:
-            reg_address = kwargs['reg_address']
-            values = kwargs['values']
+            reg_address = kwargs[REG_ADDRESS]
+            values = [kwargs[REG_VALUE]]
 
             self.parent.nemo_manager.write_register(reg_address, values)
         else:
@@ -470,8 +471,8 @@ class CommandDefinitions:
 
     def nemo_read_register(self, **kwargs):
         if self.parent.nemo_manager is not None:
-            reg_address = kwargs['reg_address']
-            size = kwargs['size']
+            reg_address = kwargs[REG_ADDRESS]
+            size = kwargs[REG_SIZE]
 
             self.parent.nemo_manager.read_register(reg_address, size)
         else:
@@ -479,7 +480,7 @@ class CommandDefinitions:
 
     def nemo_set_config(self, **kwargs):
         if self.parent.nemo_manager is not None:
-            self.parent.nemo_manager.set_config(kwargs)
+            self.parent.nemo_manager.set_config(**kwargs)
         else:
             self.parent.logger.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
 
@@ -503,9 +504,9 @@ class CommandDefinitions:
 
     def nemo_process_rate_data(self, **kwargs):
         if self.parent.nemo_manager is not None:
-            t_start = kwargs['t_start']
-            t_stop = kwargs['t_stop']
-            decimation_factor = kwargs['decimation_factor']
+            t_start = kwargs[T_START]
+            t_stop = kwargs[T_STOP]
+            decimation_factor = kwargs[DECIMATION_FACTOR]
 
             self.parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
         else:
@@ -513,9 +514,9 @@ class CommandDefinitions:
 
     def nemo_process_histograms(self, **kwargs):
         if self.parent.nemo_manager is not None:
-            t_start = kwargs['t_start']
-            t_stop = kwargs['t_stop']
-            decimation_factor = kwargs['decimation_factor']
+            t_start = kwargs[T_START]
+            t_stop = kwargs[T_STOP]
+            decimation_factor = kwargs[DECIMATION_FACTOR]
 
             self.parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
         else:

@@ -41,8 +41,8 @@ class Radio():
         if self.mgr.outbox.empty():
             return None
         else:
-            while not mgr.outbox.empty():
-                m = mgr.outbox.get()
+            while not self.mgr.outbox.empty():
+                m = self.mgr.outbox.get()
                 print(m)
 
     #Downlink given bytearray to ground station

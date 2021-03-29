@@ -41,7 +41,9 @@ class Radio():
         if self.mgr.outbox.empty():
             return None
         else:
-            return self.mgr.outbox.get()
+            while not mgr.outbox.empty():
+                m = mgr.outbox.get()
+                print(m)
 
     #Downlink given bytearray to ground station
     def transmit(self, signal:bytearray):

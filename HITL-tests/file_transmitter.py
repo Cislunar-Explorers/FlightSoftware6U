@@ -37,8 +37,6 @@ for block in file_blocks:
     CommandCommandEnum.AddFileBlock.value, file_path = file_path,
     block_number = block[0],block_text = block[1])
 
-    print(block_command)
-
     groundstation.transmit(block_command)
     print('Transmitted Block #' + str(block[0]))
     time.sleep(transmission_interval)

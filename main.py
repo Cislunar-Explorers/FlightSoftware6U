@@ -136,7 +136,6 @@ class MainSatelliteThread(Thread):
         newCommand = self.radio.receiveSignal()
         if newCommand is not None:
             try:
-                print(newCommand)
                 unpackedCommand = self.command_handler.unpack_command(newCommand)
 
                 if unpackedCommand[0] == MAC:

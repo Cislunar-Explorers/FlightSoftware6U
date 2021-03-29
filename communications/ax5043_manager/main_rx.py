@@ -28,6 +28,7 @@ while True:
     while not mgr.outbox.empty():
         m = mgr.outbox.get()
         print(m)
+        print('hello')
 
     cycles += 1
     # After 30s, break for clean shutdown

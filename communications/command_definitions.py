@@ -120,6 +120,7 @@ class CommandDefinitions:
             TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs,
             7: self.comms_driver_test,
+            8: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
             TestCommandEnum.RTCTest.value: self.rtc_test
         }
@@ -516,3 +517,10 @@ class CommandDefinitions:
         original_file.write(full_file_text)
 
         self.parent.file_block_bank = {}
+    
+    def print_long_string(self, **kwargs):
+        number = kwargs['some_number']
+        string = kwargs['long_string']
+
+        print(number)
+        print(string)

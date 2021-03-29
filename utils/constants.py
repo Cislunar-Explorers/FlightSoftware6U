@@ -255,6 +255,7 @@ class TestCommandEnum(IntEnum):
     SeparationTest = 5
     GomPin = 6
     CommsDriver = 7
+    LongString = 8
     PiShutdown = 11
     RTCTest = 8
 

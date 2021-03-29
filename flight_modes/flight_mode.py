@@ -276,10 +276,14 @@ class TestMode(PauseBackgroundMode):
                       TestCommandEnum.ADCTest.value: ([], 0),
                       TestCommandEnum.CommsDriver.value: ([], 0),
                       TestCommandEnum.PiShutdown.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0)
+                      TestCommandEnum.RTCTest.value: ([], 0),
+                      TestCommandEnum.LongString.value: (['some_number', 'long_string'],195)
                       }
 
-    command_arg_unpackers = {}
+    command_arg_unpackers = {
+        'some_number': 'float',
+        'long_string':'string'
+    }
 
     downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
 

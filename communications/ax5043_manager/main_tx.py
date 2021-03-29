@@ -14,7 +14,7 @@ mgr = Manager(driver)
 mgr.tx_enabled = True
 
 ch = CommandHandler()
-command = ch.pack_command(1,8,9,some_number=67,long_string='abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz')
+command = ch.pack_command(1,8,9,some_number=67,long_string='abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz')
 print(command)
 mgr.inbox.put(command)
 

@@ -277,7 +277,7 @@ class TestMode(PauseBackgroundMode):
                       TestCommandEnum.CommsDriver.value: ([], 0),
                       TestCommandEnum.PiShutdown.value: ([], 0),
                       TestCommandEnum.RTCTest.value: ([], 0),
-                      TestCommandEnum.LongString.value: (['some_number', 'long_string'],195)
+                      TestCommandEnum.LongString.value: (['some_number', 'long_string'],180)
                       }
 
     command_arg_types = {

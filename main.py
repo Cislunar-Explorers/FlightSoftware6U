@@ -142,6 +142,7 @@ class MainSatelliteThread(Thread):
 
         try:
             self.rtc = RTC()
+            self.rtc.get_time()
         except Exception:
             self.rtc = None
             logger.error("RTC initialization failed")

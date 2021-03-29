@@ -280,7 +280,7 @@ class TestMode(PauseBackgroundMode):
                       TestCommandEnum.LongString.value: (['some_number', 'long_string'],195)
                       }
 
-    command_arg_unpackers = {
+    command_arg_types = {
         'some_number': 'float',
         'long_string':'string'
     }

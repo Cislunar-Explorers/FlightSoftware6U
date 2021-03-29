@@ -120,7 +120,7 @@ class CommandDefinitions:
             TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs,
             7: self.comms_driver_test,
-            8: self.print_long_string,
+            TestCommandEnum.LongString.value: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
             TestCommandEnum.RTCTest.value: self.rtc_test
         }

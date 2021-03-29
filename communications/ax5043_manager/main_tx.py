@@ -5,6 +5,7 @@ import busio
 from adafruit_bus_device.spi_device import SPIDevice
 from ax5043_driver import Ax5043
 from ax5043_manager import Manager
+from communications.commands import CommandHandler
 
 logging.basicConfig(level=logging.DEBUG)
 driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
@@ -12,7 +13,10 @@ mgr = Manager(driver)
 
 mgr.tx_enabled = True
 
-mgr.inbox.put(bytearray([0xCA, 0xFE, 0xBA, 0xBE]))
+ch = CommandHandler()
+command = ch.pack_command(1,8,9,some_number=67,long_string='abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz')
+print(command)
+mgr.inbox.put(command)
 
 cycles = 0
 while True:

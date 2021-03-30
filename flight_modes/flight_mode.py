@@ -195,13 +195,13 @@ class PauseBackgroundMode(FlightMode):
 
     def __enter__(self):
         super().__enter__()
+        self.parent.nemo_manager.pause()
         gc.disable()
-        # TODO pause nemo thread
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
-        # TODO resume nemo thread
+        self.parent.nemo_manager.resume()
         super().__exit__(exc_type, exc_val, exc_tb)
 
 

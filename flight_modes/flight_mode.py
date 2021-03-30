@@ -170,11 +170,11 @@ class FlightMode:
         pass
 
     def __enter__(self):
-        logger.info(f"Starting flight mode {self.flight_mode_id}")
+        logger.debug(f"Starting flight mode {self.flight_mode_id}")
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        logger.info(f"Finishing flight mode {self.flight_mode_id}")
+        logger.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
             logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
             logger.error(f"Failed with traceback:\n {tb}")
@@ -195,13 +195,13 @@ class PauseBackgroundMode(FlightMode):
 
     def __enter__(self):
         super().__enter__()
+        self.parent.nemo_manager.pause()
         gc.disable()
-        # TODO pause nemo thread
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
-        # TODO resume nemo thread
+        self.parent.nemo_manager.resume()
         super().__exit__(exc_type, exc_val, exc_tb)
 
 

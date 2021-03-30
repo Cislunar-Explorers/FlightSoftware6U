@@ -13,6 +13,7 @@ from time import sleep
 import utils.constants
 from utils.constants import *
 import utils.parameters as params
+from utils.exceptions import CislunarException
 from utils.db import create_sensor_tables_from_path
 
 # from drivers.dummy_sensors import PressureSensor
@@ -108,8 +109,8 @@ class MainSatelliteThread(Thread):
                 if parameter[0] != '_':
                     utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
         except:
-            raise Exception(
-                'Attempted to set parameter ' + str(parameter) +
+            raise CislunarException(
+                f'Attempted to set parameter ' + str(parameter) +
                 ', which could not be found in parameters.json'
             )
 
@@ -141,6 +142,7 @@ class MainSatelliteThread(Thread):
 
         try:
             self.rtc = RTC()
+            self.rtc.get_time()
         except Exception:
             self.rtc = None
             logger.error("RTC initialization failed")

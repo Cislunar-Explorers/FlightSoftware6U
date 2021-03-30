@@ -116,6 +116,9 @@ VBOOST_3 = "vboost_3"
 SYSTEM_CURRENT = "cursys"
 BATTERY_VOLTAGE = "vbatt"
 
+SUN_CURRENT = "cursun"
+BATT_MODE = "batt_mode"
+
 PROP_TANK_PRESSURE = "prs_pressure"
 
 SUCCESSFUL = "successful"

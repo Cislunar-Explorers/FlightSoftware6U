@@ -109,9 +109,6 @@ class FlightMode:
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
-    def register_commands(cls):
-        raise NotImplementedError("Only implemented in specific flight mode subclasses")
-
     def run_mode(self):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
@@ -184,9 +181,6 @@ class FlightMode:
 # Pause garbage collection and anything else that could
 # interrupt critical thread
 class PauseBackgroundMode(FlightMode):
-    def register_commands(self):
-        super().register_commands()
-
     def run_mode(self):
         super().run_mode()
 
@@ -346,23 +340,73 @@ class SensorMode(FlightMode):
 class LowBatterySafetyMode(FlightMode):
     flight_mode_id = FMEnum.LowBatterySafety.value
 
+    command_codecs = {}
+    command_arg_types = {}
+    downlink_codecs = {
+        LowBatterySafetyCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
+                                                        HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP,
+                                                        THERMOCOUPLER_TEMP,
+                                                        CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
+                                                        VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
+                                                        PROP_TANK_PRESSURE], 84),
+
+        LowBatterySafetyCommandEnum.CritTelem.value: (
+            [BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE], 8)
+    }
+
+    downlink_arg_types = {RTC_TIME: 'double',
+                          POSITION_X: 'double', POSITION_Y: 'double', POSITION_Z: 'double',
+                          ATT_1: 'float', ATT_2: 'float', ATT_3: 'float', ATT_4: 'float',
+                          HK_TEMP_1: 'short', HK_TEMP_2: 'short', HK_TEMP_3: 'short', HK_TEMP_4: 'short',
+                          GYRO_TEMP: 'float',
+                          THERMOCOUPLER_TEMP: 'float',
+                          CURRENT_IN_1: 'short', CURRENT_IN_2: 'short', CURRENT_IN_3: 'short',
+                          VBOOST_1: 'short', VBOOST_2: 'short', VBOOST_3: 'short',
+                          PROP_TANK_PRESSURE: 'float',
+                          SUCCESSFUL: 'bool',
+
+                          BATTERY_VOLTAGE: 'short',
+                          SUN_CURRENT: 'short',
+                          SYSTEM_CURRENT: 'short',
+                          BATT_MODE: 'uint8',
+                          PPT_MODE: 'uint8',
+                          }
+
     def __init__(self, parent):
         super().__init__(parent)
-        raise NotImplementedError
 
     def run_mode(self):
-        sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
-        raise NotImplementedError
+        if self.task_completed:
+            sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
+        else:
+            self.parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
+            self.parent.gom.rf_transmitting_switch(
+                receive=True)  # make sure to listen for commands instead of transmitting
+            self.parent.gom.rf_receiving_switch(receive=True)
+            self.completed_task()
+
+    def poll_inputs(self):
+        super().poll_inputs()
 
     def update_state(self):
+        super().update_state()  # if there are maneuvers, reorientations, opnav, to be done, then switch
         # check power supply to see if I can transition back to NormalMode
         if self.parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
-    def __enter__(self):
-        super().__enter__()
-        self.parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
-        self.parent.gom.pc.set_GPIO_low()
+        time_for_opnav = (time() - self.parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
+        time_for_telem = (time() - self.parent.last_telem_downlink) // 60 < params.LB_TLM_INTERVAL
+
+        if time_for_opnav and FMEnum.Opnav.value not in self.parent.FMQueue:
+            self.parent.FMQueue.put(FMEnum.Opnav.value)
+
+        if time_for_telem:
+            telem = self.parent.telemetry.minimal_packet()
+            downlink = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+                                                                  FMEnum.LowBatterySafety.value,
+                                                                  LowBatterySafetyCommandEnum.CritTelem.value,
+                                                                  **telem)
+            self.parent.downlink_queue.put(downlink)
 
 
 class ManeuverMode(PauseBackgroundMode):
@@ -402,10 +446,6 @@ class SafeMode(FlightMode):
 
 
 class NormalMode(FlightMode):
-
-    def register_commands(cls):
-        pass
-
     flight_mode_id = FMEnum.Normal.value
 
     command_codecs = {
@@ -423,24 +463,24 @@ class NormalMode(FlightMode):
         NormalCommandEnum.NemoWriteRegister.value: ([REG_ADDRESS, REG_VALUE], 2),
         NormalCommandEnum.NemoReadRegister.value: ([REG_ADDRESS, REG_SIZE], 2),
         NormalCommandEnum.NemoSetConfig.value: ([
-            DET_ENABLE_UINT8,
-            DET0_BIAS_UINT8,
-            DET1_BIAS_UINT8,
-            DET0_THRESHOLD_UINT8,
-            DET1_THRESHOLD_UINT8,
-            RATE_WIDTH_MIN,
-            RATE_WIDTH_MAX,
-            BIN_WIDTH,
-            BIN_0_MIN_WIDTH,
-            RATE_INTERVAL,
-            VETO_THRESHOLD_MIN,
-            VETO_THRESHOLD_MAX,
-            CONFIG_WRITE_PERIOD,
-            CONFIG_ROTATE_PERIOD,
-            DATE_WRITE_PERIOD,
-            RATE_DATA_ROTATE_PERIOD,
-            HISTOGRAM_ROTATE_PERIOD,
-        ], 32),
+                                                    DET_ENABLE_UINT8,
+                                                    DET0_BIAS_UINT8,
+                                                    DET1_BIAS_UINT8,
+                                                    DET0_THRESHOLD_UINT8,
+                                                    DET1_THRESHOLD_UINT8,
+                                                    RATE_WIDTH_MIN,
+                                                    RATE_WIDTH_MAX,
+                                                    BIN_WIDTH,
+                                                    BIN_0_MIN_WIDTH,
+                                                    RATE_INTERVAL,
+                                                    VETO_THRESHOLD_MIN,
+                                                    VETO_THRESHOLD_MAX,
+                                                    CONFIG_WRITE_PERIOD,
+                                                    CONFIG_ROTATE_PERIOD,
+                                                    DATE_WRITE_PERIOD,
+                                                    RATE_DATA_ROTATE_PERIOD,
+                                                    HISTOGRAM_ROTATE_PERIOD,
+                                                ], 32),
         NormalCommandEnum.NemoPowerOff.value: ([], 0),
         NormalCommandEnum.NemoPowerOn.value: ([], 0),
         NormalCommandEnum.NemoReboot.value: ([], 0),
@@ -582,13 +622,17 @@ class NormalMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def poll_inputs(self):
+        super().poll_inputs()
+
     def update_state(self):
         super_fm = super().update_state()
 
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self.parent.telemetry.opn.poll_time) // 60 < params.OPNAV_INTERVAL
+        time_for_opnav = (time() - self.parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
+        time_for_telem = (time() - self.parent.last_telem_downlink) // 60 < params.TELEM_INTERVAL
         need_to_electrolyze = self.parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self.parent.telemetry.gom.is_electrolyzing
 
@@ -614,6 +658,14 @@ class NormalMode(FlightMode):
         if time_for_opnav:
             logger.info("Time to run Opnav")
             return FMEnum.OpNav.value
+
+        if time_for_telem:
+            telem = self.parent.telemetry.standard_packet_dict()
+            downlink = self.parent.downlink_handler.pack_downlink(
+                self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.BasicTelem.value,
+                **telem)
+
+            self.parent.downlink_queue.put(downlink)
 
         # if we have data to downlink, change to comms mode
         if not (self.parent.downlink_queue.empty()):

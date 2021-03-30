@@ -64,7 +64,8 @@ class MainSatelliteThread(Thread):
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
+        self.last_opnav_run = time()  # Figure out what to set to for first opnav run
+        self.last_telem_downlink = time()
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME

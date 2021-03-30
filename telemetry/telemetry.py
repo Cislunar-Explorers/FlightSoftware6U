@@ -7,7 +7,7 @@ import numpy as np
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
 from utils.db import GyroModel
-from utils.constants import MAX_GYRO_RATE, GomOutputs
+from utils.constants import MAX_GYRO_RATE, GomOutputs, BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE
 import utils.parameters as params
 
 
@@ -259,6 +259,13 @@ class Telemetry(SynchronousSensor):
                 'cursys': self.gom.hk.cursys,  # ushort
                 'vbatt': self.gom.hk.vbatt,  # ushort
                 'prs_pressure': self.prs.pressure}
+
+    def minimal_packet(self):
+        return {BATTERY_VOLTAGE: self.gom.hk.vbatt,
+                SUN_CURRENT: self.gom.hk.cursun,
+                SYSTEM_CURRENT: self.gom.hk.cursys,
+                BATT_MODE: self.gom.hk.battmode,
+                PPT_MODE: self.gom.hk.pptmode}
 
     def write_telem(self, telem):
         # FIXME

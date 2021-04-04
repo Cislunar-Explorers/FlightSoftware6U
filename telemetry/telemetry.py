@@ -6,8 +6,9 @@ from telemetry.sensor import SynchronousSensor
 import numpy as np
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
-from utils.db import GyroModel
-from utils.constants import MAX_GYRO_RATE, GomOutputs
+#from utils.db import GyroModel
+from utils.db import TelemetryModel, create_sensor_tables_from_path
+from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
 import utils.parameters as params
 
 
@@ -71,16 +72,25 @@ class GyroSensor(SynchronousSensor):
 
         return smoothed
 
-    def write(self):
-        gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
-        gyro_model = GyroModel.from_tuple(gyro_tuple)
+    def get_rot(self):
+        return self.rot
 
-        try:
-            session = self.parent.create_session()
-            session.add(gyro_model)
-            session.commit()
-        finally:
-            session.close()
+    def get_acc(self):
+        return self.acc
+
+    def get_mag(self):
+        return self.mag
+
+    # def write(self):
+    #     gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
+    #     gyro_model = GyroModel.gyro_from_tuple(gyro_tuple)
+    #
+    #     try:
+    #         session = self.parent.create_session()
+    #         session.add(gyro_model)
+    #         session.commit()
+    #     finally:
+    #         session.close()
 
 
 class PressureSensor(SynchronousSensor):
@@ -171,7 +181,8 @@ class Telemetry(SynchronousSensor):
 
         self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc]
 
-        # initialize databases here if not init'd already
+        create_session = create_sensor_tables_from_path(DB_FILE)
+        self.session = create_session()
 
     def poll(self):
         # polls every sensor for the latest telemetry that can be accessed
@@ -260,11 +271,78 @@ class Telemetry(SynchronousSensor):
                 'vbatt': self.gom.hk.vbatt,  # ushort
                 'prs_pressure': self.prs.pressure}
 
-    def write_telem(self, telem):
-        # FIXME
-        # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>
-        # functions above, or a list of all of them.
-        raise NotImplementedError
+    def write_telem(self):
+        try:
+            time_polled = time()
+            gx, gy, gz = GyroSensor.get_rot()  # rot
+            ax, ay, az = GyroSensor.get_acc()  # acc
+            bx, by, bz = GyroSensor.get_mag()  # mag
+
+            telemetry_data = TelemetryModel(
+                time_polled=time_polled,
+                GOM_vboost1=self.gom.hk.vboost[0],
+                GOM_vboost2=self.gom.hk.vboost[1],
+                GOM_vboost3=self.gom.hk.vboost[2],
+                GOM_vbatt=self.gom.hk.vbatt,
+                GOM_curin1=self.gom.hk.curin[0],
+                GOM_curin2=self.gom.hk.curin[1],
+                GOM_curin3=self.gom.hk.curin[2],
+                GOM_cursun=self.gom.hk.cursun,
+                GOM_cursys=self.gom.hk.cursys,
+                GOM_reserved1=self.gom.hk.reserved1,
+                GOM_curout1=self.gom.hk.curout[0],
+                GOM_curout2=self.gom.hk.curout[1],
+                GOM_curout3=self.gom.hk.curout[2],
+                GOM_curout4=self.gom.hk.curout[3],
+                GOM_curout5=self.gom.hk.curout[4],
+                GOM_curout6=self.gom.hk.curout[5],
+                # TODO figure out if this is just one or array
+                # GOM_outputs = Column(Integer),
+                GOM_latchup1=self.gom.hk.latchup[0],
+                GOM_latchup2=self.gom.hk.latchup[1],
+                GOM_latchup3=self.gom.hk.latchup[2],
+                GOM_latchup4=self.gom.hk.latchup[3],
+                GOM_latchup5=self.gom.hk.latchup[4],
+                GOM_latchup6=self.gom.hk.latchup[5],
+                GOM_wdt_i2c_time_left=self.gom.hk.wdt_i2c_time_left,
+                GOM_wdt_gnd_time_left=self.gom.hk.wdt_gnd_time_left,
+                GOM_counter_wdt_i2c=self.gom.hk.counter_wdt_i2c,
+                GOM_counter_wdt_gnd=self.gom.hk.counter_wdt_gnd,
+                GOM_counter_boot=self.gom.hk.counter_boot,
+                GOM_bootcause=self.gom.hk.bootcause,
+                GOM_battmode=self.gom.hk.battmodeColumn,
+                GOM_temp1=self.gom.hk.temp[0],
+                GOM_temp2=self.gom.hk.temp[1],
+                GOM_temp3=self.gom.hk.temp[2],
+                GOM_temp4=self.gom.hk.temp[3],
+                GOM_pptmode=self.gom.hk.pptmode,
+                GOM_reserved2=self.gom.hk.reserved2,
+                RTC_measurement_taken=self.rtc.rtc_time,
+                RPI_cpu=self.cpu,
+                RPI_ram=self.ram,
+                RPI_dsk=self.disk,
+                RPI_tmp=self.tmp,
+                RPI_boot=self.boot_time,
+                RPI_uptime=self.up_time,
+                GYRO_gyr_x=gx,
+                GYRO_gyr_y=gy,
+                GYRO_gyr_z=gz,
+                GYRO_acc_x=ax,
+                GYRO_acc_y=ay,
+                GYRO_acc_z=az,
+                GYRO_mag_x=bx,
+                GYRO_mag_y=by,
+                GYRO_mag_z=bz,
+                GYRO_temperature=self.gyr.tmp,
+                THERMOCOUPLE_pressure=self.thm.tmp,
+                PRESSURE_pressure=self.pressure
+            )
+            self.session.add(telemetry_data)
+            self.session.commit()
+
+        finally:
+            pass
+
 
     def query_telem(self):
         # FIXME

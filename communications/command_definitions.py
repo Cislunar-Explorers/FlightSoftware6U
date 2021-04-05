@@ -199,18 +199,18 @@ class CommandDefinitions:
         self.parent.logger.info(f"RTC Temp: {self.parent.rtc.get_temp()}")
         self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info(f"Setting RTC time to 1e9")
+        self.parent.logger.info("Setting RTC time to 1e9")
         self.parent.rtc.set_time(1e9)
-        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
+        self.parent.logger.info("New RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info(f"Incrementing RTC Time by 5555 seconds")
+        self.parent.logger.info("Incrementing RTC Time by 5555 seconds")
         self.parent.rtc.increment_rtc(5555)
         self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
-        self.parent.logger.info(f"Disabling Oscillator, waiting 10 seconds")
+        self.parent.logger.info("Disabling Oscillator, waiting 10 seconds")
         self.parent.rtc.disable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
-        self.parent.logger.info(f"Enabling Oscillator, waiting 10 seconds")
+        self.parent.logger.info("Enabling Oscillator, waiting 10 seconds")
         self.parent.rtc.enable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
@@ -548,6 +548,15 @@ class CommandDefinitions:
                     successful=False)
 
             self.parent.downlink_queue.put(acknowledgement)
+
+    def get_gom_conf1(self, **kwargs):
+        raise NotImplementedError
+
+    def set_gom_conf2(self, **kwargs):
+        raise NotImplementedError
+
+    def get_gom_conf2(self, **kwargs):
+        raise NotImplementedError
 
     def shell_command(self, **kwargs):
         cmd: str = kwargs.get(CMD)

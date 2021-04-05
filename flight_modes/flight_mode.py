@@ -156,7 +156,9 @@ class FlightMode:
                 self.parent.commands_to_execute.remove(finished_command)
 
     def poll_inputs(self):
-        self.parent.gom.tick_wdt()
+
+        if self.parent.gom is not None:
+            self.parent.gom.tick_wdt()
         self.parent.telemetry.poll()
 
     def completed_task(self):

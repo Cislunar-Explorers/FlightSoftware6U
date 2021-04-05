@@ -264,9 +264,11 @@ class Telemetry(SynchronousSensor):
         # FIXME
         # writes telem to database, where telem is either only one of the outputs of one of the poll_<sensor>
         # functions above, or a list of all of them.
+
         raise NotImplementedError
 
     def query_telem(self):
         # FIXME
         # querys telemetry from database
+        # Query: <DB NUMBER>>, <COLUMN_NUM>>, time1?, time2?, LIMIT 10
         raise NotImplementedError

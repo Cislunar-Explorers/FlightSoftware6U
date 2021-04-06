@@ -18,7 +18,6 @@ import utils.parameters as params
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
 from time import time, sleep
 
-
 # power device address
 POWER_ADDRESS = 0x02
 
@@ -66,7 +65,6 @@ OUT_5 = 4  # 5V
 OUT_6 = 5  # 3.3V
 OUT_HEATER = 6
 OUT_SWITCH = 7
-
 
 # Outputs on board:
 #
@@ -486,7 +484,7 @@ class Power:
             # Set transmitting side of RF switch to transmit
             self._pi.write(RF_TX_EN, pigpio.HIGH)
 
-    def rf_receiving_switch(self,receive:bool = True):
+    def rf_receiving_switch(self, receive: bool = True):
         if receive:
             # Set receiving RF switch to receive
             self._pi.write(RF_RX_EN, pigpio.HIGH)

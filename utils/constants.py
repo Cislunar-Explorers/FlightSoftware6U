@@ -177,6 +177,11 @@ VBOOST1 = "vboost1"
 VBOOST2 = "vboost2"
 VBOOST3 = "vboost3"
 
+MAX_VOLTAGE = 'max_voltage'
+NORM_VOLTAGE = 'norm_voltage'
+SAFE_VOLTAGE = 'safe_voltage'
+CRIT_VOLTAGE = 'crit_voltage'
+
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half

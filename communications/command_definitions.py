@@ -546,6 +546,30 @@ class CommandDefinitions:
 
             self.parent.downlink_queue.put(acknowledgement)
 
+    def get_gom_conf1(self, **kwargs):
+        if self.parent.gom is not None:
+            current_config = self.parent.gom.get_health_data(level="config")
+            current_config_dict = dict_from_eps_config(current_config)
+            acknowledgement = self.parent.downlink_handler.pack_downlink(
+                self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Get.value,
+                **current_config_dict)
+            self.parent.downlink_queue.put(acknowledgement)
+
+    def set_gom_conf2(self, **kwargs):
+        if self.parent.gom is not None:
+            new_conf2 = eps_config2_from_dict(kwargs)
+            self.parent.gom.pc.config2_set(new_conf2)
+            self.parent.gom.pc.config2_cmd(2)
+
+    def get_gom_conf2(self, **kwargs):
+        if self.parent.gom is not None:
+            current_conf2 = self.parent.gom.get_health_data(level='config2')
+            current_config2_dict = dict_from_eps_config2(current_conf2)
+            acknowledgement = self.parent.downlink_handler.pack_downlink(
+                self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
+                **current_config2_dict)
+            self.parent.downlink_queue.put(acknowledgement)
+
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:
     return {PPT_MODE: config.ppt_mode,
@@ -656,3 +680,26 @@ def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     new_config.vboost[2] = vboost[2]
 
     return new_config
+
+
+def eps_config2_from_dict(config_dict: dict) -> ps.eps_config2_t:
+    gom_conf2 = ps.eps_config2_t()
+
+    max_voltage = config_dict.get(MAX_VOLTAGE)
+    normal_voltage = config_dict.get(NORM_VOLTAGE)
+    safe_voltage = config_dict.get(SAFE_VOLTAGE)
+    crit_voltage = config_dict.get(CRIT_VOLTAGE)
+
+    gom_conf2.batt_maxvoltage = max_voltage
+    gom_conf2.batt_normalvoltage = normal_voltage
+    gom_conf2.batt_safevoltage = safe_voltage
+    gom_conf2.criticalvoltage = crit_voltage
+
+    return gom_conf2
+
+
+def dict_from_eps_config2(conf2: ps.eps_config2_t) -> dict:
+    return {MAX_VOLTAGE: conf2.batt_maxvoltage,
+            NORM_VOLTAGE: conf2.batt_normalvoltage,
+            SAFE_VOLTAGE: conf2.batt_safevoltage,
+            CRIT_VOLTAGE: conf2.batt_critialvolatge}

@@ -2,7 +2,8 @@ from random import randint
 import drivers.power.power_structs as ps
 from communications.commands import CommandHandler
 from utils.constants import FMEnum, NormalCommandEnum, MAC
-from communications.command_definitions import dict_from_eps_config, eps_config_from_dict
+from communications.command_definitions import dict_from_eps_config, eps_config_from_dict, dict_from_eps_config2, \
+    eps_config2_from_dict
 
 
 def test_config_command():
@@ -102,5 +103,36 @@ def test_config_command():
     assert config.vboost[2] == unpacked_config.vboost[2]
 
 
+def test_config2_command():
+    config2 = ps.eps_config2_t()
+    config2.batt_maxvoltage = 8300
+    config2.batt_normalvoltage = 7600
+    config2.batt_safevoltage = 7200
+    config2.batt_criticalvoltage = 6800
+
+    config2_dict = dict_from_eps_config2(config2)
+
+    COUNTER = 0
+
+    ch = CommandHandler()
+
+    command_bytes = ch.pack_command(COUNTER, FMEnum.Normal.value, NormalCommandEnum.GomConf2Set.value, **config2_dict)
+    mac, counter, mode, command_id, kwargs = ch.unpack_command(command_bytes)
+
+    assert mac == MAC
+    assert counter == COUNTER
+    assert mode == FMEnum.Normal.value
+    assert command_id == NormalCommandEnum.GomConf2Set.value
+
+    unpacked_config2 = eps_config2_from_dict(kwargs)
+
+    assert config2._fields_ == unpacked_config2._fields_
+
+
+#    for i in config2._fields_:
+#        assert getattr(config2, i[0]) == getattr(unpacked_config2, i[0])
+
+
 if __name__ == '__main__':
     test_config_command()
+    test_config2_command()

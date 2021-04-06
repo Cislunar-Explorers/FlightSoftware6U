@@ -702,4 +702,4 @@ def dict_from_eps_config2(conf2: ps.eps_config2_t) -> dict:
     return {MAX_VOLTAGE: conf2.batt_maxvoltage,
             NORM_VOLTAGE: conf2.batt_normalvoltage,
             SAFE_VOLTAGE: conf2.batt_safevoltage,
-            CRIT_VOLTAGE: conf2.batt_critialvolatge}
+            CRIT_VOLTAGE: conf2.batt_criticalvoltage}

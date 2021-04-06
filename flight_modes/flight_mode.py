@@ -519,6 +519,10 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE8: "bool",
         OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
         VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
+        MAX_VOLTAGE: 'short',
+        NORM_VOLTAGE: 'short',
+        SAFE_VOLTAGE: 'short',
+        CRIT_VOLTAGE: 'short',
     }
 
     downlink_codecs = {

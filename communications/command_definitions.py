@@ -577,7 +577,7 @@ class CommandDefinitions:
 
     def picberry(self, **kwargs):
         cmd: str = kwargs.get(CMD)
-        base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx"
+        base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
         subprocess.run(base_command + cmd, shell=True)
 
 

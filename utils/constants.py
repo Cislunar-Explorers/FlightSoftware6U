@@ -150,6 +150,36 @@ GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 # TODO: make sure that we change this to 500 if need be
 GYRO_RANGE = 250  # degrees per second
 
+# Gom config command args:
+PPT_MODE = "ppt_mode"
+BATTHEATERMODE = "battheater_mode"
+BATTHEATERLOW = "battheater_low"
+BATTHEATERHIGH = "battheater_high"
+OUTPUT_NORMAL1 = "output_normal_value1"
+OUTPUT_NORMAL2 = "output_normal_value2"
+OUTPUT_NORMAL3 = "output_normal_value3"
+OUTPUT_NORMAL4 = "output_normal_value4"
+OUTPUT_NORMAL5 = "output_normal_value5"
+OUTPUT_NORMAL6 = "output_normal_value6"
+OUTPUT_NORMAL7 = "output_normal_value7"
+OUTPUT_NORMAL8 = "output_normal_value8"
+OUTPUT_SAFE1 = "output_safe_value1"
+OUTPUT_SAFE2 = "output_safe_value2"
+OUTPUT_SAFE3 = "output_safe_value3"
+OUTPUT_SAFE4 = "output_safe_value4"
+OUTPUT_SAFE5 = "output_safe_value5"
+OUTPUT_SAFE6 = "output_safe_value6"
+OUTPUT_SAFE7 = "output_safe_value7"
+OUTPUT_SAFE8 = "output_safe_value8"
+OUTPUT_ON_DELAY = "output_initial_on_delay"
+OUTPUT_OFF_DELAY = "output_initial_off_delay"
+VBOOST1 = "vboost1"
+VBOOST2 = "vboost2"
+VBOOST3 = "vboost3"
+
+CMD = 'cmd'
+RETURN_CODE = 'return_code'
+
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -207,7 +237,7 @@ class NormalCommandEnum(IntEnum):
     GetParam = 11
     SetOpnavInterval = 12
     WhenReorient = 13  # when we want to schedule a reorientation maneuver
-                       # 2 args, unix time stamp and spin axis vector (2 floats)
+    # 2 args, unix time stamp and spin axis vector (2 floats)
     ScheduleReorientation = 14
     ScheduleManeuver = 15
     ACSPulsing = 16
@@ -219,6 +249,16 @@ class NormalCommandEnum(IntEnum):
     NemoReboot = 22
     NemoProcessRateData = 23
     NemoProcessHistograms = 24
+    GomConf1Set = 30
+    GomConf1Get = 31
+    GomConf2Set = 32
+    GomConf2Get = 33
+
+    ShellCommand = 50
+    SudoCommand = 51
+    Picberry = 52
+
+    CommandStatus = 99
 
 
 @unique
@@ -304,4 +344,6 @@ class CommandCommandEnum(IntEnum):
     GomPin = 6  # 1 arg: which gom pin to toggle
     GomGeneralCmd = 7
     GeneralCmd = 8
+
+    ShellCommand = 50
     CeaseComms = 170

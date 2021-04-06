@@ -7,20 +7,18 @@ if TYPE_CHECKING:
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 # It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
 
-from datetime import datetime
-from utils.constants import FMEnum, NormalCommandEnum, SafetyCommandEnum, CommandCommandEnum, TestCommandEnum
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
-import os
+import drivers.power.power_structs as ps
 import time
 from threading import Thread
-from utils.constants import INTERVAL, STATE, DELAY, NAME, VALUE, NUM_BLOCKS, HARD_SET, PARAMETERS_JSON_PATH, a, b, M, \
-    team_identifier, START, PULSE_DT, PULSE_NUM, PULSE_DURATION, REG_ADDRESS, REG_VALUE, REG_SIZE, T_START, T_STOP, \
-    DECIMATION_FACTOR
+from utils.constants import *
 from json import load, dump
 from utils.exceptions import CommandArgException
+import subprocess
 
 import os
 import utils.parameters as params
+
 
 def verification(**kwargs):
     """CQC Comms Verification
@@ -99,6 +97,13 @@ class CommandDefinitions:
             NormalCommandEnum.NemoReboot.value: self.nemo_reboot,
             NormalCommandEnum.NemoProcessRateData.value: self.nemo_process_rate_data,
             NormalCommandEnum.NemoProcessHistograms.value: self.nemo_process_histograms,
+            NormalCommandEnum.GomConf1Set.value: self.set_gom_conf1,
+            NormalCommandEnum.GomConf1Get.value: self.get_gom_conf1,
+            NormalCommandEnum.GomConf2Set.value: self.set_gom_conf2,
+            NormalCommandEnum.GomConf2Get.value: self.get_gom_conf2,
+            NormalCommandEnum.ShellCommand.value: self.shell_command,
+            NormalCommandEnum.SudoCommand.value: self.sudo_command,
+            NormalCommandEnum.Picberry.value: self.picberry,
         }
 
         self.low_battery_commands = {
@@ -119,17 +124,8 @@ class CommandDefinitions:
             SafetyCommandEnum.DetailedTelem.value: self.gather_detailed_telem
         }
 
-        self.opnav_commands = {
-            1: self.run_opnav,
-            2: self.set_opnav_interval
-        }
-
-        self.maneuver_commands = {
-            1: self.run_opnav,
-            # 2: self.change_attitude,
-            # 9: self.burn
-        }
-
+        self.opnav_commands = {}
+        self.maneuver_commands = {}
         self.sensor_commands = {}
 
         self.test_commands = {
@@ -203,18 +199,18 @@ class CommandDefinitions:
         self.parent.logger.info(f"RTC Temp: {self.parent.rtc.get_temp()}")
         self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info(f"Setting RTC time to 1e9")
+        self.parent.logger.info("Setting RTC time to 1e9")
         self.parent.rtc.set_time(1e9)
-        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
+        self.parent.logger.info("New RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info(f"Incrementing RTC Time by 5555 seconds")
+        self.parent.logger.info("Incrementing RTC Time by 5555 seconds")
         self.parent.rtc.increment_rtc(5555)
         self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
-        self.parent.logger.info(f"Disabling Oscillator, waiting 10 seconds")
+        self.parent.logger.info("Disabling Oscillator, waiting 10 seconds")
         self.parent.rtc.disable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
-        self.parent.logger.info(f"Enabling Oscillator, waiting 10 seconds")
+        self.parent.logger.info("Enabling Oscillator, waiting 10 seconds")
         self.parent.rtc.enable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
@@ -251,8 +247,7 @@ class CommandDefinitions:
         self.parent.FMQueue.put(FMEnum.OpNav.value)
 
     def set_parameter(self, **kwargs):
-        """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
-        string which we can't pack/unpack """
+        """Changes the values of a parameter in utils/parameters.py or .json if hard_set"""
         name = kwargs[NAME]
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
@@ -529,3 +524,169 @@ class CommandDefinitions:
             self.parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
         else:
             self.parent.logger.error("CMD: nemo_process_histograms() failed, nemo_manager not initialized")
+
+    def set_gom_conf1(self, **kwargs):
+        new_config = eps_config_from_dict(**kwargs)
+        self.parent.logger.info("New config to be set:")
+        ps.displayConfig(new_config)
+
+        if self.parent.gom is not None:
+            try:
+                self.parent.gom.pc.config_set(new_config)
+                updated_config: ps.eps_config_t = self.parent.gom.pc.config_get()
+
+                new_config_dict = dict_from_eps_config(updated_config)
+                acknowledgement = self.parent.downlink_handler.pack_downlink(
+                    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Set.value,
+                    **new_config_dict)
+
+            except Exception:
+                self.parent.logger.error("Could not set new gom config")
+                acknowledgement = self.parent.downlink_handler.pack_downlink(
+                    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.CommandStatus.value,
+                    fmid=self.parent.flight_mode.flight_mode_id, cid=NormalCommandEnum.GomConf1Set.value,
+                    successful=False)
+
+            self.parent.downlink_queue.put(acknowledgement)
+
+    def get_gom_conf1(self, **kwargs):
+        raise NotImplementedError
+
+    def set_gom_conf2(self, **kwargs):
+        raise NotImplementedError
+
+    def get_gom_conf2(self, **kwargs):
+        raise NotImplementedError
+
+    def shell_command(self, **kwargs):
+        cmd: str = kwargs.get(CMD)
+        self.parent.logger.info(f"Running {cmd}")
+        output = subprocess.run(cmd, shell=True)
+
+        response = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+                                                              self.parent.flight_mode.flight_mode_id,
+                                                              NormalCommandEnum.ShellCommand.value,
+                                                              return_code=output.returncode)
+        self.parent.downlink_queue.put(response)
+
+    def sudo_command(self, **kwargs):
+        """Same as shell_command, but prepends 'sudo ' to the command"""
+        cmd: str = kwargs.get(CMD)
+        command = 'sudo ' + cmd
+        self.shell_command(cmd=command)
+
+    def picberry(self, **kwargs):
+        cmd: str = kwargs.get(CMD)
+        base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
+        subprocess.run(base_command + cmd, shell=True)
+
+
+def dict_from_eps_config(config: ps.eps_config_t) -> dict:
+    return {PPT_MODE: config.ppt_mode,
+            BATTHEATERMODE: bool(config.battheater_mode),
+            BATTHEATERLOW: config.battheater_low,
+            BATTHEATERHIGH: config.battheater_high,
+            OUTPUT_NORMAL1: bool(config.output_normal_value[0]),
+            OUTPUT_NORMAL2: bool(config.output_normal_value[1]),
+            OUTPUT_NORMAL3: bool(config.output_normal_value[2]),
+            OUTPUT_NORMAL4: bool(config.output_normal_value[3]),
+            OUTPUT_NORMAL5: bool(config.output_normal_value[4]),
+            OUTPUT_NORMAL6: bool(config.output_normal_value[5]),
+            OUTPUT_NORMAL7: bool(config.output_normal_value[6]),
+            OUTPUT_NORMAL8: bool(config.output_normal_value[7]),
+            OUTPUT_SAFE1: bool(config.output_safe_value[0]),
+            OUTPUT_SAFE2: bool(config.output_safe_value[1]),
+            OUTPUT_SAFE3: bool(config.output_safe_value[2]),
+            OUTPUT_SAFE4: bool(config.output_safe_value[3]),
+            OUTPUT_SAFE5: bool(config.output_safe_value[4]),
+            OUTPUT_SAFE6: bool(config.output_safe_value[5]),
+            OUTPUT_SAFE7: bool(config.output_safe_value[6]),
+            OUTPUT_SAFE8: bool(config.output_safe_value[7]),
+            OUTPUT_ON_DELAY: config.output_initial_on_delay[0],
+            OUTPUT_OFF_DELAY: config.output_initial_off_delay[0],
+            VBOOST1: config.vboost[0],
+            VBOOST2: config.vboost[1],
+            VBOOST3: config.vboost[2],
+            }
+
+
+def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
+    ppt_mode = kwargs.get(PPT_MODE)
+    heater_mode = int(kwargs.get(BATTHEATERMODE))  # BATTHEATERMODE is transmitted as a bool, then cast to 0/1
+    heater_low = kwargs.get(BATTHEATERLOW)
+    heater_high = kwargs.get(BATTHEATERHIGH)
+    normal_output = [kwargs.get(OUTPUT_NORMAL1),
+                     kwargs.get(OUTPUT_NORMAL2),
+                     kwargs.get(OUTPUT_NORMAL3),
+                     kwargs.get(OUTPUT_NORMAL4),
+                     kwargs.get(OUTPUT_NORMAL5),
+                     kwargs.get(OUTPUT_NORMAL6),
+                     kwargs.get(OUTPUT_NORMAL7),
+                     kwargs.get(OUTPUT_NORMAL8)]
+
+    normal_output = list(map(int, normal_output))  # transmitted as bools, convert to ints
+
+    safe_output = [kwargs.get(OUTPUT_SAFE1),
+                   kwargs.get(OUTPUT_SAFE2),
+                   kwargs.get(OUTPUT_SAFE3),
+                   kwargs.get(OUTPUT_SAFE4),
+                   kwargs.get(OUTPUT_SAFE5),
+                   kwargs.get(OUTPUT_SAFE6),
+                   kwargs.get(OUTPUT_SAFE7),
+                   kwargs.get(OUTPUT_SAFE8)]
+
+    normal_output = list(map(int, normal_output))  # transmitted as bools, convert to ints
+
+    # this means that all outputs have the same on/off delay
+    initial_on_delay = [kwargs.get(OUTPUT_ON_DELAY)] * 8
+    initial_off_delay = [kwargs.get(OUTPUT_OFF_DELAY)] * 8
+
+    vboost = [kwargs.get(VBOOST1), kwargs.get(VBOOST2), kwargs.get(VBOOST3)]
+
+    new_config = ps.eps_config_t()
+    new_config.ppt_mode = ppt_mode
+    new_config.battheater_mode = heater_mode
+    new_config.battheater_low = heater_low
+    new_config.battheater_high = heater_high
+
+    new_config.output_normal_value[0] = normal_output[0]
+    new_config.output_normal_value[1] = normal_output[1]
+    new_config.output_normal_value[2] = normal_output[2]
+    new_config.output_normal_value[3] = normal_output[3]
+    new_config.output_normal_value[4] = normal_output[4]
+    new_config.output_normal_value[5] = normal_output[5]
+    new_config.output_normal_value[6] = normal_output[6]
+    new_config.output_normal_value[7] = normal_output[7]
+
+    new_config.output_safe_value[0] = safe_output[0]
+    new_config.output_safe_value[1] = safe_output[1]
+    new_config.output_safe_value[2] = safe_output[2]
+    new_config.output_safe_value[3] = safe_output[3]
+    new_config.output_safe_value[4] = safe_output[4]
+    new_config.output_safe_value[5] = safe_output[5]
+    new_config.output_safe_value[6] = safe_output[6]
+    new_config.output_safe_value[7] = safe_output[7]
+
+    new_config.output_initial_on_delay[0] = initial_on_delay[0]
+    new_config.output_initial_on_delay[1] = initial_on_delay[1]
+    new_config.output_initial_on_delay[2] = initial_on_delay[2]
+    new_config.output_initial_on_delay[3] = initial_on_delay[3]
+    new_config.output_initial_on_delay[4] = initial_on_delay[4]
+    new_config.output_initial_on_delay[5] = initial_on_delay[5]
+    new_config.output_initial_on_delay[6] = initial_on_delay[6]
+    new_config.output_initial_on_delay[7] = initial_on_delay[7]
+
+    new_config.output_initial_off_delay[0] = initial_off_delay[0]
+    new_config.output_initial_off_delay[1] = initial_off_delay[1]
+    new_config.output_initial_off_delay[2] = initial_off_delay[2]
+    new_config.output_initial_off_delay[3] = initial_off_delay[3]
+    new_config.output_initial_off_delay[4] = initial_off_delay[4]
+    new_config.output_initial_off_delay[5] = initial_off_delay[5]
+    new_config.output_initial_off_delay[6] = initial_off_delay[6]
+    new_config.output_initial_off_delay[7] = initial_off_delay[7]
+
+    new_config.vboost[0] = vboost[0]
+    new_config.vboost[1] = vboost[1]
+    new_config.vboost[2] = vboost[2]
+
+    return new_config

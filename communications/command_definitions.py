@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import drivers.power.power_structs as ps
 import time
+import hashlib
 from threading import Thread
 from utils.constants import *
 from json import load, dump
@@ -135,6 +136,7 @@ class CommandDefinitions:
             TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs,
             7: self.comms_driver_test,
+            TestCommandEnum.LongString.value: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
             TestCommandEnum.RTCTest.value: self.rtc_test
         }
@@ -150,7 +152,10 @@ class CommandDefinitions:
             CommandCommandEnum.GomPin.value: self.gom_outputs,
             CommandCommandEnum.GomGeneralCmd.value: self.gom_command,
             CommandCommandEnum.GeneralCmd.value: self.general_command,
-            CommandCommandEnum.CeaseComms.value: self.cease_comms
+            CommandCommandEnum.CeaseComms.value: self.cease_comms,
+            CommandCommandEnum.AddFileBlock.value: self.add_file_block,
+            CommandCommandEnum.GetFileBlocksInfo.value:self.get_file_blocks_info,
+            CommandCommandEnum.ActivateFile.value:self.activate_file
         }
 
         self.COMMAND_DICT = {
@@ -430,7 +435,7 @@ class CommandDefinitions:
 
     def edit_file_at_line(self, **kwargs):
 
-        file_path = kwargs['file_path']
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
@@ -449,7 +454,7 @@ class CommandDefinitions:
 
     def insert_line_in_file(self, **kwargs):
 
-        file_path = kwargs['file_path']
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
@@ -462,6 +467,84 @@ class CommandDefinitions:
         # Write new line into file
         original_file.seek(0)
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
+
+    def add_file_block(self, **kwargs):
+
+        file_path = kwargs['file_path']
+        block_number = kwargs['block_number']
+        block_text = kwargs['block_text']
+
+        self.parent.file_block_bank[block_number] = (file_path,block_text)
+
+        #Downlink acknowledgment with block number
+        acknowledgement = self.parent.downlink_handler.pack_downlink(
+        self.parent.downlink_counter, FMEnum.Command.value, 
+        CommandCommandEnum.AddFileBlock.value, successful=True, 
+        block_number = block_number)
+        #self.parent.downlink_queue.put(acknowledgement)
+
+    def get_file_blocks_info(self, **kwargs):
+        """Downlink checksum of file blocks and any missing block numbers"""
+        file_path = kwargs['file_path']
+        total_blocks = kwargs['total_blocks']
+        full_file_text = ''
+        missing_blocks = ''
+
+        for i in range(total_blocks):
+
+            try:
+                block = self.parent.file_block_bank[i]
+
+                if block[0] == file_path:
+                    full_file_text += block[1]
+
+            except KeyError:
+                missing_blocks += str(i) + ','
+        
+        checksum = hashlib.md5(full_file_text.encode('utf-8')).hexdigest()
+        
+        file_block_info = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+        FMEnum.Command.value, CommandCommandEnum.GetFileBlocksInfo.value,
+        checksum=checksum,missing_blocks=missing_blocks)
+        self.parent.downlink_queue.put(file_block_info)
+
+    def activate_file(self, **kwargs):
+        
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
+        total_blocks = kwargs['total_blocks']
+        local_file_name = kwargs['file_path'] 
+
+        assert(total_blocks == len(self.parent.file_block_bank))
+
+        full_file_text = ''
+
+        #Assemble file from blocks
+        for i in range(total_blocks):
+            full_file_text += self.parent.file_block_bank[i][1]
+        
+        #Create backup with the original if the file already exists
+        if os.path.exists(file_path):
+            original_file = open(file_path, 'r')
+            original_file_lines = original_file.readlines()
+            backup_name = FLIGHT_SOFTWARE_PATH + local_file_name[:local_file_name.index('.py')] + '_backup.py'
+            backup_file = open(backup_name, 'w')
+            backup_file.writelines(original_file_lines)
+
+        #Opens target file, creates one with the given path if it doesn't exist yet
+        original_file = open(file_path, 'w')
+
+        #Write chained file blocks to the target file path
+        original_file.seek(0)
+        original_file.write(full_file_text)
+
+        self.parent.file_block_bank = {}
+    
+    def print_long_string(self, **kwargs):
+        number = kwargs['some_number']
+        string = kwargs['long_string']
+
+        print(number)
+        print(string)
 
     def nemo_write_register(self, **kwargs):
         if self.parent.nemo_manager is not None:

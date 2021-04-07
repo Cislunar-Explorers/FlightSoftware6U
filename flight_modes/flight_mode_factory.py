@@ -6,7 +6,8 @@ from flight_modes.flight_mode import (
     SensorMode,
     TestMode,
     CommsMode,
-    OpNavMode
+    OpNavMode,
+    CommandMode
 )
 
 from flight_modes.restart_reboot import RestartMode, BootUpMode
@@ -25,6 +26,7 @@ FLIGHT_MODE_DICT = {
     FMEnum.SensorMode.value: SensorMode,
     FMEnum.TestMode.value: TestMode,
     FMEnum.CommsMode.value: CommsMode,
+    FMEnum.Command.value: CommandMode,
     FMEnum.AttitudeAdjustment.value: AAMode
 }
 

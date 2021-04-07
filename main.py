@@ -68,6 +68,7 @@ class MainSatelliteThread(Thread):
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+        self.file_block_bank = {}
         self.need_to_reboot = False
 
         self.gom = None
@@ -304,7 +305,7 @@ class MainSatelliteThread(Thread):
         """This is the main loop of the Cislunar Explorers and runs constantly during flight."""
         try:
             while True:
-                sleep(5)  # TODO remove when flight modes execute real tasks
+                #sleep(5)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()

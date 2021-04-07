@@ -61,7 +61,6 @@ class AAMode(PauseBackgroundMode):
 
         return NO_FM_CHANGE
 
-    # TODO implement actual maneuver execution
     # check if exit condition has completed
     def run_mode(self):
         # double check to make sure that we actually have the info we need to reorient:

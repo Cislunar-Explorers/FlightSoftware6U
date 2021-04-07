@@ -63,10 +63,37 @@ TIME = "time"
 
 HARD_SET = "hard_set"
 
+
 FILE_PATH = "file_path"
 BLOCK_NUMBER = "block_number"
 BLOCK_TEXT = "block_text"
 TOTAL_BLOCKS = "total_blocks"
+REG_ADDRESS = "reg_address"
+REG_VALUE = "reg_value"
+REG_SIZE = "reg_size"
+
+DET_ENABLE_UINT8 = "det_enable_uint8"
+DET0_BIAS_UINT8 = "det0_bias_uint8"
+DET1_BIAS_UINT8 = "det1_bias_uint8"
+DET0_THRESHOLD_UINT8 = "det0_threshold_uint8"
+DET1_THRESHOLD_UINT8 = "det1_threshold_uint8"
+RATE_WIDTH_MIN = "rate_width_min"
+RATE_WIDTH_MAX = "rate_width_max"
+BIN_WIDTH = "bin_width"
+BIN_0_MIN_WIDTH = "bin_0_min_width"
+RATE_INTERVAL = "rate_interval"
+VETO_THRESHOLD_MIN = "veto_threshold_min"
+VETO_THRESHOLD_MAX = "veto_threshold_max"
+CONFIG_WRITE_PERIOD = "config_write_period"
+CONFIG_ROTATE_PERIOD = "config_rotate_period"
+DATE_WRITE_PERIOD = "data_write_period"
+RATE_DATA_ROTATE_PERIOD = "rate_data_rotate_period"
+HISTOGRAM_ROTATE_PERIOD = "histogram_rotate_period"
+
+T_START = "t_start"
+T_STOP = "t_stop"
+
+DECIMATION_FACTOR = "decimation_factor"
 
 # Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
@@ -109,6 +136,7 @@ CISLUNAR_BASE_DIR = os.path.join(
 )
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
+NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
 
 a = 1664525
 b = 1013904223
@@ -130,6 +158,36 @@ GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 # Gyro specific constants
 # TODO: make sure that we change this to 500 if need be
 GYRO_RANGE = 250  # degrees per second
+
+# Gom config command args:
+PPT_MODE = "ppt_mode"
+BATTHEATERMODE = "battheater_mode"
+BATTHEATERLOW = "battheater_low"
+BATTHEATERHIGH = "battheater_high"
+OUTPUT_NORMAL1 = "output_normal_value1"
+OUTPUT_NORMAL2 = "output_normal_value2"
+OUTPUT_NORMAL3 = "output_normal_value3"
+OUTPUT_NORMAL4 = "output_normal_value4"
+OUTPUT_NORMAL5 = "output_normal_value5"
+OUTPUT_NORMAL6 = "output_normal_value6"
+OUTPUT_NORMAL7 = "output_normal_value7"
+OUTPUT_NORMAL8 = "output_normal_value8"
+OUTPUT_SAFE1 = "output_safe_value1"
+OUTPUT_SAFE2 = "output_safe_value2"
+OUTPUT_SAFE3 = "output_safe_value3"
+OUTPUT_SAFE4 = "output_safe_value4"
+OUTPUT_SAFE5 = "output_safe_value5"
+OUTPUT_SAFE6 = "output_safe_value6"
+OUTPUT_SAFE7 = "output_safe_value7"
+OUTPUT_SAFE8 = "output_safe_value8"
+OUTPUT_ON_DELAY = "output_initial_on_delay"
+OUTPUT_OFF_DELAY = "output_initial_off_delay"
+VBOOST1 = "vboost1"
+VBOOST2 = "vboost2"
+VBOOST3 = "vboost3"
+
+CMD = 'cmd'
+RETURN_CODE = 'return_code'
 
 
 # GOMspace Channel designations:
@@ -188,11 +246,28 @@ class NormalCommandEnum(IntEnum):
     GetParam = 11
     SetOpnavInterval = 12
     WhenReorient = 13  # when we want to schedule a reorientation maneuver
-                       # 2 args, unix time stamp and spin axis vector (2 floats)
+    # 2 args, unix time stamp and spin axis vector (2 floats)
     ScheduleReorientation = 14
     ScheduleManeuver = 15
     ACSPulsing = 16
+    NemoWriteRegister = 17
+    NemoReadRegister = 18
+    NemoSetConfig = 19
+    NemoPowerOff = 20
+    NemoPowerOn = 21
+    NemoReboot = 22
+    NemoProcessRateData = 23
+    NemoProcessHistograms = 24
+    GomConf1Set = 30
+    GomConf1Get = 31
+    GomConf2Set = 32
+    GomConf2Get = 33
 
+    ShellCommand = 50
+    SudoCommand = 51
+    Picberry = 52
+
+    CommandStatus = 99
 
 
 @unique
@@ -283,4 +358,5 @@ class CommandCommandEnum(IntEnum):
     AddFileBlock = 9
     GetFileBlocksInfo = 10
     ActivateFile = 11
+    ShellCommand = 50
     CeaseComms = 170

@@ -3,6 +3,7 @@
 # from typing import Tuple
 from time import sleep, time
 from utils.constants import FMEnum, DEG2RAD, NO_FM_CHANGE, GOM_TIMING_FUDGE_FACTOR
+import utils.parameters as params
 from flight_modes.flight_mode import PauseBackgroundMode
 # from math import sin, cos
 import gc
@@ -89,10 +90,10 @@ class AAMode(PauseBackgroundMode):
                 self.missed_timing(pulse_start)
             else:
                 self.parent.logger.debug(f"Sleeping {pulse_start - time()}s")
-                sleep(max([(pulse_start - time()) - 2, 0]))
                 self.parent.gom.pc.calculate_solenoid_wave()
+                sleep(max([(pulse_start - time()) - 2, 0]))
                 self.parent.logger.info(
-                    f"Experimental solenoid function. spike={self.parent.parameters['ACS_SPIKE_DURATION']}, hold={pulse_duration}")
+                    f"Experimental solenoid function. spike={params.ACS_SPIKE_DURATION}, hold={pulse_duration}")
                 # pulse ACS according to timings
                 try:
                     for pulse_time in absolute_pulse_times:

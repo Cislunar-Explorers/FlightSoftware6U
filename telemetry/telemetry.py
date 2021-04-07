@@ -6,7 +6,7 @@ from telemetry.sensor import SynchronousSensor
 import numpy as np
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
-#from utils.db import GyroModel
+# from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
 from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
 import utils.parameters as params
@@ -181,8 +181,8 @@ class Telemetry(SynchronousSensor):
 
         self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc]
 
-        create_session = create_sensor_tables_from_path(DB_FILE)
-        self.session = create_session()
+        create_session = create_sensor_tables_from_path(DB_FILE)  # instantiate DB session
+        self.session = create_session()  # instantiate DB session
 
     def poll(self):
         # polls every sensor for the latest telemetry that can be accessed
@@ -343,8 +343,56 @@ class Telemetry(SynchronousSensor):
         finally:
             pass
 
+    def query_telem(self, sensor):
+        if sensor.equals("all"):
+            self.query_all()
+        elif sensor.equals("gom"):
+            self.query_gom()
+        elif sensor.equals("rtc"):
+            self.query_rtc()
+        elif sensor.equals("rpi"):
+            self.query_rpi()
+        elif sensor.equals("gyro"):
+            self.query_gyro()
+        elif sensor.equals("thm"):
+            self.query_thm()
+        elif sensor.equals("pressure"):
+            self.query_pressure()
+        else:
+            raise ValueError
 
-    def query_telem(self):
-        # FIXME
-        # querys telemetry from database
-        raise NotImplementedError
+    def query_all(self):
+        entries = self.session.query(TelemetryModel).all()
+        for entry in entries:
+            print(entry)
+
+    def query_gom(self):
+        entries = self.session.query(TelemetryModel).all()
+        for entry in entries[:36]:
+            print(entry)
+
+    def query_rtc(self):
+        entries = self.session.query(TelemetryModel).all()
+        for entry in entries[36:37]:
+            print(entry)
+
+    def query_rpi(self):
+        entries = self.session.query(TelemetryModel).all()
+        for entry in entries[37:43]:
+            print(entry)
+
+    def query_gyro(self):
+        entries = self.session.query(TelemetryModel).all()
+        for entry in entries[43:54]:
+            print(entry)
+
+    def query_thm(self):
+        entries = self.session.query(TelemetryModel).all()
+        for entry in entries[53:54]:
+            print(entry)
+
+    def query_pressure(self):
+        entries = self.session.query(TelemetryModel).all()
+        for entry in entries[54:55]:
+            print(entry)
+

@@ -157,7 +157,7 @@ GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 # Gyro specific constants
 # TODO: make sure that we change this to 500 if need be
-GYRO_RANGE = 250  # degrees per second
+GYRO_RANGE = 500  # degrees per second
 
 # Gom config command args:
 PPT_MODE = "ppt_mode"

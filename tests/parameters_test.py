@@ -6,6 +6,7 @@ import os
 
 def test_parameters():
     """Copied from main.py's init_parameters"""
+    print(os.getcwd())
     with open(os.fspath("../utils/parameters.json")) as f:
         json_parameter_dict = load(f)
 

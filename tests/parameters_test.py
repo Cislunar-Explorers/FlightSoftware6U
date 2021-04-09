@@ -9,7 +9,7 @@ def test_parameters():
     if os.getcwd() == '/home/runner/work/FlightSoftware/FlightSoftware':
         filepath = 'utils/parameters.json'
     else:
-        filepath = '../utils.parameters.json'
+        filepath = '../utils/parameters.json'
 
     with open(os.fspath(filepath)) as f:
         json_parameter_dict = load(f)

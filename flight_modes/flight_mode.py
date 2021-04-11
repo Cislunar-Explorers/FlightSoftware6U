@@ -223,10 +223,14 @@ class TestMode(PauseBackgroundMode):
                       TestCommandEnum.ADCTest.value: ([], 0),
                       TestCommandEnum.CommsDriver.value: ([], 0),
                       TestCommandEnum.PiShutdown.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0)
+                      TestCommandEnum.RTCTest.value: ([], 0),
+                      TestCommandEnum.LongString.value: (['some_number', 'long_string'],180)
                       }
 
-    command_arg_unpackers = {}
+    command_arg_types = {
+        'some_number': 'float',
+        'long_string':'string'
+    }
 
     downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
 
@@ -637,11 +641,31 @@ class CommandMode(PauseBackgroundMode):
 
     flight_mode_id = FMEnum.Command.value
 
-    # TODO
-    command_codecs = {}
-    command_arg_unpackers = {}
-    downlink_codecs = {}
-    downlink_arg_types = {}
+
+    command_codecs = {
+        CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
+        CommandCommandEnum.ActivateFile.value:([FILE_PATH,TOTAL_BLOCKS],52)
+        }
+
+    command_arg_types = {
+        FILE_PATH: 'string',
+        BLOCK_NUMBER: 'short',
+        BLOCK_TEXT: 'string',
+        TOTAL_BLOCKS: 'short'
+    }
+
+    downlink_codecs = {
+        CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 80 - MIN_COMMAND_SIZE)
+    }
+
+    downlink_arg_types = {
+        SUCCESSFUL: 'bool',
+        BLOCK_NUMBER: 'short',
+        CHECKSUM: 'string',
+        MISSING_BLOCKS: 'string'
+    }
 
     def __init__(self, parent):
         super().__init__(parent)

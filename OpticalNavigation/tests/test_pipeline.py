@@ -123,17 +123,20 @@ def test_start(mocker):
     mocker.patch('OpticalNavigation.core.opnav.record_gyro', side_effect=record_gyro_mock)
 
 
-    path = '../../../../Downloads/surrender-case-1b/'
+    path = '../../../../../Downloads/cislunar_case1c/'
     idx = [0]
     names = ['cam1_expLow_f', 'cam1_expHigh_f',
               'cam2_expLow_f', 'cam2_expHigh_f',
               'cam3_expLow_f', 'cam3_expHigh_f']
-    timestamps = [0, 0, 2094400, 2094400, 4188800, 4188800]
+    #timestamps = [0, 0, 2094400, 2094400, 4188800, 4188800]
+    timestamps = [0, 6283200, 2094400, 2094400 + 6283200, 4188800, 4188800 + 6283200]
     interval = [65450]
     def extract_frames_mock(vid_dir, endTimestamp):
         frames = []
-        for i in range(0,16):
-            frames.append(path + names[idx[0]] + str(i) + "_t" + str(timestamps[idx[0]] + interval[0]*i) + ".jpg")
+        for i in range(0,20):
+            frames.append(path + names[idx[0]] + str(i) + "_t" + str(int(round((timestamps[idx[0]] + interval[0]*i)/1000-0.01))) + ".jpg")
+            #print((timestamps[idx[0]] + interval[0]*i)/1000)
+            #print(frames[-1])
         print("frames_mock")
         idx[0] += 1
         return frames

@@ -232,9 +232,10 @@ def measureEarth(img):
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
 
-        c = contours[0]
-        xy, (major, minor), ang = cv2.minAreaRect(c)
-        r = major / 2
+        areas = [cv2.contourArea(c) for c in contours]
+        max_index = np.argmax(areas)
+        c = contours[max_index]
+        xy, r = cv2.minEnclosingCircle(c)
         # TODO: Shift center based on aspect ratio, center of "mass"
         return xy, r
     else:
@@ -250,9 +251,11 @@ def measureSun(img):
         contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = contours[0] if len(contours) == 2 else contours[1]
 
-        c = contours[0]
-        xy, (major, minor), _ = cv2.fitEllipse(c)
-        r = (major + minor) / 4
+        areas = [cv2.contourArea(c) for c in contours]
+        max_index = np.argmax(areas)
+        c = contours[max_index]
+        xy, r = cv2.minEnclosingCircle(c)
+        # TODO: Shift center based on aspect ratio, center of "mass"
         return xy, r
     else:
         return None
@@ -264,9 +267,10 @@ def measureMoon(img):
     contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) is not 0:
-        c = contours[0]
-        xy, (major, minor), ang = cv2.minAreaRect(c)
-        r = major / 2
+        areas = [cv2.contourArea(c) for c in contours]
+        max_index = np.argmax(areas)
+        c = contours[max_index]
+        xy, r = cv2.minEnclosingCircle(c)
         # TODO: Shift center based on aspect ratio, center of "mass"
         return xy, r
     return None
@@ -360,10 +364,17 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
     else:
+        earth = None
+        index = 0
         for f in [out, out2]:
             if cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
                 continue
-            earth = measureEarth(f)
+
+            if earth is not None:
+                earth = None
+            elif np.max(areas) > 400 and index == 0: #TODO: Placeholder
+                earth = measureEarth(f)
+
             if earth is not None:
                 (eX, eY), eR = earth
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
@@ -371,16 +382,20 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
-            if earth is None:
+            elif earth is None and (index != 0 or np.max(areas) < 400) and (index != 1 or area < 400):#TODO: Placeholder
                 moon = measureMoon(f)
                 if moon is not None:
                     (mX, mY), mR = moon
+                    print("Radius",mR)
                     mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)
                     mRho2 = mXst ** 2 + mYst ** 2
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
+            index += 1
+
     return result
+
 
 
 # Shift stereographic coordinates of center to camera frame (at start of exposure)

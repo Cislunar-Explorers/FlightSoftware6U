@@ -271,7 +271,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     lastReboot = datetime(2020, 7, 28, 22, 8, 3)
 
     if not np.isnan(bestEarthTuple[1]):
-        earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))
+        earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))*1000
         dateTimeEarth = lastReboot + timedelta(microseconds=earthTimestamp)
         earthTimeElapsed = (dateTimeEarth - observeStart).total_seconds()
         earthRotation = avgGyroY * earthTimeElapsed
@@ -284,7 +284,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
 
     if not np.isnan(bestMoonTuple[1]):
         moonTimestamp = int(re.search("[t](\d+)", bestMoonTuple[0]).group(1))
-        dateTimeMoon = lastReboot + timedelta(microseconds=moonTimestamp)
+        dateTimeMoon = lastReboot + timedelta(microseconds=moonTimestamp)*1000
         moonTimeElapsed = (dateTimeMoon - observeStart).total_seconds()
         moonRotation = avgGyroY * moonTimeElapsed
         tZeroMoonRotation = np.array([math.cos(moonRotation), 0, math.sin(moonRotation), 0, 1, 0, -1 * math.sin(moonRotation), 0, math.cos(moonRotation)]).reshape(3, 3)
@@ -295,7 +295,7 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
         bestMoonTuple[2][0] = coordArray[0]
 
     if not np.isnan(bestSunTuple[1]):
-        sunTimestamp = int(re.search("[t](\d+)", bestSunTuple[0]).group(1))
+        sunTimestamp = int(re.search("[t](\d+)", bestSunTuple[0]).group(1))*1000
         dateTimeSun = lastReboot + timedelta(microseconds=sunTimestamp)
         sunTimeElapsed = (dateTimeSun - observeStart).total_seconds()
         sunRotation = avgGyroY * sunTimeElapsed

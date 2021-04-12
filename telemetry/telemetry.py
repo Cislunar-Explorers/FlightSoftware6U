@@ -296,8 +296,12 @@ class Telemetry(SynchronousSensor):
                 GOM_curout4=self.gom.hk.curout[3],
                 GOM_curout5=self.gom.hk.curout[4],
                 GOM_curout6=self.gom.hk.curout[5],
+
                 # TODO figure out if this is just one or array
                 # GOM_outputs = Column(Integer),
+                GOM_outputs=self.gom.hk.outputs[0],
+
+
                 GOM_latchup1=self.gom.hk.latchup[0],
                 GOM_latchup2=self.gom.hk.latchup[1],
                 GOM_latchup3=self.gom.hk.latchup[2],
@@ -339,9 +343,8 @@ class Telemetry(SynchronousSensor):
             )
             self.session.add(telemetry_data)
             self.session.commit()
-
         finally:
-            pass
+            self.session.close()
 
     def query_telem(self, sensor):
         if sensor.equals("all"):
@@ -368,31 +371,31 @@ class Telemetry(SynchronousSensor):
 
     def query_gom(self):
         entries = self.session.query(TelemetryModel).all()
-        for entry in entries[:36]:
+        for entry in entries[1:37]:
             print(entry)
 
     def query_rtc(self):
         entries = self.session.query(TelemetryModel).all()
-        for entry in entries[36:37]:
+        for entry in entries[37:38]:
             print(entry)
 
     def query_rpi(self):
         entries = self.session.query(TelemetryModel).all()
-        for entry in entries[37:43]:
+        for entry in entries[38:44]:
             print(entry)
 
     def query_gyro(self):
         entries = self.session.query(TelemetryModel).all()
-        for entry in entries[43:54]:
+        for entry in entries[44:55]:
             print(entry)
 
     def query_thm(self):
         entries = self.session.query(TelemetryModel).all()
-        for entry in entries[53:54]:
+        for entry in entries[55:56]:
             print(entry)
 
     def query_pressure(self):
         entries = self.session.query(TelemetryModel).all()
-        for entry in entries[54:55]:
+        for entry in entries[56:57]:
             print(entry)
 

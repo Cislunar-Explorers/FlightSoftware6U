@@ -586,7 +586,7 @@ class TelemetryModel(SQLAlchemyTableBase):
     GOM_reserved2 = Column(Integer)
 
     # RTC DATA
-    RTC_measurement_taken = Column(DateTime)
+    RTC_measurement_taken = Column(Float)
 
     # RPi DATA
     RPI_cpu = Column(Integer)

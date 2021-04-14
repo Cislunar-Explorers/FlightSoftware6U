@@ -9,7 +9,7 @@ groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4
-file_path = FLIGHT_SOFTWARE_PATH + 'FlightSoftware/HITL-tests/test_upload_file.py'
+file_path = FLIGHT_SOFTWARE_PATH + 'FlightSoftware/communications/command_definitions.py'
 
 #Get file
 #Max transmission size - space alotted for file name - block number - 

@@ -513,6 +513,7 @@ class CommandDefinitions:
 
     def activate_file(self, **kwargs):
         
+        #CAN I SEE THIS COMMENT?
         file_path = FLIGHT_SOFTWARE_PATH + params.FILE_UPDATE_PATH
         total_blocks = kwargs['total_blocks']
         local_file_name = kwargs['file_path'] 

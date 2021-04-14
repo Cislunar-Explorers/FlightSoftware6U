@@ -13,8 +13,8 @@ file_path = FLIGHT_SOFTWARE_PATH + 'FlightSoftware/communications/command_defini
 
 #Get file
 #Max transmission size - space alotted for file name - block number - 
-# min command size - 2*(2 bytes for string length)
-max_string_size = 195 - MIN_COMMAND_SIZE
+# min command size - (2 bytes for string length)
+max_string_size = 195 - MIN_COMMAND_SIZE - 4
 file = open(file_path)
 file_string = file.read()
 file_blocks = []

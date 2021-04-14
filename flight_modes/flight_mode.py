@@ -144,7 +144,7 @@ class FlightMode:
                     # locate which method to run:
                     method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
                     downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
-
+                    print(downlink_args)
                     #Pack downlink given what the command returned
                     if downlink_args is not None:
                         downlink = self.parent.downlink_handler.pack_downlink(

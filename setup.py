@@ -22,7 +22,6 @@ INSTALL_REQUIRES = [
     "opencv-python",
     "SQLAlchemy",
     "scipy",
-    "python-dotenv",
 ]
 
 PI_INSTALL_REQUIRES = [

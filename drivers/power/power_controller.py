@@ -79,8 +79,8 @@ OUT_SWITCH = 7
 #
 
 # GPIO outputs
-RF_RX_EN = 19  # Physical pin 35
-RF_TX_EN = 26  # Physical pin 37
+RF_RX_EN = 26  # Physical pin 37
+RF_TX_EN = 19  # Physical pin 35
 PA_EN = 27  # Physical pin 13
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 

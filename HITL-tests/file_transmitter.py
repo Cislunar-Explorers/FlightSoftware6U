@@ -1,15 +1,15 @@
 from utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum, FLIGHT_SOFTWARE_PATH
-from communications.satellite_radio import Radio
+#from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 import hashlib
 import time
 
-groundstation = Radio()
+#groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4
-file_path = FLIGHT_SOFTWARE_PATH + 'FlightSoftware/communications/command_definitions.py'
+#file_path = FLIGHT_SOFTWARE_PATH + 'FlightSoftware/communications/command_definitions.py'
 
 #Get file
 #Max transmission size - space alotted for file name - block number - 
@@ -23,6 +23,7 @@ print('File Checksum: ' + str(hashlib.md5(file_string.encode('utf-8')).hexdigest
 
 #Determine number of blocks
 number_of_blocks = len(file_string)//max_string_size
+print(number_of_blocks)
 if len(file_string) % max_string_size != 0:
     number_of_blocks += 1
 

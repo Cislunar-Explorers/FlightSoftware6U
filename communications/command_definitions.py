@@ -515,7 +515,7 @@ class CommandDefinitions:
         
         file_path = FLIGHT_SOFTWARE_PATH + params.FILE_UPDATE_PATH
         total_blocks = kwargs['total_blocks']
-        local_file_name = kwargs['file_path'] 
+        local_file_name = params.FILE_UPDATE_PATH
 
         assert(total_blocks == len(self.parent.file_block_bank))
 

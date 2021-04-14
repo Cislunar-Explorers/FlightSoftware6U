@@ -22,4 +22,9 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests/
-        pytest OpticalNavigation/tests/
+        pytest OpticalNavigation/tests/conftest.py
+        pytest OpticalNavigation/tests/const.py
+        pytest OpticalNavigation/tests/gen_opnav_data.py
+        pytest OpticalNavigation/tests/test_attitude.py
+        pytest OpticalNavigation/tests/test_find.py
+        pytest OpticalNavigation/tests/test_ukf.py

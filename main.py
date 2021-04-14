@@ -41,7 +41,7 @@ FOR_FLIGHT = None
 
 logger = get_log()
 
-
+#CAN I SEE THIS COMMENT?
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()

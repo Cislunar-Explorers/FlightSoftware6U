@@ -35,6 +35,7 @@ class BootUpMode(FlightMode):
         if self.parent.need_to_reboot:
             # TODO: double check the boot db history to make sure we aren't going into a boot loop
             # TODO: downlink something to let ground station know we're alive
+            logger.critical("Rebooting to init cameras")
             os.system("sudo reboot")
 
     def log(self):
@@ -76,6 +77,7 @@ class RestartMode(FlightMode):
         if self.parent.need_to_reboot:
             # TODO double check the boot db history to make sure we aren't going into a boot loop
             # TODO: downlink something to let ground station know we're alive and going to reboot
+            logger.critical("Rebooting to init cameras")
             os.system("sudo reboot")
 
         self.completed_task()

@@ -175,7 +175,15 @@ class FlightMode:
 
                     # locate which method to run:
                     method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
-                    method_to_run(**command_kwargs)  # run that method
+                    downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
+
+                    #Pack downlink given what the command returned
+                    if downlink_args is not None:
+                        downlink = self.parent.downlink_handler.pack_downlink(
+                            self.parent.downlink_counter, command_fm, command_id,
+                            **downlink_args)
+                        self.parent.downlink_queue.put(downlink)
+
                 finished_commands.append(command)
 
                 # Prioritize downlinking: execute all necessary downlinks before
@@ -564,9 +572,10 @@ class CommandMode(PauseBackgroundMode):
     flight_mode_id = FMEnum.Command.value
 
     command_codecs = {
-        CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
-        CommandCommandEnum.ActivateFile.value:([FILE_PATH,TOTAL_BLOCKS],52)
+        CommandCommandEnum.SetUpdatePath.value: ([FILE_PATH], 195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.AddFileBlock.value:([BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([TOTAL_BLOCKS], 2),
+        CommandCommandEnum.ActivateFile.value:([TOTAL_BLOCKS],2)
         }
 
     command_arg_types = {
@@ -578,7 +587,7 @@ class CommandMode(PauseBackgroundMode):
 
     downlink_codecs = {
         CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 80 - MIN_COMMAND_SIZE)
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195 - MIN_COMMAND_SIZE)
     }
 
     downlink_arg_types = {

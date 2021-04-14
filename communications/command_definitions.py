@@ -148,6 +148,7 @@ class CommandDefinitions:
             CommandCommandEnum.GomGeneralCmd.value: self.gom_command,
             CommandCommandEnum.GeneralCmd.value: self.general_command,
             CommandCommandEnum.CeaseComms.value: self.cease_comms,
+            CommandCommandEnum.SetUpdatePath.value: self.set_file_to_update,
             CommandCommandEnum.AddFileBlock.value: self.add_file_block,
             CommandCommandEnum.GetFileBlocksInfo.value:self.get_file_blocks_info,
             CommandCommandEnum.ActivateFile.value:self.activate_file
@@ -464,13 +465,17 @@ class CommandDefinitions:
         original_file.seek(0)
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
 
-    def add_file_block(self, **kwargs):
+    def set_file_to_update(self, **kwargs):
 
         file_path = kwargs['file_path']
+        params.__setattr__('FILE_UPDATE_PATH', file_path)
+
+    def add_file_block(self, **kwargs):
+
         block_number = kwargs['block_number']
         block_text = kwargs['block_text']
 
-        self.parent.file_block_bank[block_number] = (file_path,block_text)
+        self.parent.file_block_bank[block_number] = block_text
 
         #Downlink acknowledgment with block number
         acknowledgement = self.parent.downlink_handler.pack_downlink(
@@ -481,7 +486,7 @@ class CommandDefinitions:
 
     def get_file_blocks_info(self, **kwargs):
         """Downlink checksum of file blocks and any missing block numbers"""
-        file_path = kwargs['file_path']
+        
         total_blocks = kwargs['total_blocks']
         full_file_text = ''
         missing_blocks = ''
@@ -490,23 +495,21 @@ class CommandDefinitions:
 
             try:
                 block = self.parent.file_block_bank[i]
-
-                if block[0] == file_path:
-                    full_file_text += block[1]
+                full_file_text += block
 
             except KeyError:
                 missing_blocks += str(i) + ','
         
         checksum = hashlib.md5(full_file_text.encode('utf-8')).hexdigest()
         
-        file_block_info = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
-        FMEnum.Command.value, CommandCommandEnum.GetFileBlocksInfo.value,
-        checksum=checksum,missing_blocks=missing_blocks)
-        self.parent.downlink_queue.put(file_block_info)
+        return ({
+            'checksum': checksum,
+            'missing_blocks': missing_blocks
+        })
 
     def activate_file(self, **kwargs):
         
-        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
+        file_path = FLIGHT_SOFTWARE_PATH + params.FILE_UPDATE_PATH
         total_blocks = kwargs['total_blocks']
         local_file_name = kwargs['file_path'] 
 

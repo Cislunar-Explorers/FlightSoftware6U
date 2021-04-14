@@ -22,4 +22,4 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests/
-        pytest OpticalNavigation/tests/test_attitude.py
+        pytest OpticalNavigation/tests/test_ukf.py

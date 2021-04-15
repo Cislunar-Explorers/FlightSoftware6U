@@ -103,6 +103,7 @@ class FlightMode:
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
+        print(not self.parent.downlink_queue.empty())
         # go to comms mode if there is something in the comms queue
         if not self.parent.downlink_queue.empty():
             return FMEnum.CommsMode.value
@@ -681,7 +682,6 @@ class CommandMode(PauseBackgroundMode):
 
     def update_state(self):
         # DO NOT TICK THE WDT
-        print(self.parent.downlink_queue.empty())
         super_fm = super().update_state()
         if super_fm != NO_FM_CHANGE:
             return super_fm  # 

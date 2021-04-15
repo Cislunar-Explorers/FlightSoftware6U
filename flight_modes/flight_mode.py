@@ -681,6 +681,7 @@ class CommandMode(PauseBackgroundMode):
 
     def update_state(self):
         # DO NOT TICK THE WDT
+        print('hi')
         super_fm = super().update_state()
         if super_fm != NO_FM_CHANGE:
             return super_fm  # 

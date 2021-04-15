@@ -18,7 +18,7 @@ max_string_size = 195 - MIN_COMMAND_SIZE
 file = open(file_path)
 file_string = file.read()
 file_blocks = []
-print('File Checksum: ' + str(hashlib.md5(full_file_text.encode('utf-8')).hexdigest()))
+print('File Checksum: ' + str(hashlib.md5(file_string.encode('utf-8')).hexdigest()))
 
 #Determine number of blocks
 number_of_blocks = len(file_string)//max_string_size

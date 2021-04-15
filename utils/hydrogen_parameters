@@ -1,0 +1,12 @@
+# Specific parameters for Hydrogen
+
+GYRO_BIAS_X = 0
+GYRO_BIAS_Y = 0
+GYRO_BIAS_Z = 0
+
+GYRO_BIAS_TEMPERATURE = 0
+
+# TODO
+GYRO_BIAS_DXDT = 0
+GYRO_BIAS_DYDT = 0
+GYRO_BIAS_DZDT = 0

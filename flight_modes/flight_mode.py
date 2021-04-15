@@ -103,7 +103,6 @@ class FlightMode:
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
-        print(not self.parent.downlink_queue.empty())
         # go to comms mode if there is something in the comms queue
         if not self.parent.downlink_queue.empty():
             return FMEnum.CommsMode.value

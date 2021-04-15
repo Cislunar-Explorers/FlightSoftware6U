@@ -491,7 +491,7 @@ class CommandDefinitions:
     def get_file_blocks_info(self, **kwargs):
         """Downlink checksum of file blocks and any missing block numbers"""
         
-        time.sleep(7) #For testing only
+        time.sleep(15) #For testing only
 
         total_blocks = kwargs['total_blocks']
         full_file_text = ''

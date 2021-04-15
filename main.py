@@ -264,7 +264,6 @@ class MainSatelliteThread(Thread):
         if fm_to_update_to is None:
             pass
         elif fm_to_update_to != NO_FM_CHANGE and fm_to_update_to != self.flight_mode.flight_mode_id:
-            print('hi')
             self.replace_flight_mode_by_id(fm_to_update_to)
 
     def clear_command_queue(self):

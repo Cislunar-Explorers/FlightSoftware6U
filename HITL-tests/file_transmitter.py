@@ -41,3 +41,13 @@ for block in file_blocks:
     print('Transmitted Block #' + str(block[0]))
     time.sleep(transmission_interval)
     command_counter+= 1
+
+file_info_request = ch.pack_command(command_counter, FMEnum.Command.value,
+CommandCommandEnum.GetFileBlocksInfo.value,total_blocks=number_of_blocks)
+groundstation.transmit(file_info_request)
+print('Receiving...')
+while True:
+    downlink = groundstation.receiveSignal()
+    if downlink is not None:
+        print('Downlink Received')
+        print(dh.unpack_downlink(downlink))

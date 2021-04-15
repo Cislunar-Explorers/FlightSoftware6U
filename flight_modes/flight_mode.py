@@ -151,7 +151,7 @@ class FlightMode:
                             self.parent.downlink_counter, command_fm, command_id,
                             **downlink_args)
                         self.parent.downlink_queue.put(downlink)
-
+                    print (self.parent.downlink_queue.empty())
                 finished_commands.append(command)
 
                 # Prioritize downlinking: execute all necessary downlinks before

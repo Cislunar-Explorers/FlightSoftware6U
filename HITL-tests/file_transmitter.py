@@ -9,17 +9,16 @@ groundstation = Radio()
 ch = CommandHandler()
 command_counter = 1
 transmission_interval = 4
-file_path_for_opening = FLIGHT_SOFTWARE_PATH + 'FlightSoftware/HITL-tests/test_file'
-
-print('File Checksum: ' + str(hashlib.md5(full_file_text.encode('utf-8')).hexdigest()))
+file_path= FLIGHT_SOFTWARE_PATH + 'FlightSoftware/HITL-tests/test_file'
 
 #Get file
 #Max transmission size - space alotted for file name - block number - 
 # min command size - 2*(2 bytes for string length)
 max_string_size = 195 - MIN_COMMAND_SIZE
-file = open(file_path_for_opening)
+file = open(file_path)
 file_string = file.read()
 file_blocks = []
+print('File Checksum: ' + str(hashlib.md5(full_file_text.encode('utf-8')).hexdigest()))
 
 #Determine number of blocks
 number_of_blocks = len(file_string)//max_string_size
@@ -35,7 +34,7 @@ i = 0
 for block in file_blocks:
     
     block_command = ch.pack_command(command_counter, FMEnum.Command.value, 
-    CommandCommandEnum.AddFileBlock.value, file_path = file_path,
+    CommandCommandEnum.AddFileBlock.value,
     block_number = block[0],block_text = block[1])
 
     groundstation.transmit(block_command)

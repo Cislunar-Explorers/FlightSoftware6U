@@ -24,7 +24,7 @@ from utils.exceptions import UnknownFlightModeException
 no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
-    FMEnum.Command.value
+    #FMEnum.Command.value
 ]
 # this line of code brought to you by https://stackoverflow.com/questions/29503339/
 all_modes = list(map(int, FMEnum))
@@ -54,7 +54,7 @@ class FlightMode:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
          serves as a basis for which most other flight modes can build off of."""
-        print('hi')
+        
         # I am not sure this will properly work, but shuld have little impact for software demo
         if self.parent.opnav_process.is_alive():
             try:

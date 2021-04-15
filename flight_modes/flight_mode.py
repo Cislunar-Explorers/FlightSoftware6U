@@ -144,16 +144,14 @@ class FlightMode:
                     # locate which method to run:
                     method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
                     downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
-                    print(downlink_args)
-                    print(downlink_args is not None)
-                    print(downlink_args != None)
+                    
                     #Pack downlink given what the command returned
                     if downlink_args != None:
                         downlink = self.parent.downlink_handler.pack_downlink(
                             self.parent.downlink_counter, command_fm, command_id,
                             **downlink_args)
                         self.parent.downlink_queue.put(downlink)
-                    print (self.parent.downlink_queue.empty())
+                   
                 finished_commands.append(command)
 
                 # Prioritize downlinking: execute all necessary downlinks before
@@ -683,7 +681,9 @@ class CommandMode(PauseBackgroundMode):
 
     def update_state(self):
         # DO NOT TICK THE WDT
-        return NO_FM_CHANGE  # intentional
+        super_fm = super().update_state()
+        if super_fm != NO_FM_CHANGE:
+            return super_fm  # 
 
     def run_mode(self):
         pass  # intentional

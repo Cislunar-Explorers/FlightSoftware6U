@@ -147,6 +147,7 @@ class FlightMode:
                     print(downlink_args)
                     #Pack downlink given what the command returned
                     if downlink_args is not None:
+                        print('hi')
                         downlink = self.parent.downlink_handler.pack_downlink(
                             self.parent.downlink_counter, command_fm, command_id,
                             **downlink_args)

@@ -54,7 +54,7 @@ class FlightMode:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
          serves as a basis for which most other flight modes can build off of."""
-
+        print('hi')
         # I am not sure this will properly work, but shuld have little impact for software demo
         if self.parent.opnav_process.is_alive():
             try:

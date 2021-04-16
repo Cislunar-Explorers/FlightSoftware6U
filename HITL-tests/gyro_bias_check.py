@@ -1,6 +1,8 @@
 from drivers.gyro import GyroSensor
 import numpy as np
+from utils.log import get_log
 
+logger = get_log()
 gyro = GyroSensor()
 
 # take 500 gyro measurements and store data
@@ -15,6 +17,6 @@ data = np.array(data)
 biases = np.mean(data, axis=0)
 standard_devs = np.std(data, axis=0)
 
-print(f"Biases: {biases}")
-print(f"Stds: {standard_devs}")
-print(f"Temperature: {temperature}")
+logger.info(f"Biases: {biases}")
+logger.info(f"Stds: {standard_devs}")
+logger.info(f"Temperature: {temperature}")

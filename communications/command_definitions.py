@@ -665,6 +665,7 @@ class CommandDefinitions:
 
     def exec_py_file(self, **kwargs):
         filename: str = kwargs.get(FNAME)
+        filename += '.py'
         self.parent.logger.debug(f"CWD: {os.getcwd()}")
         exec(open(filename).read())
 

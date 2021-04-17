@@ -463,7 +463,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.ShellCommand.value: ([CMD], 24),
         NormalCommandEnum.SudoCommand.value: ([CMD], 24),
         NormalCommandEnum.Picberry.value: ([CMD], 24),
-        NormalCommandEnum.ExecPyFile.value: ([FNAME], 24)
+        NormalCommandEnum.ExecPyFile.value: ([FNAME], 36)
     }
 
     command_arg_types = {

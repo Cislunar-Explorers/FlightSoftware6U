@@ -695,7 +695,7 @@ def eps_config2_from_dict(config_dict: dict) -> ps.eps_config2_t:
     gom_conf2.batt_maxvoltage = max_voltage
     gom_conf2.batt_normalvoltage = normal_voltage
     gom_conf2.batt_safevoltage = safe_voltage
-    gom_conf2.criticalvoltage = crit_voltage
+    gom_conf2.batt_criticalvoltage = crit_voltage
 
     return gom_conf2
 

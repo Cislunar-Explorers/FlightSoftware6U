@@ -105,6 +105,7 @@ class CommandDefinitions:
             NormalCommandEnum.ShellCommand.value: self.shell_command,
             NormalCommandEnum.SudoCommand.value: self.sudo_command,
             NormalCommandEnum.Picberry.value: self.picberry,
+            NormalCommandEnum.ExecPyFile.value: self.exec_py_file,
         }
 
         self.low_battery_commands = {

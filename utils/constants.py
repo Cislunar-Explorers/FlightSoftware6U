@@ -189,6 +189,7 @@ VBOOST3 = "vboost3"
 CMD = 'cmd'
 RETURN_CODE = 'return_code'
 
+FNAME = 'filename'
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -266,6 +267,7 @@ class NormalCommandEnum(IntEnum):
     ShellCommand = 50
     SudoCommand = 51
     Picberry = 52
+    ExecPyFile = 53
 
     CommandStatus = 99
 

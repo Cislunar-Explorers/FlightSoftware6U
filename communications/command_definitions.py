@@ -663,6 +663,11 @@ class CommandDefinitions:
         base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
         subprocess.run(base_command + cmd, shell=True)
 
+    def exec_py_file(self, **kwargs):
+        filename: str = kwargs.get(FNAME)
+        self.parent.logger.debug(f"CWD: {os.getcwd()}")
+        exec(open(filename).read())
+
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:
     return {PPT_MODE: config.ppt_mode,

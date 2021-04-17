@@ -539,22 +539,22 @@ class CommandDefinitions:
 
             except Exception:
                 self.parent.logger.error("Could not set new gom config")
-                acknowledgement = self.parent.downlink_handler.pack_downlink(
-                    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.CommandStatus.value,
-                    fmid=self.parent.flight_mode.flight_mode_id, cid=NormalCommandEnum.GomConf1Set.value,
-                    successful=False)
-
-            self.parent.downlink_queue.put(acknowledgement)
+            #     acknowledgement = self.parent.downlink_handler.pack_downlink(
+            #         self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.CommandStatus.value,
+            #         fmid=self.parent.flight_mode.flight_mode_id, cid=NormalCommandEnum.GomConf1Set.value,
+            #         successful=False)
+            #
+            # self.parent.downlink_queue.put(acknowledgement)
 
     def get_gom_conf1(self, **kwargs):
         if self.parent.gom is not None:
             current_config = self.parent.gom.get_health_data(level="config")
             ps.displayConfig(current_config)
             current_config_dict = dict_from_eps_config(current_config)
-            acknowledgement = self.parent.downlink_handler.pack_downlink(
-                self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Get.value,
-                **current_config_dict)
-            self.parent.downlink_queue.put(acknowledgement)
+            # acknowledgement = self.parent.downlink_handler.pack_downlink(
+            #     self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Get.value,
+            #     **current_config_dict)
+            # self.parent.downlink_queue.put(acknowledgement)
 
     def set_gom_conf2(self, **kwargs):
         if self.parent.gom is not None:
@@ -567,10 +567,10 @@ class CommandDefinitions:
             current_conf2 = self.parent.gom.get_health_data(level='config2')
             ps.displayConfig2(current_conf2)
             current_config2_dict = dict_from_eps_config2(current_conf2)
-            acknowledgement = self.parent.downlink_handler.pack_downlink(
-                self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
-                **current_config2_dict)
-            self.parent.downlink_queue.put(acknowledgement)
+            # acknowledgement = self.parent.downlink_handler.pack_downlink(
+            #    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
+            #    **current_config2_dict)
+            # self.parent.downlink_queue.put(acknowledgement)
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:

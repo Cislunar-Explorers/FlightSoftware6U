@@ -127,12 +127,66 @@ def test_config2_command():
     unpacked_config2 = eps_config2_from_dict(kwargs)
 
     assert config2._fields_ == unpacked_config2._fields_
+    # ps.displayConfig2(config2)
+    # ps.displayConfig2(unpacked_config2)
 
 
 #    for i in config2._fields_:
 #        assert getattr(config2, i[0]) == getattr(unpacked_config2, i[0])
 
+def prep_config():
+    config = ps.eps_config_t()
+    config.ppt_mode = 1
+    config.battheater_mode = 1
+    config.battheater_low = 0
+    config.battheater_high = 1
+    config.output_normal_value[0] = 0
+    config.output_normal_value[1] = 0
+    config.output_normal_value[2] = 0
+    config.output_normal_value[3] = 0
+    config.output_normal_value[4] = 0
+    config.output_normal_value[5] = 0
+    config.output_normal_value[6] = 0
+    config.output_normal_value[7] = 0
+
+    config.output_safe_value[0] = 0
+    config.output_safe_value[1] = 0
+    config.output_safe_value[2] = 0
+    config.output_safe_value[3] = 0
+    config.output_safe_value[4] = 0
+    config.output_safe_value[5] = 0
+    config.output_safe_value[6] = 0
+    config.output_safe_value[7] = 0
+
+    initial_on = 0
+    config.output_initial_on_delay[0] = initial_on
+    config.output_initial_on_delay[1] = initial_on
+    config.output_initial_on_delay[2] = initial_on
+    config.output_initial_on_delay[3] = initial_on
+    config.output_initial_on_delay[4] = initial_on
+    config.output_initial_on_delay[5] = initial_on
+    config.output_initial_on_delay[6] = initial_on
+    config.output_initial_on_delay[7] = initial_on
+
+    initial_off = 0
+    config.output_initial_off_delay[0] = initial_off
+    config.output_initial_off_delay[1] = initial_off
+    config.output_initial_off_delay[2] = initial_off
+    config.output_initial_off_delay[3] = initial_off
+    config.output_initial_off_delay[4] = initial_off
+    config.output_initial_off_delay[5] = initial_off
+    config.output_initial_off_delay[6] = initial_off
+    config.output_initial_off_delay[7] = initial_off
+
+    config.vboost[0] = 2410
+    config.vboost[1] = 2410
+    config.vboost[2] = 2410
+
+    config_dict = dict_from_eps_config(config)
+    return config_dict
+
 
 if __name__ == '__main__':
     test_config_command()
     test_config2_command()
+    print(prep_config())

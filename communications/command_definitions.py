@@ -627,7 +627,7 @@ def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
                    kwargs.get(OUTPUT_SAFE7),
                    kwargs.get(OUTPUT_SAFE8)]
 
-    normal_output = list(map(int, normal_output))  # transmitted as bools, convert to ints
+    safe_output = list(map(int, safe_output))  # transmitted as bools, convert to ints
 
     # this means that all outputs have the same on/off delay
     initial_on_delay = [kwargs.get(OUTPUT_ON_DELAY)] * 8

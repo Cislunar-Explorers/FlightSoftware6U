@@ -306,6 +306,7 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 #sleep(5)  # TODO remove when flight modes execute real tasks
+                print('hi')
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()
@@ -327,8 +328,6 @@ class MainSatelliteThread(Thread):
         logger.critical("Shutting down flight software")
         # self.comms.stop()
 
-#WRITING A BUNCH OF STUFF HERE TO TEST IF THIS WORKS
-#SUP
 if __name__ == "__main__":
     FOR_FLIGHT = False
     main = MainSatelliteThread()

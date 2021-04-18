@@ -1,7 +1,7 @@
-"""Stuff and things
-Man this is an annoying HITL test
-Kinda want more than one block
-So here we go making the file longer
-And longer and longer
-Probably good now
-New thing"""
+blue='Stuff and things'
+red='Man this is an annoying HITL test'
+yes='Kinda want more than one block'
+n='So here we go making the file longer'
+f='And longer and longer'
+g='Probably good now'
+h='New thing'

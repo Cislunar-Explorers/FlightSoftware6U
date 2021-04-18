@@ -9,7 +9,7 @@ groundstation = Radio()
 ch = CommandHandler()
 dh = DownlinkHandler()
 command_counter = 1
-transmission_interval = 4
+transmission_interval = 0
 file_path= FLIGHT_SOFTWARE_PATH + 'FlightSoftware/HITL-tests/test_file'
 
 #Get file

@@ -62,6 +62,7 @@ while True:
     if downlink is not None:
         print('Downlink Received')
         file_info = dh.unpack_downlink(downlink)
+        break
 
 if file_info[4]['checksum'] == checksum:
     activate_file_command = ch.pack_command(command_counter, FMEnum.Command.value,

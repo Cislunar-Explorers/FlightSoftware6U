@@ -18,6 +18,7 @@ update_file_name = ch.pack_command(command_counter, FMEnum.Command.value,
 CommandCommandEnum.SetUpdatePath.value, file_path=satellite_file_path)
 groundstation.transmit(update_file_name)
 print('File name set')
+command_counter += 1
 
 #Get file
 #Max transmission size - space alotted for file name - block number - 

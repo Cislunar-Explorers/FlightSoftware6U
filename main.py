@@ -306,7 +306,7 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 #sleep(5)  # TODO remove when flight modes execute real tasks
-                print('hi')
+                
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()

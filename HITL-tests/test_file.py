@@ -1,7 +1,0 @@
-blue='Stuff and things'
-red='Man this is an annoying HITL test'
-yes='Kinda want more than one block'
-n='So here we go making the file longer'
-f='And longer and longer'
-g='Probably good now'
-h='New thing'

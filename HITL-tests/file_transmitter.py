@@ -11,7 +11,7 @@ dh = DownlinkHandler()
 command_counter = 1
 transmission_interval = 0
 satellite_file_path = 'main.py'
-file_path= FLIGHT_SOFTWARE_PATH + 'FlightSoftware/main.py'
+file_path= FLIGHT_SOFTWARE_PATH + 'FlightSoftware/' + satellite_file_path
 
 #Set file to be updated
 update_file_name = ch.pack_command(command_counter, FMEnum.Command.value,

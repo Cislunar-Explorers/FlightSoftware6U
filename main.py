@@ -327,7 +327,8 @@ class MainSatelliteThread(Thread):
         logger.critical("Shutting down flight software")
         # self.comms.stop()
 
-
+#WRITING A BUNCH OF STUFF HERE TO TEST IF THIS WORKS
+#SUP
 if __name__ == "__main__":
     FOR_FLIGHT = False
     main = MainSatelliteThread()

@@ -1,7 +1,7 @@
-Stuff and things
+"""Stuff and things
 Man this is an annoying HITL test
 Kinda want more than one block
 So here we go making the file longer
 And longer and longer
 Probably good now
-New thing
+New thing"""

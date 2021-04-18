@@ -10,7 +10,12 @@ ch = CommandHandler()
 dh = DownlinkHandler()
 command_counter = 1
 transmission_interval = 0
+satellite_file_path = 'main.py'
 file_path= FLIGHT_SOFTWARE_PATH + 'FlightSoftware/main.py'
+
+#Set file to be updated
+update_file_name = ch.pack_command(command_counter, FMEnum.Command.value,
+CommandCommandEnum.SetUpdatePath.value, file_path=satellite_file_path)
 
 #Get file
 #Max transmission size - space alotted for file name - block number - 

@@ -27,7 +27,8 @@ max_string_size = 195 - MIN_COMMAND_SIZE - 4
 file = open(file_path)
 file_string = file.read()
 file_blocks = []
-print('File Checksum: ' + str(hashlib.md5(file_string.encode('utf-8')).hexdigest()))
+checksum = str(hashlib.md5(file_string.encode('utf-8')).hexdigest())
+print('File Checksum: ' + checksum)
 
 #Determine number of blocks
 number_of_blocks = len(file_string)//max_string_size
@@ -59,4 +60,12 @@ while True:
     downlink = groundstation.receiveSignal()
     if downlink is not None:
         print('Downlink Received')
-        print(dh.unpack_downlink(downlink))
+        file_info = dh.unpack_downlink(downlink)
+
+if file_info[4]['checksum'] == checksum:
+    activate_file_command = ch.pack_command(command_counter, FMEnum.Command.value,
+    CommandCommandEnum.ActivateFile.value,total_blocks=number_of_blocks)
+    groundstation.transmit(activate_file_command)
+    print('File Activated')
+else:
+    print('Missing blocks: ' + file_info[4]['missing_blocks'])

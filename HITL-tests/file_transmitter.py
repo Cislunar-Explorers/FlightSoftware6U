@@ -10,7 +10,7 @@ ch = CommandHandler()
 dh = DownlinkHandler()
 command_counter = 1
 transmission_interval = 0
-satellite_file_path = 'HITL-tests/test_file.py'
+satellite_file_path = 'main.py'
 file_path= FLIGHT_SOFTWARE_PATH + 'FlightSoftware/' + satellite_file_path
 
 #Set file to be updated

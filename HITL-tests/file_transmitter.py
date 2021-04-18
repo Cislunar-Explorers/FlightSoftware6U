@@ -55,6 +55,7 @@ for block in file_blocks:
 file_info_request = ch.pack_command(command_counter, FMEnum.Command.value,
 CommandCommandEnum.GetFileBlocksInfo.value,total_blocks=number_of_blocks)
 groundstation.transmit(file_info_request)
+command_counter += 1
 print('Receiving...')
 file_info = ''
 while True:

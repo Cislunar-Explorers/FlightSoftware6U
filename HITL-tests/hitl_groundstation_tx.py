@@ -37,7 +37,7 @@ if len(commandArguments) > 2:
         
         kwargs[argName] = argValue
 
-commandToTransmit = ch.pack_command(commandCounter, mode_id, command_id, **kwargs)
+commandToTransmit = ch.pack_command(70, mode_id, command_id, **kwargs)
 print(len(commandToTransmit))
 print(commandToTransmit)
 groundstation.transmit(commandToTransmit)

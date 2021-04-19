@@ -1,30 +1,36 @@
-from communications.commands import CommandHandler
 from communications.command_definitions import CommandDefinitions
-from flight_modes.flight_mode_factory import build_flight_mode
-from utils.constants import FMEnum, BootCommandEnum, NormalCommandEnum, SafetyCommandEnum, LowBatterySafetyCommandEnum, \
-    TestCommandEnum, CommandCommandEnum
+from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatterySafetyCommandEnum, \
+    SafetyCommandEnum, OpNavCommandEnum, ManeuverCommandEnum, SensorsCommandEnum, CommsCommandEnum, TestCommandEnum, \
+    CommandCommandEnum
 
-command_enums = [BootCommandEnum, NormalCommandEnum, SafetyCommandEnum, LowBatterySafetyCommandEnum, TestCommandEnum,
-                 CommandCommandEnum]
-command_ids = [FMEnum.Boot.value, FMEnum.Normal.value, FMEnum.Safety.value, FMEnum.LowBatterySafety.value,
-               FMEnum.TestMode.value, FMEnum.Command.value]
+command_enums = [BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatterySafetyCommandEnum,
+                 SafetyCommandEnum, OpNavCommandEnum, ManeuverCommandEnum, SensorsCommandEnum, TestCommandEnum,
+                 CommsCommandEnum, CommandCommandEnum, TestCommandEnum, CommandCommandEnum]
 
 
 def testFlightCommands():
-    ch = CommandHandler()
-    ch.register_commands()
     cd = CommandDefinitions(None)
     all_modes = list(map(int, FMEnum))
 
-    i = 0
-    for command_enum in command_enums:
-        command_fm = command_ids[i]
-        i += 1
-        for command_id in command_enum:
-            assert command_fm in cd.COMMAND_DICT
-            print(command_id.value)
-            print(cd.COMMAND_DICT[command_fm])
-            assert command_id.value in cd.COMMAND_DICT[command_fm]
+    zipped_enums_command_dicts = list(zip(command_enums, cd.COMMAND_DICT.values()))
+    # want to make sure that all command IDs defined in utils.constants matches what's in command_definitions
+
+    error_msg = ""
+
+    for enum, command_dict in zipped_enums_command_dicts:
+        all_enum_commands = list(map(int, enum))
+        all_command_ids = list(command_dict.keys())
+        all_enum_commands = sorted(all_enum_commands)
+        all_command_ids = sorted(all_command_ids)
+
+        try:
+            assert all_enum_commands == all_command_ids
+        except AssertionError:
+            commands_not_in_both = set(all_enum_commands).symmetric_difference(all_command_ids)
+            error_msg += f"Commands defined in {enum} not consistent with utils.constants: {commands_not_in_both}\n"
+
+    if error_msg != "":
+        raise AssertionError(error_msg)
 
 
 if __name__ == '__main__':

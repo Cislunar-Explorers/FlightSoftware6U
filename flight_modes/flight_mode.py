@@ -81,9 +81,8 @@ class FlightMode:
             return flight_mode_id
 
         # go to maneuver mode if there is something in the maneuver queue
-        # TODO check existence/value of BURN TIME paramter, rather than only checking the queue
-        if not self.parent.maneuver_queue.empty():
-            if params.SCHEDULED_BURN_TIME is not None and params.SCHEDULED_BURN_TIME > time():
+        if not self.parent.maneuver_queue.empty() or params.SCHEDULED_BURN_TIME:
+            if params.SCHEDULED_BURN_TIME > time():
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
                     return FMEnum.Maneuver.value
 
@@ -156,7 +155,8 @@ class FlightMode:
                 self.parent.commands_to_execute.remove(finished_command)
 
     def poll_inputs(self):
-        self.parent.gom.tick_wdt()
+        if self.parent.gom is not None:
+            self.parent.gom.tick_wdt()
         self.parent.telemetry.poll()
 
     def completed_task(self):
@@ -221,10 +221,14 @@ class TestMode(PauseBackgroundMode):
                       TestCommandEnum.ADCTest.value: ([], 0),
                       TestCommandEnum.CommsDriver.value: ([], 0),
                       TestCommandEnum.PiShutdown.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0)
+                      TestCommandEnum.RTCTest.value: ([], 0),
+                      TestCommandEnum.LongString.value: (['some_number', 'long_string'],180)
                       }
 
-    command_arg_unpackers = {}
+    command_arg_types = {
+        'some_number': 'float',
+        'long_string': 'string'
+    }
 
     downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
 
@@ -453,6 +457,10 @@ class NormalMode(FlightMode):
                                                OUTPUT_SAFE2, OUTPUT_SAFE3, OUTPUT_SAFE4, OUTPUT_SAFE5, OUTPUT_SAFE6,
                                                OUTPUT_SAFE7, OUTPUT_SAFE8, OUTPUT_ON_DELAY, OUTPUT_OFF_DELAY, VBOOST1,
                                                VBOOST2, VBOOST3], 30),
+        # TODO: clarify how many bytes go into string here
+        NormalCommandEnum.ShellCommand.value: ([CMD], 24),
+        NormalCommandEnum.SudoCommand.value: ([CMD], 24),
+        NormalCommandEnum.Picberry.value: ([CMD], 24),
         NormalCommandEnum.GomConf1Get.value: ([], 0),
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
         NormalCommandEnum.GomConf2Get.value: ([], 0),
@@ -523,6 +531,7 @@ class NormalMode(FlightMode):
         NORM_VOLTAGE: 'short',
         SAFE_VOLTAGE: 'short',
         CRIT_VOLTAGE: 'short',
+        CMD: 'string'
     }
 
     downlink_codecs = {
@@ -534,6 +543,7 @@ class NormalMode(FlightMode):
 
         NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1),
         NormalCommandEnum.GomConf1Set.value: command_codecs.get(NormalCommandEnum.GomConf1Set.value),
+        NormalCommandEnum.ShellCommand.value: ([RETURN_CODE], 1)
     }
 
     downlink_arg_types = {
@@ -587,6 +597,7 @@ class NormalMode(FlightMode):
         NORM_VOLTAGE: 'short',
         SAFE_VOLTAGE: 'short',
         CRIT_VOLTAGE: 'short',
+        RETURN_CODE: "uint8"
     }
 
     def __init__(self, parent):
@@ -639,9 +650,31 @@ class CommandMode(PauseBackgroundMode):
 
     flight_mode_id = FMEnum.Command.value
 
-    command_codecs = {}
 
-    command_arg_unpackers = {}
+    command_codecs = {
+        CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
+        CommandCommandEnum.ActivateFile.value:([FILE_PATH,TOTAL_BLOCKS],52)
+        }
+
+    command_arg_types = {
+        FILE_PATH: 'string',
+        BLOCK_NUMBER: 'short',
+        BLOCK_TEXT: 'string',
+        TOTAL_BLOCKS: 'short'
+    }
+
+    downlink_codecs = {
+        CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 80 - MIN_COMMAND_SIZE)
+    }
+
+    downlink_arg_types = {
+        SUCCESSFUL: 'bool',
+        BLOCK_NUMBER: 'short',
+        CHECKSUM: 'string',
+        MISSING_BLOCKS: 'string'
+    }
 
     def __init__(self, parent):
         super().__init__(parent)

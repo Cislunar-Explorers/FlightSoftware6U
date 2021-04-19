@@ -31,8 +31,9 @@ ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
 DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
-# Parameters.json path
-PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
+# Important paths
+FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
+PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -62,6 +63,11 @@ TIME = "time"
 
 HARD_SET = "hard_set"
 
+
+FILE_PATH = "file_path"
+BLOCK_NUMBER = "block_number"
+BLOCK_TEXT = "block_text"
+TOTAL_BLOCKS = "total_blocks"
 REG_ADDRESS = "reg_address"
 REG_VALUE = "reg_value"
 REG_SIZE = "reg_size"
@@ -119,6 +125,9 @@ BATTERY_VOLTAGE = "vbatt"
 PROP_TANK_PRESSURE = "prs_pressure"
 
 SUCCESSFUL = "successful"
+
+MISSING_BLOCKS = "missing_blocks"
+CHECKSUM = "checksum"
 
 # SQL Stuff
 SQL_PREFIX = "sqlite:///"
@@ -181,6 +190,9 @@ MAX_VOLTAGE = 'max_voltage'
 NORM_VOLTAGE = 'norm_voltage'
 SAFE_VOLTAGE = 'safe_voltage'
 CRIT_VOLTAGE = 'crit_voltage'
+
+CMD = 'cmd'
+RETURN_CODE = 'return_code'
 
 
 # GOMspace Channel designations:
@@ -256,6 +268,13 @@ class NormalCommandEnum(IntEnum):
     GomConf2Set = 32
     GomConf2Get = 33
 
+    ShellCommand = 50
+    SudoCommand = 51
+    Picberry = 52
+
+    CommandStatus = 99
+
+
 @unique
 class LowBatterySafetyCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
@@ -312,8 +331,10 @@ class TestCommandEnum(IntEnum):
     SeparationTest = 5
     GomPin = 6
     CommsDriver = 7
-    PiShutdown = 11
     RTCTest = 8
+    LongString = 9
+    PiShutdown = 11
+
 
 
 @unique
@@ -334,4 +355,8 @@ class CommandCommandEnum(IntEnum):
     GomPin = 6  # 1 arg: which gom pin to toggle
     GomGeneralCmd = 7
     GeneralCmd = 8
+    AddFileBlock = 9
+    GetFileBlocksInfo = 10
+    ActivateFile = 11
+    ShellCommand = 50
     CeaseComms = 170

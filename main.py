@@ -68,6 +68,7 @@ class MainSatelliteThread(Thread):
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+        self.file_block_bank = {}
         self.need_to_reboot = False
 
         self.gom = None
@@ -220,34 +221,34 @@ class MainSatelliteThread(Thread):
     def poll_inputs(self):
 
         self.flight_mode.poll_inputs()
+        if self.radio is not None:
+            # Telemetry downlink
+            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:
+                telemetry = self.command_definitions.gather_basic_telem()
+                telem_downlink = (
+                    self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
+                                                        NormalCommandEnum.BasicTelem.value, **telemetry))
+                self.downlink_queue.put(telem_downlink)
+                self.radio.last_telemetry_time = datetime.today()
 
-        # Telemetry downlink
-        if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:
-            telemetry = self.command_definitions.gather_basic_telem()
-            telem_downlink = (
-                self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
-                                                    NormalCommandEnum.BasicTelem.value, **telemetry))
-            self.downlink_queue.put(telem_downlink)
-            self.radio.last_telemetry_time = datetime.today()
+            # Listening for new commands
+            newCommand = self.radio.receiveSignal()
+            if newCommand is not None:
+                try:
+                    unpackedCommand = self.command_handler.unpack_command(newCommand)
 
-        # Listening for new commands
-        newCommand = self.radio.receiveSignal()
-        if newCommand is not None:
-            try:
-                unpackedCommand = self.command_handler.unpack_command(newCommand)
-
-                if unpackedCommand[0] == MAC:
-                    if unpackedCommand[1] == self.command_counter + 1:
-                        self.command_queue.put(bytes(newCommand))
-                        self.command_counter += 1
+                    if unpackedCommand[0] == MAC:
+                        if unpackedCommand[1] == self.command_counter + 1:
+                            self.command_queue.put(bytes(newCommand))
+                            self.command_counter += 1
+                        else:
+                            logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
                     else:
-                        logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
-                else:
-                    logger.warning('Unauthenticated Command Received')
-            except:
-                logger.error('Invalid Command Received')
-        else:
-            logger.debug('Not Received')
+                        logger.warning('Unauthenticated Command Received')
+                except:
+                    logger.error('Invalid Command Received')
+            else:
+                logger.debug('Not Received')
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -304,7 +305,7 @@ class MainSatelliteThread(Thread):
         """This is the main loop of the Cislunar Explorers and runs constantly during flight."""
         try:
             while True:
-                sleep(5)  # TODO remove when flight modes execute real tasks
+                #sleep(5)  # TODO remove when flight modes execute real tasks
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()

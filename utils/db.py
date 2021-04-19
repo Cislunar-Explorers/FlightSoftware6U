@@ -540,6 +540,81 @@ class GomModel(SQLAlchemyTableBase):
                 f"")
         # TODO
 
+
+class TelemetryModel(SQLAlchemyTableBase):
+    __tablename__ = "Telemetry"
+
+    id = Column(Integer, primary_key=True)
+    time_polled = Column(DateTime)
+
+    # GOM DATA
+    GOM_vboost1 = Column(Integer)
+    GOM_vboost2 = Column(Integer)
+    GOM_vboost3 = Column(Integer)
+    GOM_vbatt = Column(Integer)
+    GOM_curin1 = Column(Integer)
+    GOM_curin2 = Column(Integer)
+    GOM_curin3 = Column(Integer)
+    GOM_cursun = Column(Integer)
+    GOM_cursys = Column(Integer)
+    GOM_reserved1 = Column(Integer)
+    GOM_curout1 = Column(Integer)
+    GOM_curout2 = Column(Integer)
+    GOM_curout3 = Column(Integer)
+    GOM_curout4 = Column(Integer)
+    GOM_curout5 = Column(Integer)
+    GOM_curout6 = Column(Integer)
+    GOM_outputs = Column(Integer)
+    GOM_latchup1 = Column(Integer)
+    GOM_latchup2 = Column(Integer)
+    GOM_latchup3 = Column(Integer)
+    GOM_latchup4 = Column(Integer)
+    GOM_latchup5 = Column(Integer)
+    GOM_latchup6 = Column(Integer)
+    GOM_wdt_i2c_time_left = Column(Integer)
+    GOM_wdt_gnd_time_left = Column(Integer)
+    GOM_counter_wdt_i2c = Column(Integer)
+    GOM_counter_wdt_gnd = Column(Integer)
+    GOM_counter_boot = Column(Integer)
+    GOM_bootcause = Column(Integer)
+    GOM_battmode = Column(Integer)
+    GOM_temp1 = Column(Integer)
+    GOM_temp2 = Column(Integer)
+    GOM_temp3 = Column(Integer)
+    GOM_temp4 = Column(Integer)
+    GOM_pptmode = Column(Integer)
+    GOM_reserved2 = Column(Integer)
+
+    # RTC DATA
+    RTC_measurement_taken = Column(Float)
+
+    # RPi DATA
+    RPI_cpu = Column(Integer)
+    RPI_ram = Column(Integer)
+    RPI_dsk = Column(Integer)
+    RPI_tmp = Column(Integer)
+    RPI_boot = Column(Float)
+    RPI_uptime = Column(Float)
+
+    # GYRO DATA
+    GYRO_gyr_x = Column(Float)
+    GYRO_gyr_y = Column(Float)
+    GYRO_gyr_z = Column(Float)
+    GYRO_acc_x = Column(Float)
+    GYRO_acc_y = Column(Float)
+    GYRO_acc_z = Column(Float)
+    GYRO_mag_x = Column(Float)
+    GYRO_mag_y = Column(Float)
+    GYRO_mag_z = Column(Float)
+    GYRO_temperature = Column(Float)
+
+    # THERMOCOUPLE DATA
+    THERMOCOUPLE_pressure = Column(Float)
+
+    # PRESSURE DATA
+    PRESSURE_pressure = Column(Float)
+
+
 def create_sensor_tables(engine):
     SQLAlchemyTableBase.metadata.create_all(engine)
     create_session.configure(bind=engine)

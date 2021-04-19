@@ -10,10 +10,12 @@ if TYPE_CHECKING:
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import drivers.power.power_structs as ps
 import time
+import hashlib
 from threading import Thread
 from utils.constants import *
 from json import load, dump
 from utils.exceptions import CommandArgException
+import subprocess
 
 import os
 import utils.parameters as params
@@ -99,7 +101,10 @@ class CommandDefinitions:
             NormalCommandEnum.GomConf1Set.value: self.set_gom_conf1,
             NormalCommandEnum.GomConf1Get.value: self.get_gom_conf1,
             NormalCommandEnum.GomConf2Set.value: self.set_gom_conf2,
-            NormalCommandEnum.GomConf2Get.value: self.get_gom_conf2
+            NormalCommandEnum.GomConf2Get.value: self.get_gom_conf2,
+            NormalCommandEnum.ShellCommand.value: self.shell_command,
+            NormalCommandEnum.SudoCommand.value: self.sudo_command,
+            NormalCommandEnum.Picberry.value: self.picberry,
         }
 
         self.low_battery_commands = {
@@ -131,6 +136,7 @@ class CommandDefinitions:
             TestCommandEnum.SeparationTest.value: self.separation_test,
             6: self.gom_outputs,
             7: self.comms_driver_test,
+            TestCommandEnum.LongString.value: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
             TestCommandEnum.RTCTest.value: self.rtc_test
         }
@@ -146,7 +152,10 @@ class CommandDefinitions:
             CommandCommandEnum.GomPin.value: self.gom_outputs,
             CommandCommandEnum.GomGeneralCmd.value: self.gom_command,
             CommandCommandEnum.GeneralCmd.value: self.general_command,
-            CommandCommandEnum.CeaseComms.value: self.cease_comms
+            CommandCommandEnum.CeaseComms.value: self.cease_comms,
+            CommandCommandEnum.AddFileBlock.value: self.add_file_block,
+            CommandCommandEnum.GetFileBlocksInfo.value:self.get_file_blocks_info,
+            CommandCommandEnum.ActivateFile.value:self.activate_file
         }
 
         self.COMMAND_DICT = {
@@ -195,18 +204,18 @@ class CommandDefinitions:
         self.parent.logger.info(f"RTC Temp: {self.parent.rtc.get_temp()}")
         self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info(f"Setting RTC time to 1e9")
+        self.parent.logger.info("Setting RTC time to 1e9")
         self.parent.rtc.set_time(1e9)
-        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
+        self.parent.logger.info("New RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info(f"Incrementing RTC Time by 5555 seconds")
+        self.parent.logger.info("Incrementing RTC Time by 5555 seconds")
         self.parent.rtc.increment_rtc(5555)
         self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
-        self.parent.logger.info(f"Disabling Oscillator, waiting 10 seconds")
+        self.parent.logger.info("Disabling Oscillator, waiting 10 seconds")
         self.parent.rtc.disable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
-        self.parent.logger.info(f"Enabling Oscillator, waiting 10 seconds")
+        self.parent.logger.info("Enabling Oscillator, waiting 10 seconds")
         self.parent.rtc.enable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
@@ -243,8 +252,7 @@ class CommandDefinitions:
         self.parent.FMQueue.put(FMEnum.OpNav.value)
 
     def set_parameter(self, **kwargs):
-        """Changes the values of a variable in constants.py. Current implementation requires the 'name' kwarg to be a
-        string which we can't pack/unpack """
+        """Changes the values of a parameter in utils/parameters.py or .json if hard_set"""
         name = kwargs[NAME]
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
@@ -427,7 +435,7 @@ class CommandDefinitions:
 
     def edit_file_at_line(self, **kwargs):
 
-        file_path = kwargs['file_path']
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
@@ -446,7 +454,7 @@ class CommandDefinitions:
 
     def insert_line_in_file(self, **kwargs):
 
-        file_path = kwargs['file_path']
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         line_number = kwargs['line_number']
         new_line = kwargs['new_line']
 
@@ -459,6 +467,84 @@ class CommandDefinitions:
         # Write new line into file
         original_file.seek(0)
         original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
+
+    def add_file_block(self, **kwargs):
+
+        file_path = kwargs['file_path']
+        block_number = kwargs['block_number']
+        block_text = kwargs['block_text']
+
+        self.parent.file_block_bank[block_number] = (file_path,block_text)
+
+        #Downlink acknowledgment with block number
+        acknowledgement = self.parent.downlink_handler.pack_downlink(
+        self.parent.downlink_counter, FMEnum.Command.value, 
+        CommandCommandEnum.AddFileBlock.value, successful=True, 
+        block_number = block_number)
+        #self.parent.downlink_queue.put(acknowledgement)
+
+    def get_file_blocks_info(self, **kwargs):
+        """Downlink checksum of file blocks and any missing block numbers"""
+        file_path = kwargs['file_path']
+        total_blocks = kwargs['total_blocks']
+        full_file_text = ''
+        missing_blocks = ''
+
+        for i in range(total_blocks):
+
+            try:
+                block = self.parent.file_block_bank[i]
+
+                if block[0] == file_path:
+                    full_file_text += block[1]
+
+            except KeyError:
+                missing_blocks += str(i) + ','
+        
+        checksum = hashlib.md5(full_file_text.encode('utf-8')).hexdigest()
+        
+        file_block_info = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+        FMEnum.Command.value, CommandCommandEnum.GetFileBlocksInfo.value,
+        checksum=checksum,missing_blocks=missing_blocks)
+        self.parent.downlink_queue.put(file_block_info)
+
+    def activate_file(self, **kwargs):
+        
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
+        total_blocks = kwargs['total_blocks']
+        local_file_name = kwargs['file_path'] 
+
+        assert(total_blocks == len(self.parent.file_block_bank))
+
+        full_file_text = ''
+
+        #Assemble file from blocks
+        for i in range(total_blocks):
+            full_file_text += self.parent.file_block_bank[i][1]
+        
+        #Create backup with the original if the file already exists
+        if os.path.exists(file_path):
+            original_file = open(file_path, 'r')
+            original_file_lines = original_file.readlines()
+            backup_name = FLIGHT_SOFTWARE_PATH + local_file_name[:local_file_name.index('.py')] + '_backup.py'
+            backup_file = open(backup_name, 'w')
+            backup_file.writelines(original_file_lines)
+
+        #Opens target file, creates one with the given path if it doesn't exist yet
+        original_file = open(file_path, 'w')
+
+        #Write chained file blocks to the target file path
+        original_file.seek(0)
+        original_file.write(full_file_text)
+
+        self.parent.file_block_bank = {}
+    
+    def print_long_string(self, **kwargs):
+        number = kwargs['some_number']
+        string = kwargs['long_string']
+
+        print(number)
+        print(string)
 
     def nemo_write_register(self, **kwargs):
         if self.parent.nemo_manager is not None:
@@ -571,6 +657,37 @@ class CommandDefinitions:
             #    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
             #    **current_config2_dict)
             # self.parent.downlink_queue.put(acknowledgement)
+
+    def get_gom_conf1(self, **kwargs):
+        raise NotImplementedError
+
+    def set_gom_conf2(self, **kwargs):
+        raise NotImplementedError
+
+    def get_gom_conf2(self, **kwargs):
+        raise NotImplementedError
+
+    def shell_command(self, **kwargs):
+        cmd: str = kwargs.get(CMD)
+        self.parent.logger.info(f"Running {cmd}")
+        output = subprocess.run(cmd, shell=True)
+
+        response = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+                                                              self.parent.flight_mode.flight_mode_id,
+                                                              NormalCommandEnum.ShellCommand.value,
+                                                              return_code=output.returncode)
+        self.parent.downlink_queue.put(response)
+
+    def sudo_command(self, **kwargs):
+        """Same as shell_command, but prepends 'sudo ' to the command"""
+        cmd: str = kwargs.get(CMD)
+        command = 'sudo ' + cmd
+        self.shell_command(cmd=command)
+
+    def picberry(self, **kwargs):
+        cmd: str = kwargs.get(CMD)
+        base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
+        subprocess.run(base_command + cmd, shell=True)
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:

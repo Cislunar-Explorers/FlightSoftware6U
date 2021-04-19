@@ -53,11 +53,11 @@ class GyroSensor(SynchronousSensor):
             self.acc = self.parent.gyro.get_acceleration()
             self.tmp = self.parent.gyro.get_temp()
 
-    def poll_smoothed(self, freq=10, duration=3, samples=5):
+    def poll_smoothed(self, freq=10, duration=1, samples=10):
         # poll and smooth gyro data
 
         n_data = freq * duration
-        data = [] * n_data
+        data = [None] * n_data
         for i in range(n_data):
             data[i] = self.parent.gyro.get_gyro_corrected()
             sleep(1.0 / freq)
@@ -343,7 +343,6 @@ class Telemetry(SynchronousSensor):
 
         finally:
             pass
-
 
     def query_telem(self):
         # FIXME

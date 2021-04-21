@@ -274,7 +274,7 @@ class NormalCommandEnum(IntEnum):
     Picberry = 52
     ExecPyFile = 53
 
-    CommandStatus = 99
+    # CommandStatus = 99
 
 
 @unique

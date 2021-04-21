@@ -222,7 +222,7 @@ class TestMode(PauseBackgroundMode):
                       TestCommandEnum.CommsDriver.value: ([], 0),
                       TestCommandEnum.PiShutdown.value: ([], 0),
                       TestCommandEnum.RTCTest.value: ([], 0),
-                      TestCommandEnum.LongString.value: (['some_number', 'long_string'],180)
+                      TestCommandEnum.LongString.value: (['some_number', 'long_string'], 180)
                       }
 
     command_arg_types = {
@@ -415,7 +415,7 @@ class NormalMode(FlightMode):
     command_codecs = {
         NormalCommandEnum.Switch.value: ([], 0),
         NormalCommandEnum.RunOpNav.value: ([], 0),
-        NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
+        # NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
@@ -652,12 +652,12 @@ class CommandMode(PauseBackgroundMode):
 
     flight_mode_id = FMEnum.Command.value
 
-
     command_codecs = {
-        CommandCommandEnum.AddFileBlock.value:([FILE_PATH,BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.AddFileBlock.value: ([FILE_PATH, BLOCK_NUMBER, BLOCK_TEXT], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
-        CommandCommandEnum.ActivateFile.value:([FILE_PATH,TOTAL_BLOCKS],52)
-        }
+        CommandCommandEnum.ActivateFile.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
+        CommandCommandEnum.ShellCommand.value: ([CMD], 24)
+    }
 
     command_arg_types = {
         FILE_PATH: 'string',
@@ -667,8 +667,9 @@ class CommandMode(PauseBackgroundMode):
     }
 
     downlink_codecs = {
-        CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 80 - MIN_COMMAND_SIZE)
+        CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL, BLOCK_NUMBER], 3),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 80 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.ShellCommand.value: ([RETURN_CODE], 1)
     }
 
     downlink_arg_types = {

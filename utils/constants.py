@@ -186,6 +186,11 @@ VBOOST1 = "vboost1"
 VBOOST2 = "vboost2"
 VBOOST3 = "vboost3"
 
+MAX_VOLTAGE = 'max_voltage'
+NORM_VOLTAGE = 'norm_voltage'
+SAFE_VOLTAGE = 'safe_voltage'
+CRIT_VOLTAGE = 'crit_voltage'
+
 CMD = 'cmd'
 RETURN_CODE = 'return_code'
 
@@ -234,7 +239,7 @@ class RestartCommandEnum(IntEnum):
 class NormalCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     RunOpNav = 1  # no args
-    SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
+    # SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
     SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
     # Really not sure what 3 and 4 are supposed to do:
     # SetAccelerate = 3  # arg=true/false
@@ -246,9 +251,9 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
-    WhenReorient = 13  # when we want to schedule a reorientation maneuver
+    #    WhenReorient = 13  # when we want to schedule a reorientation maneuver
     # 2 args, unix time stamp and spin axis vector (2 floats)
-    ScheduleReorientation = 14
+    #    ScheduleReorientation = 14
     ScheduleManeuver = 15
     ACSPulsing = 16
     NemoWriteRegister = 17
@@ -269,7 +274,7 @@ class NormalCommandEnum(IntEnum):
     Picberry = 52
     ExecPyFile = 53
 
-    CommandStatus = 99
+    # CommandStatus = 99
 
 
 @unique
@@ -287,7 +292,7 @@ class LowBatterySafetyCommandEnum(IntEnum):
 class SafetyCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     ExitSafetyMode = 1
-    SetExitSafetyMode = 2
+    # SetExitSafetyMode = 2
     SetParameter = 5
     CritTelem = 6
     BasicTelem = 7
@@ -297,36 +302,31 @@ class SafetyCommandEnum(IntEnum):
 @unique
 class OpNavCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    SetInterval = 2  # arg=interval in minutes packed as an int
+    # RunOpNav = 1  # no args
+    # SetInterval = 2  # arg=interval in minutes packed as an int
 
 
 @unique
 class ManeuverCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    SetDesiredAttitude = 2  # arg=attitude
-    SetAccelerate = 3  # arg=true/false
-    SetBreakpoint = 4  # arg=?
-    SetBurnTime = 9  # 1 arg: time at which thruster fires
 
 
 @unique
 class SensorsCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    Thermocouple = 1
-    PressureTransducer = 2
-    Gomspace = 3
-    CameraMux = 4
-    Gyro = 5
-    RTC = 6
-    AX5043 = 7
+    # Thermocouple = 1
+    # PressureTransducer = 2
+    # Gomspace = 3
+    # CameraMux = 4
+    # Gyro = 5
+    # RTC = 6
+    # AX5043 = 7
 
 
 @unique
 class TestCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    SetTestMode = 1  # no args
+    # SetTestMode = 1  # no args
     TriggerBurnWire = 2  # no args
     RunOpNav = 3  # no args
     ADCTest = 4
@@ -336,14 +336,14 @@ class TestCommandEnum(IntEnum):
     RTCTest = 8
     LongString = 9
     PiShutdown = 11
-    
+
 
 
 @unique
 class CommsCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    DownlinkFullDataPacket = 4  # no args
-    SetDataPacket = 5  # arg=data packet id
+    # DownlinkFullDataPacket = 4  # no args
+    # SetDataPacket = 5  # arg=data packet id
 
 
 @unique

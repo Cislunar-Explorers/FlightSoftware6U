@@ -337,29 +337,29 @@ def output_CZML(trajDfpath, attDfPath, original_csv_timescale_in_seconds, startD
                 "cartesian": []
             }
         }
-        
+
     ]
 
     trajDf = pd.read_csv(trajDfpath)
     attDf = pd.read_csv(attDfPath)
-    timestep = original_csv_timescale_in_seconds # Sample rate of original csv in seconds
-    time = list(np.arange(0,len(trajDf.index)*original_csv_timescale_in_seconds, timestep))
-    x = np.array(trajDf['x'].tolist(), dtype=np.float) * 1000
-    y = np.array(trajDf['y'].tolist(), dtype=np.float) * 1000
-    z = np.array(trajDf['z'].tolist(), dtype=np.float) * 1000
-    # vx = np.array(trajDf['vx'].tolist(), dtype=np.float) * 1000
-    # vy = np.array(trajDf['vy'].tolist(), dtype=np.float) * 1000
-    # vz = np.array(trajDf['vz'].tolist(), dtype=np.float) * 1000
-    q1 = np.array(attDf['q1'].tolist(), dtype=np.float)
-    q2 = np.array(attDf['q2'].tolist(), dtype=np.float)
-    q3 = np.array(attDf['q3'].tolist(), dtype=np.float)
-    q4 = np.array(attDf['q4'].tolist(), dtype=np.float)
+    timestep = original_csv_timescale_in_seconds  # Sample rate of original csv in seconds
+    time = list(np.arange(0, len(trajDf.index) * original_csv_timescale_in_seconds, timestep))
+    x = np.array(trajDf['x'].tolist(), dtype=float) * 1000
+    y = np.array(trajDf['y'].tolist(), dtype=float) * 1000
+    z = np.array(trajDf['z'].tolist(), dtype=float) * 1000
+    # vx = np.array(trajDf['vx'].tolist(), dtype=float)* 1000
+    # vy = np.array(trajDf['vy'].tolist(), dtype=float)* 1000
+    # vz = np.array(trajDf['vz'].tolist(), dtype=float)* 1000
+    q1 = np.array(attDf['q1'].tolist(), dtype=float)
+    q2 = np.array(attDf['q2'].tolist(), dtype=float)
+    q3 = np.array(attDf['q3'].tolist(), dtype=float)
+    q4 = np.array(attDf['q4'].tolist(), dtype=float)
 
     for i in tqdm(range(len(time)), desc="Writing to CZML"):
-        # vector = np.array([vx[i], vy[i], vz[i]], dtype=np.float)
+        # vector = np.array([vx[i], vy[i], vz[i]], dtype=float)
         # vector = vector / np.linalg.norm(vector)
 
-        position_string = [int(time[i]),float(x[i]),float(y[i]),float(z[i])]
+        position_string = [int(time[i]), float(x[i]), float(y[i]), float(z[i])]
 
         # Extract quaternions
         q = np.array([float(q1[i]), float(q2[i]), float(q3[i]), float(q4[i])])

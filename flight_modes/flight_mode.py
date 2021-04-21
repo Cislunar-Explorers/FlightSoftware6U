@@ -464,6 +464,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.GomConf1Get.value: ([], 0),
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
         NormalCommandEnum.GomConf2Get.value: ([], 0),
+        NormalCommandEnum.ExecPyFile.value: ([FNAME], 36)
     }
 
     command_arg_types = {
@@ -531,7 +532,8 @@ class NormalMode(FlightMode):
         NORM_VOLTAGE: 'short',
         SAFE_VOLTAGE: 'short',
         CRIT_VOLTAGE: 'short',
-        CMD: 'string'
+        CMD: 'string',
+        FNAME: 'string'
     }
 
     downlink_codecs = {

@@ -10,6 +10,7 @@ from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroE
 from utils.db import TelemetryModel, create_sensor_tables_from_path
 from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
 import utils.parameters as params
+from typing import Tuple
 
 
 def moving_average(x, w):
@@ -39,15 +40,15 @@ class GomSensor(SynchronousSensor):
 class GyroSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.rot = (float(), float(), float())  # rad/s
-        self.mag = (float(), float(), float())  # microTesla
-        self.acc = (float(), float(), float())  # m/s^2
-        self.tmp = float()  # deg C
+        self.rot: Tuple[float, float, float] = (float(), float(), float())  # rad/s
+        self.mag: Tuple[float, float, float] = (float(), float(), float())  # microTesla
+        self.acc: Tuple[float, float, float] = (float(), float(), float())  # m/s^2
+        self.tmp: float = float()  # deg C
 
     def poll(self):
         super().poll()
         if self.parent.gyro is not None:
-            self.rot = self.parent.gyro.get_gyro()
+            self.rot = self.parent.gyro.get_gyro_corrected()
             self.mag = self.parent.gyro.get_mag()
             self.acc = self.parent.gyro.get_acceleration()
             self.tmp = self.parent.gyro.get_temp()
@@ -58,17 +59,17 @@ class GyroSensor(SynchronousSensor):
         n_data = freq * duration
         data = [] * n_data
         for i in range(n_data):
-            data[i] = self.parent.gyro.get_gyro()
+            data[i] = self.parent.gyro.get_gyro_corrected()
             sleep(1.0 / freq)
 
-        data = np.asarray(data)
+        data = np.asarray(data).T
 
         smoothed = np.empty(3)
 
         # smooth data using convolution 
-        smoothed[0] = moving_average(data.T[0], samples)
-        smoothed[1] = moving_average(data.T[1], samples)
-        smoothed[2] = moving_average(data.T[2], samples)
+        smoothed[0] = moving_average(data[0], samples)
+        smoothed[1] = moving_average(data[1], samples)
+        smoothed[2] = moving_average(data[2], samples)
 
         return smoothed
 
@@ -118,13 +119,13 @@ class ThermocoupleSensor(SynchronousSensor):
 class PiSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.cpu = int()  # can be packed as short
-        self.ram = int()  # can be packed as short
-        self.disk = int()  # can be packed as short
-        self.boot_time = float()
-        self.up_time = int()
-        self.tmp = float()  # can be packed as a short
-        self.all = tuple()
+        self.cpu: int = int()  # can be packed as short
+        self.ram: int = int()  # can be packed as short
+        self.disk: int = int()  # can be packed as short
+        self.boot_time: float = float()
+        self.up_time: int = int()
+        self.tmp: float = float()  # can be packed as a short
+        self.all: Tuple[int, int, int, float, int, float, float] = tuple()
 
     def poll(self):
         super().poll()
@@ -274,9 +275,9 @@ class Telemetry(SynchronousSensor):
     def write_telem(self):
         try:
             time_polled = time()
-            gx, gy, gz = GyroSensor.get_rot()  # rot
-            ax, ay, az = GyroSensor.get_acc()  # acc
-            bx, by, bz = GyroSensor.get_mag()  # mag
+            gx, gy, gz = self.gyr.get_rot()  # rot
+            ax, ay, az = self.gyr.get_acc()  # acc
+            bx, by, bz = self.gyr.get_mag()  # mag
 
             telemetry_data = TelemetryModel(
                 time_polled=time_polled,
@@ -322,7 +323,7 @@ class Telemetry(SynchronousSensor):
                 GOM_pptmode=self.gom.hk.pptmode,
                 GOM_reserved2=self.gom.hk.reserved2,
                 RTC_measurement_taken=self.rtc.rtc_time,
-                RPI_cpu=self.cpu,
+                RPI_cpu=self.cpu,  # TODO: fix this
                 RPI_ram=self.ram,
                 RPI_dsk=self.disk,
                 RPI_tmp=self.tmp,

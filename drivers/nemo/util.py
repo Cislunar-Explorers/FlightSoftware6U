@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Utilities for working with Nemo data v3.4
+Utilities for working with Nemo data v3.5
 """
 
 import os

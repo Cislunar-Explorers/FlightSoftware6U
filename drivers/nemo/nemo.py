@@ -655,7 +655,7 @@ class Nemo(I2CDevice):
 
 
 if __name__ == "__main__":
-    nemo = Nemo()
+    nemo = Nemo(reset_gpio_ch=16)
 
     def print_config():
         """Get and print configuration"""

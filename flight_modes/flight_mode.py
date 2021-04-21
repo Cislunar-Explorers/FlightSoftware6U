@@ -470,6 +470,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.ShellCommand.value: ([CMD], 24),
         NormalCommandEnum.SudoCommand.value: ([CMD], 24),
         NormalCommandEnum.Picberry.value: ([CMD], 24),
+        NormalCommandEnum.ExecPyFile.value: ([FNAME], 36)
     }
 
     command_arg_types = {
@@ -533,7 +534,8 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE8: "bool",
         OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
         VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
-        CMD: 'string'
+        CMD: 'string',
+        FNAME: 'string'
     }
 
     downlink_codecs = {

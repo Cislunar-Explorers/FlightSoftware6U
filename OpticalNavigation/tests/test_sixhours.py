@@ -46,13 +46,20 @@ def sixhours_direct_test(visual_analysis, state_error, part_start, part_end, tim
     [timestep]: interval in minutes
     """
     from tests.const import TEST_6HOURS_meas, TEST_6HOURS_moonEph, TEST_6HOURS_sunEph, TEST_6HOURS_traj
-    d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime = get6HoursBatch(part_start, part_end, part_start, timestep, np.array([1,1,1,1,1,1]), np.array([1,1,1]), np.array([1,1,1,1]), 1, 1, 1, att_meas=False)
-    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
-    state = (np.array([d_traj['x'][0], d_traj['y'][0], d_traj['z'][0], d_traj['vx'][0], d_traj['vy'][0], d_traj['vz'][0]], dtype=np.float)).reshape(6,1)
+    d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime = get6HoursBatch(part_start, part_end, part_start,
+                                                                                  timestep,
+                                                                                  np.array([1, 1, 1, 1, 1, 1]),
+                                                                                  np.array([1, 1, 1]),
+                                                                                  np.array([1, 1, 1, 1]), 1, 1, 1,
+                                                                                  att_meas=False)
+    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))  # Initial Covariance Estimate of State
+    state = (
+        np.array([d_traj['x'][0], d_traj['y'][0], d_traj['z'][0], d_traj['vx'][0], d_traj['vy'][0], d_traj['vz'][0]],
+                 dtype=float)).reshape(6, 1)
     last_estimate_dt_seconds = 200
     state[0:3] = state[0:3] - last_estimate_dt_seconds * state[3:6]
-    R = np.diag(np.array(state_error, dtype=np.float))
-    error = np.random.multivariate_normal(np.zeros((6,)),R).reshape(6,1)
+    R = np.diag(np.array(state_error, dtype=float))
+    error = np.random.multivariate_normal(np.zeros((6,)), R).reshape(6, 1)
     state = state + error
 
     liveTraj = None
@@ -65,22 +72,30 @@ def sixhours_direct_test(visual_analysis, state_error, part_start, part_end, tim
     # print(int(trajTruthdf.shape[0]*1 - 1))
     for t in tqdm(range( len(d_traj['x']) ), desc ='Trajectory Completion'):
         # if t == 0: continue
-        moonEph = (np.array([d_moonEph['x'][t], d_moonEph['y'][t], d_moonEph['z'][t], d_moonEph['vx'][t], d_moonEph['vy'][t], d_moonEph['vz'][t]], dtype=np.float)).reshape(1,6)
-        sunEph = (np.array([d_sunEph['x'][t], d_sunEph['y'][t], d_sunEph['z'][t], d_sunEph['vx'][t], d_sunEph['vy'][t], d_sunEph['vz'][t]], dtype=np.float)).reshape(1,6)
-        meas = (np.array([d_camMeas['z1'][t], d_camMeas['z2'][t], d_camMeas['z3'][t], d_camMeas['z4'][t], d_camMeas['z5'][t], d_camMeas['z6'][t]], dtype=np.float)).reshape(6,1)
-        traj_out = runTrajUKF(EphemerisVector(moonEph[0,0], moonEph[0,1], moonEph[0,2], moonEph[0,3], moonEph[0,4], moonEph[0,5]), 
-                                EphemerisVector(sunEph[0,0], sunEph[0,1], sunEph[0,2], sunEph[0,3], sunEph[0,4], sunEph[0,5]), 
-                                CameraMeasurementVector(meas[0,0], meas[1,0], meas[2,0], meas[3,0], meas[4,0], meas[5,0]), 
-                                TrajectoryStateVector.from_numpy_array(state), 
-                                dt, 
-                                CovarianceMatrix(matrix=P), 
-                                MatlabTestCameraParameters, 
-                                dynamicsOnly=False) # used to have this, not sure why it's gone orientation=orientation
+        moonEph = (np.array(
+            [d_moonEph['x'][t], d_moonEph['y'][t], d_moonEph['z'][t], d_moonEph['vx'][t], d_moonEph['vy'][t],
+             d_moonEph['vz'][t]], dtype=float)).reshape(1, 6)
+        sunEph = (np.array([d_sunEph['x'][t], d_sunEph['y'][t], d_sunEph['z'][t], d_sunEph['vx'][t], d_sunEph['vy'][t],
+                            d_sunEph['vz'][t]], dtype=float)).reshape(1, 6)
+        meas = (np.array(
+            [d_camMeas['z1'][t], d_camMeas['z2'][t], d_camMeas['z3'][t], d_camMeas['z4'][t], d_camMeas['z5'][t],
+             d_camMeas['z6'][t]], dtype=float)).reshape(6, 1)
+        traj_out = runTrajUKF(
+            EphemerisVector(moonEph[0, 0], moonEph[0, 1], moonEph[0, 2], moonEph[0, 3], moonEph[0, 4], moonEph[0, 5]),
+            EphemerisVector(sunEph[0, 0], sunEph[0, 1], sunEph[0, 2], sunEph[0, 3], sunEph[0, 4], sunEph[0, 5]),
+            CameraMeasurementVector(meas[0, 0], meas[1, 0], meas[2, 0], meas[3, 0], meas[4, 0], meas[5, 0]),
+            TrajectoryStateVector.from_numpy_array(state),
+            dt,
+            CovarianceMatrix(matrix=P),
+            MatlabTestCameraParameters,
+            dynamicsOnly=False)  # used to have this, not sure why it's gone orientation=orientation
         state = traj_out.new_state.data
         P = traj_out.new_P.data
         K = traj_out.K
         # Per iteration error
-        traj = (np.array([d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
+        traj = (np.array(
+            [d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]],
+            dtype=float)).reshape(6, 1)
         traj = traj.flatten()
         fstate = state.flatten()
         posError = math.sqrt( np.sum((traj[:3] - fstate[:3])**2) )
@@ -98,11 +113,11 @@ def sixhours_direct_test(visual_analysis, state_error, part_start, part_end, tim
 
     t = int((part_end - part_start)/timestep - 1)
     traj = (np.array([d_traj['x'][t],
-        d_traj['y'][t],
-        d_traj['z'][t],
-        d_traj['vx'][t],
-        d_traj['vy'][t],
-        d_traj['vz'][t]], dtype=np.float)).reshape(6,1)
+                      d_traj['y'][t],
+                      d_traj['z'][t],
+                      d_traj['vx'][t],
+                      d_traj['vy'][t],
+                      d_traj['vz'][t]], dtype=float)).reshape(6, 1)
         
     traj = traj.flatten()
     state = state.flatten()
@@ -128,15 +143,22 @@ def sixhours_db_test(mocker, state_error, part_start, part_end, timestep):
     create_session = create_sensor_tables_from_path(sql_path)
     session = create_session()
     time = datetime.now()
-    d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime = get6HoursBatch(part_start, part_end, part_start, timestep, np.array([1,1,1,1,1,1]), np.array([1,1,1]), np.array([1,1,1,1]), 1, 1, 1, att_meas=False)
+    d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime = get6HoursBatch(part_start, part_end, part_start,
+                                                                                  timestep,
+                                                                                  np.array([1, 1, 1, 1, 1, 1]),
+                                                                                  np.array([1, 1, 1]),
+                                                                                  np.array([1, 1, 1, 1]), 1, 1, 1,
+                                                                                  att_meas=False)
     assert len(d_camMeas['z1']) == len(d_traj['x'])
-    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=np.float)) # Initial Covariance Estimate of State
-    R = np.diag(np.array(state_error, dtype=np.float))
+    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))  # Initial Covariance Estimate of State
+    R = np.diag(np.array(state_error, dtype=float))
     # init state
-    state = (np.array([d_traj['x'][0], d_traj['y'][0], d_traj['z'][0], d_traj['vx'][0], d_traj['vy'][0], d_traj['vz'][0]], dtype=np.float)).reshape(6,1)
+    state = (
+        np.array([d_traj['x'][0], d_traj['y'][0], d_traj['z'][0], d_traj['vx'][0], d_traj['vy'][0], d_traj['vz'][0]],
+                 dtype=float)).reshape(6, 1)
     last_estimate_dt_seconds = 200
     state[0:3] = state[0:3] - last_estimate_dt_seconds * state[3:6]
-    error = np.random.multivariate_normal(np.zeros((6,)),R).reshape(6,1)
+    error = np.random.multivariate_normal(np.zeros((6,)), R).reshape(6, 1)
     state = state + error
     state = state.flatten()
     entries = [
@@ -215,7 +237,8 @@ def sixhours_db_test(mocker, state_error, part_start, part_end, timestep):
     entries = session.query(OpNavTrajectoryStateModel).all()
     # print(entries)
     expected_new_entries_len = len(d_traj['x'])
-    assert len(entries) == expected_new_entries_len+1, f'Expected {expected_new_entries_len+1} entries in trajectory db, got {len(entries)}'
+    assert len(
+        entries) == expected_new_entries_len + 1, f'Expected {expected_new_entries_len + 1} entries in trajectory db, got {len(entries)}'
     # start() should succeed
     assert status == OPNAV_EXIT_STATUS.SUCCESS, f'Expected start() to succeed, got status {status}'
     # position and velocity errors should be within bounds
@@ -223,16 +246,21 @@ def sixhours_db_test(mocker, state_error, part_start, part_end, timestep):
     # entry = entries[-1]
     # for i, timestamp in tqdm(enumerate(timestamps), desc=""):
     i = len(timestamps) - 1
-    entry = session.query(OpNavTrajectoryStateModel).filter(OpNavTrajectoryStateModel.time_retrieved == timestamps[-1]).first() # search for state estimate made at time of measurement
-    true_state = np.array([d_traj['x'][i], d_traj['y'][i], d_traj['z'][i], d_traj['vx'][i], d_traj['vy'][i], d_traj['vz'][i]], dtype=np.float).flatten()
-    est_state = np.array([entry.position_x, entry.position_y, entry.position_z, entry.velocity_x, entry.velocity_y, entry.velocity_z], dtype=np.float).flatten()
+    entry = session.query(OpNavTrajectoryStateModel).filter(OpNavTrajectoryStateModel.time_retrieved == timestamps[
+        -1]).first()  # search for state estimate made at time of measurement
+    true_state = np.array(
+        [d_traj['x'][i], d_traj['y'][i], d_traj['z'][i], d_traj['vx'][i], d_traj['vy'][i], d_traj['vz'][i]],
+        dtype=float).flatten()
+    est_state = np.array(
+        [entry.position_x, entry.position_y, entry.position_z, entry.velocity_x, entry.velocity_y, entry.velocity_z],
+        dtype=float).flatten()
     posError = calculate_position_error(true_state, est_state)
     velError = calculate_velocity_error(true_state, est_state)
     print(f'true_state: {true_state}')
     print(f'est_state: {est_state}')
     print(f'Position error: {posError}\nVelocity error: {velError}')
     assert posError <= POS_ERROR_6HOURS, f'Position error is too large. Expected {POS_ERROR_6HOURS} Actual {posError}'
-    assert velError <= VEL_ERROR_6HOURS, f'Velocity error is too large. Expected {VEL_ERROR_6HOURS} Actual {velError}' 
+    assert velError <= VEL_ERROR_6HOURS, f'Velocity error is too large. Expected {VEL_ERROR_6HOURS} Actual {velError}'
     progress_bar.close()
 
 """

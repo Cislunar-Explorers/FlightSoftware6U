@@ -6,7 +6,12 @@ import os
 
 def test_parameters():
     """Copied from main.py's init_parameters"""
-    with open(os.fspath("../utils/parameters.json")) as f:
+    if os.getcwd() == '/home/runner/work/FlightSoftware/FlightSoftware':
+        filepath = 'utils/parameters.json'
+    else:
+        filepath = '../utils/parameters.json'
+
+    with open(os.fspath(filepath)) as f:
         json_parameter_dict = load(f)
 
     try:

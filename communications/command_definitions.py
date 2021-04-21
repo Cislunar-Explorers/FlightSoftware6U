@@ -105,6 +105,7 @@ class CommandDefinitions:
             NormalCommandEnum.ShellCommand.value: self.shell_command,
             NormalCommandEnum.SudoCommand.value: self.sudo_command,
             NormalCommandEnum.Picberry.value: self.picberry,
+            NormalCommandEnum.ExecPyFile.value: self.exec_py_file,
         }
 
         self.low_battery_commands = {
@@ -667,6 +668,12 @@ class CommandDefinitions:
         cmd: str = kwargs.get(CMD)
         base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
         subprocess.run(base_command + cmd, shell=True)
+
+    def exec_py_file(self, **kwargs):
+        filename: str = kwargs.get(FNAME)
+        filename += '.py'
+        self.parent.logger.debug(f"CWD: {os.getcwd()}")
+        exec(open(filename).read())
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:

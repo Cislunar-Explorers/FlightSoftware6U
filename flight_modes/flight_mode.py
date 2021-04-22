@@ -163,7 +163,6 @@ class FlightMode:
                 self.parent.commands_to_execute.remove(finished_command)
 
     def poll_inputs(self):
-
         if self.parent.gom is not None:
             self.parent.gom.tick_wdt()
         self.parent.telemetry.poll()
@@ -231,12 +230,12 @@ class TestMode(PauseBackgroundMode):
                       TestCommandEnum.CommsDriver.value: ([], 0),
                       TestCommandEnum.PiShutdown.value: ([], 0),
                       TestCommandEnum.RTCTest.value: ([], 0),
-                      TestCommandEnum.LongString.value: (['some_number', 'long_string'],180)
+                      TestCommandEnum.LongString.value: (['some_number', 'long_string'], 180)
                       }
 
     command_arg_types = {
         'some_number': 'float',
-        'long_string':'string'
+        'long_string': 'string'
     }
 
     downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
@@ -424,7 +423,7 @@ class NormalMode(FlightMode):
     command_codecs = {
         NormalCommandEnum.Switch.value: ([], 0),
         NormalCommandEnum.RunOpNav.value: ([], 0),
-        NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
+        # NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
         # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
@@ -436,24 +435,24 @@ class NormalMode(FlightMode):
         NormalCommandEnum.NemoWriteRegister.value: ([REG_ADDRESS, REG_VALUE], 2),
         NormalCommandEnum.NemoReadRegister.value: ([REG_ADDRESS, REG_SIZE], 2),
         NormalCommandEnum.NemoSetConfig.value: ([
-            DET_ENABLE_UINT8,
-            DET0_BIAS_UINT8,
-            DET1_BIAS_UINT8,
-            DET0_THRESHOLD_UINT8,
-            DET1_THRESHOLD_UINT8,
-            RATE_WIDTH_MIN,
-            RATE_WIDTH_MAX,
-            BIN_WIDTH,
-            BIN_0_MIN_WIDTH,
-            RATE_INTERVAL,
-            VETO_THRESHOLD_MIN,
-            VETO_THRESHOLD_MAX,
-            CONFIG_WRITE_PERIOD,
-            CONFIG_ROTATE_PERIOD,
-            DATE_WRITE_PERIOD,
-            RATE_DATA_ROTATE_PERIOD,
-            HISTOGRAM_ROTATE_PERIOD,
-        ], 32),
+                                                    DET_ENABLE_UINT8,
+                                                    DET0_BIAS_UINT8,
+                                                    DET1_BIAS_UINT8,
+                                                    DET0_THRESHOLD_UINT8,
+                                                    DET1_THRESHOLD_UINT8,
+                                                    RATE_WIDTH_MIN,
+                                                    RATE_WIDTH_MAX,
+                                                    BIN_WIDTH,
+                                                    BIN_0_MIN_WIDTH,
+                                                    RATE_INTERVAL,
+                                                    VETO_THRESHOLD_MIN,
+                                                    VETO_THRESHOLD_MAX,
+                                                    CONFIG_WRITE_PERIOD,
+                                                    CONFIG_ROTATE_PERIOD,
+                                                    DATE_WRITE_PERIOD,
+                                                    RATE_DATA_ROTATE_PERIOD,
+                                                    HISTOGRAM_ROTATE_PERIOD,
+                                                ], 32),
         NormalCommandEnum.NemoPowerOff.value: ([], 0),
         NormalCommandEnum.NemoPowerOn.value: ([], 0),
         NormalCommandEnum.NemoReboot.value: ([], 0),
@@ -470,6 +469,9 @@ class NormalMode(FlightMode):
         NormalCommandEnum.ShellCommand.value: ([CMD], 24),
         NormalCommandEnum.SudoCommand.value: ([CMD], 24),
         NormalCommandEnum.Picberry.value: ([CMD], 24),
+        NormalCommandEnum.GomConf1Get.value: ([], 0),
+        NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
+        NormalCommandEnum.GomConf2Get.value: ([], 0),
         NormalCommandEnum.ExecPyFile.value: ([FNAME], 36)
     }
 
@@ -534,6 +536,10 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE8: "bool",
         OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
         VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
+        MAX_VOLTAGE: 'short',
+        NORM_VOLTAGE: 'short',
+        SAFE_VOLTAGE: 'short',
+        CRIT_VOLTAGE: 'short',
         CMD: 'string',
         FNAME: 'string'
     }
@@ -597,6 +603,10 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE8: "bool",
         OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
         VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
+        MAX_VOLTAGE: 'short',
+        NORM_VOLTAGE: 'short',
+        SAFE_VOLTAGE: 'short',
+        CRIT_VOLTAGE: 'short',
         RETURN_CODE: "uint8"
     }
 
@@ -650,13 +660,13 @@ class CommandMode(PauseBackgroundMode):
 
     flight_mode_id = FMEnum.Command.value
 
-
     command_codecs = {
         CommandCommandEnum.SetUpdatePath.value: ([FILE_PATH], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.AddFileBlock.value:([BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([TOTAL_BLOCKS], 2),
         CommandCommandEnum.ActivateFile.value:([TOTAL_BLOCKS],2)
-        }
+        CommandCommandEnum.ShellCommand.value: ([CMD], 24)
+    }
 
     command_arg_types = {
         FILE_PATH: 'string',
@@ -668,6 +678,7 @@ class CommandMode(PauseBackgroundMode):
     downlink_codecs = {
         CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
         CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195 - MIN_COMMAND_SIZE)
+        CommandCommandEnum.ShellCommand.value: ([RETURN_CODE], 1)
     }
 
     downlink_arg_types = {

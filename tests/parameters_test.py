@@ -6,7 +6,8 @@ import os
 
 def test_parameters():
     """Copied from main.py's init_parameters"""
-    if os.getcwd() == '/home/runner/work/FlightSoftware/FlightSoftware':
+    print(os.getcwd())
+    if 'FlightSoftware/FlightSoftware/' not in os.getcwd():  # checks if running pytest
         filepath = 'utils/parameters.json'
     else:
         filepath = '../utils/parameters.json'

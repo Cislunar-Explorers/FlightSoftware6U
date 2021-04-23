@@ -130,9 +130,11 @@ def test_config2_command():
     # ps.displayConfig2(config2)
     # ps.displayConfig2(unpacked_config2)
 
+    assert config2.batt_maxvoltage == unpacked_config2.batt_maxvoltage
+    assert config2.batt_normalvoltage == unpacked_config2.batt_normalvoltage
+    assert config2.batt_safevoltage == unpacked_config2.batt_safevoltage
+    assert config2.batt_criticalvoltage == unpacked_config2.batt_criticalvoltage
 
-#    for i in config2._fields_:
-#        assert getattr(config2, i[0]) == getattr(unpacked_config2, i[0])
 
 def prep_config():
     config = ps.eps_config_t()

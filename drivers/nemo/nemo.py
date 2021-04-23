@@ -2,7 +2,7 @@
 
 """
 Python interface to NEMO (Netron Experiment in Moon Orbit). Intended for use on Raspberry Pi.
-(c) 2020-2021 Los Alamos National Laboratory v3.4
+(c) 2020-2021 Los Alamos National Laboratory v3.5
 """
 
 import logging
@@ -10,12 +10,31 @@ import os
 import datetime
 from pathlib import Path
 from time import sleep
+import threading
 
 import pigpio
-from adafruit_blinka.agnostic import board_id
+from adafruit_blinka.agnostic import board_id, detector
 if board_id != 'GENERIC_LINUX_PC':
-    import board
     import busio
+    if detector.board.any_embedded_linux:
+        from adafruit_blinka.microcontroller.generic_linux.i2c import I2C as _I2C
+
+    class CustomI2C(busio.I2C):
+        """
+        Class to override busio.I2C for init with port, rather than pins
+        """
+
+        def __init__(self, port_id, frequency=100000):
+            """Class constructor"""
+            self.init(port_id, frequency)
+
+        def init(self, port_id, frequency):
+            """Initialization"""
+            self.deinit()
+            self._i2c = _I2C(port_id, mode=_I2C.MASTER, baudrate=frequency)
+
+            if threading is not None:
+                self._lock = threading.RLock()
 
 
 class I2CTransactionFailure(Exception):
@@ -27,10 +46,10 @@ class I2CDevice:
     Simple class to represent I2C devices.
     """
 
-    def __init__(self, dev_addr=0x13, log=True):
+    def __init__(self, port_id, dev_addr=0x13, log=True):
         """Class constructor"""
         if board_id != 'GENERIC_LINUX_PC':
-            self._bus = busio.I2C(board.SCL, board.SDA)
+            self._bus = CustomI2C(port_id)
         else:
             self._bus = None
         self._dev_addr = dev_addr
@@ -113,8 +132,9 @@ class Domino(I2CDevice):
         0x00000163D5D6: 'A201',
     }
 
-    def __init__(self, dev_addr, reg_sn, reg_temp, reg_bias, reg_threshold, reg_bin_0, log=True):
-        I2CDevice.__init__(self, dev_addr, log=log)
+    def __init__(self, port_id, dev_addr, reg_sn, reg_temp, reg_bias, reg_threshold, reg_bin_0,
+                 log=True):
+        I2CDevice.__init__(self, port_id=port_id, dev_addr=dev_addr, log=log)
         self._reg_sn = reg_sn
         self._reg_temp = reg_temp
         self._reg_bias = reg_bias
@@ -330,7 +350,8 @@ class Nemo(I2CDevice):
         'FU2': {'det0_mfg_serial_number': '00581', 'det1_mfg_serial_number': '00745'},
     }
 
-    def __init__(self, dev_addr=0x13, reset_gpio_ch=5, log=True):
+    def __init__(self, port_id, reset_gpio_ch, dev_addr=0x13, log=True):
+        self._port_id = port_id
         self._reset_gpio_ch = reset_gpio_ch
         self._pi = pigpio.pi()
 
@@ -338,14 +359,14 @@ class Nemo(I2CDevice):
         self._pi.set_mode(self._reset_gpio_ch, pigpio.OUTPUT)
         self.release_from_reset()
 
-        I2CDevice.__init__(self, dev_addr, log=log)
+        I2CDevice.__init__(self, port_id=self._port_id, dev_addr=dev_addr, log=log)
 
         # setup detectors
-        self.det0 = Domino(self._dev_addr, self.REG_D0_SN0, self.REG_D0_TEMP_L, self.REG_D0_BIAS,
-                           self.REG_D0_THRESHOLD, self.REG_D0_BIN_0, log=log)
+        self.det0 = Domino(self._port_id, self._dev_addr, self.REG_D0_SN0, self.REG_D0_TEMP_L,
+                           self.REG_D0_BIAS, self.REG_D0_THRESHOLD, self.REG_D0_BIN_0, log=log)
 
-        self.det1 = Domino(self._dev_addr, self.REG_D1_SN0, self.REG_D1_TEMP_L, self.REG_D1_BIAS,
-                           self.REG_D1_THRESHOLD, self.REG_D1_BIN_0, log=log)
+        self.det1 = Domino(self._port_id, self._dev_addr, self.REG_D1_SN0, self.REG_D1_TEMP_L,
+                           self.REG_D1_BIAS, self.REG_D1_THRESHOLD, self.REG_D1_BIN_0, log=log)
 
     @classmethod
     def serial_number_to_assembly_name(cls, serial_number):
@@ -655,7 +676,7 @@ class Nemo(I2CDevice):
 
 
 if __name__ == "__main__":
-    nemo = Nemo()
+    nemo = Nemo(port_id=3, reset_gpio_ch=16)
 
     def print_config():
         """Get and print configuration"""

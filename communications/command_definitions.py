@@ -155,8 +155,9 @@ class CommandDefinitions:
             CommandCommandEnum.GeneralCmd.value: self.general_command,
             CommandCommandEnum.CeaseComms.value: self.cease_comms,
             CommandCommandEnum.AddFileBlock.value: self.add_file_block,
-            CommandCommandEnum.GetFileBlocksInfo.value:self.get_file_blocks_info,
-            CommandCommandEnum.ActivateFile.value:self.activate_file
+            CommandCommandEnum.GetFileBlocksInfo.value: self.get_file_blocks_info,
+            CommandCommandEnum.ActivateFile.value: self.activate_file,
+            CommandCommandEnum.ShellCommand.value: self.shell_command
         }
 
         self.COMMAND_DICT = {
@@ -475,14 +476,14 @@ class CommandDefinitions:
         block_number = kwargs['block_number']
         block_text = kwargs['block_text']
 
-        self.parent.file_block_bank[block_number] = (file_path,block_text)
+        self.parent.file_block_bank[block_number] = (file_path, block_text)
 
-        #Downlink acknowledgment with block number
+        # Downlink acknowledgment with block number
         acknowledgement = self.parent.downlink_handler.pack_downlink(
-        self.parent.downlink_counter, FMEnum.Command.value, 
-        CommandCommandEnum.AddFileBlock.value, successful=True, 
-        block_number = block_number)
-        #self.parent.downlink_queue.put(acknowledgement)
+            self.parent.downlink_counter, FMEnum.Command.value,
+            CommandCommandEnum.AddFileBlock.value, successful=True,
+            block_number=block_number)
+        # self.parent.downlink_queue.put(acknowledgement)
 
     def get_file_blocks_info(self, **kwargs):
         """Downlink checksum of file blocks and any missing block numbers"""
@@ -501,29 +502,30 @@ class CommandDefinitions:
 
             except KeyError:
                 missing_blocks += str(i) + ','
-        
+
         checksum = hashlib.md5(full_file_text.encode('utf-8')).hexdigest()
-        
+
         file_block_info = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
-        FMEnum.Command.value, CommandCommandEnum.GetFileBlocksInfo.value,
-        checksum=checksum,missing_blocks=missing_blocks)
+                                                                     FMEnum.Command.value,
+                                                                     CommandCommandEnum.GetFileBlocksInfo.value,
+                                                                     checksum=checksum, missing_blocks=missing_blocks)
         self.parent.downlink_queue.put(file_block_info)
 
     def activate_file(self, **kwargs):
-        
+
         file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         total_blocks = kwargs['total_blocks']
-        local_file_name = kwargs['file_path'] 
+        local_file_name = kwargs['file_path']
 
-        assert(total_blocks == len(self.parent.file_block_bank))
+        assert (total_blocks == len(self.parent.file_block_bank))
 
         full_file_text = ''
 
-        #Assemble file from blocks
+        # Assemble file from blocks
         for i in range(total_blocks):
             full_file_text += self.parent.file_block_bank[i][1]
-        
-        #Create backup with the original if the file already exists
+
+        # Create backup with the original if the file already exists
         if os.path.exists(file_path):
             original_file = open(file_path, 'r')
             original_file_lines = original_file.readlines()
@@ -531,15 +533,15 @@ class CommandDefinitions:
             backup_file = open(backup_name, 'w')
             backup_file.writelines(original_file_lines)
 
-        #Opens target file, creates one with the given path if it doesn't exist yet
+        # Opens target file, creates one with the given path if it doesn't exist yet
         original_file = open(file_path, 'w')
 
-        #Write chained file blocks to the target file path
+        # Write chained file blocks to the target file path
         original_file.seek(0)
         original_file.write(full_file_text)
 
         self.parent.file_block_bank = {}
-    
+
     def print_long_string(self, **kwargs):
         number = kwargs['some_number']
         string = kwargs['long_string']
@@ -626,12 +628,38 @@ class CommandDefinitions:
 
             except Exception:
                 self.parent.logger.error("Could not set new gom config")
-                acknowledgement = self.parent.downlink_handler.pack_downlink(
-                    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.CommandStatus.value,
-                    fmid=self.parent.flight_mode.flight_mode_id, cid=NormalCommandEnum.GomConf1Set.value,
-                    successful=False)
+            #     acknowledgement = self.parent.downlink_handler.pack_downlink(
+            #         self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.CommandStatus.value,
+            #         fmid=self.parent.flight_mode.flight_mode_id, cid=NormalCommandEnum.GomConf1Set.value,
+            #         successful=False)
+            #
+            # self.parent.downlink_queue.put(acknowledgement)
 
-            self.parent.downlink_queue.put(acknowledgement)
+    def get_gom_conf1(self, **kwargs):
+        if self.parent.gom is not None:
+            current_config = self.parent.gom.get_health_data(level="config")
+            ps.displayConfig(current_config)
+            current_config_dict = dict_from_eps_config(current_config)
+            # acknowledgement = self.parent.downlink_handler.pack_downlink(
+            #     self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Get.value,
+            #     **current_config_dict)
+            # self.parent.downlink_queue.put(acknowledgement)
+
+    def set_gom_conf2(self, **kwargs):
+        if self.parent.gom is not None:
+            new_conf2 = eps_config2_from_dict(kwargs)
+            self.parent.gom.pc.config2_set(new_conf2)
+            self.parent.gom.pc.config2_cmd(2)
+
+    def get_gom_conf2(self, **kwargs):
+        if self.parent.gom is not None:
+            current_conf2 = self.parent.gom.get_health_data(level='config2')
+            ps.displayConfig2(current_conf2)
+            current_config2_dict = dict_from_eps_config2(current_conf2)
+            # acknowledgement = self.parent.downlink_handler.pack_downlink(
+            #    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
+            #    **current_config2_dict)
+            # self.parent.downlink_queue.put(acknowledgement)
 
     def get_gom_conf1(self, **kwargs):
         raise NotImplementedError
@@ -725,7 +753,7 @@ def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
                    kwargs.get(OUTPUT_SAFE7),
                    kwargs.get(OUTPUT_SAFE8)]
 
-    normal_output = list(map(int, normal_output))  # transmitted as bools, convert to ints
+    safe_output = list(map(int, safe_output))  # transmitted as bools, convert to ints
 
     # this means that all outputs have the same on/off delay
     initial_on_delay = [kwargs.get(OUTPUT_ON_DELAY)] * 8
@@ -780,3 +808,26 @@ def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     new_config.vboost[2] = vboost[2]
 
     return new_config
+
+
+def eps_config2_from_dict(config_dict: dict) -> ps.eps_config2_t:
+    gom_conf2 = ps.eps_config2_t()
+
+    max_voltage = config_dict.get(MAX_VOLTAGE)
+    normal_voltage = config_dict.get(NORM_VOLTAGE)
+    safe_voltage = config_dict.get(SAFE_VOLTAGE)
+    crit_voltage = config_dict.get(CRIT_VOLTAGE)
+
+    gom_conf2.batt_maxvoltage = max_voltage
+    gom_conf2.batt_normalvoltage = normal_voltage
+    gom_conf2.batt_safevoltage = safe_voltage
+    gom_conf2.batt_criticalvoltage = crit_voltage
+
+    return gom_conf2
+
+
+def dict_from_eps_config2(conf2: ps.eps_config2_t) -> dict:
+    return {MAX_VOLTAGE: conf2.batt_maxvoltage,
+            NORM_VOLTAGE: conf2.batt_normalvoltage,
+            SAFE_VOLTAGE: conf2.batt_safevoltage,
+            CRIT_VOLTAGE: conf2.batt_criticalvoltage}

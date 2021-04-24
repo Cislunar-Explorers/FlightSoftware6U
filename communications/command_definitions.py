@@ -106,6 +106,7 @@ class CommandDefinitions:
             NormalCommandEnum.SudoCommand.value: self.sudo_command,
             NormalCommandEnum.Picberry.value: self.picberry,
             NormalCommandEnum.ExecPyFile.value: self.exec_py_file,
+            NormalCommandEnum.IgnoreLowBatt.value: self.ignore_low_battery,
         }
 
         self.low_battery_commands = {

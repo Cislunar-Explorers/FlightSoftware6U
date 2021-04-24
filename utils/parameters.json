@@ -27,5 +27,7 @@
   "GYRO_BIAS_TEMPERATURE": 0,
   "GYRO_BIAS_DXDT": 0,
   "GYRO_BIAS_DYDT": 0,
-  "GYRO_BIAS_DZDT": 0
+  "GYRO_BIAS_DZDT": 0,
+  "FOR_FLIGHT": false,
+  "WANT_TO_OPNAV": false
 }

@@ -2,11 +2,14 @@ import utils.parameters
 from utils.exceptions import CislunarException
 from json import load
 import os
+debug = False
 
 
 def test_parameters():
     """Copied from main.py's init_parameters"""
-    print(os.getcwd())
+
+    if debug:
+        print(os.getcwd())
     if 'FlightSoftware/FlightSoftware/' not in os.getcwd():  # checks if running pytest
         filepath = 'utils/parameters.json'
     else:

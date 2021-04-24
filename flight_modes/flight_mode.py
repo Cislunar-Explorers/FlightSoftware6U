@@ -482,7 +482,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.GomConf1Get.value: ([], 0),
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
         NormalCommandEnum.GomConf2Get.value: ([], 0),
-        NormalCommandEnum.ExecPyFile.value: ([FNAME], 36)
+        NormalCommandEnum.ExecPyFile.value: ([FNAME], 36),
         NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1)
     }
 

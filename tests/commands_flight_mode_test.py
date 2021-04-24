@@ -27,7 +27,7 @@ def testFlightCommands():
             assert all_enum_commands == all_command_ids
         except AssertionError:
             commands_not_in_both = set(all_enum_commands).symmetric_difference(all_command_ids)
-            error_msg += f"Commands defined in {enum} not consistent with utils.constants: {commands_not_in_both}\n"
+            error_msg += f"command_definition.py's {str(enum)[6:-1]} command dict not consistent with utils.constants: {commands_not_in_both}\n "
 
     if error_msg != "":
         raise AssertionError(error_msg)

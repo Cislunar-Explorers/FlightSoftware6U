@@ -362,3 +362,9 @@ class CommandCommandEnum(IntEnum):
     ActivateFile = 11
     ShellCommand = 50
     CeaseComms = 170
+
+
+@unique
+class MissionModeEnum(IntEnum):
+    Boot = 0
+    Normal = 1

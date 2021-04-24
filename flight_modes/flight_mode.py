@@ -13,6 +13,7 @@ from datetime import datetime
 from multiprocessing import Process
 import subprocess
 from queue import Empty
+from traceback import format_tb
 
 from utils.constants import *
 
@@ -169,6 +170,23 @@ class FlightMode:
     def write_telemetry(self):
         pass
 
+    @staticmethod
+    def update_mission_mode(cls, mission_mode_id):
+        """Sets the behavior of flight modes. Acts like a meta-flight mode."""
+        if mission_mode_id == MissionModeEnum.Boot.value:
+            # set parameters for boot
+            params.CURRENT_MISSION_MODE = 0
+            params.WANT_TO_ELECTROLYZE = False
+            params.WANT_TO_OPNAV = False
+            params.TELEM_DOWNLINK_TIME = 10
+
+        if mission_mode_id == MissionModeEnum.Normal.value:
+            # set parameters for normal mission mode
+            params.CURRENT_MISSION_MODE = 1
+            params.WANT_TO_ELECTROLYZE = True
+            params.WANT_TO_OPNAV = True
+            params.TELEM_DOWNLINK_TIME = 60
+
     def __enter__(self):
         logger.debug(f"Starting flight mode {self.flight_mode_id}")
         return self
@@ -177,7 +195,7 @@ class FlightMode:
         logger.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
             logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
-            logger.error(f"Failed with traceback:\n {tb}")
+            logger.error(f"Failed with traceback:\n {format_tb(tb)}")
 
 
 # Model for FlightModes that require precise timing

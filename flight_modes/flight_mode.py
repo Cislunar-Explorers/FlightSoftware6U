@@ -483,6 +483,7 @@ class NormalMode(FlightMode):
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
         NormalCommandEnum.GomConf2Get.value: ([], 0),
         NormalCommandEnum.ExecPyFile.value: ([FNAME], 36)
+        NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1)
     }
 
     command_arg_types = {
@@ -550,8 +551,8 @@ class NormalMode(FlightMode):
         NORM_VOLTAGE: 'short',
         SAFE_VOLTAGE: 'short',
         CRIT_VOLTAGE: 'short',
-        CMD: 'string',
-        FNAME: 'string'
+        FNAME: 'string',
+        CMD: 'string', IGNORE: 'bool',
     }
 
     downlink_codecs = {
@@ -623,6 +624,9 @@ class NormalMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def poll_inputs(self):
+        super().poll_inputs()
+
     def update_state(self):
         super_fm = super().update_state()
 
@@ -635,6 +639,9 @@ class NormalMode(FlightMode):
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
+
+        # if we don't want to run opnav (per GS command), set time_for_opnav to false
+        time_for_opnav = time_for_opnav and params.WANT_TO_OPNAV
 
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
@@ -662,6 +669,18 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
+        if not params.FOR_FLIGHT:
+            # log relevant data
+            gom_voltage = self.parent.tlm.gom.hk.vbatt
+            current_in = self.parent.tlm.gom.hk.cursun
+            current_out = self.parent.tlm.gom.hk.cursys
+            pressure = self.parent.tlm.prs.pressure
+            poll_time = self.parent.tlm.poll_time
+            data = [poll_time, gom_voltage, current_in, current_out, pressure]
+            data_str = ','.join([str(elem) for elem in data])
+            with open("fill_and_fire.csv", 'a') as ff:
+                ff.write(data_str)
+
         self.completed_task()
 
 
@@ -674,7 +693,7 @@ class CommandMode(PauseBackgroundMode):
         CommandCommandEnum.AddFileBlock.value: ([FILE_PATH, BLOCK_NUMBER, BLOCK_TEXT], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
         CommandCommandEnum.ActivateFile.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
-        CommandCommandEnum.ShellCommand.value: ([CMD], 24)
+    CommandCommandEnum.ShellCommand.value: ([CMD], 24)
     }
 
     command_arg_types = {

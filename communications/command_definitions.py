@@ -340,7 +340,13 @@ class CommandDefinitions:
         state = kwargs[STATE]
         delay = kwargs.get(DELAY, 0)
         assert type(state) is bool
+        params.WANT_TO_ELECTROLYZE = state
         self.parent.gom.set_electrolysis(state, delay=delay)
+
+    def ignore_low_battery(self, **kwargs):
+        """This is obviously a very dangerous command. It's mainly meant for testing on the ground"""
+        ignore = kwargs[IGNORE]
+        params.IGNORE_LOW_BATTERY = ignore
 
     # def burn(self, **kwargs):
     #     time_burn = kwargs['time']

@@ -222,7 +222,7 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
 # Percent of white pixels determines if earth detected
 # TODO make thresholds parameters
 def measureEarth(img):
-    lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
+    lowThresh = cv2.inRange(img, (0, 0, 0), (255, 30, 30)) #lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
     percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
     if percentWhite >= 0.2:
         highThreshRed = cv2.inRange(img, (0, 0, 5), (255, 255, 255))

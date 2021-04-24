@@ -111,6 +111,7 @@ class Camera:
             time.sleep(1)
             camera.exposure_mode = 'off'
 
+            prevTimestamp = 0
             # t0 = time.monotonic()  # Host time when recording is commanded
             camera.start_recording(filename, format='mjpeg')
             lastTimestamp = camera.timestamp
@@ -123,7 +124,9 @@ class Camera:
                     f = camera.frame
                     time.sleep((1 / frame_rate) / 2)
                 lastIndex = f.index
+                prevTimestamp = lastTimestamp
                 lastTimestamp = f.timestamp
             camera.stop_recording()
             # Timestamp is in microseconds, relative to last system reboot (default clock_mode='raw')
-            return (filename, lastTimestamp)
+            frameDiff = lastTimestamp - prevTimestamp
+            return (filename, frameDiff, lastTimestamp)

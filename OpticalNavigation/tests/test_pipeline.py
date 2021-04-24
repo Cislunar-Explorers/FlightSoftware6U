@@ -26,8 +26,8 @@ from utils.constants import DB_FILE
 # from tests.animations import LiveTrajectoryPlot
 
 SQL_PREFIX = "sqlite:///"
-#sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
-sql_path = DB_FILE
+sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
+#sql_path = DB_FILE
 
 def setup_function(function):
     # Reset databases
@@ -123,7 +123,7 @@ def test_start(mocker):
     mocker.patch('OpticalNavigation.core.opnav.record_gyro', side_effect=record_gyro_mock)
 
 
-    path = '../../../../../Downloads/cislunar_case1c/'
+    path = '../../../../Desktop/cislunar_case1c/'
     idx = [0]
     names = ['cam1_expLow_f', 'cam1_expHigh_f',
               'cam2_expLow_f', 'cam2_expHigh_f',

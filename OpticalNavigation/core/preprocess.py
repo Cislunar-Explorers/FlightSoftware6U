@@ -15,7 +15,7 @@ def rolling_shutter(img):
     """
     time.sleep(3)
     raise NotImplementedError("implement rolling shutter transformation")
-
+'''
 def extract_frames(vid_dir, endTimestamp):
     """
     Extracts frames from video located at path [vid_dir]
@@ -46,7 +46,31 @@ def extract_frames(vid_dir, endTimestamp):
     # src.release()
     # cv2.destroyAllWindows()
     return frames
- 
+'''
+
+
+def extract_frames(video, frameDiff, endTimestamp):
+    base = os.path.splitext(video)[0]
+    print(base)
+    file = open(video, "rb")
+    fileBuffer = file.read()
+    # Separate the entire byte array based on the ending magic number of JPEG
+    splitFrames = fileBuffer.split(b'\xff\xd9')
+
+    # Iterate over byte array to count number of actual frames (there may be empty element at end of array)
+    numFrames = 0
+    while numFrames < len(splitFrames) and splitFrames[numFrames].startswith(b'\xff\xd8'):
+        numFrames += 1
+
+    frame = 0
+    # Make sure that each frame we check starts with magic number of JPEG
+    while frame < numFrames:
+        timestamp = endTimestamp - (frameDiff * (numFrames - frame - 1))
+        with open(base + f'_f{frame}_t{timestamp}.jpg', 'wb') as x:
+            x.write(splitFrames[frame] + b'\xff\xd9')
+        frame += 1
+
+
 def rect_to_stereo_proj(img, fov=62.2, fov2=48.8):
     """
     Source:     http://lexafrancis.com/rectilinear-to-stereographic-image-converter-python/

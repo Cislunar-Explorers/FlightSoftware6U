@@ -175,7 +175,7 @@ class MainSatelliteThread(Thread):
                 for i in [1, 2, 3]:
                     try:
                         self.mux.selectCamera(i)
-                        f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
+                        f, d, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
                     except Exception as e:
                         logger.error(f"CAM{i} initialization failed")
                         cameras_list[i - 1] = 0

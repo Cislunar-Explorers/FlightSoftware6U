@@ -9,9 +9,7 @@ electrolyzing = False
 
 interval = 3 # Number of seconds between each transmission
 repetitions = 5 # Number of total times you want to transmit the pattern
-
-downlink = bytes(input("Enter signal you want to downlink (e.g '\\x08\\x07\\x00\\x00)':"), encoding='utf-8')
-downlink = downlink.decode('unicode-escape').encode('ISO-8859-1')
+downlink = b'\x08\x07\x00\x00' #Message you want to downlink
 #–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 # Enter Transmit Mode
        

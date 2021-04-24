@@ -18,7 +18,6 @@ import utils.parameters as params
 from utils.exceptions import PowerException, PowerInputError, PowerReadError
 from time import time, sleep
 
-
 # power device address
 POWER_ADDRESS = 0x02
 
@@ -67,7 +66,6 @@ OUT_6 = 5  # 3.3V
 OUT_HEATER = 6
 OUT_SWITCH = 7
 
-
 # Outputs on board:
 #
 #       H1
@@ -79,8 +77,8 @@ OUT_SWITCH = 7
 #
 
 # GPIO outputs
-RF_RX_EN = 19  # Physical pin 35
-RF_TX_EN = 26  # Physical pin 37
+RF_RX_EN = 26  # Physical pin 37
+RF_TX_EN = 19  # Physical pin 35
 PA_EN = 27  # Physical pin 13
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
@@ -315,14 +313,14 @@ class Power:
             self.write(CMD_CONFIG_CMD, [command])
 
     # returns eps_config_t structure
-    def config_get(self):
+    def config_get(self) -> ps.eps_config_t:
         ps.gom_logger.debug("Getting current config")
         self.write(CMD_CONFIG_GET, [])
         return ps.c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
 
     # takes eps_config_t struct and sets configuration
     # Input struct is of type eps_config_t
-    def config_set(self, struct):
+    def config_set(self, struct: ps.eps_config_t):
         ps.gom_logger.debug("Setting current config")
         array = struct >> _ >> ps.c_structToBytes >> _ >> ps.bytesToList
         self.write(CMD_CONFIG_SET, array)
@@ -486,7 +484,7 @@ class Power:
             # Set transmitting side of RF switch to transmit
             self._pi.write(RF_TX_EN, pigpio.HIGH)
 
-    def rf_receiving_switch(self,receive:bool = True):
+    def rf_receiving_switch(self, receive: bool = True):
         if receive:
             # Set receiving RF switch to receive
             self._pi.write(RF_RX_EN, pigpio.HIGH)

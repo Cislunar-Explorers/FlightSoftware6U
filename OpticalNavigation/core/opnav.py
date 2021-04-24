@@ -1,5 +1,4 @@
 from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
-#from utils.constants import OPNAV_INTERVAL
 from OpticalNavigation.core.acquisition import startAcquisition, readOmega
 from OpticalNavigation.core.cam_meas import cameraMeasurements
 import OpticalNavigation.core.ukf as traj_ukf
@@ -45,7 +44,7 @@ def __get_covariance_matrix_from_state(state_entry) -> CovarianceMatrix:
         [state_entry.r5c1, state_entry.r5c2, state_entry.r5c3, state_entry.r5c4, state_entry.r5c5, state_entry.r5c6],
         [state_entry.r6c1, state_entry.r6c2, state_entry.r6c3, state_entry.r6c4, state_entry.r6c5, state_entry.r6c6],
     ]
-    return CovarianceMatrix(matrix=np.array(a_P, dtype=np.float).reshape(6,6))
+    return CovarianceMatrix(matrix=np.array(a_P, dtype=float).reshape(6, 6))
 
 def __process_propulsion_events(session: session.Session) -> OPNAV_EXIT_STATUS:
     """
@@ -152,7 +151,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     # 1. select camera
     # 2. record camera measurements
     # 3. record gyro measurements
-    
+
     #observeStart = datetime(2020, 7, 28, 22, 8, 3)
     observeStart = time.time() * 10 ** 6 #In usec
     #observeStart = datetime(2020, 7, 28, 22, 8, 3) #TEMPORARY TESTING START TIME
@@ -198,7 +197,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
     #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
-    
+
     #frames = glob.glob("/home/pi/surrender_images/*.jpg")
     #logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 

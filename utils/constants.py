@@ -31,8 +31,9 @@ ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
 DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
-# Parameters.json path
-PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
+# Important paths
+FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
+PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -61,6 +62,38 @@ NUM_BLOCKS = "num_blocks"
 TIME = "time"
 
 HARD_SET = "hard_set"
+
+
+FILE_PATH = "file_path"
+BLOCK_NUMBER = "block_number"
+BLOCK_TEXT = "block_text"
+TOTAL_BLOCKS = "total_blocks"
+REG_ADDRESS = "reg_address"
+REG_VALUE = "reg_value"
+REG_SIZE = "reg_size"
+
+DET_ENABLE_UINT8 = "det_enable_uint8"
+DET0_BIAS_UINT8 = "det0_bias_uint8"
+DET1_BIAS_UINT8 = "det1_bias_uint8"
+DET0_THRESHOLD_UINT8 = "det0_threshold_uint8"
+DET1_THRESHOLD_UINT8 = "det1_threshold_uint8"
+RATE_WIDTH_MIN = "rate_width_min"
+RATE_WIDTH_MAX = "rate_width_max"
+BIN_WIDTH = "bin_width"
+BIN_0_MIN_WIDTH = "bin_0_min_width"
+RATE_INTERVAL = "rate_interval"
+VETO_THRESHOLD_MIN = "veto_threshold_min"
+VETO_THRESHOLD_MAX = "veto_threshold_max"
+CONFIG_WRITE_PERIOD = "config_write_period"
+CONFIG_ROTATE_PERIOD = "config_rotate_period"
+DATE_WRITE_PERIOD = "data_write_period"
+RATE_DATA_ROTATE_PERIOD = "rate_data_rotate_period"
+HISTOGRAM_ROTATE_PERIOD = "histogram_rotate_period"
+
+T_START = "t_start"
+T_STOP = "t_stop"
+
+DECIMATION_FACTOR = "decimation_factor"
 
 # Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
@@ -93,6 +126,9 @@ PROP_TANK_PRESSURE = "prs_pressure"
 
 SUCCESSFUL = "successful"
 
+MISSING_BLOCKS = "missing_blocks"
+CHECKSUM = "checksum"
+
 # SQL Stuff
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
@@ -100,7 +136,8 @@ CISLUNAR_BASE_DIR = os.path.join(
 )
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
-#Add opnav dir like log dir
+NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
+
 a = 1664525
 b = 1013904223
 M = 2 ** 32
@@ -120,8 +157,44 @@ GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 # Gyro specific constants
 # TODO: make sure that we change this to 500 if need be
-GYRO_RANGE = 250  # degrees per second
+GYRO_RANGE = 500  # degrees per second
 
+# Gom config command args:
+PPT_MODE = "ppt_mode"
+BATTHEATERMODE = "battheater_mode"
+BATTHEATERLOW = "battheater_low"
+BATTHEATERHIGH = "battheater_high"
+OUTPUT_NORMAL1 = "output_normal_value1"
+OUTPUT_NORMAL2 = "output_normal_value2"
+OUTPUT_NORMAL3 = "output_normal_value3"
+OUTPUT_NORMAL4 = "output_normal_value4"
+OUTPUT_NORMAL5 = "output_normal_value5"
+OUTPUT_NORMAL6 = "output_normal_value6"
+OUTPUT_NORMAL7 = "output_normal_value7"
+OUTPUT_NORMAL8 = "output_normal_value8"
+OUTPUT_SAFE1 = "output_safe_value1"
+OUTPUT_SAFE2 = "output_safe_value2"
+OUTPUT_SAFE3 = "output_safe_value3"
+OUTPUT_SAFE4 = "output_safe_value4"
+OUTPUT_SAFE5 = "output_safe_value5"
+OUTPUT_SAFE6 = "output_safe_value6"
+OUTPUT_SAFE7 = "output_safe_value7"
+OUTPUT_SAFE8 = "output_safe_value8"
+OUTPUT_ON_DELAY = "output_initial_on_delay"
+OUTPUT_OFF_DELAY = "output_initial_off_delay"
+VBOOST1 = "vboost1"
+VBOOST2 = "vboost2"
+VBOOST3 = "vboost3"
+
+MAX_VOLTAGE = 'max_voltage'
+NORM_VOLTAGE = 'norm_voltage'
+SAFE_VOLTAGE = 'safe_voltage'
+CRIT_VOLTAGE = 'crit_voltage'
+
+CMD = 'cmd'
+RETURN_CODE = 'return_code'
+
+FNAME = 'filename'
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -166,7 +239,7 @@ class RestartCommandEnum(IntEnum):
 class NormalCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     RunOpNav = 1  # no args
-    SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
+    # SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
     SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
     # Really not sure what 3 and 4 are supposed to do:
     # SetAccelerate = 3  # arg=true/false
@@ -178,12 +251,30 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
-    WhenReorient = 13  # when we want to schedule a reorientation maneuver
-                       # 2 args, unix time stamp and spin axis vector (2 floats)
-    ScheduleReorientation = 14
+    #    WhenReorient = 13  # when we want to schedule a reorientation maneuver
+    # 2 args, unix time stamp and spin axis vector (2 floats)
+    #    ScheduleReorientation = 14
     ScheduleManeuver = 15
     ACSPulsing = 16
+    NemoWriteRegister = 17
+    NemoReadRegister = 18
+    NemoSetConfig = 19
+    NemoPowerOff = 20
+    NemoPowerOn = 21
+    NemoReboot = 22
+    NemoProcessRateData = 23
+    NemoProcessHistograms = 24
+    GomConf1Set = 30
+    GomConf1Get = 31
+    GomConf2Set = 32
+    GomConf2Get = 33
 
+    ShellCommand = 50
+    SudoCommand = 51
+    Picberry = 52
+    ExecPyFile = 53
+
+    # CommandStatus = 99
 
 
 @unique
@@ -201,7 +292,7 @@ class LowBatterySafetyCommandEnum(IntEnum):
 class SafetyCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     ExitSafetyMode = 1
-    SetExitSafetyMode = 2
+    # SetExitSafetyMode = 2
     SetParameter = 5
     CritTelem = 6
     BasicTelem = 7
@@ -211,51 +302,48 @@ class SafetyCommandEnum(IntEnum):
 @unique
 class OpNavCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    SetInterval = 2  # arg=interval in minutes packed as an int
+    # RunOpNav = 1  # no args
+    # SetInterval = 2  # arg=interval in minutes packed as an int
 
 
 @unique
 class ManeuverCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    SetDesiredAttitude = 2  # arg=attitude
-    SetAccelerate = 3  # arg=true/false
-    SetBreakpoint = 4  # arg=?
-    SetBurnTime = 9  # 1 arg: time at which thruster fires
 
 
 @unique
 class SensorsCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    Thermocouple = 1
-    PressureTransducer = 2
-    Gomspace = 3
-    CameraMux = 4
-    Gyro = 5
-    RTC = 6
-    AX5043 = 7
+    # Thermocouple = 1
+    # PressureTransducer = 2
+    # Gomspace = 3
+    # CameraMux = 4
+    # Gyro = 5
+    # RTC = 6
+    # AX5043 = 7
 
 
 @unique
 class TestCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    SetTestMode = 1  # no args
+    # SetTestMode = 1  # no args
     TriggerBurnWire = 2  # no args
     RunOpNav = 3  # no args
     ADCTest = 4
     SeparationTest = 5
     GomPin = 6
     CommsDriver = 7
-    PiShutdown = 11
     RTCTest = 8
+    LongString = 9
+    PiShutdown = 11
+
 
 
 @unique
 class CommsCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    DownlinkFullDataPacket = 4  # no args
-    SetDataPacket = 5  # arg=data packet id
+    # DownlinkFullDataPacket = 4  # no args
+    # SetDataPacket = 5  # arg=data packet id
 
 
 @unique
@@ -269,4 +357,8 @@ class CommandCommandEnum(IntEnum):
     GomPin = 6  # 1 arg: which gom pin to toggle
     GomGeneralCmd = 7
     GeneralCmd = 8
+    AddFileBlock = 9
+    GetFileBlocksInfo = 10
+    ActivateFile = 11
+    ShellCommand = 50
     CeaseComms = 170

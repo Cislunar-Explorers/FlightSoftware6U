@@ -357,8 +357,9 @@ class CommandCommandEnum(IntEnum):
     GomPin = 6  # 1 arg: which gom pin to toggle
     GomGeneralCmd = 7
     GeneralCmd = 8
-    AddFileBlock = 9
-    GetFileBlocksInfo = 10
-    ActivateFile = 11
+    SetUpdatePath = 9
+    AddFileBlock = 10
+    GetFileBlocksInfo = 11
+    ActivateFile = 12
     ShellCommand = 50
     CeaseComms = 170

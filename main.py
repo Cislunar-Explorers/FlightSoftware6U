@@ -41,7 +41,6 @@ FOR_FLIGHT = None
 
 logger = get_log()
 
-
 class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
@@ -306,6 +305,7 @@ class MainSatelliteThread(Thread):
         try:
             while True:
                 #sleep(5)  # TODO remove when flight modes execute real tasks
+                
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()
@@ -326,7 +326,6 @@ class MainSatelliteThread(Thread):
             self.nemo_manager.close()
         logger.critical("Shutting down flight software")
         # self.comms.stop()
-
 
 if __name__ == "__main__":
     FOR_FLIGHT = False

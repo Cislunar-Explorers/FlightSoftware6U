@@ -107,6 +107,7 @@ class CommandDefinitions:
             NormalCommandEnum.Picberry.value: self.picberry,
             NormalCommandEnum.ExecPyFile.value: self.exec_py_file,
             NormalCommandEnum.IgnoreLowBatt.value: self.ignore_low_battery,
+            NormalCommandEnum.MissionMode.value: self.set_mission_mode,
         }
 
         self.low_battery_commands = {
@@ -666,14 +667,6 @@ class CommandDefinitions:
             #    **current_config2_dict)
             # self.parent.downlink_queue.put(acknowledgement)
 
-    def get_gom_conf1(self, **kwargs):
-        raise NotImplementedError
-
-    def set_gom_conf2(self, **kwargs):
-        raise NotImplementedError
-
-    def get_gom_conf2(self, **kwargs):
-        raise NotImplementedError
 
     def shell_command(self, **kwargs):
         cmd: str = kwargs.get(CMD)
@@ -702,6 +695,13 @@ class CommandDefinitions:
         filename += '.py'
         self.parent.logger.debug(f"CWD: {os.getcwd()}")
         exec(open(filename).read())
+
+    def set_mission_mode(self, **kwargs):
+        mission_mode = kwargs[MISSION_MODE]
+        self.set_parameter(name='CURRENT_MISSION_MODE', value=mission_mode, hard_set=True)
+        self.parent.flight_mode.update_mission_mode(mission_mode)
+
+        return {MISSION_MODE: params.CURRENT_MISSION_MODE}
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:

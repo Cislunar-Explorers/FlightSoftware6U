@@ -172,22 +172,34 @@ class FlightMode:
     def write_telemetry(self):
         pass
 
-    @staticmethod
-    def update_mission_mode(cls, mission_mode_id):
+    def update_mission_mode(self, mission_mode_id: int):
         """Sets the behavior of flight modes. Acts like a meta-flight mode."""
-        if mission_mode_id == MissionModeEnum.Boot.value:
-            # set parameters for boot
-            params.CURRENT_MISSION_MODE = 0
-            params.WANT_TO_ELECTROLYZE = False
-            params.WANT_TO_OPNAV = False
-            params.TELEM_DOWNLINK_TIME = 10
+        if mission_mode_id != params.CURRENT_MISSION_MODE:
+            self.parent.command_definitions.set_parameter(name='CURRENT_MISSION_MODE', value=mission_mode_id,
+                                                          hard_set=True)
+            if mission_mode_id == MissionModeEnum.Boot.value:
+                # set parameters for boot
+                # TODO bulk parameters hard set?
+                self.parent.command_definitions.set_parameter(name='WANT_TO_ELECTROLYZE', value=False,
+                                                              hard_set=True)
+                self.parent.command_definitions.set_parameter(name='WANT_TO_OPNAV', value=False,
+                                                              hard_set=True)
+                self.parent.command_definitions.set_parameter(name='TELEM_DOWNLINK_TIME', value=10,
+                                                              hard_set=True)
+                # self.parent.command_definitions.set_parameter(name='CURRENT_MISSION_MODE', value=mission_mode_id,
+                #                                              hard_set=True)
 
-        if mission_mode_id == MissionModeEnum.Normal.value:
-            # set parameters for normal mission mode
-            params.CURRENT_MISSION_MODE = 1
-            params.WANT_TO_ELECTROLYZE = True
-            params.WANT_TO_OPNAV = True
-            params.TELEM_DOWNLINK_TIME = 60
+            if mission_mode_id == MissionModeEnum.Normal.value:
+                # set parameters for normal mission mode
+                # TODO bulk parameters hard set?
+                self.parent.command_definitions.set_parameter(name='WANT_TO_ELECTROLYZE', value=True,
+                                                              hard_set=True)
+                self.parent.command_definitions.set_parameter(name='WANT_TO_OPNAV', value=True,
+                                                              hard_set=True)
+                self.parent.command_definitions.set_parameter(name='TELEM_DOWNLINK_TIME', value=60,
+                                                              hard_set=True)
+                # self.parent.command_definitions.set_parameter(name='CURRENT_MISSION_MODE', value=mission_mode_id,
+                # hard_set=True)
 
     def __enter__(self):
         logger.debug(f"Starting flight mode {self.flight_mode_id}")
@@ -517,7 +529,8 @@ class NormalMode(FlightMode):
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
         NormalCommandEnum.GomConf2Get.value: NONE,
         NormalCommandEnum.ExecPyFile.value: ([FNAME], 36),
-        NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1)
+        NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1),
+        NormalCommandEnum.MissionMode.value: ([MISSION_MODE], 1)
     }
 
     command_arg_types = {
@@ -586,7 +599,7 @@ class NormalMode(FlightMode):
         SAFE_VOLTAGE: 'short',
         CRIT_VOLTAGE: 'short',
         FNAME: 'string',
-        CMD: 'string', IGNORE: 'bool',
+        CMD: 'string', IGNORE: 'bool', MISSION_MODE: 'uint8'
     }
 
     downlink_codecs = {

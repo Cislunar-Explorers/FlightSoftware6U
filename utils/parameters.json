@@ -29,5 +29,7 @@
   "GYRO_BIAS_DYDT": 0,
   "GYRO_BIAS_DZDT": 0,
   "FOR_FLIGHT": false,
-  "WANT_TO_OPNAV": false
+  "WANT_TO_OPNAV": false,
+  "SPACECRAFT_NAME": "",
+  "CURRENT_MISSION_MODE": 0
 }

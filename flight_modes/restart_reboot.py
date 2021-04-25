@@ -5,8 +5,10 @@ from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEn
 from flight_modes.flight_mode import FlightMode
 import os
 from utils.log import get_log
-from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
+from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum, MissionModeEnum
 import psutil
+import utils.parameters as params
+import glob
 
 logger = get_log()
 
@@ -32,11 +34,12 @@ class BootUpMode(FlightMode):
         self.session = create_session()
 
         self.log()
+        self.set_parameters()
 
-        # deploy antennae
-        # FIXME: differentiate between Hydrogen and Oxygen. Each satellite now has different required Bootup behaviors
-        logger.info("Antennae deploy...")
-        self.parent.gom.burnwire1(5)
+        if params.SPACECRAFT_NAME == 'HYDROGEN':
+            # deploy antennae
+            logger.info("Deploying antennae")
+            self.parent.gom.burnwire1(5)
 
         if self.parent.need_to_reboot:
             # TODO: double check the boot db history to make sure we aren't going into a boot loop
@@ -54,6 +57,10 @@ class BootUpMode(FlightMode):
 
     def update_state(self) -> int:
         return NO_FM_CHANGE
+
+    def set_parameters(self):
+        self.parent.command_definitions.set_parameter(name="SPACECRAFT_NAME", value=determine_name(), hard_set=True)
+        self.update_mission_mode(MissionModeEnum.Boot.value)
 
 
 class RestartMode(FlightMode):
@@ -91,3 +98,27 @@ class RestartMode(FlightMode):
 
     def update_state(self) -> int:
         return super().update_state()
+
+
+def get_hostname():
+    # thank you https://stackoverflow.com/questions/4271740/how-can-i-use-python-to-get-the-system-hostname
+    # Does not work on windows
+    return os.uname()[1]
+
+
+def determine_name():
+    """Checks if Hydrogen or oxygen"""
+    filenames = glob.glob('../utils/*_parameters.py')
+    if 'hydrogen' in ','.join(filenames):
+        space_name = 'HYDROGEN'
+    else:
+        space_name = 'OXYGEN'
+
+    # if in flight, double check the hostname
+    # Want to assume oxygen in worst case scenario (don't want to split prematurely!)
+    if params.FOR_FLIGHT:
+        hostname = get_hostname()
+        if 'oxygen' in hostname and space_name == 'HYDROGEN':
+            space_name = 'OXYGEN'
+
+    return space_name

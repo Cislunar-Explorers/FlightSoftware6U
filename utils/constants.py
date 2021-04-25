@@ -204,7 +204,7 @@ RETURN_CODE = 'return_code'
 FNAME = 'filename'
 IGNORE = 'ignore'
 PASSWORD = 'password'
-
+MISSION_MODE = 'mission_mode'
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -283,6 +283,7 @@ class NormalCommandEnum(IntEnum):
     SudoCommand = 51
     Picberry = 52
     ExecPyFile = 53
+    MissionMode = 54
 
     IgnoreLowBatt = 60
 

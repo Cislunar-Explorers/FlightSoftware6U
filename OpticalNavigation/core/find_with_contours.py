@@ -282,7 +282,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     # u is in body frame here
     # Assumes only spinning about y-axis
     u = np.array([0, 1, 0], dtype=np.float32)
-    camNum = int(re.search("[cam](\d+)", src).group(1))
+    camNum = int(re.search(r'[cam](\d+)', src).group(1))
     if camNum == 1:
         u = np.linalg.inv(camera_params.cam1Rotation).dot(u)
     elif camNum == 2:

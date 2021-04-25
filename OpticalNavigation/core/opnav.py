@@ -110,10 +110,10 @@ def __calculate_cam_measurements(body1:np.ndarray, body2:np.ndarray) -> np.float
 
 def __get_elapsed_time(bestTuple, timeDeltaAvgs, observeStart):
     """
-    Calculates the elapsed time (in seconds) between the beginning of the opnav observe call and the timestamp of a selected frame
+    Calculates the elapsed time (in seconds, floating pt) between the beginning of the opnav observe call and the timestamp of a selected frame
     """
-    timestamp = int(re.search("[t](\d+)", bestTuple[0]).group(1))*1000 # factor of 1000 is ONLY for case1c
-    camNum = int(re.search("[cam](\d+)", bestTuple[0]).group(1))
+    timestamp = int(re.search(r'[t](\d+)', bestTuple[0]).group(1))*1000 # factor of 1000 is ONLY for case1c
+    camNum = int(re.search(r'[cam](\d+)', bestTuple[0]).group(1))
     timestampUnix = timestamp + timeDeltaAvgs[camNum-1]
     timeElapsed = (timestampUnix - observeStart) * 10**-6
     return timeElapsed
@@ -175,7 +175,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     #observeStart = time.time() * 10**6 #In usec
     observeStart = datetime(2020, 7, 28, 22, 8, 3) #TEMPORARY TESTING START TIME
-    observeStart = int(observeStart.replace(tzinfo=timezone.utc).timestamp() * 10**6)
+    observeStart = int(observeStart.replace(tzinfo=timezone.utc).timestamp() * 10**6) # In unix time
     recordings = []
     timeDeltaAvgs = [0, 0, 0]
 
@@ -185,10 +185,11 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         select_camera(id = i)
         '''
         # Get Unix time before recording(in seconds floating point -> microseconds)
-        linuxTime1 = time.time() * 10 ** 6
         # Get camera time (in microseconds)
+        linuxTime1:int
         cameraTime1:int
         with PiCamera() as camera:
+            linuxTime1 = int(time.time() * 10 ** 6)
             cameraTime1 = camera.timestamp
         # Get difference between two clocks
         timeDelta1 = linuxTime1 - cameraTime1
@@ -199,10 +200,11 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         fileDiffTime2 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
         '''
         # Get Unix time after recording(in seconds floating point -> microseconds)
-        linuxTime2 = time.time() * 10 ** 6
         # Get camera time (in microseconds)
+        linuxTime2:int
         cameraTime2:int
         with PiCamera() as camera:
+            linuxTime2 = time.time() * 10 ** 6
             cameraTime2 = camera.timestamp
         # Get difference between two clocks
         timeDelta2 = linuxTime2 - cameraTime2
@@ -291,7 +293,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     logger.info("[OPNAV]: Performing camera to body rotations...")
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
         coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
-        camNum = int(re.search("[cam](\d+)", data[0]).group(1))
+        camNum = int(re.search(r'[cam](\d+)', data[0]).group(1))
         if camNum == 1:
             coordArray = (camera_params.cam1Rotation).dot(coordArray)
         elif camNum == 2:
@@ -324,6 +326,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     if not np.isnan(bestEarthTuple[1]):
         earthTimeElapsed = __get_elapsed_time(bestEarthTuple, timeDeltaAvgs, observeStart)
+        logger.info(f"[OPNAV]: earthTimeElapsed= {earthTimeElapsed}")
         earthRotation = avgGyroY * earthTimeElapsed
         tZeroEarthRotation = np.array([math.cos(earthRotation), 0, math.sin(earthRotation), 0, 1, 0, -1 * math.sin(earthRotation), 0, math.cos(earthRotation)]).reshape(3, 3)
         coordArray = np.array([bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2]]).reshape(3, 1)
@@ -334,6 +337,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     if not np.isnan(bestMoonTuple[1]):
         moonTimeElapsed = __get_elapsed_time(bestMoonTuple, timeDeltaAvgs, observeStart)
+        logger.info(f"[OPNAV]: moonTimeElapsed= {moonTimeElapsed}")
         moonRotation = avgGyroY * moonTimeElapsed
         tZeroMoonRotation = np.array([math.cos(moonRotation), 0, math.sin(moonRotation), 0, 1, 0, -1 * math.sin(moonRotation), 0, math.cos(moonRotation)]).reshape(3, 3)
         coordArray = np.array([bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2]]).reshape(3, 1)
@@ -344,6 +348,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     if not np.isnan(bestSunTuple[1]):
         sunTimeElapsed = __get_elapsed_time(bestSunTuple, timeDeltaAvgs, observeStart)
+        logger.info(f"[OPNAV]: sunTimeElapsed= {sunTimeElapsed}")
         sunRotation = avgGyroY * sunTimeElapsed
         tZeroSunRotation = np.array([math.cos(sunRotation), 0, math.sin(sunRotation), 0, 1, 0, -1 * math.sin(sunRotation), 0, math.cos(sunRotation)]).reshape(3, 3)
         coordArray = np.array([bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2]]).reshape(3, 1)

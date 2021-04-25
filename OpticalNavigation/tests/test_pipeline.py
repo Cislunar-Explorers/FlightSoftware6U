@@ -150,7 +150,7 @@ def test_start(mocker):
         print("get_elapsed_time_mock")
         observeStart = datetime.utcfromtimestamp(observeStart * 10**-6)
         lastReboot = datetime(2020, 7, 28, 22, 8, 3)
-        timestamp = int(re.search("[t](\d+)", bestTuple[0]).group(1)) * 1000 # factor if 1000 ONLY for case1c
+        timestamp = int(re.search(r'[t](\d+)', bestTuple[0]).group(1)) * 1000 # factor if 1000 ONLY for case1c
         dateTime = lastReboot + timedelta(microseconds=timestamp)
         timeElapsed = (dateTime - observeStart).total_seconds()
         return timeElapsed

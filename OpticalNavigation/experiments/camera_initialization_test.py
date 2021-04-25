@@ -1,6 +1,6 @@
 import argparse
 import OpticalNavigation.core.camera as camera
-# Run restart and then manually restart with sudo reboot
+# Run with restart option and then manually restart with sudo reboot
 # To record, specify the name of file you wish to create
 
 
@@ -19,4 +19,5 @@ if __name__ == "__main__":
         print("selected mux")
         cam = camera.Camera()
         f, t = cam.rawObservation(args["mode"])
+        print("Recorded video")
         print(f, t)

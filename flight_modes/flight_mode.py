@@ -24,7 +24,7 @@ from utils.exceptions import UnknownFlightModeException
 no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
-    #FMEnum.Command.value
+    # FMEnum.Command.value
 ]
 # this line of code brought to you by https://stackoverflow.com/questions/29503339/
 all_modes = list(map(int, FMEnum))
@@ -54,7 +54,7 @@ class FlightMode:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
          serves as a basis for which most other flight modes can build off of."""
-        
+
         # I am not sure this will properly work, but shuld have little impact for software demo
         if self.parent.opnav_process.is_alive():
             try:
@@ -143,14 +143,14 @@ class FlightMode:
                     # locate which method to run:
                     method_to_run = self.parent.command_definitions.COMMAND_DICT[command_fm][command_id]
                     downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
-                    
-                    #Pack downlink given what the command returned
+
+                    # Pack downlink given what the command returned
                     if downlink_args != None:
                         downlink = self.parent.downlink_handler.pack_downlink(
                             self.parent.downlink_counter, command_fm, command_id,
                             **downlink_args)
                         self.parent.downlink_queue.put(downlink)
-                   
+
                 finished_commands.append(command)
 
                 # Prioritize downlinking: execute all necessary downlinks before
@@ -662,9 +662,9 @@ class CommandMode(PauseBackgroundMode):
 
     command_codecs = {
         CommandCommandEnum.SetUpdatePath.value: ([FILE_PATH], 195 - MIN_COMMAND_SIZE),
-        CommandCommandEnum.AddFileBlock.value:([BLOCK_NUMBER,BLOCK_TEXT],195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.AddFileBlock.value: ([BLOCK_NUMBER, BLOCK_TEXT], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([TOTAL_BLOCKS], 2),
-        CommandCommandEnum.ActivateFile.value:([TOTAL_BLOCKS],2)
+        CommandCommandEnum.ActivateFile.value: ([TOTAL_BLOCKS], 2),
         CommandCommandEnum.ShellCommand.value: ([CMD], 24)
     }
 
@@ -676,8 +676,8 @@ class CommandMode(PauseBackgroundMode):
     }
 
     downlink_codecs = {
-        CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL,BLOCK_NUMBER],3),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195 - MIN_COMMAND_SIZE)
+        CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL, BLOCK_NUMBER], 3),
+        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.ShellCommand.value: ([RETURN_CODE], 1)
     }
 
@@ -703,4 +703,4 @@ class CommandMode(PauseBackgroundMode):
     def poll_inputs(self):
         # TODO
         pass
-        #raise NotImplementedError  # only check the comms queue
+        # raise NotImplementedError  # only check the comms queue

@@ -3,7 +3,7 @@ from math import *
 import cv2
 import os
 import numpy as np
-from OpticalNavigation.core.const import CisLunarCameraParameters, CisLunarCamRecParams
+from OpticalNavigation.core.const import CisLunarCameraParameters
 import time
 
 def rolling_shutter(img):
@@ -49,7 +49,7 @@ def extract_frames(vid_dir, endTimestamp):
 '''
 
 
-def extract_frames(video, frameDiff, endTimestamp):
+def extract_frames(video, frameDiff, endTimestamp, cameraRecParams):
     base = os.path.splitext(video)[0]
     print(base)
     file = open(video, "rb")
@@ -63,12 +63,17 @@ def extract_frames(video, frameDiff, endTimestamp):
         numFrames += 1
 
     frame = 0
-    # Make sure that each frame we check starts with magic number of JPEG
-    while frame < numFrames:
+    video_frames = []
+    # Make sure that we only use the number of frames we expect
+    # Extra frames that go over this number are taen while camera is ending recording
+    while frame < cameraRecParams.fps * cameraRecParams.recTime:
         timestamp = endTimestamp - (frameDiff * (numFrames - frame - 1))
-        with open(base + f'_f{frame}_t{timestamp}.jpg', 'wb') as x:
+        frame_name = base + f'_f{frame}_t{timestamp}.jpg'
+        with open(frame_name, 'wb') as x:
             x.write(splitFrames[frame] + b'\xff\xd9')
         frame += 1
+        video_frames.append(frame_name)
+    return video_frames
 
 
 def rect_to_stereo_proj(img, fov=62.2, fov2=48.8):

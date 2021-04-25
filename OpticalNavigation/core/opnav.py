@@ -6,24 +6,26 @@ import OpticalNavigation.core.attitude as attitude
 from OpticalNavigation.core.sense import select_camera, record_video, record_gyro
 from OpticalNavigation.core.preprocess import extract_frames
 from OpticalNavigation.core.find_with_contours import *
-from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
+from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
 import numpy as np
 import traceback
 import pandas as pd
 from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
 from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
-from utils.constants import DB_FILE
+from utils.constants import DB_FILE, OPNAV_MEDIA_PATH
 from utils.log import *
 import utils.parameters as params
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import math
 from sqlalchemy import desc
 from sqlalchemy.orm import session
 import re
 import glob
 import time
+import shutil
+import os
 
-from picamera import PiCamera
+#from picamera import PiCamera
 
 logger = get_log()
 
@@ -105,6 +107,16 @@ def __calculate_cam_measurements(body1:np.ndarray, body2:np.ndarray) -> np.float
     """
     d_em = math.sqrt((body1[0]-body2[0])**2+(body1[1]-body2[1])**2+(body1[2]-body2[2])**2)
     return 2 * math.asin(d_em/2)
+
+def __get_elapsed_time(bestTuple, timeDeltaAvgs, observeStart):
+    """
+    Calculates the elapsed time (in seconds) between the beginning of the opnav observe call and the timestamp of a selected frame
+    """
+    timestamp = int(re.search("[t](\d+)", bestTuple[0]).group(1))*1000 # factor of 1000 is ONLY for case1c
+    camNum = int(re.search("[cam](\d+)", bestTuple[0]).group(1))
+    timestampUnix = timestamp + timeDeltaAvgs[camNum-1]
+    timeElapsed = (timestampUnix - observeStart) * 10**-6
+    return timeElapsed
 ################################
 
 def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars(), camera_params:CameraParameters=CisLunarCameraParameters) -> OPNAV_EXIT_STATUS:
@@ -124,6 +136,15 @@ def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()
     assert len(session.query(OpNavTrajectoryStateModel).all()) >= 1 and len(session.query(OpNavAttitudeStateModel).all()) >= 1
 
     camera_rec_params = CameraRecordingParameters(params.CAMERA_FPS, params.CAMERA_RECORDING_TIME, params.CAMERA_LOW_EXPOSURE, params.CAMERA_HIGH_EXPOSURE)
+
+    #Check if there are files in opnav_media folder and delete
+    '''
+    if len(os.listdir(OPNAV_MEDIA_PATH)) != 0:
+        logger.info("[OPNAV]: Deleting files from opnav_media folder")
+        rm_cmd = 'rm -f' + OPNAV_MEDIA_PATH + '*'
+        os.system(rm_cmd)
+    '''
+
 
     propulsion_exit_status = __process_propulsion_events(session)
     if propulsion_exit_status is not OPNAV_EXIT_STATUS.SUCCESS:
@@ -152,46 +173,53 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     # 2. record camera measurements
     # 3. record gyro measurements
 
-    #observeStart = datetime(2020, 7, 28, 22, 8, 3)
-    observeStart = time.time() * 10 ** 6 #In usec
-    #observeStart = datetime(2020, 7, 28, 22, 8, 3) #TEMPORARY TESTING START TIME
+    #observeStart = time.time() * 10**6 #In usec
+    observeStart = datetime(2020, 7, 28, 22, 8, 3) #TEMPORARY TESTING START TIME
+    observeStart = int(observeStart.replace(tzinfo=timezone.utc).timestamp() * 10**6)
     recordings = []
-    timeDeltaAvg = 0
+    timeDeltaAvgs = [0, 0, 0]
 
-    # Get Unix time before recording(in seconds floating point -> microseconds)
-    linuxTime1 = time.time() * 10 ** 6
-    # Get camera time (in microseconds)
-    cameraTime1 = PiCamera.timestamp
-    # Get difference between two clocks
-    timeDelta1 = linuxTime1 - cameraTime1
+
 
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
+        '''
+        # Get Unix time before recording(in seconds floating point -> microseconds)
+        linuxTime1 = time.time() * 10 ** 6
+        # Get camera time (in microseconds)
+        cameraTime1:int
+        with PiCamera() as camera:
+            cameraTime1 = camera.timestamp
+        # Get difference between two clocks
+        timeDelta1 = linuxTime1 - cameraTime1
+        '''
         logger.info(f"[OPNAV]: Recording from camera {i}")
         # TODO: figure out exposure parameters
-        fileDiffTime1 = record_video(f"cam{i}_expLow.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expLow)
-        fileDiffTime2 = record_video(f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
+        fileDiffTime1 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expLow.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expLow)
+        fileDiffTime2 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
+        '''
+        # Get Unix time after recording(in seconds floating point -> microseconds)
+        linuxTime2 = time.time() * 10 ** 6
+        # Get camera time (in microseconds)
+        cameraTime2:int
+        with PiCamera() as camera:
+            cameraTime2 = camera.timestamp
+        # Get difference between two clocks
+        timeDelta2 = linuxTime2 - cameraTime2
 
+        timeDeltaAvg = (timeDelta1 + timeDelta2) / 2
+        timeDeltaAvgs[i-1] = timeDeltaAvg
+        '''
         recordings.append(fileDiffTime1)
         recordings.append(fileDiffTime2)
 
-    # Get Unix time after recording(in seconds floating point -> microseconds)
-    linuxTime2 = time.time() * 10 ** 6
-    # Get camera time (in microseconds)
-    cameraTime2 = PiCamera.timestamp
-    # Get difference between two clocks
-    timeDelta2 = linuxTime2 - cameraTime2
-
-    timeDeltaAvg = (timeDelta1 + timeDelta2) / 2
-
     #logger.info("[OPNAV]: Extracting frames...")
-    # TODO: What is format of vid_dir / where is file stored? recordings[i][0]?
-    frames0 = extract_frames(vid_dir=recordings[0][0], frameDiff = recordings[0][1], endTimestamp = recordings[0][2])
-    frames1 = extract_frames(vid_dir=recordings[1][0], frameDiff = recordings[1][1], endTimestamp = recordings[1][2])
-    frames2 = extract_frames(vid_dir=recordings[2][0], frameDiff = recordings[2][1], endTimestamp = recordings[2][2])
-    frames3 = extract_frames(vid_dir=recordings[3][0], frameDiff = recordings[3][1], endTimestamp = recordings[3][2])
-    frames4 = extract_frames(vid_dir=recordings[4][0], frameDiff = recordings[4][1], endTimestamp = recordings[4][2])
-    frames5 = extract_frames(vid_dir=recordings[5][0], frameDiff = recordings[5][1], endTimestamp = recordings[5][2])
+    frames0 = extract_frames(vid_dir=recordings[0][0], frameDiff = recordings[0][1], endTimestamp = recordings[0][2], cameraRecParams=camera_rec_params)
+    frames1 = extract_frames(vid_dir=recordings[1][0], frameDiff = recordings[1][1], endTimestamp = recordings[1][2], cameraRecParams=camera_rec_params)
+    frames2 = extract_frames(vid_dir=recordings[2][0], frameDiff = recordings[2][1], endTimestamp = recordings[2][2], cameraRecParams=camera_rec_params)
+    frames3 = extract_frames(vid_dir=recordings[3][0], frameDiff = recordings[3][1], endTimestamp = recordings[3][2], cameraRecParams=camera_rec_params)
+    frames4 = extract_frames(vid_dir=recordings[4][0], frameDiff = recordings[4][1], endTimestamp = recordings[4][2], cameraRecParams=camera_rec_params)
+    frames5 = extract_frames(vid_dir=recordings[5][0], frameDiff = recordings[5][1], endTimestamp = recordings[5][2], cameraRecParams=camera_rec_params)
     frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
@@ -202,9 +230,9 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     #logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
-    earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
-    moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
-    sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
+    earthDetectionArray = np.zeros((len(frames), 4), dtype = float)
+    moonDetectionArray = np.zeros((len(frames), 4), dtype = float)
+    sunDetectionArray = np.zeros((len(frames), 4), dtype = float)
     logger.info("[OPNAV]: Finding...")
     progress = 1
     for f in range(len(frames)):
@@ -290,18 +318,12 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     logger.info("[OPNAV]: Body to T0 rotation...")
     avgGyroY = np.mean(gyro_meas, axis = 0)[1]
     # Rotation is product of angular speed and time between frame and start of observation
-    #lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first()
-    #lastReboot = lastRebootRow.reboot_at
-    #lastReboot = datetime(2020, 7, 28, 22, 8, 3)
+    lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first()
+    lastReboot = lastRebootRow.reboot_at
+    lastReboot = datetime(2020, 7, 28, 22, 8, 3)
 
     if not np.isnan(bestEarthTuple[1]):
-        #earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))*1000
-        #dateTimeEarth = lastReboot + timedelta(microseconds=earthTimestamp)
-        #earthTimeElapsed = (dateTimeEarth - observeStart).total_seconds()
-
-        earthTimestamp = int(re.search("[t](\d+)", bestEarthTuple[0]).group(1))
-        earthTimestampUnix = earthTimestamp + timeDeltaAvg
-        earthTimeElapsed = (earthTimestampUnix - observeStart) * 10**-6
+        earthTimeElapsed = __get_elapsed_time(bestEarthTuple, timeDeltaAvgs, observeStart)
         earthRotation = avgGyroY * earthTimeElapsed
         tZeroEarthRotation = np.array([math.cos(earthRotation), 0, math.sin(earthRotation), 0, 1, 0, -1 * math.sin(earthRotation), 0, math.cos(earthRotation)]).reshape(3, 3)
         coordArray = np.array([bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2]]).reshape(3, 1)
@@ -311,13 +333,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         bestEarthTuple[2][0] = coordArray[0]
 
     if not np.isnan(bestMoonTuple[1]):
-        #moonTimestamp = int(re.search("[t](\d+)", bestMoonTuple[0]).group(1))*1000
-        #dateTimeMoon = lastReboot + timedelta(microseconds=moonTimestamp)
-        #moonTimeElapsed = (dateTimeMoon - observeStart).total_seconds()
-
-        moonTimestamp = int(re.search("[t](\d+)", bestMoonTuple[0]).group(1))
-        moonTimestampUnix = moonTimestamp + timeDeltaAvg
-        moonTimeElapsed = (moonTimestampUnix - observeStart) * 10**-6
+        moonTimeElapsed = __get_elapsed_time(bestMoonTuple, timeDeltaAvgs, observeStart)
         moonRotation = avgGyroY * moonTimeElapsed
         tZeroMoonRotation = np.array([math.cos(moonRotation), 0, math.sin(moonRotation), 0, 1, 0, -1 * math.sin(moonRotation), 0, math.cos(moonRotation)]).reshape(3, 3)
         coordArray = np.array([bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2]]).reshape(3, 1)
@@ -327,13 +343,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         bestMoonTuple[2][0] = coordArray[0]
 
     if not np.isnan(bestSunTuple[1]):
-        #sunTimestamp = int(re.search("[t](\d+)", bestSunTuple[0]).group(1))*1000
-        #dateTimeSun = lastReboot + timedelta(microseconds=sunTimestamp)
-        #sunTimeElapsed = (dateTimeSun - observeStart).total_seconds()
-
-        sunTimestamp = int(re.search("[t](\d+)", bestSunTuple[0]).group(1))
-        sunTimestampUnix = sunTimestamp + timeDeltaAvg
-        sunTimeElapsed = (sunTimestampUnix - observeStart) * 10**-6
+        sunTimeElapsed = __get_elapsed_time(bestSunTuple, timeDeltaAvgs, observeStart)
         sunRotation = avgGyroY * sunTimeElapsed
         tZeroSunRotation = np.array([math.cos(sunRotation), 0, math.sin(sunRotation), 0, 1, 0, -1 * math.sin(sunRotation), 0, math.cos(sunRotation)]).reshape(3, 3)
         coordArray = np.array([bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2]]).reshape(3, 1)

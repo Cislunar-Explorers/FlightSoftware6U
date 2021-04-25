@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import math
 import os
+import re
 from tqdm import tqdm
 from datetime import datetime, timedelta
 from time import sleep
@@ -18,6 +19,7 @@ from OpticalNavigation.tests.const import CesiumTestCameraParameters
 from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
 from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
 from utils.constants import DB_FILE
+import utils.parameters as params
 
 # from core.ukf import runTrajUKF
 # from tests.const import POS_ERROR, VEL_ERROR
@@ -112,7 +114,7 @@ def test_start(mocker):
         time = timestamps[idx[0]]
         filename = videos[idx[0]]
         #idx[0] += 1
-        return (filename, time)
+        return (filename, 0, time)
 
     #Don't use record_video mock for software demo
     mocker.patch('OpticalNavigation.core.opnav.record_video', side_effect=record_video_mock)
@@ -131,7 +133,8 @@ def test_start(mocker):
     #timestamps = [0, 0, 2094400, 2094400, 4188800, 4188800]
     timestamps = [0, 6283200, 2094400, 2094400 + 6283200, 4188800, 4188800 + 6283200]
     interval = [65450]
-    def extract_frames_mock(vid_dir, endTimestamp):
+    camera_rec_params = opnav_constants.CameraRecordingParameters(params.CAMERA_FPS, params.CAMERA_RECORDING_TIME, params.CAMERA_LOW_EXPOSURE, params.CAMERA_HIGH_EXPOSURE)
+    def extract_frames_mock(vid_dir, frameDiff, endTimestamp, cameraRecParams):
         frames = []
         for i in range(0,20):
             frames.append(path + names[idx[0]] + str(i) + "_t" + str(int(round((timestamps[idx[0]] + interval[0]*i)/1000-0.01))) + ".jpg")
@@ -141,6 +144,18 @@ def test_start(mocker):
         idx[0] += 1
         return frames
     mocker.patch('OpticalNavigation.core.opnav.extract_frames', side_effect=extract_frames_mock)
+
+
+    def __get_elapsed_time_mock(bestTuple, timeDeltaAvgs, observeStart):
+        print("get_elapsed_time_mock")
+        observeStart = datetime.utcfromtimestamp(observeStart * 10**-6)
+        lastReboot = datetime(2020, 7, 28, 22, 8, 3)
+        timestamp = int(re.search("[t](\d+)", bestTuple[0]).group(1)) * 1000 # factor if 1000 ONLY for case1c
+        dateTime = lastReboot + timedelta(microseconds=timestamp)
+        timeElapsed = (dateTime - observeStart).total_seconds()
+        return timeElapsed
+
+    mocker.patch('OpticalNavigation.core.opnav.__get_elapsed_time', side_effect=__get_elapsed_time_mock)
 
     # start opnav system
     opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)

@@ -38,8 +38,9 @@ class BootUpMode(FlightMode):
 
         if params.SPACECRAFT_NAME == 'HYDROGEN':
             # deploy antennae
-            logger.info("Deploying antennae")
-            self.parent.gom.burnwire1(5)
+            logger.info("Deploying antennae on Hydrogen")
+            self.parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION)
+            self.parent.command_definitions.set_parameter(name="BURNWIRES_FIRED", value=True, hard_set=True)
 
         if self.parent.need_to_reboot:
             # TODO: double check the boot db history to make sure we aren't going into a boot loop
@@ -60,6 +61,7 @@ class BootUpMode(FlightMode):
 
     def set_parameters(self):
         self.parent.command_definitions.set_parameter(name="SPACECRAFT_NAME", value=determine_name(), hard_set=True)
+        self.parent.logger.info(f"Spacecraft is {params.SPACECRAFT_NAME}")
         self.update_mission_mode(MissionModeEnum.Boot.value)
 
 

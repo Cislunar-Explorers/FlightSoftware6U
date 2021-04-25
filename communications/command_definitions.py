@@ -108,6 +108,8 @@ class CommandDefinitions:
             NormalCommandEnum.ExecPyFile.value: self.exec_py_file,
             NormalCommandEnum.IgnoreLowBatt.value: self.ignore_low_battery,
             NormalCommandEnum.MissionMode.value: self.set_mission_mode,
+            NormalCommandEnum.InitOpnav.value: self.init_opnav_parameters,
+            NormalCommandEnum.SetCommsOffTimes: self.set_comms_off_times
         }
 
         self.low_battery_commands = {
@@ -702,6 +704,25 @@ class CommandDefinitions:
         self.parent.flight_mode.update_mission_mode(mission_mode)
 
         return {MISSION_MODE: params.CURRENT_MISSION_MODE}
+
+    def init_opnav_parameters(self, **kwargs):
+        pos_x = kwargs[POSITION_X]
+        pos_y = kwargs[POSITION_Y]
+        pos_z = kwargs[POSITION_Z]
+        pos_t = kwargs[NASA_PROVIDED_TIME]
+
+        # TODO write above values to opnav db
+
+        self.set_parameter(name="WANT_TO_OPNAV", value=True, hard_set=True)
+
+    def set_comms_off_times(self, **kwargs):
+        comms_off_start = kwargs[COMMS_OFF_START]
+        comms_off_end = kwargs[COMMS_OFF_END]
+
+        self.set_parameter(name="COMMS_OFF_TIME_START", value=comms_off_start, hard_set=True)
+        self.set_parameter(name="COMMS_OFF_TIME_END", value=comms_off_end, hard_set=True)
+
+        return {COMMS_OFF_START: comms_off_start, COMMS_OFF_END: comms_off_end}
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:

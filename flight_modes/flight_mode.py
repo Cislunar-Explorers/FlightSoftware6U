@@ -118,7 +118,6 @@ class FlightMode:
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def execute_commands(self):
-        bogus = bool()
         if len(self.parent.commands_to_execute) == 0:
             pass  # If I have no commands to execute do nothing
         else:
@@ -167,7 +166,15 @@ class FlightMode:
 
     # Autonomous actions to maintain safety
     def automatic_actions(self):
-        pass
+        if not params.BURNWIRES_FIRED and self.parent.telemetry.rtc.rtc_time - params.INITIAL_TIME > (3600 * 3):
+            self.parent.logger.info("Actuating burnwires after 3 hours now.")
+            self.parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION)
+            self.parent.command_definitions.set_parameter(name="BURNWIRES_FIRED", value=True, hard_set=True)
+
+        if self.parent.telemetry.gom.hk.outputs[GomOutputs.comms.value] == 0 and \
+                not (params.COMMS_OFF_TIME_START < time() < params.COMMS_OFF_TIME_END):
+            self.parent.logger.info("Autonomously Turning on LNA to receive commands")
+            self.parent.gom.lna(True)
 
     def write_telemetry(self):
         pass
@@ -530,13 +537,13 @@ class NormalMode(FlightMode):
         NormalCommandEnum.GomConf2Get.value: NONE,
         NormalCommandEnum.ExecPyFile.value: ([FNAME], 36),
         NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1),
-        NormalCommandEnum.MissionMode.value: ([MISSION_MODE], 1)
+        NormalCommandEnum.MissionMode.value: ([MISSION_MODE], 1),
+        NormalCommandEnum.InitOpnav.value: ([POSITION_X, POSITION_Y, POSITION_Z, NASA_PROVIDED_TIME], 32),
+        NormalCommandEnum.SetCommsOffTimes.value: ([COMMS_OFF_START, COMMS_OFF_END], 8)
     }
 
     command_arg_types = {
-        AZIMUTH: 'float',
-        ELEVATION: 'float',
-        ACCELERATE: 'bool',
+        AZIMUTH: 'float', ELEVATION: 'float', ACCELERATE: 'bool',
         NAME: 'string',
         VALUE: 'double',
         STATE: 'bool',
@@ -576,30 +583,17 @@ class NormalMode(FlightMode):
         BATTHEATERMODE: "bool",
         BATTHEATERLOW: "uint8",
         BATTHEATERHIGH: "uint8",
-        OUTPUT_NORMAL1: "bool",
-        OUTPUT_NORMAL2: "bool",
-        OUTPUT_NORMAL3: "bool",
-        OUTPUT_NORMAL4: "bool",
-        OUTPUT_NORMAL5: "bool",
-        OUTPUT_NORMAL6: "bool",
-        OUTPUT_NORMAL7: "bool",
-        OUTPUT_NORMAL8: "bool",
-        OUTPUT_SAFE1: "bool",
-        OUTPUT_SAFE2: "bool",
-        OUTPUT_SAFE3: "bool",
-        OUTPUT_SAFE4: "bool",
-        OUTPUT_SAFE5: "bool",
-        OUTPUT_SAFE6: "bool",
-        OUTPUT_SAFE7: "bool",
-        OUTPUT_SAFE8: "bool",
+        OUTPUT_NORMAL1: "bool", OUTPUT_NORMAL2: "bool", OUTPUT_NORMAL3: "bool", OUTPUT_NORMAL4: "bool",
+        OUTPUT_NORMAL5: "bool", OUTPUT_NORMAL6: "bool", OUTPUT_NORMAL7: "bool", OUTPUT_NORMAL8: "bool",
+        OUTPUT_SAFE1: "bool", OUTPUT_SAFE2: "bool", OUTPUT_SAFE3: "bool", OUTPUT_SAFE4: "bool",
+        OUTPUT_SAFE5: "bool", OUTPUT_SAFE6: "bool", OUTPUT_SAFE7: "bool", OUTPUT_SAFE8: "bool",
         OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
         VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
-        MAX_VOLTAGE: 'short',
-        NORM_VOLTAGE: 'short',
-        SAFE_VOLTAGE: 'short',
-        CRIT_VOLTAGE: 'short',
+        MAX_VOLTAGE: 'short', NORM_VOLTAGE: 'short', SAFE_VOLTAGE: 'short', CRIT_VOLTAGE: 'short',
         FNAME: 'string',
-        CMD: 'string', IGNORE: 'bool', MISSION_MODE: 'uint8'
+        CMD: 'string', IGNORE: 'bool', MISSION_MODE: 'uint8',
+        POSITION_X: 'double', POSITION_Y: 'double', POSITION_Z: 'double', NASA_PROVIDED_TIME: 'double',
+        COMMS_OFF_START: 'int', COMMS_OFF_END: 'int'
     }
 
     downlink_codecs = {

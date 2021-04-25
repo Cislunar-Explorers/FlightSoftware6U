@@ -205,6 +205,11 @@ FNAME = 'filename'
 IGNORE = 'ignore'
 PASSWORD = 'password'
 MISSION_MODE = 'mission_mode'
+NASA_PROVIDED_TIME = 'nasa_start_time'
+
+COMMS_OFF_START = 'comms_off_start'
+COMMS_OFF_END = 'comms_off_end'
+
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -278,6 +283,8 @@ class NormalCommandEnum(IntEnum):
     GomConf1Get = 31
     GomConf2Set = 32
     GomConf2Get = 33
+    InitOpnav = 34
+    SetCommsOffTimes = 35
 
     ShellCommand = 50
     SudoCommand = 51

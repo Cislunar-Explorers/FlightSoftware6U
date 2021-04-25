@@ -71,13 +71,14 @@ class MainSatelliteThread(Thread):
         self.file_block_bank = {}
         self.need_to_reboot = False
 
-        self.gom = None
-        self.gyro = None
-        self.adc = None
-        self.rtc = None
-        self.radio = None
-        self.mux = None
-        self.camera = None
+        self.gom = Gomspace
+        self.gyro = GyroSensor
+        self.adc = ADC
+        self.rtc = RTC
+        self.radio = Radio
+        self.mux = camera.CameraMux
+        self.camera = camera.Camera
+        self.nemo_manager = NemoManager
         self.init_sensors()
 
         # Telemetry
@@ -311,6 +312,7 @@ class MainSatelliteThread(Thread):
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
+                self.flight_mode.automatic_actions()
         finally:
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:

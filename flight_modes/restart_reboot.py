@@ -12,8 +12,13 @@ logger = get_log()
 
 
 class BootUpMode(FlightMode):
+    """FMID 0"""
     flight_mode_id = FMEnum.Boot.value
-    command_codecs = {BootCommandEnum.Split.value: ([], 0)}
+    command_codecs = {
+        BootCommandEnum.Switch.value: ([], 0),
+        BootCommandEnum.Split.value: ([], 0)
+    }
+
     command_arg_unpackers = {}
 
     def __init__(self, parent):
@@ -52,7 +57,8 @@ class BootUpMode(FlightMode):
 
 
 class RestartMode(FlightMode):
-    command_codecs = {}
+    """FMID 1"""
+    command_codecs = {RestartCommandEnum.Switch.value: ([], 0)}
     command_arg_unpackers = {}
     flight_mode_id = FMEnum.Restart.value
 

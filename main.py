@@ -68,6 +68,7 @@ class MainSatelliteThread(Thread):
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
+        self.attach_sigterm_handler()
         self.file_block_bank = {}
         self.need_to_reboot = False
 
@@ -218,6 +219,14 @@ class MainSatelliteThread(Thread):
 
     def attach_sigint_handler(self):
         signal.signal(signal.SIGINT, self.handle_sigint)
+
+    def handle_sigterm(self, signal, frame):
+        self.shutdown()
+        sys.exit(0)
+
+    def attach_sigterm_handler(self):
+        self.logger.critical("SIGTERM received")
+        signal.signal(signal.SIGTERM, self.handle_sigterm)
 
     def poll_inputs(self):
 

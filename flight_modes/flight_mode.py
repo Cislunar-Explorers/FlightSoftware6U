@@ -166,7 +166,8 @@ class FlightMode:
 
     # Autonomous actions to maintain safety
     def automatic_actions(self):
-        if not params.BURNWIRES_FIRED and self.parent.telemetry.rtc.rtc_time - params.INITIAL_TIME > (3600 * 3):
+        if not params.BURNWIRES_FIRED and self.parent.telemetry.rtc.rtc_time - params.INITIAL_TIME > (
+                3600 * BURNWIRE_WAITTIME):
             self.parent.logger.info("Actuating burnwires after 3 hours now.")
             self.parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION)
             self.parent.command_definitions.set_parameter(name="BURNWIRES_FIRED", value=True, hard_set=True)

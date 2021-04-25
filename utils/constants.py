@@ -3,12 +3,12 @@ import os
 import hashlib
 
 # unit conversions
-
 DEG2RAD = 3.14159265359 / 180
 
 # Delay to wait on BootUp
 # TODO change back to 30.0
 BOOTUP_SEPARATION_DELAY = 5.0
+BURNWIRE_WAITIME = 3  # hours, defined by NASA
 
 # Verification Key Parameters
 MAC_LENGTH = 4

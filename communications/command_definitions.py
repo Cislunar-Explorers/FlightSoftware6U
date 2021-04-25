@@ -481,11 +481,7 @@ class CommandDefinitions:
         block_number = kwargs['block_number']
         block_text = kwargs['block_text']
 
-<<<<<<< HEAD
         self.parent.file_block_bank[block_number] = block_text
-=======
-        self.parent.file_block_bank[block_number] = (file_path, block_text)
->>>>>>> 8435204eceba08156c667fbfa058fc05bbc5089d
 
         # Downlink acknowledgment with block number
         acknowledgement = self.parent.downlink_handler.pack_downlink(
@@ -513,7 +509,6 @@ class CommandDefinitions:
                 missing_blocks += str(i) + ','
 
         checksum = hashlib.md5(full_file_text.encode('utf-8')).hexdigest()
-<<<<<<< HEAD
         
         return ({
             'checksum': checksum,
@@ -521,24 +516,10 @@ class CommandDefinitions:
         })
 
     def activate_file(self, **kwargs):
-        
-        file_path = FLIGHT_SOFTWARE_PATH + params.FILE_UPDATE_PATH
-        total_blocks = kwargs['total_blocks']
-        local_file_name = params.FILE_UPDATE_PATH
-=======
-
-        file_block_info = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
-                                                                     FMEnum.Command.value,
-                                                                     CommandCommandEnum.GetFileBlocksInfo.value,
-                                                                     checksum=checksum, missing_blocks=missing_blocks)
-        self.parent.downlink_queue.put(file_block_info)
-
-    def activate_file(self, **kwargs):
 
         file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
         total_blocks = kwargs['total_blocks']
         local_file_name = kwargs['file_path']
->>>>>>> 8435204eceba08156c667fbfa058fc05bbc5089d
 
         assert (total_blocks == len(self.parent.file_block_bank))
 
@@ -546,15 +527,13 @@ class CommandDefinitions:
 
         # Assemble file from blocks
         for i in range(total_blocks):
-<<<<<<< HEAD
+
             full_file_text += self.parent.file_block_bank[i]
         
         #Create backup with the original if the file already exists
-=======
-            full_file_text += self.parent.file_block_bank[i][1]
+            full_file_text += self.parent.file_block_bank[i]
 
         # Create backup with the original if the file already exists
->>>>>>> 8435204eceba08156c667fbfa058fc05bbc5089d
         if os.path.exists(file_path):
             original_file = open(file_path, 'r')
             original_file_lines = original_file.readlines()

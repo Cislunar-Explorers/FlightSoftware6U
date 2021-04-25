@@ -527,10 +527,6 @@ class CommandDefinitions:
 
         # Assemble file from blocks
         for i in range(total_blocks):
-
-            full_file_text += self.parent.file_block_bank[i]
-        
-        #Create backup with the original if the file already exists
             full_file_text += self.parent.file_block_bank[i]
 
         # Create backup with the original if the file already exists

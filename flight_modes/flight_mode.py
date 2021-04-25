@@ -32,6 +32,8 @@ all_modes = list(map(int, FMEnum))
 
 logger = get_log()
 
+NONE = ([], 0)
+
 
 class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
@@ -224,6 +226,7 @@ class PauseBackgroundMode(FlightMode):
 
 
 class TestMode(PauseBackgroundMode):
+    """FMID 8"""
     flight_mode_id = FMEnum.TestMode.value
 
     def __init__(self, parent):
@@ -235,11 +238,12 @@ class TestMode(PauseBackgroundMode):
     def run_mode(self):
         pass
 
-    command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
-                      TestCommandEnum.ADCTest.value: ([], 0),
-                      TestCommandEnum.CommsDriver.value: ([], 0),
-                      TestCommandEnum.PiShutdown.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0),
+    command_codecs = {TestCommandEnum.Switch.value: NONE,
+                      TestCommandEnum.SeparationTest.value: NONE,
+                      TestCommandEnum.ADCTest.value: NONE,
+                      TestCommandEnum.CommsDriver.value: NONE,
+                      TestCommandEnum.PiShutdown.value: NONE,
+                      TestCommandEnum.RTCTest.value: NONE,
                       TestCommandEnum.LongString.value: (['some_number', 'long_string'], 180)
                       }
 
@@ -258,7 +262,9 @@ class TestMode(PauseBackgroundMode):
 
 
 class CommsMode(FlightMode):
+    """FMID 9"""
     flight_mode_id = FMEnum.CommsMode.value
+    command_codecs = {CommsCommandEnum.Switch.value: NONE}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -322,7 +328,9 @@ class CommsMode(FlightMode):
 
 
 class OpNavMode(FlightMode):
+    """FMID 5"""
     flight_mode_id = FMEnum.OpNav.value
+    command_codecs = {OpNavCommandEnum.Switch.value: NONE}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -355,7 +363,9 @@ class OpNavMode(FlightMode):
 
 
 class SensorMode(FlightMode):
+    """FMID 7"""
     flight_mode_id = FMEnum.SensorMode.value
+    command_codecs = {SensorsCommandEnum.Switch.value: NONE}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -366,7 +376,18 @@ class SensorMode(FlightMode):
 
 
 class LowBatterySafetyMode(FlightMode):
+    """FMID 3"""
     flight_mode_id = FMEnum.LowBatterySafety.value
+    command_codecs = {LowBatterySafetyCommandEnum.Switch.value: NONE,
+                      LowBatterySafetyCommandEnum.BasicTelem.value: NONE,
+                      LowBatterySafetyCommandEnum.CritTelem.value: NONE,
+                      LowBatterySafetyCommandEnum.DetailedTelem.value: NONE,
+                      LowBatterySafetyCommandEnum.ExitLBSafetyMode: NONE,
+                      LowBatterySafetyCommandEnum.SetExitLBSafetyMode: ([VBATT], 2),
+                      LowBatterySafetyCommandEnum.SetParam: ([NAME, VALUE, HARD_SET], 33)
+                      }
+
+    command_arg_types = {VBATT: 'short'}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -388,8 +409,9 @@ class LowBatterySafetyMode(FlightMode):
 
 
 class ManeuverMode(PauseBackgroundMode):
+    """FMID 6"""
     flight_mode_id = FMEnum.Maneuver.value
-    command_codecs = {}
+    command_codecs = {ManeuverCommandEnum.Switch.value: NONE}
     command_arg_unpackers = {}
 
     def __init__(self, parent):
@@ -414,7 +436,15 @@ class ManeuverMode(PauseBackgroundMode):
 
 # TODO
 class SafeMode(FlightMode):
+    """FMID 4"""
     flight_mode_id = FMEnum.Safety.value
+
+    command_codecs = {SafetyCommandEnum.Switch.value: NONE,
+                      SafetyCommandEnum.DetailedTelem.value: NONE,
+                      SafetyCommandEnum.CritTelem.value: NONE,
+                      SafetyCommandEnum.BasicTelem.value: NONE,
+                      SafetyCommandEnum.ExitSafetyMode.value: NONE,
+                      SafetyCommandEnum.SetParameter.value: ([NAME, VALUE, HARD_SET], 33), }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -431,15 +461,19 @@ class NormalMode(FlightMode):
     flight_mode_id = FMEnum.Normal.value
 
     command_codecs = {
-        NormalCommandEnum.Switch.value: ([], 0),
-        NormalCommandEnum.RunOpNav.value: ([], 0),
+        NormalCommandEnum.Switch.value: NONE,
+        NormalCommandEnum.RunOpNav.value: NONE,
         # NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
-        # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
+        # NormalCommandEnum.SetBreakpoint.value: NONE,  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
+        NormalCommandEnum.CritTelem.value: NONE,
+        NormalCommandEnum.BasicTelem.value: NONE,
+        NormalCommandEnum.DetailedTelem.value: NONE,
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
+        NormalCommandEnum.GetParam.value: ([INDEX], 2),
         NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4),
         NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 14),
         NormalCommandEnum.NemoWriteRegister.value: ([REG_ADDRESS, REG_VALUE], 2),
@@ -463,9 +497,9 @@ class NormalMode(FlightMode):
                                                     RATE_DATA_ROTATE_PERIOD,
                                                     HISTOGRAM_ROTATE_PERIOD,
                                                 ], 32),
-        NormalCommandEnum.NemoPowerOff.value: ([], 0),
-        NormalCommandEnum.NemoPowerOn.value: ([], 0),
-        NormalCommandEnum.NemoReboot.value: ([], 0),
+        NormalCommandEnum.NemoPowerOff.value: NONE,
+        NormalCommandEnum.NemoPowerOn.value: NONE,
+        NormalCommandEnum.NemoReboot.value: NONE,
         NormalCommandEnum.NemoProcessRateData.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
         NormalCommandEnum.NemoProcessHistograms.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
         NormalCommandEnum.GomConf1Set.value: ([PPT_MODE, BATTHEATERMODE, BATTHEATERLOW, BATTHEATERHIGH, OUTPUT_NORMAL1,
@@ -479,9 +513,9 @@ class NormalMode(FlightMode):
         NormalCommandEnum.ShellCommand.value: ([CMD], 24),
         NormalCommandEnum.SudoCommand.value: ([CMD], 24),
         NormalCommandEnum.Picberry.value: ([CMD], 24),
-        NormalCommandEnum.GomConf1Get.value: ([], 0),
+        NormalCommandEnum.GomConf1Get.value: NONE,
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
-        NormalCommandEnum.GomConf2Get.value: ([], 0),
+        NormalCommandEnum.GomConf2Get.value: NONE,
         NormalCommandEnum.ExecPyFile.value: ([FNAME], 36),
         NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1)
     }
@@ -690,17 +724,32 @@ class CommandMode(PauseBackgroundMode):
     flight_mode_id = FMEnum.Command.value
 
     command_codecs = {
+        CommandCommandEnum.Switch.value: NONE,
+        CommandCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
+        CommandCommandEnum.SetSystemTime: ([TIME], 8),
+        CommandCommandEnum.RebootPi: NONE,
+        CommandCommandEnum.RebootGom: NONE,
+        CommandCommandEnum.PowerCycle: NONE,
+        CommandCommandEnum.GomPin: ([OUTPUT_CHANNEL, STATE, DELAY], 4),
         CommandCommandEnum.AddFileBlock.value: ([FILE_PATH, BLOCK_NUMBER, BLOCK_TEXT], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
         CommandCommandEnum.ActivateFile.value: ([FILE_PATH, TOTAL_BLOCKS], 52),
-    CommandCommandEnum.ShellCommand.value: ([CMD], 24)
+        CommandCommandEnum.ShellCommand.value: ([CMD], 24),
+        CommandCommandEnum.GeneralCmd.value: ([CMD], 24),  # TODO
+        CommandCommandEnum.GomGeneralCmd.value: ([CMD], 24),  # TODO
+        CommandCommandEnum.CeaseComms.value: ([PASSWORD], 8)
     }
 
     command_arg_types = {
         FILE_PATH: 'string',
         BLOCK_NUMBER: 'short',
         BLOCK_TEXT: 'string',
-        TOTAL_BLOCKS: 'short'
+        TOTAL_BLOCKS: 'short',
+        SYS_TIME: 'double',
+        GOM_PIN_STATE: 'bool',
+        GOM_PIN_DELAY: 'short',
+        OUTPUT_CHANNEL: 'uint8',
+        PASSWORD: 'long'
     }
 
     downlink_codecs = {

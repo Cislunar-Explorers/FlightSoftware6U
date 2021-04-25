@@ -60,9 +60,12 @@ PULSE_DT = "pulse_dt"
 NUM_BLOCKS = "num_blocks"
 
 TIME = "time"
+SYS_TIME = 'sys_time'
 
 HARD_SET = "hard_set"
 
+GOM_PIN_STATE = 'gom_pin_state'
+GOM_PIN_DELAY = 'gom_pin_delay'
 
 FILE_PATH = "file_path"
 BLOCK_NUMBER = "block_number"
@@ -94,6 +97,9 @@ T_START = "t_start"
 T_STOP = "t_stop"
 
 DECIMATION_FACTOR = "decimation_factor"
+
+INDEX = 'index'
+VBATT = 'vbatt'
 
 # Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
@@ -190,12 +196,14 @@ MAX_VOLTAGE = 'max_voltage'
 NORM_VOLTAGE = 'norm_voltage'
 SAFE_VOLTAGE = 'safe_voltage'
 CRIT_VOLTAGE = 'crit_voltage'
+OUTPUT_CHANNEL = 'output_channel'
 
 CMD = 'cmd'
 RETURN_CODE = 'return_code'
 
 FNAME = 'filename'
 IGNORE = 'ignore'
+PASSWORD = 'password'
 
 
 # GOMspace Channel designations:
@@ -331,16 +339,12 @@ class SensorsCommandEnum(IntEnum):
 class TestCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     # SetTestMode = 1  # no args
-    TriggerBurnWire = 2  # no args
-    RunOpNav = 3  # no args
     ADCTest = 4
     SeparationTest = 5
-    GomPin = 6
     CommsDriver = 7
     RTCTest = 8
     LongString = 9
     PiShutdown = 11
-
 
 
 @unique
@@ -366,6 +370,11 @@ class CommandCommandEnum(IntEnum):
     ActivateFile = 11
     ShellCommand = 50
     CeaseComms = 170
+
+
+@unique
+class AttitudeCommandEnum(IntEnum):
+    Switch = 0
 
 
 @unique

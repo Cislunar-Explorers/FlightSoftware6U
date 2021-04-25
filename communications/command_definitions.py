@@ -132,11 +132,8 @@ class CommandDefinitions:
         self.sensor_commands = {}
 
         self.test_commands = {
-            2: self.split,
-            3: self.run_opnav,
             TestCommandEnum.ADCTest.value: self.adc_test,
             TestCommandEnum.SeparationTest.value: self.separation_test,
-            6: self.gom_outputs,
             7: self.comms_driver_test,
             TestCommandEnum.LongString.value: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
@@ -161,6 +158,8 @@ class CommandDefinitions:
             CommandCommandEnum.ShellCommand.value: self.shell_command
         }
 
+        self.attitude_commands = {}
+
         self.COMMAND_DICT = {
             FMEnum.Boot.value: self.bootup_commands,
             FMEnum.Restart.value: self.restart_commands,
@@ -172,7 +171,8 @@ class CommandDefinitions:
             FMEnum.SensorMode.value: self.sensor_commands,
             FMEnum.TestMode.value: self.test_commands,
             FMEnum.CommsMode: self.comms_commands,
-            FMEnum.Command.value: self.command_commands
+            FMEnum.Command.value: self.command_commands,
+            FMEnum.AttitudeAdjustment.value: self.attitude_commands
         }
 
         for value in self.COMMAND_DICT.values():
@@ -278,13 +278,9 @@ class CommandDefinitions:
     def set_exit_lowbatt_threshold(self, **kwargs):
         """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
         requires one kwarg and does some basic sanity checks on the passed value"""
-        value = kwargs['value']
+        value = kwargs['vbatt']
         try:
-            assert 0 < value < 1.0 and float(value) is float
-            if value >= params.ENTER_LOW_BATTERY_MODE_THRESHOLD:
-                self.parent.logger.error(
-                    f"New value for Exit LB thresh must be less than current Enter LB thresh value")
-                assert False
+            assert 4 < value < 8.5 and float(value) is float
             self.set_parameter(name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
         except AssertionError:
             self.parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
@@ -377,11 +373,13 @@ class CommandDefinitions:
         os.system("reboot")
         # add something here that adds to the restarts db that this restart was commanded
 
-    def cease_comms(self):
-        # I'm actually unsure of how to do this. Maybe do something with the GPIO pins so that the pi can't transmit
-        self.parent.logger.critical("Ceasing all communications")
-        # definitely should implement some sort of password and double verification to prevent accidental triggering
-        raise NotImplementedError
+    def cease_comms(self, **kwargs):
+        pword = kwargs[PASSWORD]
+        if pword == 123:  # TODO, change
+            # I'm actually unsure of how to do this. Maybe do something with the GPIO pins so that the pi can't transmit
+            self.parent.logger.critical("Ceasing all communications")
+            # definitely should implement some sort of password and double verification to prevent accidental triggering
+            raise NotImplementedError
 
     def set_system_clock(self, **kwargs):  # Needs validation (talk to Viraj)
         # need to validate this works, and need to integrate updating RTC

@@ -38,7 +38,7 @@ def C3(theta):
 """
 
 class AAMode(PauseBackgroundMode):
-    """Attitude adjustment flight mode"""
+    """FMID 11: Attitude adjustment flight mode"""
 
     flight_mode_id = FMEnum.AttitudeAdjustment.value
     command_codecs = {}

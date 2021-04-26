@@ -209,7 +209,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
         timeDeltaAvg = (timeDelta1 + timeDelta2) / 2
         timeDeltaAvgs[i-1] = timeDeltaAvg
-        
+
         recordings.append(fileDiffTime1)
         recordings.append(fileDiffTime2)
 

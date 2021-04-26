@@ -28,8 +28,8 @@ import utils.parameters as params
 # from tests.animations import LiveTrajectoryPlot
 
 SQL_PREFIX = "sqlite:///"
-sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
-#sql_path = DB_FILE
+#sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
+sql_path = DB_FILE
 
 def setup_function(function):
     # Reset databases
@@ -101,7 +101,7 @@ def test_start(mocker):
         return
 
     #Don't use select_camera_mock for software demo
-    mocker.patch('OpticalNavigation.core.opnav.select_camera', side_effect=select_camera_mock)
+    #mocker.patch('OpticalNavigation.core.opnav.select_camera', side_effect=select_camera_mock)
 
     idx = [0]
     timestamps = [981750, 981750, 2028950, 2028950, 3010700, 3010700]
@@ -117,7 +117,7 @@ def test_start(mocker):
         return (filename, 0, time)
 
     #Don't use record_video mock for software demo
-    mocker.patch('OpticalNavigation.core.opnav.record_video', side_effect=record_video_mock)
+    #mocker.patch('OpticalNavigation.core.opnav.record_video', side_effect=record_video_mock)
 
     def record_gyro_mock(count):
         print("gyro_mock")
@@ -143,7 +143,7 @@ def test_start(mocker):
         print("frames_mock")
         idx[0] += 1
         return frames
-    mocker.patch('OpticalNavigation.core.opnav.extract_frames', side_effect=extract_frames_mock)
+    #mocker.patch('OpticalNavigation.core.opnav.extract_frames', side_effect=extract_frames_mock)
 
 
     def __get_elapsed_time_mock(bestTuple, timeDeltaAvgs, observeStart):
@@ -155,7 +155,7 @@ def test_start(mocker):
         timeElapsed = (dateTime - observeStart).total_seconds()
         return timeElapsed
 
-    mocker.patch('OpticalNavigation.core.opnav.__get_elapsed_time', side_effect=__get_elapsed_time_mock)
+    #mocker.patch('OpticalNavigation.core.opnav.__get_elapsed_time', side_effect=__get_elapsed_time_mock)
 
     # start opnav system
     opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)

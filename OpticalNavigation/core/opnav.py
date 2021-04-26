@@ -138,12 +138,12 @@ def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()
     camera_rec_params = CameraRecordingParameters(params.CAMERA_FPS, params.CAMERA_RECORDING_TIME, params.CAMERA_LOW_EXPOSURE, params.CAMERA_HIGH_EXPOSURE)
 
     #Check if there are files in opnav_media folder and delete
-    '''
+
     if len(os.listdir(OPNAV_MEDIA_PATH)) != 0:
         logger.info("[OPNAV]: Deleting files from opnav_media folder")
         rm_cmd = 'rm -f' + OPNAV_MEDIA_PATH + '*'
         os.system(rm_cmd)
-    '''
+
 
 
     propulsion_exit_status = __process_propulsion_events(session)
@@ -179,11 +179,9 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     recordings = []
     timeDeltaAvgs = [0, 0, 0]
 
-
-
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
-        '''
+
         # Get Unix time before recording(in seconds floating point -> microseconds)
         # Get camera time (in microseconds)
         linuxTime1:int
@@ -193,12 +191,12 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
             cameraTime1 = camera.timestamp
         # Get difference between two clocks
         timeDelta1 = linuxTime1 - cameraTime1
-        '''
+
         logger.info(f"[OPNAV]: Recording from camera {i}")
         # TODO: figure out exposure parameters
         fileDiffTime1 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expLow.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expLow)
         fileDiffTime2 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
-        '''
+
         # Get Unix time after recording(in seconds floating point -> microseconds)
         # Get camera time (in microseconds)
         linuxTime2:int
@@ -211,11 +209,11 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
         timeDeltaAvg = (timeDelta1 + timeDelta2) / 2
         timeDeltaAvgs[i-1] = timeDeltaAvg
-        '''
+        
         recordings.append(fileDiffTime1)
         recordings.append(fileDiffTime2)
 
-    #logger.info("[OPNAV]: Extracting frames...")
+    logger.info("[OPNAV]: Extracting frames...")
     frames0 = extract_frames(vid_dir=recordings[0][0], frameDiff = recordings[0][1], endTimestamp = recordings[0][2], cameraRecParams=camera_rec_params)
     frames1 = extract_frames(vid_dir=recordings[1][0], frameDiff = recordings[1][1], endTimestamp = recordings[1][2], cameraRecParams=camera_rec_params)
     frames2 = extract_frames(vid_dir=recordings[2][0], frameDiff = recordings[2][1], endTimestamp = recordings[2][2], cameraRecParams=camera_rec_params)
@@ -228,8 +226,10 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
     #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
 
-    #frames = glob.glob("/home/pi/surrender_images/*.jpg")
-    #logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
+    # Overwrite frames to separate path
+    frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
+
+    logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = float)

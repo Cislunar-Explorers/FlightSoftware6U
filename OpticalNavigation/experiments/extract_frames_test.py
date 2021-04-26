@@ -8,6 +8,7 @@ from picamera import PiCamera
 import time
 import numpy as np
 from datetime import datetime, timedelta, timezone
+import argparse
 
 
 def record_and_extract():
@@ -130,4 +131,16 @@ def unix_timestamp_test():
     print("Earth Elapsed Actual = 11.585")
     print("Moon Elapsed Actual = 11.585")
     print("Sun Elapsed Actual = 2.094")
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-m", "--mode", help="Restart mode for camera mux or regular run")
+    args = vars(ap.parse_args())
+
+    if args["mode"] == "frames":
+        record_and_extract()
+    elif args["mode"] == "timestamp":
+        unix_timestamp_test()
+
+
 

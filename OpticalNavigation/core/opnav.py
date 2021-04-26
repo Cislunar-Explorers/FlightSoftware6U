@@ -25,7 +25,7 @@ import time
 import shutil
 import os
 
-#from picamera import PiCamera
+from picamera import PiCamera
 
 logger = get_log()
 

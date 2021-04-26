@@ -155,7 +155,7 @@ def test_start(mocker):
         timeElapsed = (dateTime - observeStart).total_seconds()
         return timeElapsed
 
-    #mocker.patch('OpticalNavigation.core.opnav.__get_elapsed_time', side_effect=__get_elapsed_time_mock)
+    mocker.patch('OpticalNavigation.core.opnav.__get_elapsed_time', side_effect=__get_elapsed_time_mock)
 
     # start opnav system
     opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)

@@ -49,10 +49,10 @@ def extract_frames(vid_dir, endTimestamp):
 '''
 
 
-def extract_frames(video, frameDiff, endTimestamp, cameraRecParams):
-    base = os.path.splitext(video)[0]
+def extract_frames(vid_dir, frameDiff, endTimestamp, cameraRecParams):
+    base = os.path.splitext(vid_dir)[0]
     print(base)
-    file = open(video, "rb")
+    file = open(vid_dir, "rb")
     fileBuffer = file.read()
     # Separate the entire byte array based on the ending magic number of JPEG
     splitFrames = fileBuffer.split(b'\xff\xd9')

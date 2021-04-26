@@ -1,14 +1,14 @@
 import numpy as np
 import time
-#from OpticalNavigation.core.camera import Camera, CameraMux
+from OpticalNavigation.core.camera import Camera, CameraMux
 
 def select_camera(id):
     """
     Selects camera for recording video
     [id]: id of camera
     """
-    #mux = CameraMux()
-    #mux.selectCamera(id)
+    mux = CameraMux()
+    mux.selectCamera(id)
     pass
 
 def record_video(filename, framerate, recTime, exposure):
@@ -16,10 +16,10 @@ def record_video(filename, framerate, recTime, exposure):
     Records video from selected camera
     [exposure]: exposure level for camera
     """
-    #cam = Camera()
-    #file_diff_time = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterSpeed=exposure)
-    #return file_diff_time
-    pass
+    cam = Camera()
+    file_diff_time = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterSpeed=exposure)
+    return file_diff_time
+    
 
 def record_gyro(count):
     """

@@ -653,7 +653,7 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
-        self.completed_task()
+        #self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):

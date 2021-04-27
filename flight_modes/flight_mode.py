@@ -51,6 +51,7 @@ class FlightMode:
         self.task_completed = False
 
     def update_state(self) -> int:
+        print(self.parent.downlink_queue.empty())
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
          serves as a basis for which most other flight modes can build off of."""

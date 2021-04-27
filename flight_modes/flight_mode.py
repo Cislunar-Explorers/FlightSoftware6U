@@ -51,7 +51,7 @@ class FlightMode:
         self.task_completed = False
 
     def update_state(self) -> int:
-        print(self.parent.downlink_queue.empty())
+        
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
          serves as a basis for which most other flight modes can build off of."""
@@ -90,19 +90,19 @@ class FlightMode:
         # go to reorientation mode if there is something in the reorientation queue
         if (not self.parent.reorientation_queue.empty()) or self.parent.reorientation_list:
             return FMEnum.AttitudeAdjustment.value
-
+        print('hi')
         # if battery is low, go to low battery mode
         batt_percent = self.parent.telemetry.gom.percent
         if (batt_percent < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
-
+        
         # if there is no current coming into the batteries, go to low battery mode
         if sum(self.parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT \
                 and batt_percent < params.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
-
+        print('hello')
         # go to comms mode if there is something in the comms queue
         if not self.parent.downlink_queue.empty():
             return FMEnum.CommsMode.value

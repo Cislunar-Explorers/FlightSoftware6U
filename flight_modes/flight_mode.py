@@ -51,7 +51,6 @@ class FlightMode:
         self.task_completed = False
 
     def update_state(self) -> int:
-        
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
          serves as a basis for which most other flight modes can build off of."""
@@ -66,18 +65,19 @@ class FlightMode:
                 if not self.parent.opnav_process.is_alive():
                     self.parent.opnav_process.terminate()
                     logger.info("[OPNAV]: Process Terminated")
-        print('hi')
+        
         flight_mode_id = self.flight_mode_id
 
         if flight_mode_id not in all_modes:
             raise UnknownFlightModeException(flight_mode_id)
-        print('hello')
+        
         if self.task_completed:
+            print('hi')
             if self.parent.FMQueue.empty():
                 return FMEnum.Normal.value
             else:
                 return self.parent.FMQueue.get()
-        print('here')
+        
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 

@@ -66,18 +66,18 @@ class FlightMode:
                 if not self.parent.opnav_process.is_alive():
                     self.parent.opnav_process.terminate()
                     logger.info("[OPNAV]: Process Terminated")
-
+        print('hi')
         flight_mode_id = self.flight_mode_id
 
         if flight_mode_id not in all_modes:
             raise UnknownFlightModeException(flight_mode_id)
-
+        print('hello')
         if self.task_completed:
             if self.parent.FMQueue.empty():
                 return FMEnum.Normal.value
             else:
                 return self.parent.FMQueue.get()
-
+        print('here')
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
@@ -90,7 +90,7 @@ class FlightMode:
         # go to reorientation mode if there is something in the reorientation queue
         if (not self.parent.reorientation_queue.empty()) or self.parent.reorientation_list:
             return FMEnum.AttitudeAdjustment.value
-        print('hi')
+        
         # if battery is low, go to low battery mode
         batt_percent = self.parent.telemetry.gom.percent
         if (batt_percent < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
@@ -102,7 +102,7 @@ class FlightMode:
                 and batt_percent < params.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
-        print('hello')
+        
         # go to comms mode if there is something in the comms queue
         if not self.parent.downlink_queue.empty():
             return FMEnum.CommsMode.value

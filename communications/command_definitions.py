@@ -269,7 +269,7 @@ class CommandDefinitions:
             json_parameter_dict[name] = value
             dump(json_parameter_dict, open(PARAMETERS_JSON_PATH, 'w'), indent=0)
         time.sleep(15)
-        return {successful=True}
+        return {'successful':True}
 
         self.parent.logger.info(f"Changed constant {name} from {initial_value} to {value}")
 

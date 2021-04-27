@@ -16,7 +16,7 @@ from bitstring import BitArray
 
 from datetime import datetime
 
-class Radio():
+class Groundstation():
 
     def __init__(self):
 
@@ -42,16 +42,15 @@ class Radio():
         if self.mgr.outbox.empty():
             return None
         else:
-            return self.mgr.outbox.get()
+            downlink = self.mgr.outbox.get()
+            print('Inflated Bytes: ' + str(downlink))
+            return self.bit_deflation(downlink, ZERO_WORD, ONE_WORD)
 
     #Downlink given bytearray to ground station
     def transmit(self, signal:bytearray):
 
         self.mgr.tx_enabled = True
-
-        inflatedSignal = self.bit_inflation(signal, ZERO_WORD, ONE_WORD)
-        print('Inflated Bytes: ' + str(inflatedSignal))
-        self.mgr.inbox.put(inflatedSignal)
+        self.mgr.inbox.put(signal)
 
         cycles = 0
 
@@ -72,19 +71,18 @@ class Radio():
         self.mgr.dispatch()
         
         self.last_transmit_time = datetime.today()
-
-    def bit_inflation(self, downlink: bytearray, zero_word:bytes, one_word:bytes):
-   
-    #Convert bytes to bits
-        downlinkBitString = BitArray(bytes=downlink).bin
-
-        inflatedByteArray = bytearray('',encoding='utf-8')
+    
+    def bit_deflation(self, downlink: bytearray, zero_word: bytearray, one_word: bytearray):
+    
+        deflatedBitArray = BitArray('',bin='')
         
-        #Add two bytes for every bit corresponding to the appropriate word
-        for bit in downlinkBitString:
-            if bit == '0':
-                inflatedByteArray += zero_word
+        #Recover 
+        for i in range(len(downlink)//2):
+            byte = downlink[i*2:(i*2)+2]
+            
+            if byte == zero_word:
+                deflatedBitArray += '0b0'
             else:
-                inflatedByteArray += one_word
-
-        return inflatedByteArray
+                deflatedBitArray += '0b1'
+        
+        return deflatedBitArray.bytes

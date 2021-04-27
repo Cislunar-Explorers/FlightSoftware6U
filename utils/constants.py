@@ -196,6 +196,9 @@ RETURN_CODE = 'return_code'
 
 FNAME = 'filename'
 
+ZERO_WORD = b'\xcb\x51'
+ONE_WORD = b'\xdc\x2c'
+
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
 @unique

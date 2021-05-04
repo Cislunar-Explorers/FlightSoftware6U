@@ -19,7 +19,7 @@ SQLAlchemyTableBase = declarative_base()
 
 
 class CommandModel(SQLAlchemyTableBase):
-    __tablename__ = "commands"
+    __tablename__ = "Commands"
 
     id = Column(Integer, primary_key=True)
     command_received = Column(DateTime)

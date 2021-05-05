@@ -167,7 +167,7 @@ class FlightMode:
     # Autonomous actions to maintain safety
     def automatic_actions(self):
         if not params.BURNWIRES_FIRED and self.parent.telemetry.rtc.rtc_time - params.INITIAL_TIME > (
-                3600 * BURNWIRE_WAITTIME):
+                3600 * BURNWIRE_WAITIME):
             self.parent.logger.info("Actuating burnwires after 3 hours now.")
             self.parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION)
             self.parent.command_definitions.set_parameter(name="BURNWIRES_FIRED", value=True, hard_set=True)
@@ -202,8 +202,9 @@ class FlightMode:
                 # TODO bulk parameters hard set?
                 self.parent.command_definitions.set_parameter(name='WANT_TO_ELECTROLYZE', value=True,
                                                               hard_set=True)
-                self.parent.command_definitions.set_parameter(name='WANT_TO_OPNAV', value=True,
-                                                              hard_set=True)
+                # self.parent.command_definitions.set_parameter(name='WANT_TO_OPNAV', value=True,
+                #                                              hard_set=True)
+                # Only want to run opnav once we get initial position and time update command
                 self.parent.command_definitions.set_parameter(name='TELEM_DOWNLINK_TIME', value=60,
                                                               hard_set=True)
                 # self.parent.command_definitions.set_parameter(name='CURRENT_MISSION_MODE', value=mission_mode_id,

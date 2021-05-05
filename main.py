@@ -221,11 +221,11 @@ class MainSatelliteThread(Thread):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def handle_sigterm(self, signal, frame):
+        self.logger.critical("SIGTERM received")
         self.shutdown()
         sys.exit(0)
 
     def attach_sigterm_handler(self):
-        self.logger.critical("SIGTERM received")
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
     def poll_inputs(self):

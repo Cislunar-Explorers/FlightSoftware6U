@@ -19,6 +19,7 @@ import subprocess
 
 import os
 import utils.parameters as params
+from telemetry.telemetry import Telemetry
 
 
 def verification(**kwargs):
@@ -343,20 +344,6 @@ class CommandDefinitions:
         assert type(state) is bool
         self.parent.gom.set_electrolysis(state, delay=delay)
 
-    # def burn(self, **kwargs):
-    #     time_burn = kwargs['time']
-    #     absolute = kwargs['absolute']
-    #
-    #     if absolute:  # i.e. if we want to burn at a specific absolute time
-    #         delay = time_burn - datetime.now()
-    #     else:  # if we want to burn exactly x seconds from receiving the command
-    #         delay = time
-    #
-    #     if delay < 0:
-    #         self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
-    #     else:
-    #         self.parent.gom.glowplug(params.GLOWPLUG_DURATION, delay=delay)
-
     def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
         self.parent.logger.info("Scheduling a maneuver at: " + str(float(time_burn)))
@@ -365,6 +352,18 @@ class CommandDefinitions:
 
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+
+    def telemetry_db_downlink(self, **kwargs):
+        sensor = kwargs['sensor']
+        Telemetry.query_telem(sensor)
+
+    def command_db_downlink(self):
+        # TODO
+        pass
+
+    def all_db_downlink(self):
+        # TODO
+        pass
 
     @staticmethod
     def reboot_pi():

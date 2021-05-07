@@ -13,7 +13,7 @@ def test_telemetry_model():
     telemetry_measurements = session.query(TelemetryModel).all()
     assert 0 == len(telemetry_measurements)
 
-    measurement_taken = time()  # FIXME the telem db model's time_polled field needs to be a double!
+    measurement_taken = time()
 
     new_measurement = TelemetryModel(
         time_polled=measurement_taken,

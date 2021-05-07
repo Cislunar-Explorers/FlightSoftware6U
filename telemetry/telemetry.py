@@ -369,34 +369,41 @@ class Telemetry(SynchronousSensor):
         entries = self.session.query(TelemetryModel).all()
         for entry in entries:
             print(entry)
+            # replace print with downlink
 
     def query_gom(self):
         entries = self.session.query(TelemetryModel).all()
         for entry in entries[1:37]:
             print(entry)
+            # replace print with downlink
 
     def query_rtc(self):
         entries = self.session.query(TelemetryModel).all()
         for entry in entries[37:38]:
             print(entry)
+            # replace print with downlink
 
     def query_rpi(self):
         entries = self.session.query(TelemetryModel).all()
         for entry in entries[38:44]:
             print(entry)
+            # replace print with downlink
 
     def query_gyro(self):
         entries = self.session.query(TelemetryModel).all()
         for entry in entries[44:55]:
             print(entry)
+            # replace print with downlink
 
     def query_thm(self):
         entries = self.session.query(TelemetryModel).all()
         for entry in entries[55:56]:
             print(entry)
+            # replace print with downlink
 
     def query_pressure(self):
         entries = self.session.query(TelemetryModel).all()
         for entry in entries[56:57]:
             print(entry)
+            # replace print with downlink
 

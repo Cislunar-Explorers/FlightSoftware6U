@@ -87,10 +87,10 @@ def test_telemetry_model():
 
     session.add(new_measurement)
     session.commit()
+    telemetry_measurements = session.query(TelemetryModel).all()
     assert 1 == len(telemetry_measurements)
 
-    entries = session.query(TelemetryModel).all()
-    for entry in entries:
+    for entry in telemetry_measurements:
         print(entry)
 
 

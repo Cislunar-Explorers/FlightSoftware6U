@@ -614,11 +614,73 @@ class TelemetryModel(SQLAlchemyTableBase):
     # PRESSURE DATA
     PRESSURE_pressure = Column(Float)
 
+    def __repr__(self):
+        return (
+            f"<TelemetryModel("
+            f"time_polled={self.time_polled}, "
+            f"GOM_vboost1={self.GOM_vboost1}, "
+            f"GOM_vboost2={self.GOM_vboost2}, "
+            f"GOM_vboost3={self.GOM_vboost3}, "
+            f"GOM_vbatt={self.GOM_vbatt}, "
+            f"GOM_curin1={self.GOM_curin1}, "
+            f"GOM_curin2={self.GOM_curin2}, "
+            f"GOM_curin3={self.GOM_curin3}, "
+            f"GOM_cursun={self.GOM_cursun}, "
+            f"GOM_cursys={self.GOM_cursys}, "
+            f"GOM_reserved1={self.GOM_reserved1}, "
+            f"GOM_curout1={self.GOM_curout1}, "
+            f"GOM_curout2={self.GOM_curout2}, "
+            f"GOM_curout3={self.GOM_curout3}, "
+            f"GOM_curout4={self.GOM_curout4}, "
+            f"GOM_curout5={self.GOM_curout5}, "
+            f"GOM_curout6={self.GOM_curout6}, "
+            f"GOM_outputs={self.GOM_outputs}, "
+            f"GOM_latchup1={self.GOM_latchup1}, "
+            f"GOM_latchup2={self.GOM_latchup2}, "
+            f"GOM_latchup3={self.GOM_latchup3}, "
+            f"GOM_latchup4={self.GOM_latchup4}, "
+            f"GOM_latchup5={self.GOM_latchup5}, "
+            f"GOM_latchup6={self.GOM_latchup6}, "
+            f"GOM_wdt_i2c_time_left={self.GOM_wdt_i2c_time_left}, "
+            f"GOM_wdt_gnd_time_left={self.GOM_wdt_gnd_time_left}, "
+            f"GOM_counter_wdt_i2c={self.GOM_counter_wdt_i2c}, "
+            f"GOM_counter_wdt_gnd={self.GOM_counter_wdt_gnd}, "
+            f"GOM_counter_boot={self.GOM_counter_boot}, "
+            f"GOM_bootcause={self.GOM_bootcause}, "
+            f"GOM_battmode={self.GOM_battmode}, "
+            f"GOM_temp1={self.GOM_temp1}, "
+            f"GOM_temp2={self.GOM_temp2}, "
+            f"GOM_temp3={self.GOM_temp3}, "
+            f"GOM_temp4={self.GOM_temp4}, "
+            f"GOM_pptmode={self.GOM_pptmode}, "
+            f"GOM_reserved2={self.GOM_reserved2}, "
+            f"RTC_measurement_taken={self.RTC_measurement_taken}, "
+            f"RPI_cpu={self.RPI_cpu}, "
+            f"RPI_ram={self.RPI_ram}, "
+            f"RPI_dsk={self.RPI_dsk}, "
+            f"RPI_tmp={self.RPI_tmp}, "            
+            f"RPI_boot={self.RPI_boot}, "
+            f"RPI_uptime={self.RPI_uptime}, "           
+            f"GYRO_gyr_x={self.GYRO_gyr_x}, "
+            f"GYRO_gyr_y={self.GYRO_gyr_y}, "
+            f"GYRO_gyr_z={self.GYRO_gyr_z}, "
+            f"GYRO_acc_x={self.GYRO_acc_x}, "
+            f"GYRO_acc_y={self.GYRO_acc_y}, "
+            f"GYRO_acc_z={self.GYRO_acc_z}, "
+            f"GYRO_mag_x={self.GYRO_mag_x}, "
+            f"GYRO_mag_y={self.GYRO_mag_y}, "
+            f"GYRO_mag_z={self.GYRO_mag_z}, "
+            f"GYRO_temperature={self.GYRO_temperature}, "
+            f"THERMOCOUPLE_pressure={self.THERMOCOUPLE_pressure}, "
+            f"PRESSURE_pressure={self.PRESSURE_pressure})>"
+        )
+
 
 def create_sensor_tables(engine):
     SQLAlchemyTableBase.metadata.create_all(engine)
     create_session.configure(bind=engine)
     return create_session
+
 
 def create_sensor_tables_from_path(path: str):
     engine = create_engine(path)

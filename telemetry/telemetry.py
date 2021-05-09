@@ -82,17 +82,6 @@ class GyroSensor(SynchronousSensor):
     def get_mag(self):
         return self.mag
 
-    # def write(self):
-    #     gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
-    #     gyro_model = GyroModel.gyro_from_tuple(gyro_tuple)
-    #
-    #     try:
-    #         session = self.parent.create_session()
-    #         session.add(gyro_model)
-    #         session.commit()
-    #     finally:
-    #         session.close()
-
 
 class PressureSensor(SynchronousSensor):
     def __init__(self, parent):

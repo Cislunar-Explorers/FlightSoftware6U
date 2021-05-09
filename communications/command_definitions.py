@@ -355,7 +355,7 @@ class CommandDefinitions:
 
     def telemetry_db_downlink(self, **kwargs):
         sensor = kwargs['sensor']
-        Telemetry.query_telem(sensor)
+        self.parent.Telemetry.query_telem(sensor)
 
     def command_db_downlink(self):
         # TODO

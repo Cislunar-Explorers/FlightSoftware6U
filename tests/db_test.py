@@ -1,7 +1,7 @@
 from time import time
 
 
-from utils.db import create_sensor_tables_from_path, PressureModel, TelemetryModel
+from utils.db import create_sensor_tables_from_path, TelemetryModel
 
 MEMORY_DB_PATH = "sqlite://"
 
@@ -92,6 +92,8 @@ def test_telemetry_model():
     telemetry_measurements = session.query(TelemetryModel).all()
     assert 1 == len(telemetry_measurements)
     for entry in telemetry_measurements:
+        print(type(telemetry_measurements))
+        print(telemetry_measurements[0])
         print(entry)
 
     # just gom query

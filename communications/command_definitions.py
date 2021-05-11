@@ -353,19 +353,6 @@ class CommandDefinitions:
     def return_to_normal(self):
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
-    def telemetry_db_downlink(self, **kwargs):
-        # TODO
-        sensor = kwargs['sensor']
-        self.parent.Telemetry.query_telem(sensor)
-
-    def command_db_downlink(self):
-        # TODO
-        pass
-
-    def all_db_downlink(self):
-        # TODO
-        pass
-
     @staticmethod
     def reboot_pi():
         os.system("reboot")

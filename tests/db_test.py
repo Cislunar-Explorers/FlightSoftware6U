@@ -10,6 +10,44 @@ def test_telemetry_model():
     telemetry_measurements = session.query(TelemetryModel).all()
     assert 0 == len(telemetry_measurements)
 
+    make_entry(session)
+
+    telemetry_measurements = session.query(TelemetryModel).all()
+    print(len(telemetry_measurements))
+    assert 1 == len(telemetry_measurements)
+    for entry in telemetry_measurements:
+        print(entry)
+        print()
+
+    make_entry(session)
+
+    telemetry_measurements = session.query(TelemetryModel).all()
+    print(len(telemetry_measurements))
+    assert 2 == len(telemetry_measurements)
+    for entry in telemetry_measurements:
+        print(entry)
+        print()
+
+    session.delete(telemetry_measurements[0])
+    session.commit()
+
+    telemetry_measurements = session.query(TelemetryModel).all()
+    print(len(telemetry_measurements))
+    for entry in telemetry_measurements:
+        print(entry)
+        print()
+
+    # just gom query
+    GOM_query = session.query(TelemetryModel.time_polled,
+                              TelemetryModel.GOM_vboost1,
+                              TelemetryModel.GOM_vboost2,
+                              TelemetryModel.GOM_vboost3,
+                              )
+    # for entry in GOM_query:
+    #     print(entry)
+
+
+def make_entry(session):
     measurement_taken = time()
 
     new_measurement = TelemetryModel(
@@ -85,23 +123,6 @@ def test_telemetry_model():
 
     session.add(new_measurement)
     session.commit()
-
-    # all telemetry measurements
-    telemetry_measurements = session.query(TelemetryModel).all()
-    assert 1 == len(telemetry_measurements)
-    for entry in telemetry_measurements:
-        print(type(telemetry_measurements))
-        print(telemetry_measurements[0])
-        print(entry)
-
-    # just gom query
-    GOM_query = session.query(TelemetryModel.time_polled,
-                              TelemetryModel.GOM_vboost1,
-                              TelemetryModel.GOM_vboost2,
-                              TelemetryModel.GOM_vboost3,
-                              )
-    for entry in GOM_query:
-        print(entry)
 
 
 if __name__ == "__main__":

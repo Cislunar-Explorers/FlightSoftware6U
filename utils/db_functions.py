@@ -1,21 +1,21 @@
 from utils.db import TelemetryModel
 from utils.db import create_sensor_tables_from_path
-from utils.constants import DB_FILE
+from utils.constants import DB_FILE, DB_ENTRY_LIMIT
 # import the rest of the models
 
 
-def telemetry_query(datatype, limit):
+def telemetry_query(datatype, amount):
     """
     Datatype specifies the data that wants to be queried inside of TelemetryModel
     Datatype can be: "GOM", "RTC", "RPI", "GYRO", "THERMO", "PRESSURE", or "ALL"
-    Prints limit number of entries in the database for desired datatype
+    Prints amount number of entries in the database for desired datatype
     """
     try:
         create_session = create_sensor_tables_from_path(DB_FILE)
         session = create_session()
         if datatype.equals("ALL"):
             telemetry_measurements = session.query(TelemetryModel).all()
-            for entry in range(limit):
+            for entry in range(amount):
                 print(telemetry_measurements[entry])
         elif datatype.equals("GOM"):
             GOM_query = session.query(TelemetryModel.time_polled,
@@ -56,13 +56,13 @@ def telemetry_query(datatype, limit):
                                       TelemetryModel.GOM_pptmode,
                                       TelemetryModel.GOM_reserved2,
                                       )
-            for entry in range(limit):
+            for entry in range(amount):
                 print(GOM_query[entry])
         elif datatype.equals("RTC"):
             RTC_query = session.query(TelemetryModel.time_polled,
                                       TelemetryModel.RTC_measurement_taken
                                       )
-            for entry in range(limit):
+            for entry in range(amount):
                 print(RTC_query[entry])
         elif datatype.equals("RPI"):
             RPI_query = session.query(TelemetryModel.time_polled,
@@ -73,7 +73,7 @@ def telemetry_query(datatype, limit):
                                       TelemetryModel.RPI_boot,
                                       TelemetryModel.RPI_uptime,
                                       )
-            for entry in range(limit):
+            for entry in range(amount):
                 print(RPI_query[entry])
         elif datatype.equals("GYRO"):
             GYRO_query = session.query(TelemetryModel.time_polled,
@@ -88,20 +88,58 @@ def telemetry_query(datatype, limit):
                                        TelemetryModel.GYRO_mag_z,
                                        TelemetryModel.GYRO_temperature
                                        )
-            for entry in range(limit):
+            for entry in range(amount):
                 print(GYRO_query[entry])
         elif datatype.equals("THERMO"):
             THERMO_query = session.query(TelemetryModel.time_polled,
                                          TelemetryModel.THERMOCOUPLE_pressure
                                          )
-            for entry in range(limit):
+            for entry in range(amount):
                 print(THERMO_query[entry])
         elif datatype.equals("PRESSURE"):
             PRESSURE_query = session.query(TelemetryModel.time_polled,
                                            TelemetryModel.PRESSURE_pressure
                                            )
-            for entry in range(limit):
+            for entry in range(amount):
                 print(PRESSURE_query[entry])
         session.close()
+    finally:
+        pass
+
+
+def clean(model, entry_limit=DB_ENTRY_LIMIT):
+    """
+    'Cleans' a specific database by deleting the oldest entries
+    Keeps entry_limit number of entries still in the database
+    Model is a sqlalchemyModel
+    """
+    try:
+        create_session = create_sensor_tables_from_path(DB_FILE)
+        session = create_session()
+
+        entries = session.query(model).all()
+        number_to_delete = len(entries) - entry_limit
+        for x in range(number_to_delete):
+            session.delete(entries[x])
+
+        session.commit()
+    finally:
+        pass
+
+
+def wipe(model):
+    """
+    Wipes (deletes) all entries from the model that is passed in as an argument
+    Model is a sqlalchemyModel
+    """
+    try:
+        create_session = create_sensor_tables_from_path(DB_FILE)
+        session = create_session()
+
+        entries = session.query(model).all()
+        for entry in entries:
+            session.delete(entry)
+
+        session.commit()
     finally:
         pass

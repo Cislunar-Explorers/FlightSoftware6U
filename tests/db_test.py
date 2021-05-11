@@ -52,6 +52,35 @@ def test_telemetry_model():
     print("telemetry_query -- PASS")
     print()
 
+    print("... making another entry to TelemetryModel...")
+    print("currently 4 entries")
+    print()
+    make_entry(session)
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 4 == len(telemetry_measurements), "FAIL"
+
+    print("cleaning TelemetryModel with entry_limit=2 \nonly two entries now:")
+    db_functions.clean("Telemetry", session, 2)
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 2 == len(telemetry_measurements), "FAIL"
+    db_functions.display_model("Telemetry", session)
+    print("length of TelemetryModel:", len(telemetry_measurements))
+    print()
+
+    print("clean -- PASS")
+    print()
+
+    print("wiping TelemetryModel of all entries")
+    print("length before wiping:", len(telemetry_measurements))
+    db_functions.wipe("Telemetry", session)
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 0 == len(telemetry_measurements), "FAIL"
+    db_functions.display_model("Telemetry", session)
+    print("length after wiping:", len(telemetry_measurements))
+    print()
+
+    print("ALL TESTS PASS")
+
 
 def make_entry(session):
     measurement_taken = time()

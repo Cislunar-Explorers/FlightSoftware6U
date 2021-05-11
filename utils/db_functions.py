@@ -1,11 +1,23 @@
-from utils.db import TelemetryModel, CommandModel
+from utils.db import TelemetryModel, CommandModel, RebootsModel
+from utils.db import OpNavTrajectoryStateModel, OpNavAttitudeStateModel, OpNavPropulsionModel
+from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavGyroMeasurementModel
 from utils.db import create_sensor_tables_from_path
 from utils.constants import DB_ENTRY_LIMIT
 
 # TODO change MEMORY_DB_PATH back to DB_FILE
 MEMORY_DB_PATH = "sqlite://"
 
-databases_dict = {"Telemetry": TelemetryModel, "Commands": CommandModel}
+# each key is the "__tablename__" for each model in db.py
+databases_dict = {"Commands": CommandModel,
+                  "opnav_trajectory_state": OpNavTrajectoryStateModel,
+                  "opnav_attitude_state": OpNavAttitudeStateModel,
+                  "opnav_ephemeris": OpNavEphemerisModel,
+                  "opnav_camera_measurement_state": OpNavCameraMeasurementModel,
+                  "opnav_gyro_measurement_state": OpNavGyroMeasurementModel,
+                  "opnav_propulsion_state": OpNavPropulsionModel,
+                  "Reboots": RebootsModel,
+                  "Telemetry": TelemetryModel
+                  }
 
 
 def display_model(model, session):
@@ -160,19 +172,15 @@ def clean(model, session, entry_limit=DB_ENTRY_LIMIT):
         print("error during clean")
 
 
-def wipe(model):
+def wipe(model, session):
     """
     Wipes (deletes) all entries from the model that is passed in as an argument
     Model is a sqlalchemyModel
+    A sqlalchemy session (session) must be passed in
     """
     try:
-        create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
-        session = create_session()
-
-        entries = session.query(model).all()
+        entries = session.query(databases_dict.get(model)).all()
         for entry in entries:
             session.delete(entry)
-
-        session.commit()
     except:
         print("error during wipe")

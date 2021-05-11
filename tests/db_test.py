@@ -13,6 +13,7 @@ def test_telemetry_model():
     telemetry_measurements = session.query(TelemetryModel).all()
     assert 0 == len(telemetry_measurements), "FAIL"
     print("Creation of empty session -- PASS")
+    print()
 
     make_entry(session)
 
@@ -20,13 +21,36 @@ def test_telemetry_model():
     assert 1 == len(telemetry_measurements), "FAIL"
 
     make_entry(session)
+    make_entry(session)
     telemetry_measurements = session.query(TelemetryModel).all()
-    assert 2 == len(telemetry_measurements), "FAIL"
-    print("Creation of 2 entries -- PASS")
+    assert 3 == len(telemetry_measurements), "FAIL"
+    print("Creation of 3 entries -- PASS")
+    print()
 
-    session.commit()
+    print("displaying all TelemetryModel entries:")
+    db_functions.display_model("Telemetry", session)
+    print()
 
-    db_functions.display_model(TelemetryModel)
+    print("display_model -- PASS")
+    print()
+
+    print("displaying two (out of three) most recent entries in TelemetryModel:")
+    db_functions.display_model_amount("Telemetry", 2, session)
+    print()
+
+    print("display_model_amount -- PASS")
+    print()
+
+    print("displaying most recent RPI entry:")
+    db_functions.telemetry_query("RPI", 1, session)
+    print()
+
+    print("displaying 3 most recent GYRO entries:")
+    db_functions.telemetry_query("GYRO", 3, session)
+    print()
+
+    print("telemetry_query -- PASS")
+    print()
 
 
 def make_entry(session):

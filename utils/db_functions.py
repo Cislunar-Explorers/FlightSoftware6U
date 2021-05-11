@@ -1,7 +1,6 @@
 from utils.db import TelemetryModel
 from utils.db import create_sensor_tables_from_path
 from utils.constants import DB_FILE, DB_ENTRY_LIMIT
-# import the rest of the models
 
 
 def display_model(model):

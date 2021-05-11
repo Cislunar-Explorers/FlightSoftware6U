@@ -2,13 +2,15 @@ from utils.db import TelemetryModel
 from utils.db import create_sensor_tables_from_path
 from utils.constants import DB_FILE, DB_ENTRY_LIMIT
 
+MEMORY_DB_PATH = "sqlite://"
+
 
 def display_model(model):
     """
     Displays all entries in desired sqlalchemyModel
     """
     try:
-        create_session = create_sensor_tables_from_path(DB_FILE)
+        create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
         session = create_session()
 
         entries = session.query(model).all()
@@ -25,7 +27,7 @@ def display_model_amount(model, amount):
     Displays amount number of most recent entries in desired sqlalchemyModel
     """
     try:
-        create_session = create_sensor_tables_from_path(DB_FILE)
+        create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
         session = create_session()
 
         entries = session.query(model).all()
@@ -45,7 +47,7 @@ def telemetry_query(datatype, amount):
     Prints amount number of entries in the database for desired datatype
     """
     try:
-        create_session = create_sensor_tables_from_path(DB_FILE)
+        create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
         session = create_session()
 
         if datatype.equals("ALL"):
@@ -157,7 +159,7 @@ def clean(model, entry_limit=DB_ENTRY_LIMIT):
     Model is a sqlalchemyModel
     """
     try:
-        create_session = create_sensor_tables_from_path(DB_FILE)
+        create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
         session = create_session()
 
         entries = session.query(model).all()
@@ -176,7 +178,7 @@ def wipe(model):
     Model is a sqlalchemyModel
     """
     try:
-        create_session = create_sensor_tables_from_path(DB_FILE)
+        create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
         session = create_session()
 
         entries = session.query(model).all()

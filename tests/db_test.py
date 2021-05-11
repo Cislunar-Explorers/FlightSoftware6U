@@ -1,50 +1,32 @@
 from time import time
 
 from utils.db import create_sensor_tables_from_path, TelemetryModel
+from utils import db_functions
 
 MEMORY_DB_PATH = "sqlite://"
+
 
 def test_telemetry_model():
     create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
     session = create_session()
+
     telemetry_measurements = session.query(TelemetryModel).all()
-    assert 0 == len(telemetry_measurements)
+    assert 0 == len(telemetry_measurements), "FAIL"
+    print("Creation of empty session -- PASS")
 
     make_entry(session)
 
     telemetry_measurements = session.query(TelemetryModel).all()
-    print(len(telemetry_measurements))
-    assert 1 == len(telemetry_measurements)
-    for entry in telemetry_measurements:
-        print(entry)
-        print()
+    assert 1 == len(telemetry_measurements), "FAIL"
 
     make_entry(session)
-
     telemetry_measurements = session.query(TelemetryModel).all()
-    print(len(telemetry_measurements))
-    assert 2 == len(telemetry_measurements)
-    for entry in telemetry_measurements:
-        print(entry)
-        print()
+    assert 2 == len(telemetry_measurements), "FAIL"
+    print("Creation of 2 entries -- PASS")
 
-    session.delete(telemetry_measurements[0])
     session.commit()
 
-    telemetry_measurements = session.query(TelemetryModel).all()
-    print(len(telemetry_measurements))
-    for entry in telemetry_measurements:
-        print(entry)
-        print()
-
-    # just gom query
-    GOM_query = session.query(TelemetryModel.time_polled,
-                              TelemetryModel.GOM_vboost1,
-                              TelemetryModel.GOM_vboost2,
-                              TelemetryModel.GOM_vboost3,
-                              )
-    # for entry in GOM_query:
-    #     print(entry)
+    db_functions.display_model(TelemetryModel)
 
 
 def make_entry(session):

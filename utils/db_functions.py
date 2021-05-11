@@ -20,7 +20,7 @@ def display_model(model):
         pass
 
 
-def display_model(model, amount):
+def display_model_amount(model, amount):
     """
     Displays amount number of most recent entries in desired sqlalchemyModel
     """

@@ -1,10 +1,8 @@
 from time import time
 
-
 from utils.db import create_sensor_tables_from_path, TelemetryModel
 
 MEMORY_DB_PATH = "sqlite://"
-
 
 def test_telemetry_model():
     create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
@@ -101,7 +99,6 @@ def test_telemetry_model():
                               TelemetryModel.GOM_vboost1,
                               TelemetryModel.GOM_vboost2,
                               TelemetryModel.GOM_vboost3,
-                              # more obviously
                               )
     for entry in GOM_query:
         print(entry)

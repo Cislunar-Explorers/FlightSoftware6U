@@ -47,6 +47,7 @@ def telemetry_query(datatype, amount):
     try:
         create_session = create_sensor_tables_from_path(DB_FILE)
         session = create_session()
+
         if datatype.equals("ALL"):
             entries = session.query(TelemetryModel).all()
             length = len(entries)
@@ -143,6 +144,7 @@ def telemetry_query(datatype, amount):
             length = len(PRESSURE_query)
             for entry in range(length-amount, length):
                 print(PRESSURE_query[entry])
+
         session.close()
     finally:
         pass

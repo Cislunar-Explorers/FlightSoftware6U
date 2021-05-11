@@ -4,6 +4,41 @@ from utils.constants import DB_FILE, DB_ENTRY_LIMIT
 # import the rest of the models
 
 
+def display_model(model):
+    """
+    Displays all entries in desired sqlalchemyModel
+    """
+    try:
+        create_session = create_sensor_tables_from_path(DB_FILE)
+        session = create_session()
+
+        entries = session.query(model).all()
+        for entry in range(len(entries)):
+            print(entries[entry])
+
+        session.close()
+    finally:
+        pass
+
+
+def display_model(model, amount):
+    """
+    Displays amount number of most recent entries in desired sqlalchemyModel
+    """
+    try:
+        create_session = create_sensor_tables_from_path(DB_FILE)
+        session = create_session()
+
+        entries = session.query(model).all()
+        length = len(entries)
+        for entry in range(length-amount, length):
+            print(entries[entry])
+
+        session.close()
+    finally:
+        pass
+
+
 def telemetry_query(datatype, amount):
     """
     Datatype specifies the data that wants to be queried inside of TelemetryModel
@@ -14,9 +49,10 @@ def telemetry_query(datatype, amount):
         create_session = create_sensor_tables_from_path(DB_FILE)
         session = create_session()
         if datatype.equals("ALL"):
-            telemetry_measurements = session.query(TelemetryModel).all()
-            for entry in range(amount):
-                print(telemetry_measurements[entry])
+            entries = session.query(TelemetryModel).all()
+            length = len(entries)
+            for entry in range(length-amount, length):
+                print(entries[entry])
         elif datatype.equals("GOM"):
             GOM_query = session.query(TelemetryModel.time_polled,
                                       TelemetryModel.GOM_vboost1,
@@ -56,13 +92,15 @@ def telemetry_query(datatype, amount):
                                       TelemetryModel.GOM_pptmode,
                                       TelemetryModel.GOM_reserved2,
                                       )
-            for entry in range(amount):
+            length = len(GOM_query)
+            for entry in range(length-amount, length):
                 print(GOM_query[entry])
         elif datatype.equals("RTC"):
             RTC_query = session.query(TelemetryModel.time_polled,
                                       TelemetryModel.RTC_measurement_taken
                                       )
-            for entry in range(amount):
+            length = len(RTC_query)
+            for entry in range(length-amount, length):
                 print(RTC_query[entry])
         elif datatype.equals("RPI"):
             RPI_query = session.query(TelemetryModel.time_polled,
@@ -73,7 +111,8 @@ def telemetry_query(datatype, amount):
                                       TelemetryModel.RPI_boot,
                                       TelemetryModel.RPI_uptime,
                                       )
-            for entry in range(amount):
+            length = len(RPI_query)
+            for entry in range(length-amount, length):
                 print(RPI_query[entry])
         elif datatype.equals("GYRO"):
             GYRO_query = session.query(TelemetryModel.time_polled,
@@ -88,19 +127,22 @@ def telemetry_query(datatype, amount):
                                        TelemetryModel.GYRO_mag_z,
                                        TelemetryModel.GYRO_temperature
                                        )
-            for entry in range(amount):
+            length = len(GYRO_query)
+            for entry in range(length-amount, length):
                 print(GYRO_query[entry])
         elif datatype.equals("THERMO"):
             THERMO_query = session.query(TelemetryModel.time_polled,
                                          TelemetryModel.THERMOCOUPLE_pressure
                                          )
-            for entry in range(amount):
+            length = len(THERMO_query)
+            for entry in range(length-amount, length):
                 print(THERMO_query[entry])
         elif datatype.equals("PRESSURE"):
             PRESSURE_query = session.query(TelemetryModel.time_polled,
                                            TelemetryModel.PRESSURE_pressure
                                            )
-            for entry in range(amount):
+            length = len(PRESSURE_query)
+            for entry in range(length-amount, length):
                 print(PRESSURE_query[entry])
         session.close()
     finally:

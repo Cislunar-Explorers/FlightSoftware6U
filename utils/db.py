@@ -15,7 +15,6 @@ create_session = sessionmaker()
 SQLAlchemyTableBase = declarative_base()
 
 # NOTE do not use foreign key in any of these tables
-# TODO implement Model classes for all sensor data to be stored
 
 
 class CommandModel(SQLAlchemyTableBase):

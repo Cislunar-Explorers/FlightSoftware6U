@@ -87,10 +87,21 @@ def test_telemetry_model():
 
     session.add(new_measurement)
     session.commit()
+
+    # all telemetry measurements
     telemetry_measurements = session.query(TelemetryModel).all()
     assert 1 == len(telemetry_measurements)
-
     for entry in telemetry_measurements:
+        print(entry)
+
+    # just gom query
+    GOM_query = session.query(TelemetryModel.time_polled,
+                              TelemetryModel.GOM_vboost1,
+                              TelemetryModel.GOM_vboost2,
+                              TelemetryModel.GOM_vboost3,
+                              # more obviously
+                              )
+    for entry in GOM_query:
         print(entry)
 
 

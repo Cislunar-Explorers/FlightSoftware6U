@@ -354,6 +354,7 @@ class CommandDefinitions:
         self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
     def telemetry_db_downlink(self, **kwargs):
+        # TODO
         sensor = kwargs['sensor']
         self.parent.Telemetry.query_telem(sensor)
 

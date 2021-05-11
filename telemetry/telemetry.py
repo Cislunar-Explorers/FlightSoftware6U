@@ -286,12 +286,7 @@ class Telemetry(SynchronousSensor):
                 GOM_curout4=self.gom.hk.curout[3],
                 GOM_curout5=self.gom.hk.curout[4],
                 GOM_curout6=self.gom.hk.curout[5],
-
-                # TODO figure out if this is just one or array
-                # GOM_outputs = Column(Integer),
-                GOM_outputs=self.gom.hk.outputs[0],
-
-
+                GOM_outputs=int(str(eps_hk_t.output).replace(',', '').replace(' ', '')[1:-1], 2),
                 GOM_latchup1=self.gom.hk.latchup[0],
                 GOM_latchup2=self.gom.hk.latchup[1],
                 GOM_latchup3=self.gom.hk.latchup[2],

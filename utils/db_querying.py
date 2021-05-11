@@ -1,0 +1,1 @@
+from utils.db import TelemetryModel

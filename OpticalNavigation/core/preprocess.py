@@ -62,9 +62,6 @@ def extract_frames(vid_dir, timestamps, cameraRecParams):
     while numFrames < len(splitFrames) and splitFrames[numFrames].startswith(b'\xff\xd8'):
         numFrames += 1
 
-    if numFrames != len(timestamps):
-        print("ERROR: numFrames != len(timestamps")
-
     frame = 0
     video_frames = []
     # Make sure that we only use the number of frames we expect

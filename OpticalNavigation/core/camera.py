@@ -126,7 +126,7 @@ class Camera:
                     time.sleep((1 / frame_rate) / 2)
                 lastIndex = f.index
                 timestamps.append(f.timestamp)
-                indices = [f.index]
+                indices.append(f.index)
 
             camera.stop_recording()
             print("Filename: ")

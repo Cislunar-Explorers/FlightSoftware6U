@@ -194,8 +194,8 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
         logger.info(f"[OPNAV]: Recording from camera {i}")
         # TODO: figure out exposure parameters
-        fileDiffTime1 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expLow.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expLow)
-        fileDiffTime2 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
+        vidData1 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expLow.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expLow)
+        vidData2 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps, recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
 
         # Get Unix time after recording(in seconds floating point -> microseconds)
         # Get camera time (in microseconds)
@@ -210,16 +210,16 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         timeDeltaAvg = (timeDelta1 + timeDelta2) / 2
         timeDeltaAvgs[i-1] = timeDeltaAvg
 
-        recordings.append(fileDiffTime1)
-        recordings.append(fileDiffTime2)
+        recordings.append(vidData1)
+        recordings.append(vidData2)
 
     logger.info("[OPNAV]: Extracting frames...")
-    frames0 = extract_frames(vid_dir=recordings[0][0], frameDiff = recordings[0][1], endTimestamp = recordings[0][2], cameraRecParams=camera_rec_params)
-    frames1 = extract_frames(vid_dir=recordings[1][0], frameDiff = recordings[1][1], endTimestamp = recordings[1][2], cameraRecParams=camera_rec_params)
-    frames2 = extract_frames(vid_dir=recordings[2][0], frameDiff = recordings[2][1], endTimestamp = recordings[2][2], cameraRecParams=camera_rec_params)
-    frames3 = extract_frames(vid_dir=recordings[3][0], frameDiff = recordings[3][1], endTimestamp = recordings[3][2], cameraRecParams=camera_rec_params)
-    frames4 = extract_frames(vid_dir=recordings[4][0], frameDiff = recordings[4][1], endTimestamp = recordings[4][2], cameraRecParams=camera_rec_params)
-    frames5 = extract_frames(vid_dir=recordings[5][0], frameDiff = recordings[5][1], endTimestamp = recordings[5][2], cameraRecParams=camera_rec_params)
+    frames0 = extract_frames(vid_dir=recordings[0][0], timestamps = recordings[0][1], cameraRecParams=camera_rec_params)
+    frames1 = extract_frames(vid_dir=recordings[1][0], timestamps = recordings[1][1], cameraRecParams=camera_rec_params)
+    frames2 = extract_frames(vid_dir=recordings[2][0], timestamps = recordings[2][1], cameraRecParams=camera_rec_params)
+    frames3 = extract_frames(vid_dir=recordings[3][0], timestamps = recordings[3][1], cameraRecParams=camera_rec_params)
+    frames4 = extract_frames(vid_dir=recordings[4][0], timestamps = recordings[4][1], cameraRecParams=camera_rec_params)
+    frames5 = extract_frames(vid_dir=recordings[5][0], timestamps = recordings[5][1], cameraRecParams=camera_rec_params)
     frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg

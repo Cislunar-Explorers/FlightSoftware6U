@@ -111,10 +111,11 @@ class Camera:
             time.sleep(1)
             camera.exposure_mode = 'off'
 
-            prevTimestamp = 0
+            timestamps = []
+            indices = []
             # t0 = time.monotonic()  # Host time when recording is commanded
             camera.start_recording(filename, format='mjpeg')
-            lastTimestamp = camera.timestamp
+            #lastTimestamp = camera.timestamp
             lastIndex = -1
             # Loop over expected frames
             for n in range(video_time * frame_rate): # {video_time} seconds
@@ -124,9 +125,13 @@ class Camera:
                     f = camera.frame
                     time.sleep((1 / frame_rate) / 2)
                 lastIndex = f.index
-                prevTimestamp = lastTimestamp
-                lastTimestamp = f.timestamp
+                timestamps.append(f.timestamp)
+                indices = [f.index]
+
             camera.stop_recording()
+            print("Filename: ")
+            print(filename)
+            print("\nIndices: ")
+            print(indices)
             # Timestamp is in microseconds, relative to last system reboot (default clock_mode='raw')
-            frameDiff = lastTimestamp - prevTimestamp
-            return (filename, frameDiff, lastTimestamp)
+            return (filename, timestamps)

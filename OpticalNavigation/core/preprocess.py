@@ -49,7 +49,7 @@ def extract_frames(vid_dir, endTimestamp):
 '''
 
 
-def extract_frames(vid_dir, frameDiff, endTimestamp, cameraRecParams):
+def extract_frames(vid_dir, timestamps, cameraRecParams):
     base = os.path.splitext(vid_dir)[0]
     print(base)
     file = open(vid_dir, "rb")
@@ -62,12 +62,15 @@ def extract_frames(vid_dir, frameDiff, endTimestamp, cameraRecParams):
     while numFrames < len(splitFrames) and splitFrames[numFrames].startswith(b'\xff\xd8'):
         numFrames += 1
 
+    if numFrames != len(timestamps):
+        print("ERROR: numFrames != len(timestamps")
+
     frame = 0
     video_frames = []
     # Make sure that we only use the number of frames we expect
     # Extra frames that go over this number are taen while camera is ending recording
     while frame < cameraRecParams.fps * cameraRecParams.recTime:
-        timestamp = endTimestamp - (frameDiff * (numFrames - frame - 1))
+        timestamp = timestamps[frame]
         frame_name = base + f'_f{frame}_t{timestamp}.jpg'
         with open(frame_name, 'wb') as x:
             x.write(splitFrames[frame] + b'\xff\xd9')

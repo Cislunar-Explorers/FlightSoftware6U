@@ -339,13 +339,14 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
         if area >= 100:  # TODO: Placeholder
             x2, y2, w2, h2 = cv2.boundingRect(con)
             # Checks for rectangle overlap
-            if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y + h > y:
-                c2 = con
-                break
-
-    x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
-    box2 = BoundingBox(x2, y2, w2, h2)
-    out2, bbst2 = remap_roi(img, box2, cam, rot)
+            if (x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y):
+                c2 = con	
+                x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)	
+                box2 = BoundingBox(x2, y2, w2, h2)	
+                out2, bbst2 = remap_roi(img, box2, cam, rot)	
+                break	
+            else:	
+                x2, y2, w2, h2 = 0, 0, 0, 0
 
     # Measure body in region-of-interest
     sun = None
@@ -367,7 +368,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
         earth = None
         index = 0
         for f in [out, out2]:
-            if cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
+            if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
                 continue
 
             if earth is not None:
@@ -385,9 +386,11 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
             elif earth is None and (index != 0 or np.max(areas) < 400) and (index != 1 or area < 400):#TODO: Placeholder
                 moon = measureMoon(f)
                 if moon is not None:
-                    (mX, mY), mR = moon
-                    print("Radius",mR)
-                    mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)
+                    mXst, mYst = None,None	
+                    if index == 1:	
+                        mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)	
+                    if index == 0:	
+                        mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
                     mRho2 = mXst ** 2 + mYst ** 2
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)

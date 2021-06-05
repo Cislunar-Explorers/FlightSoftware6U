@@ -1,11 +1,15 @@
 import sys
+
+HOOTL = '--hootl' in sys.argv
+
 from threading import Thread
 from multiprocessing import Process
 from time import time
 from datetime import datetime
 from queue import Queue
 import signal
-from utils.log import get_log
+from utils.log import get_log, log_error
+from typing import Optional
 
 from json import load
 from time import sleep
@@ -29,17 +33,21 @@ from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
 
 from communications.comms_driver import CommunicationsSystem
-from communications.satellite_radio import Radio
-from drivers.gom import Gomspace
-from drivers.gyro import GyroSensor
-from drivers.ADCDriver import ADC
-from drivers.rtc import RTC
-from drivers.nemo.nemo_manager import NemoManager
-import OpticalNavigation.core.camera as camera
+
+if not HOOTL:
+    from communications.satellite_radio import Radio
+    from drivers.gom import Gomspace
+    from drivers.gyro import GyroSensor
+    from drivers.ADCDriver import ADC
+    from drivers.rtc import RTC
+    from drivers.nemo.nemo_manager import NemoManager
+    import OpticalNavigation.core.camera as camera
 
 FOR_FLIGHT = None
 
 logger = get_log()
+HOOTL = 'hootl' in sys.argv
+
 
 class MainSatelliteThread(Thread):
     def __init__(self):
@@ -70,14 +78,15 @@ class MainSatelliteThread(Thread):
         self.file_block_bank = {}
         self.need_to_reboot = False
 
-        self.gom = None
-        self.gyro = None
-        self.adc = None
-        self.rtc = None
-        self.radio = None
-        self.mux = None
-        self.camera = None
-        self.init_sensors()
+        self.gom: Optional[Gomspace] = None
+        self.gyro: Optional[GyroSensor] = None
+        self.adc: Optional[ADC] = None
+        self.rtc: Optional[RTC] = None
+        self.radio: Optional[Radio] = None
+        self.mux: Optional[camera.CameraMux] = None
+        self.camera: Optional[camera.Camera] = None
+        if not HOOTL:
+            self.init_sensors()
 
         # Telemetry
         self.tlm = Telemetry(self)
@@ -117,16 +126,18 @@ class MainSatelliteThread(Thread):
     def init_sensors(self):
         try:
             self.gom = Gomspace()
-        except Exception:
+        except Exception as e:
             self.gom = None
+            log_error(e)
             logger.error("GOM initialization failed")
         else:
             logger.info("Gom initialized")
 
         try:
             self.gyro = GyroSensor()
-        except Exception:
+        except Exception as e:
             self.gyro = None
+            log_error(e)
             logger.error("GYRO initialization failed")
         else:
             logger.info("Gyro initialized")
@@ -134,8 +145,9 @@ class MainSatelliteThread(Thread):
         try:
             self.adc = ADC(self.gyro)
             self.adc.read_temperature()
-        except Exception:
+        except Exception as e:
             self.adc = None
+            log_error(e)
             logger.error("ADC initialization failed")
         else:
             logger.info("ADC initialized")
@@ -143,24 +155,27 @@ class MainSatelliteThread(Thread):
         try:
             self.rtc = RTC()
             self.rtc.get_time()
-        except Exception:
+        except Exception as e:
             self.rtc = None
+            log_error(e)
             logger.error("RTC initialization failed")
         else:
             logger.info("RTC initialized")
 
         try:
             self.nemo_manager = NemoManager(port_id=3, data_dir=NEMO_DIR, reset_gpio_ch=16)
-        except Exception:
+        except Exception as e:
             self.nemo_manager = None
+            log_error(e)
             logger.error("NEMO initialization failed")
         else:
             logger.info("NEMO initialized")
 
         try:
             self.radio = Radio()
-        except Exception:
+        except Exception as e:
             self.radio = None
+            log_error(e)
             logger.error("RADIO initialization failed")
         else:
             logger.info("Radio initialized")
@@ -169,8 +184,9 @@ class MainSatelliteThread(Thread):
         try:
             self.mux = camera.CameraMux()
             self.mux.selectCamera(1)
-        except Exception:
+        except Exception as e:
             self.mux = None
+            log_error(e)
             logger.error("MUX initialization failed")
         else:
             logger.info("Mux initialized")
@@ -185,7 +201,8 @@ class MainSatelliteThread(Thread):
                     try:
                         self.mux.selectCamera(i)
                         f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
-                    except Exception:
+                    except Exception as e:
+                        log_error(e)
                         logger.error(f"CAM{i} initialization failed")
                         cameras_list[i - 1] = 0
                     else:
@@ -220,6 +237,7 @@ class MainSatelliteThread(Thread):
     def poll_inputs(self):
 
         self.flight_mode.poll_inputs()
+        # TODO: move this following if block to the telemetry file
         if self.radio is not None:
             # Telemetry downlink
             if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:

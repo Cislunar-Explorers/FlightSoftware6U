@@ -123,7 +123,7 @@ class MainSatelliteThread(Thread):
                 ', which could not be found in parameters.json'
             )
 
-    def init_sensors(self):
+    def init_sensors(self) -> int:
         try:
             self.gom = Gomspace()
         except Exception as e:
@@ -319,16 +319,19 @@ class MainSatelliteThread(Thread):
 
     # Wrap in try finally block to ensure it stays live
     def run(self):
-        """This is the main loop of the Cislunar Explorers and runs constantly during flight."""
+        """This is the main loop of the Cislunar Explorers FSW and runs constantly during flight."""
         try:
             while True:
-                #sleep(5)  # TODO remove when flight modes execute real tasks
-                
+                # sleep(5)  # TODO remove when flight modes execute real tasks
+
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
+        except Exception as e:
+            log_error(e, exc_info=1)
+            logger.error("Error in main loop. Transitioning to SAFE mode")
         finally:
             # TODO handle failure gracefully
             if FOR_FLIGHT is True:

@@ -1,7 +1,4 @@
 import sys
-
-HOOTL = '--hootl' in sys.argv
-
 from threading import Thread
 from multiprocessing import Process
 from time import time
@@ -34,19 +31,17 @@ from utils.boot_cause import hard_boot
 
 from communications.comms_driver import CommunicationsSystem
 
-if not HOOTL:
-    from communications.satellite_radio import Radio
-    from drivers.gom import Gomspace
-    from drivers.gyro import GyroSensor
-    from drivers.ADCDriver import ADC
-    from drivers.rtc import RTC
-    from drivers.nemo.nemo_manager import NemoManager
-    import OpticalNavigation.core.camera as camera
+from communications.satellite_radio import Radio
+from drivers.gom import Gomspace
+from drivers.gyro import GyroSensor
+from drivers.ADCDriver import ADC
+from drivers.rtc import RTC
+from drivers.nemo.nemo_manager import NemoManager
+import OpticalNavigation.core.camera as camera
 
 FOR_FLIGHT = None
 
 logger = get_log()
-HOOTL = 'hootl' in sys.argv
 
 
 class MainSatelliteThread(Thread):

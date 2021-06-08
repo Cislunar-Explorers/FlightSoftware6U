@@ -1,19 +1,23 @@
-#Packing Imports
+# Packing Imports
 import utils.struct as us
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException, SerializationException
 from sys import maxsize, float_info
 
-#Transimission Imports
+# Transimission Imports
 import logging
 import time
-import board
-import busio
+from adafruit_blinka.agnostic import board_id
+
+if board_id:
+    import board
+    import busio
 from adafruit_bus_device.spi_device import SPIDevice
 from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 
 from datetime import datetime
+
 
 class Radio():
 

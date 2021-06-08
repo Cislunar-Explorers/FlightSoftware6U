@@ -104,18 +104,21 @@ class MainSatelliteThread(Thread):
         self.comms.listen()
 
     def init_parameters(self):
-        with open(PARAMETERS_JSON_PATH) as f:
-            json_parameter_dict = load(f)
-
         try:
-            for parameter in utils.parameters.__dir__():
-                if parameter[0] != '_':
-                    utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
-        except:
-            raise CislunarException(
-                f'Attempted to set parameter ' + str(parameter) +
-                ', which could not be found in parameters.json'
-            )
+            with open(PARAMETERS_JSON_PATH) as f:
+                json_parameter_dict = load(f)
+
+            try:
+                for parameter in utils.parameters.__dir__():
+                    if parameter[0] != '_':
+                        utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
+            except:
+                raise CislunarException(
+                    f'Attempted to set parameter ' + str(parameter) +
+                    ', which could not be found in parameters.json'
+                )
+        except Exception as e:
+            log_error(e)
 
     def init_sensors(self) -> int:
         try:
@@ -316,7 +319,7 @@ class MainSatelliteThread(Thread):
         """This is the main loop of the Cislunar Explorers FSW and runs constantly during flight."""
         try:
             while True:
-                # sleep(5)  # TODO remove when flight modes execute real tasks
+                sleep(2)  # TODO remove when flight modes execute real tasks
 
                 self.poll_inputs()
                 self.update_state()

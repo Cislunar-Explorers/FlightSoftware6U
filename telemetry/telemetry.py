@@ -135,7 +135,7 @@ class PiSensor(SynchronousSensor):
         self.disk = int(psutil.disk_usage("/").percent)
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
-        if board_id:
+        if board_id and board_id != 'GENERIC_LINUX_PC':
             self.tmp = float(popen("vcgencmd measure_temp").readline().strip()[5:-2])
         self.all = (self.cpu,
                     self.ram,

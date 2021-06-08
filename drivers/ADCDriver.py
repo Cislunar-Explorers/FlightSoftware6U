@@ -14,7 +14,7 @@
 
 from adafruit_blinka.agnostic import board_id
 
-if board_id:
+if board_id and board_id != 'GENERIC_LINUX_PC':
     import ADS1115
 from drivers.gyro import GyroSensor
 

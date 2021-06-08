@@ -2,7 +2,7 @@
 # pip3 install adafruit-circuitpython-busdevice vcgencmd Adafruit-Blinka
 from adafruit_blinka.agnostic import board_id
 
-if board_id:
+if board_id and board_id != 'GENERIC_LINUX_PC':
     import board
     import busio
     from vcgencmd import Vcgencmd

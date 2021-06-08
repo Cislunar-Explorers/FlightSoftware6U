@@ -80,8 +80,7 @@ class MainSatelliteThread(Thread):
         self.radio: Optional[Radio] = None
         self.mux: Optional[camera.CameraMux] = None
         self.camera: Optional[camera.Camera] = None
-        if not HOOTL:
-            self.init_sensors()
+        self.init_sensors()
 
         # Telemetry
         self.tlm = Telemetry(self)

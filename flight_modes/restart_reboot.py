@@ -10,6 +10,7 @@ import psutil
 
 logger = get_log()
 
+
 class BootUpMode(FlightMode):
     flight_mode_id = FMEnum.Boot.value
     command_codecs = {BootCommandEnum.Split.value: ([], 0)}

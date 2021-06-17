@@ -83,17 +83,6 @@ class GyroSensor(SynchronousSensor):
     def get_mag(self):
         return self.mag
 
-    # def write(self):
-    #     gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
-    #     gyro_model = GyroModel.gyro_from_tuple(gyro_tuple)
-    #
-    #     try:
-    #         session = self.parent.create_session()
-    #         session.add(gyro_model)
-    #         session.commit()
-    #     finally:
-    #         session.close()
-
 
 class PressureSensor(SynchronousSensor):
     def __init__(self, parent):
@@ -299,12 +288,7 @@ class Telemetry(SynchronousSensor):
                 GOM_curout4=self.gom.hk.curout[3],
                 GOM_curout5=self.gom.hk.curout[4],
                 GOM_curout6=self.gom.hk.curout[5],
-
-                # TODO figure out if this is just one or array
-                # GOM_outputs = Column(Integer),
-                GOM_outputs=self.gom.hk.outputs[0],
-
-
+                GOM_outputs=int(str(eps_hk_t.output).replace(',', '').replace(' ', '')[1:-1], 2),
                 GOM_latchup1=self.gom.hk.latchup[0],
                 GOM_latchup2=self.gom.hk.latchup[1],
                 GOM_latchup3=self.gom.hk.latchup[2],
@@ -325,12 +309,12 @@ class Telemetry(SynchronousSensor):
                 GOM_pptmode=self.gom.hk.pptmode,
                 GOM_reserved2=self.gom.hk.reserved2,
                 RTC_measurement_taken=self.rtc.rtc_time,
-                RPI_cpu=self.cpu,  # TODO: fix this
-                RPI_ram=self.ram,
-                RPI_dsk=self.disk,
-                RPI_tmp=self.tmp,
-                RPI_boot=self.boot_time,
-                RPI_uptime=self.up_time,
+                RPI_cpu=self.rpi.cpu,
+                RPI_ram=self.rpi.ram,
+                RPI_dsk=self.rpi.disk,
+                RPI_tmp=self.rpi.tmp,
+                RPI_boot=self.rpi.boot_time,
+                RPI_uptime=self.rpi.up_time,
                 GYRO_gyr_x=gx,
                 GYRO_gyr_y=gy,
                 GYRO_gyr_z=gz,
@@ -341,64 +325,10 @@ class Telemetry(SynchronousSensor):
                 GYRO_mag_y=by,
                 GYRO_mag_z=bz,
                 GYRO_temperature=self.gyr.tmp,
-                THERMOCOUPLE_pressure=self.thm.tmp,
+                THERMOCOUPLE_temperature=self.thm.tmp,
                 PRESSURE_pressure=self.pressure
             )
             self.session.add(telemetry_data)
             self.session.commit()
         finally:
             self.session.close()
-
-    def query_telem(self, sensor):
-        if sensor.equals("all"):
-            self.query_all()
-        elif sensor.equals("gom"):
-            self.query_gom()
-        elif sensor.equals("rtc"):
-            self.query_rtc()
-        elif sensor.equals("rpi"):
-            self.query_rpi()
-        elif sensor.equals("gyro"):
-            self.query_gyro()
-        elif sensor.equals("thm"):
-            self.query_thm()
-        elif sensor.equals("pressure"):
-            self.query_pressure()
-        else:
-            raise ValueError
-
-    def query_all(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries:
-            print(entry)
-
-    def query_gom(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[1:37]:
-            print(entry)
-
-    def query_rtc(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[37:38]:
-            print(entry)
-
-    def query_rpi(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[38:44]:
-            print(entry)
-
-    def query_gyro(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[44:55]:
-            print(entry)
-
-    def query_thm(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[55:56]:
-            print(entry)
-
-    def query_pressure(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[56:57]:
-            print(entry)
-

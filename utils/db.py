@@ -15,11 +15,10 @@ create_session = sessionmaker()
 SQLAlchemyTableBase = declarative_base()
 
 # NOTE do not use foreign key in any of these tables
-# TODO implement Model classes for all sensor data to be stored
 
 
 class CommandModel(SQLAlchemyTableBase):
-    __tablename__ = "commands"
+    __tablename__ = "Commands"
 
     id = Column(Integer, primary_key=True)
     command_received = Column(DateTime)
@@ -32,38 +31,6 @@ class CommandModel(SQLAlchemyTableBase):
         return f"<CommandModel(Name={self.name}, app_code={self.app_code}, " \
                f"opcode={self.opcode} executed_at=" \
                f"{str(self.executed_at) if self.executed_at is not None else 'NE'})>"
-
-
-class PressureModel(SQLAlchemyTableBase):
-    __tablename__ = "pressure"
-
-    id = Column(Integer, primary_key=True)
-    measurement_taken = Column(DateTime)
-    pressure = Column(Float)
-
-    def __repr__(self):
-        return (f"<PressureModel(pressure={self.pressure}, "
-                f"taken_at={str(self.measurement_taken)})>")
-
-
-class ThermocoupleModel(SQLAlchemyTableBase):
-    __tablename__ = "thermocouple"
-
-    id = Column(Integer, primary_key=True)
-    measurement_taken = Column(DateTime)
-    pressure = Column(Float)
-
-
-class RTCModel(SQLAlchemyTableBase):
-    __tablename__ = "rtc"
-
-    id = Column(Integer, primary_key=True)
-    measurement_taken = Column(DateTime)
-    time_retrieved = Column(DateTime)
-
-    def __repr__(self):
-        return (f"<RTCModel(TimeRetrieved={str(self.time_retrieved)}, "
-                f"taken_at={str(self.time_retrieved)})>")
 
 
 class OpNavTrajectoryStateModel(SQLAlchemyTableBase):
@@ -122,6 +89,7 @@ class OpNavTrajectoryStateModel(SQLAlchemyTableBase):
             f"{self.position_y}, {self.position_z}), "
             f"covariance matrix trace=({self.r1c1+self.r2c2+self.r3c3+self.r4c4+self.r5c5+self.r6c6}))>"
         )
+
 
 class OpNavAttitudeStateModel(SQLAlchemyTableBase):
     __tablename__ = "opnav_attitude_state"
@@ -188,6 +156,7 @@ class OpNavAttitudeStateModel(SQLAlchemyTableBase):
             f"covariance matrix trace=({self.r1c1+self.r2c2+self.r3c3+self.r4c4+self.r5c5+self.r6c6}))>"
         )
 
+
 class OpNavEphemerisModel(SQLAlchemyTableBase):
     __tablename__ = "opnav_ephemeris"
 
@@ -240,6 +209,7 @@ class OpNavEphemerisModel(SQLAlchemyTableBase):
             f"moon ephemeris=({self.moon_x}, {self.moon_y}, {self.moon_z}, {self.moon_vx}, {self.moon_vy}, {self.moon_vz}))>"
         )
 
+
 class OpNavCameraMeasurementModel(SQLAlchemyTableBase):
     __tablename__ = "opnav_camera_measurement_state"
 
@@ -288,6 +258,7 @@ class OpNavCameraMeasurementModel(SQLAlchemyTableBase):
             f", camera measurement=({self.ang_em}, {self.ang_es}, {self.ang_ms}, {self.e_dia}, {self.m_dia}, {self.s_dia}))>"
         )
 
+
 class OpNavGyroMeasurementModel(SQLAlchemyTableBase):
     __tablename__ = "opnav_gyro_measurement_state"
 
@@ -320,6 +291,7 @@ class OpNavGyroMeasurementModel(SQLAlchemyTableBase):
             f", gyro measurement=({self.omegax}, {self.omegay}, {self.omegaz}))>"
         )
 
+
 class OpNavPropulsionModel(SQLAlchemyTableBase):
     __tablename__ = "opnav_propulsion_state"
 
@@ -349,6 +321,7 @@ class OpNavPropulsionModel(SQLAlchemyTableBase):
             f", acceleration=({self.acceleration}))>"
         )
 
+
 class RebootsModel(SQLAlchemyTableBase):
     __tablename__ = "Reboots"
 
@@ -360,192 +333,11 @@ class RebootsModel(SQLAlchemyTableBase):
         return f"<RebootsModel(is boot up?={self.is_bootup}, reboot_at={str(self.reboot_at)})>"
 
 
-class GyroModel(SQLAlchemyTableBase):
-    __tablename__ = "9DoF"
-
-    id = Column(Integer, primary_key=True)
-    time_polled = Column(Float)
-    gyr_x = Column(Float)
-    gyr_y = Column(Float)
-    gyr_z = Column(Float)
-    acc_x = Column(Float)
-    acc_y = Column(Float)
-    acc_z = Column(Float)
-    mag_x = Column(Float)
-    mag_y = Column(Float)
-    mag_z = Column(Float)
-    temperature = Column(Float)
-
-    @staticmethod
-    def from_tuple(gyro_tuple: tuple):
-        gyro_data, acc_data, mag_data, temperature, time = gyro_tuple
-        gx, gy, gz = gyro_data
-        ax, ay, az = acc_data
-        bx, by, bz = mag_data
-        return GyroModel(
-            time_polled=time,
-            gyr_x=gx,
-            gyr_y=gy,
-            gyr_z=gz,
-            acc_x=ax,
-            acc_y=ay,
-            acc_z=az,
-            mag_x=bx,
-            mag_y=by,
-            mag_z=bz,
-            temperature=temperature
-        )
-
-    def __repr__(self):
-        return (
-            f"<GyroModel("
-            f"gyr=({self.gyr_x}, {self.gyr_y}, {self.gyr_z}),"
-            f"acc=({self.acc_x}, {self.acc_y}, {self.acc_z}), "
-            f"mag=({self.mag_x}, {self.mag_y}, {self.mag_z}),"
-            f"temp={self.temperature}"
-            f"time={self.time_polled})>"
-        )
-
-
-class RPiModel(SQLAlchemyTableBase):
-    __tablename__ = "RPi"
-
-    id = Column(Integer, primary_key=True)
-    time_polled = Column(DateTime)
-    cpu = Column(Integer)
-    ram = Column(Integer)
-    dsk = Column(Integer)
-    tmp = Column(Integer)
-    boot = Column(Float)
-    uptime = Column(Float)
-
-    @staticmethod
-    def from_tuple(rpi_tuple: tuple):
-        cpu, ram, dsk, boot_time, uptime, temp, poll_time = rpi_tuple
-        temp = int(temp * 10)
-        # we save 2 bytes of downlink by converting the rpi temperature to an int (which is then packed as a short
-        # during transmission), but we don't lose any accuracy. On the GS we will need to divide the temperature by 10
-
-        return RPiModel(
-            time_polled=poll_time,
-            cpu=cpu,
-            ram=ram,
-            dsk=dsk,
-            boot=boot_time,
-            uptime=uptime,
-            tmp=temp
-        )
-
-    def __repr__(self):
-        return (
-            f"<RPiModel("
-            f"cpu={self.cpu}, "
-            f"ram={self.ram}, "
-            f"dsk={self.dsk}, "
-            f"temp={self.tmp}, "
-            f"boot time={self.boot_time}, "
-            f"uptime={self.uptime}, "
-            f"poll time={self.time_polled})>"
-        )
-
-
-class GomModel(SQLAlchemyTableBase):
-    __tablename__ = "Gom"
-    # See drivers/power/power_structs.py line #115 for reference
-    id = Column(Integer, primary_key=True)
-    time_polled = Column(DateTime)
-    vboost1 = Column(Integer)
-    vboost2 = Column(Integer)
-    vboost3 = Column(Integer)
-    vbatt = Column(Integer)
-    curin1 = Column(Integer)
-    curin2 = Column(Integer)
-    curin3 = Column(Integer)
-    cursun = Column(Integer)
-    cursys = Column(Integer)
-    reserved1 = Column(Integer)
-    curout1 = Column(Integer)
-    curout2 = Column(Integer)
-    curout3 = Column(Integer)
-    curout4 = Column(Integer)
-    curout5 = Column(Integer)
-    curout6 = Column(Integer)
-    outputs = Column(Integer)
-    latchup1 = Column(Integer)
-    latchup2 = Column(Integer)
-    latchup3 = Column(Integer)
-    latchup4 = Column(Integer)
-    latchup5 = Column(Integer)
-    latchup6 = Column(Integer)
-    wdt_i2c_time_left = Column(Integer)
-    wdt_gnd_time_left = Column(Integer)
-    counter_wdt_i2c = Column(Integer)
-    counter_wdt_gnd = Column(Integer)
-    counter_boot = Column(Integer)
-    bootcause = Column(Integer)
-    battmode = Column(Integer)
-    temp1 = Column(Integer)
-    temp2 = Column(Integer)
-    temp3 = Column(Integer)
-    temp4 = Column(Integer)
-    pptmode = Column(Integer)
-    reserved2 = Column(Integer)
-
-    @staticmethod
-    def from_struct(eps_hk: eps_hk_t, poll_time):
-        return GomModel(
-            time_polled=poll_time,
-            vboost1=eps_hk.vboost[0],
-            vboost2=eps_hk.vboost[1],
-            vboost3=eps_hk.vboost[2],
-            vbatt=eps_hk.vbatt,
-            curin1=eps_hk.curin[0],
-            curin2=eps_hk.curin[1],
-            curin3=eps_hk.curin[2],
-            cursun=eps_hk.cursun,
-            cursys=eps_hk.cursys,
-            reserved1=eps_hk.reserved1,
-            curout1=eps_hk.curout[0],
-            curout2=eps_hk.curout[1],
-            curout3=eps_hk.curout[2],
-            curout4=eps_hk.curout[3],
-            curout5=eps_hk.curout[4],
-            curout6=eps_hk.curout[5],
-            outputs=int(str(eps_hk.output).replace(',', '').replace(' ', '')[1:-1], 2),
-            latchup1=eps_hk.latchup[0],
-            latchup2=eps_hk.latchup[1],
-            latchup3=eps_hk.latchup[2],
-            latchup4=eps_hk.latchup[3],
-            latchup5=eps_hk.latchup[4],
-            latchup6=eps_hk.latchup[5],
-            wdt_i2c_time_left=eps_hk.wdt_i2c_time_left,
-            wdt_gnd_time_left=eps_hk.wdt_gnd_time_left,
-            counter_wdt_i2c=eps_hk.counter_wdt_i2c,
-            counter_wdt_gnd=eps_hk.counter_wdt_gnd,
-            counter_boot=eps_hk.counter_boot,
-            temp1=eps_hk.temp[0],
-            temp2=eps_hk.temp[1],
-            temp3=eps_hk.temp[2],
-            temp4=eps_hk.temp[3],
-            bootcause=eps_hk.bootcause,
-            battmode=eps_hk.battmode,
-            pptmode=eps_hk.pptmode,
-            reserved2=eps_hk.reserved2
-        )
-
-    def __repr__(self):
-        return (f""
-                f""
-                f""
-                f"")
-        # TODO
-
-
 class TelemetryModel(SQLAlchemyTableBase):
     __tablename__ = "Telemetry"
 
     id = Column(Integer, primary_key=True)
-    time_polled = Column(DateTime)  # FIXME
+    time_polled = Column(Float)
 
     # GOM DATA
     GOM_vboost1 = Column(Integer)
@@ -609,16 +401,78 @@ class TelemetryModel(SQLAlchemyTableBase):
     GYRO_temperature = Column(Float)
 
     # THERMOCOUPLE DATA
-    THERMOCOUPLE_pressure = Column(Float)
+    THERMOCOUPLE_temperature = Column(Float)
 
     # PRESSURE DATA
     PRESSURE_pressure = Column(Float)
+
+    def __repr__(self):
+        return (
+            f"<TelemetryModel("
+            f"time_polled={self.time_polled}, "
+            f"GOM_vboost1={self.GOM_vboost1}, "
+            f"GOM_vboost2={self.GOM_vboost2}, "
+            f"GOM_vboost3={self.GOM_vboost3}, "
+            f"GOM_vbatt={self.GOM_vbatt}, "
+            f"GOM_curin1={self.GOM_curin1}, "
+            f"GOM_curin2={self.GOM_curin2}, "
+            f"GOM_curin3={self.GOM_curin3}, "
+            f"GOM_cursun={self.GOM_cursun}, "
+            f"GOM_cursys={self.GOM_cursys}, "
+            f"GOM_reserved1={self.GOM_reserved1}, "
+            f"GOM_curout1={self.GOM_curout1}, "
+            f"GOM_curout2={self.GOM_curout2}, "
+            f"GOM_curout3={self.GOM_curout3}, "
+            f"GOM_curout4={self.GOM_curout4}, "
+            f"GOM_curout5={self.GOM_curout5}, "
+            f"GOM_curout6={self.GOM_curout6}, "
+            f"GOM_outputs={self.GOM_outputs}, "
+            f"GOM_latchup1={self.GOM_latchup1}, "
+            f"GOM_latchup2={self.GOM_latchup2}, "
+            f"GOM_latchup3={self.GOM_latchup3}, "
+            f"GOM_latchup4={self.GOM_latchup4}, "
+            f"GOM_latchup5={self.GOM_latchup5}, "
+            f"GOM_latchup6={self.GOM_latchup6}, "
+            f"GOM_wdt_i2c_time_left={self.GOM_wdt_i2c_time_left}, "
+            f"GOM_wdt_gnd_time_left={self.GOM_wdt_gnd_time_left}, "
+            f"GOM_counter_wdt_i2c={self.GOM_counter_wdt_i2c}, "
+            f"GOM_counter_wdt_gnd={self.GOM_counter_wdt_gnd}, "
+            f"GOM_counter_boot={self.GOM_counter_boot}, "
+            f"GOM_bootcause={self.GOM_bootcause}, "
+            f"GOM_battmode={self.GOM_battmode}, "
+            f"GOM_temp1={self.GOM_temp1}, "
+            f"GOM_temp2={self.GOM_temp2}, "
+            f"GOM_temp3={self.GOM_temp3}, "
+            f"GOM_temp4={self.GOM_temp4}, "
+            f"GOM_pptmode={self.GOM_pptmode}, "
+            f"GOM_reserved2={self.GOM_reserved2}, "
+            f"RTC_measurement_taken={self.RTC_measurement_taken}, "
+            f"RPI_cpu={self.RPI_cpu}, "
+            f"RPI_ram={self.RPI_ram}, "
+            f"RPI_dsk={self.RPI_dsk}, "
+            f"RPI_tmp={self.RPI_tmp}, "            
+            f"RPI_boot={self.RPI_boot}, "
+            f"RPI_uptime={self.RPI_uptime}, "           
+            f"GYRO_gyr_x={self.GYRO_gyr_x}, "
+            f"GYRO_gyr_y={self.GYRO_gyr_y}, "
+            f"GYRO_gyr_z={self.GYRO_gyr_z}, "
+            f"GYRO_acc_x={self.GYRO_acc_x}, "
+            f"GYRO_acc_y={self.GYRO_acc_y}, "
+            f"GYRO_acc_z={self.GYRO_acc_z}, "
+            f"GYRO_mag_x={self.GYRO_mag_x}, "
+            f"GYRO_mag_y={self.GYRO_mag_y}, "
+            f"GYRO_mag_z={self.GYRO_mag_z}, "
+            f"GYRO_temperature={self.GYRO_temperature}, "
+            f"THERMOCOUPLE_pressure={self.THERMOCOUPLE_temperature}, "
+            f"PRESSURE_pressure={self.PRESSURE_pressure})>"
+        )
 
 
 def create_sensor_tables(engine):
     SQLAlchemyTableBase.metadata.create_all(engine)
     create_session.configure(bind=engine)
     return create_session
+
 
 def create_sensor_tables_from_path(path: str):
     engine = create_engine(path)

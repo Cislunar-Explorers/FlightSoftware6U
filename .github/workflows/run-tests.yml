@@ -4,10 +4,9 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -19,7 +18,10 @@ jobs:
         pip install -e .[dev]
         cd OpticalNavigation && pip install -e . && cd ..
         pip install matplotlib
-    - name: Test with pytest
-      run: |
-        pytest tests/
-        # pytest OpticalNavigation/tests/
+      - name: Test with pytest
+        run: |
+          pytest tests/
+          # pytest OpticalNavigation/tests/
+      - name: Run pyright
+        uses: jakebailey/pyright-action@v1.0.2
+

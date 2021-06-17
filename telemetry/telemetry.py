@@ -307,12 +307,12 @@ class Telemetry(SynchronousSensor):
                 GOM_pptmode=self.gom.hk.pptmode,
                 GOM_reserved2=self.gom.hk.reserved2,
                 RTC_measurement_taken=self.rtc.rtc_time,
-                RPI_cpu=self.cpu,  # TODO: fix this
-                RPI_ram=self.ram,
-                RPI_dsk=self.disk,
-                RPI_tmp=self.tmp,
-                RPI_boot=self.boot_time,
-                RPI_uptime=self.up_time,
+                RPI_cpu=self.rpi.cpu,
+                RPI_ram=self.rpi.ram,
+                RPI_dsk=self.rpi.disk,
+                RPI_tmp=self.rpi.tmp,
+                RPI_boot=self.rpi.boot_time,
+                RPI_uptime=self.rpi.up_time,
                 GYRO_gyr_x=gx,
                 GYRO_gyr_y=gy,
                 GYRO_gyr_z=gz,
@@ -323,7 +323,7 @@ class Telemetry(SynchronousSensor):
                 GYRO_mag_y=by,
                 GYRO_mag_z=bz,
                 GYRO_temperature=self.gyr.tmp,
-                THERMOCOUPLE_pressure=self.thm.tmp,
+                THERMOCOUPLE_temperature=self.thm.tmp,
                 PRESSURE_pressure=self.pressure
             )
             self.session.add(telemetry_data)

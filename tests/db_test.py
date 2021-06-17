@@ -150,7 +150,7 @@ def make_entry(session):
         GYRO_temperature=54.0,
 
         # THERMOCOUPLE DATA
-        THERMOCOUPLE_pressure=55.0,
+        THERMOCOUPLE_temperature=55.0,
 
         # PRESSURE DATA
         PRESSURE_pressure=56.0

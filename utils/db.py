@@ -401,7 +401,7 @@ class TelemetryModel(SQLAlchemyTableBase):
     GYRO_temperature = Column(Float)
 
     # THERMOCOUPLE DATA
-    THERMOCOUPLE_pressure = Column(Float)
+    THERMOCOUPLE_temperature = Column(Float)
 
     # PRESSURE DATA
     PRESSURE_pressure = Column(Float)
@@ -463,7 +463,7 @@ class TelemetryModel(SQLAlchemyTableBase):
             f"GYRO_mag_y={self.GYRO_mag_y}, "
             f"GYRO_mag_z={self.GYRO_mag_z}, "
             f"GYRO_temperature={self.GYRO_temperature}, "
-            f"THERMOCOUPLE_pressure={self.THERMOCOUPLE_pressure}, "
+            f"THERMOCOUPLE_pressure={self.THERMOCOUPLE_temperature}, "
             f"PRESSURE_pressure={self.PRESSURE_pressure})>"
         )
 

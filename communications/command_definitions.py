@@ -19,7 +19,7 @@ import subprocess
 
 import os
 import utils.parameters as params
-from telemetry.telemetry import Telemetry
+# from telemetry.telemetry import Telemetry
 
 
 def verification(**kwargs):

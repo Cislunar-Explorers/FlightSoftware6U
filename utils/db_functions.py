@@ -1,23 +1,27 @@
+from typing import Dict
+
 from utils.db import TelemetryModel, CommandModel, RebootsModel
 from utils.db import OpNavTrajectoryStateModel, OpNavAttitudeStateModel, OpNavPropulsionModel
 from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavGyroMeasurementModel
+from utils.db import SQLAlchemyTableBase
 from utils.db import create_sensor_tables_from_path
 from utils.constants import DB_ENTRY_LIMIT
+from utils.log import log as logger
 
 # TODO change MEMORY_DB_PATH back to DB_FILE
 MEMORY_DB_PATH = "sqlite://"
 
 # each key is the "__tablename__" for each model in db.py
-databases_dict = {"Commands": CommandModel,
-                  "opnav_trajectory_state": OpNavTrajectoryStateModel,
-                  "opnav_attitude_state": OpNavAttitudeStateModel,
-                  "opnav_ephemeris": OpNavEphemerisModel,
-                  "opnav_camera_measurement_state": OpNavCameraMeasurementModel,
-                  "opnav_gyro_measurement_state": OpNavGyroMeasurementModel,
-                  "opnav_propulsion_state": OpNavPropulsionModel,
-                  "Reboots": RebootsModel,
-                  "Telemetry": TelemetryModel
-                  }
+databases_dict: Dict[str, SQLAlchemyTableBase] = {"Commands": CommandModel,
+                                                  "opnav_trajectory_state": OpNavTrajectoryStateModel,
+                                                  "opnav_attitude_state": OpNavAttitudeStateModel,
+                                                  "opnav_ephemeris": OpNavEphemerisModel,
+                                                  "opnav_camera_measurement_state": OpNavCameraMeasurementModel,
+                                                  "opnav_gyro_measurement_state": OpNavGyroMeasurementModel,
+                                                  "opnav_propulsion_state": OpNavPropulsionModel,
+                                                  "Reboots": RebootsModel,
+                                                  "Telemetry": TelemetryModel
+                                                  }
 
 
 def display_model(model, session):
@@ -29,9 +33,9 @@ def display_model(model, session):
     try:
         entries = session.query(databases_dict.get(model)).all()
         for entry in range(len(entries)):
-            print(entries[entry])
+            logger.info(entries[entry])
     except:
-        print("error during display_model")
+        logger.error("error during display_model")
 
 
 def display_model_amount(model, amount, session):
@@ -42,10 +46,10 @@ def display_model_amount(model, amount, session):
     try:
         entries = session.query(databases_dict.get(model)).all()
         length = len(entries)
-        for entry in range(length-amount, length):
-            print(entries[entry])
+        for entry in range(length - amount, length):
+            logger.info(entries[entry])
     except:
-        print("error during display_model_amount")
+        logger.error("error during display_model_amount")
 
 
 def telemetry_query(datatype, amount, session):
@@ -59,8 +63,8 @@ def telemetry_query(datatype, amount, session):
         if datatype == "ALL":
             entries = session.query(TelemetryModel).all()
             length = len(entries)
-            for entry in range(length-amount, length):
-                print(entries[entry])
+            for entry in range(length - amount, length):
+                logger.info(entries[entry])
         elif datatype == "GOM":
             GOM_query = session.query(TelemetryModel.time_polled,
                                       TelemetryModel.GOM_vboost1,
@@ -101,15 +105,15 @@ def telemetry_query(datatype, amount, session):
                                       TelemetryModel.GOM_reserved2,
                                       ).all()
             length = len(GOM_query)
-            for entry in range(length-amount, length):
-                print(GOM_query[entry])
+            for entry in range(length - amount, length):
+                logger.info(GOM_query[entry])
         elif datatype == "RTC":
             RTC_query = session.query(TelemetryModel.time_polled,
                                       TelemetryModel.RTC_measurement_taken
                                       ).all()
             length = len(RTC_query)
-            for entry in range(length-amount, length):
-                print(RTC_query[entry])
+            for entry in range(length - amount, length):
+                logger.info(RTC_query[entry])
         elif datatype == "RPI":
             RPI_query = session.query(TelemetryModel.time_polled,
                                       TelemetryModel.RPI_cpu,
@@ -120,8 +124,8 @@ def telemetry_query(datatype, amount, session):
                                       TelemetryModel.RPI_uptime,
                                       ).all()
             length = len(RPI_query)
-            for entry in range(length-amount, length):
-                print(RPI_query[entry])
+            for entry in range(length - amount, length):
+                logger.info(RPI_query[entry])
         elif datatype == "GYRO":
             GYRO_query = session.query(TelemetryModel.time_polled,
                                        TelemetryModel.GYRO_gyr_x,
@@ -136,24 +140,24 @@ def telemetry_query(datatype, amount, session):
                                        TelemetryModel.GYRO_temperature
                                        ).all()
             length = len(GYRO_query)
-            for entry in range(length-amount, length):
-                print(GYRO_query[entry])
+            for entry in range(length - amount, length):
+                logger.info(GYRO_query[entry])
         elif datatype == "THERMO":
             THERMO_query = session.query(TelemetryModel.time_polled,
-                                         TelemetryModel.THERMOCOUPLE_pressure
+                                         TelemetryModel.THERMOCOUPLE_temperature
                                          ).all()
             length = len(THERMO_query)
-            for entry in range(length-amount, length):
-                print(THERMO_query[entry])
+            for entry in range(length - amount, length):
+                logger.info(THERMO_query[entry])
         elif datatype == "PRESSURE":
             PRESSURE_query = session.query(TelemetryModel.time_polled,
                                            TelemetryModel.PRESSURE_pressure
                                            ).all()
             length = len(PRESSURE_query)
-            for entry in range(length-amount, length):
-                print(PRESSURE_query[entry])
+            for entry in range(length - amount, length):
+                logger.info(PRESSURE_query[entry])
     except:
-        print("error during telemetry_query")
+        logger.error("error during telemetry_query")
 
 
 def clean(model, session, entry_limit=DB_ENTRY_LIMIT):
@@ -169,7 +173,7 @@ def clean(model, session, entry_limit=DB_ENTRY_LIMIT):
         for x in range(number_to_delete):
             session.delete(entries[x])
     except:
-        print("error during clean")
+        logger.error("error during clean")
 
 
 def wipe(model, session):
@@ -183,4 +187,4 @@ def wipe(model, session):
         for entry in entries:
             session.delete(entry)
     except:
-        print("error during wipe")
+        logger.error("error during wipe")

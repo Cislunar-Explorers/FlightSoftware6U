@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -11,13 +12,13 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.7.5'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .[dev]
-        cd OpticalNavigation && pip install -e . && cd ..
-        pip install matplotlib
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .[dev]
+          cd OpticalNavigation && pip install -e . && cd ..
+          pip install matplotlib
       - name: Test with pytest
         run: |
           pytest tests/

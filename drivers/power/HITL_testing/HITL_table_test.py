@@ -1,7 +1,7 @@
 # Commands we want to test on the HITL table in SP2020
 
-import power_controller as pc
-import power_structs as ps
+import drivers.power.power_controller as pc
+import drivers.power.power_structs as ps
 import time
 
 HITL_test = pc.Power()
@@ -50,7 +50,7 @@ ps.gom_logger.debug("\n--- TESTING COMPONENT FUNCTIONS --- \n")
 time.sleep(5)
 ps.gom_logger.debug("Testing burnwire:")
 ps.gom_logger.debug("You should see HITL outputs 9 and 10 light up")
-HITL_test.burnwire(1)
+HITL_test.burnwire1(1)
 time.sleep(1)
 
 ps.gom_logger.debug("Testing Glowplug")

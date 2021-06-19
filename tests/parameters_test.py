@@ -16,11 +16,11 @@ def test_parameters():
         json_parameter_dict = load(f)
 
     try:
-        for parameter in utils.parameters.__dir__():
+        for parameter in dir(utils.parameters):
             if parameter[0] != '_':
-                utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
+                setattr(utils.parameters, parameter, json_parameter_dict[parameter])
 
-    except:
+    except Exception:
         raise CislunarException(
             f'Attempted to set parameter {parameter}, which could not be found in parameters.json'
         )

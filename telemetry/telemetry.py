@@ -324,7 +324,7 @@ class Telemetry(SynchronousSensor):
                 GYRO_mag_z=bz,
                 GYRO_temperature=self.gyr.tmp,
                 THERMOCOUPLE_temperature=self.thm.tmp,
-                PRESSURE_pressure=self.pressure
+                PRESSURE_pressure=self.prs.pressure
             )
             self.session.add(telemetry_data)
             self.session.commit()

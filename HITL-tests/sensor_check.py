@@ -32,14 +32,17 @@ def check_sensor_board():
     else:
         logger.info(f"Gyro initialization successful. Gyro rates: {gyro_data}")
 
-    try:
-        adc = ADC(gyro)
-        temp = adc.read_temperature()
-        pressure = adc.read_pressure()
-    except Exception:
-        logger.error("ADC init failed. Check power, gnd, and SDA/SCL connections to sensor board")
+    if gyro:
+        try:
+            adc = ADC(gyro)
+            temp = adc.read_temperature()
+            pressure = adc.read_pressure()
+        except Exception:
+            logger.error("ADC init failed. Check power, gnd, and SDA/SCL connections to sensor board")
+        else:
+            logger.info(f"ADC initialization successful. Pressure:{pressure}, Thermocouple:{temp}")
     else:
-        logger.info(f"ADC initialization successful. Pressure:{pressure}, Thermocouple:{temp}")
+        logger.warning("Not initializing ADC because Gyro failed")
 
     try:
         rtc = RTC()

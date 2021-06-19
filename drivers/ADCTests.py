@@ -10,7 +10,8 @@
 # look at the accompanying End of Semester Report found here:
 # https://cornell.app.box.com/file/664230352636
 
-from ADCDriver import ADC
+from drivers.ADCDriver import ADC
+from drivers.gyro import GyroSensor
 import time
 from utils.log import get_log
 
@@ -20,7 +21,7 @@ assert sum([1, 2, 3]) == 6, "Should be 6"
 
 
 def test_ADC_initialize():
-    return ADC()
+    return ADC(GyroSensor())
 
 
 def test_ADC_read_pressure(testADC):
@@ -67,7 +68,7 @@ def test_ADC_read_temperature_20(testADC):
 
 
 def test_ADC_get_gyro_temp(testADC):
-    test_log.info("Cold junction temperature fro gyro sensor in Celsius:")
+    test_log.info("Cold junction temperature from gyro sensor in Celsius:")
     test_log.info(testADC.get_gyro_temp())
 
 
@@ -76,7 +77,7 @@ if True:
     test_ADC_get_gyro_temp(testADC)
     # test_ADC_read_pressure_20(testADC)
     print("Conversion sanity check: 25.6 degrees")
-    print(testADC.convert_volt_to_temp(testADC, testADC.convert_temp_to_volt(25.6)))
+    print(testADC.convert_volt_to_temp(testADC.convert_temp_to_volt(25.6)))
     print("Conversion sanity check: 2.023 mV")
-    print(testADC.convert_temp_to_volt(testADC, testADC.convert_volt_to_temp(2.023)))
+    print(testADC.convert_temp_to_volt(testADC.convert_volt_to_temp(2.023)))
     test_ADC_read_temperature_continuous(testADC)

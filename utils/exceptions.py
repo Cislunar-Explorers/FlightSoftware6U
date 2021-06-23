@@ -33,12 +33,6 @@ class CommandPackingException(SerializationException):
 class CommandUnpackingException(DeserializationException):
     """Raise when an exception occurs while unpacking a command"""
 
-class DownlinkPackingException(SerializationException):
-    """Raise when an exception occurs while packing downlink data"""
-
-class DownlinkUnpackingException(DeserializationException):
-    """Raise when an exception occurs while unpacking downlink data"""
-
 
 class DownlinkPackingException(SerializationException):
     """Raise when an exception occurs while packing downlink data"""

@@ -43,14 +43,6 @@ logger = get_log()
 
 
 class MainSatelliteThread(Thread):
-    gom: Gomspace
-    gyro: GyroSensor
-    adc: ADC
-    rtc: RTC
-    radio: Radio
-    mux: camera.CameraMux
-    camera: camera.Camera
-
     def __init__(self):
         super().__init__()
         logger.info("Initializing...")
@@ -78,7 +70,14 @@ class MainSatelliteThread(Thread):
         self.attach_sigint_handler()  # FIXME
         self.file_block_bank = {}
         self.need_to_reboot = False
-
+        self.gom: Gomspace
+        self.gyro: GyroSensor
+        self.adc: ADC
+        self.rtc: RTC
+        self.radio: Radio
+        self.mux: camera.CameraMux
+        self.camera: camera.Camera
+        self.nemo_manager: NemoManager
         self.init_sensors()
 
         # Telemetry
@@ -103,19 +102,19 @@ class MainSatelliteThread(Thread):
         self.comms.listen()
 
     @staticmethod
-    def init_parameters(self):
+    def init_parameters():
         with open(PARAMETERS_JSON_PATH) as f:
             json_parameter_dict = load(f)
 
-        try:
-            for parameter in dir(utils.parameters):
+        for parameter in dir(utils.parameters):
+            try:
                 if parameter[0] != '_':
                     setattr(utils.parameters, parameter, json_parameter_dict[parameter])
-        except:
-            raise CislunarException(
-                f'Attempted to set parameter ' + str(parameter) +
-                ', which could not be found in parameters.json'
-            )
+            except KeyError:
+                raise CislunarException(
+                    f'Attempted to set parameter ' + str(parameter) +
+                    ', which could not be found in parameters.json'
+                )
 
     def init_sensors(self):
         try:

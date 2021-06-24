@@ -64,7 +64,7 @@ def check_radio():
 
 def check_nemo():
     try:
-        nemo = Nemo(reset_gpio_ch=16)
+        nemo = Nemo(port_id=3, reset_gpio_ch=16)
         nemo.self_test()
     except Exception:
         logger.error("NEMO init failed. Check 'i2cdetect -y 3' for device address 0x13")

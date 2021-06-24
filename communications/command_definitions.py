@@ -26,7 +26,7 @@ def verification(**kwargs):
     """CQC Comms Verification
     For more info see https://cornell.app.box.com/file/766365097328
     Assuming a data rate of 50 bits/second, 30 minutes of data transmission gives 78 data blocks"""
-    num_blocks = kwargs.get(NUM_BLOCKS)
+    num_blocks: int = kwargs.get(NUM_BLOCKS)
 
     data_block_sequence_num = 0
     team_bytes = team_identifier.to_bytes(4, 'big')
@@ -209,23 +209,23 @@ class CommandDefinitions:
         self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
         self.parent.logger.info("Setting RTC time to 1e9")
-        self.parent.rtc.set_time(1e9)
+        self.parent.rtc.set_time(int(1e9))
         self.parent.logger.info("New RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
         self.parent.logger.info("Incrementing RTC Time by 5555 seconds")
         self.parent.rtc.increment_rtc(5555)
         self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
         self.parent.logger.info("Disabling Oscillator, waiting 10 seconds")
-        self.parent.rtc.disable_oscillator()
+        # self.parent.rtc.disable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
         self.parent.logger.info("Enabling Oscillator, waiting 10 seconds")
-        self.parent.rtc.enable_oscillator()
+        # self.parent.rtc.enable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
         self.parent.logger.info("Disabling Oscillator")
-        self.parent.rtc.disable_oscillator()
-        self.parent.handle_sigint()
+        # self.parent.rtc.disable_oscillator()
+        self.parent.handle_sigint(None, None)
 
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
@@ -261,7 +261,7 @@ class CommandDefinitions:
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
         initial_value = getattr(params, name)
-        params.__setattr__(name, value)
+        setattr(params, name, value)
 
         # Hard sets new parameter value into JSON file
         if hard_set:
@@ -376,7 +376,7 @@ class CommandDefinitions:
         self.parent.logger.info(f"{index}:{value}")
 
     def reboot_gom(self):
-        self.parent.gom.gom.reboot()
+        self.parent.gom.pc.reboot()
 
     def power_cycle(self, **kwargs):
         passcode = kwargs.get('passcode', 'bogus')
@@ -413,13 +413,15 @@ class CommandDefinitions:
 
         gyro = self.parent.gyro.get_gyro()
 
-        fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value,
+        fx_data = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+                                                             FMEnum.TestMode.value,
                                                              TestCommandEnum.CommsDriver.value,
                                                              gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
 
         time.sleep(5)
         self.parent.radio.transmit(fx_data)
 
+    @staticmethod
     def pi_shutdown(self):
         os.system('sudo poweroff')
 
@@ -628,7 +630,7 @@ class CommandDefinitions:
 
     def get_gom_conf1(self, **kwargs):
         if self.parent.gom is not None:
-            current_config = self.parent.gom.get_health_data(level="config")
+            current_config: ps.eps_config_t = self.parent.gom.get_health_data(level="config")
             ps.displayConfig(current_config)
             current_config_dict = dict_from_eps_config(current_config)
             # acknowledgement = self.parent.downlink_handler.pack_downlink(
@@ -651,15 +653,6 @@ class CommandDefinitions:
             #    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
             #    **current_config2_dict)
             # self.parent.downlink_queue.put(acknowledgement)
-
-    def get_gom_conf1(self, **kwargs):
-        raise NotImplementedError
-
-    def set_gom_conf2(self, **kwargs):
-        raise NotImplementedError
-
-    def get_gom_conf2(self, **kwargs):
-        raise NotImplementedError
 
     def shell_command(self, **kwargs):
         cmd: str = kwargs.get(CMD)

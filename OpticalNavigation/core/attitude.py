@@ -255,10 +255,10 @@ def updateQuaternionEstimate(xhatkp, qhatkm):
 def resetSigmaSeed(xhatkp):
     return np.array([[0., 0., 0., xhatkp[3][0], xhatkp[4][0], xhatkp[5][0]]]).T
 
-def UKFSingle(cameradt:np.float, gyroVars:GyroVars, P0:np.ndarray, 
-            x0:np.ndarray, q0:np.ndarray, omegas, 
-            estimatedSatState, moonEph:np.ndarray, 
-            sunEph:np.ndarray, timeline:List[np.float]) -> AttitudeEstimateOutput:
+def UKFSingle(cameradt: float, gyroVars: GyroVars, P0: np.ndarray,
+              x0: np.ndarray, q0: np.ndarray, omegas,
+              estimatedSatState, moonEph: np.ndarray,
+              sunEph: np.ndarray, timeline: List[float]) -> AttitudeEstimateOutput:
     """
     NOTE: Does not make any assumptions about gyroSampleCount
     let n = # of camera measurements in batch
@@ -325,10 +325,11 @@ def UKFSingle(cameradt:np.float, gyroVars:GyroVars, P0:np.ndarray,
                                 new_P=CovarianceMatrix(matrix=Phat_kp1), 
                                 new_quat=QuaternionVector.from_numpy_array(quat=qhat_kp1))
 
-def runAttitudeUKF(cameradt:np.float, gyroVars:GyroVars, P0:CovarianceMatrix, 
-                x0:AttitudeStateVector, quat:QuaternionVector, omegas:List[GyroMeasurementVector], 
-                satState, moonEph:np.ndarray, 
-                sunEph:np.ndarray, timeline:List[np.float], singleIteration=False) -> AttitudeEstimateOutput:
+
+def runAttitudeUKF(cameradt: float, gyroVars: GyroVars, P0: CovarianceMatrix,
+                   x0: AttitudeStateVector, quat: QuaternionVector, omegas: List[GyroMeasurementVector],
+                   satState, moonEph: np.ndarray,
+                   sunEph: np.ndarray, timeline: List[float], singleIteration=False) -> AttitudeEstimateOutput:
     """
     Runs the attitude UKF and produces attitude estimates in the form of:
         1) attitde error state (Rodriguez Parameters) + bias (size 6x1)

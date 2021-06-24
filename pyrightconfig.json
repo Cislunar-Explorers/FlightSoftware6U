@@ -1,0 +1,9 @@
+{
+  "ignore": [
+    "drivers/nemo",
+    "OpticalNavigation/tests",
+    "OpticalNavigation/simulations"
+  ],
+  "pythonVersion": "3.7",
+  "pythonPlatform": "Linux"
+}

@@ -1,6 +1,7 @@
 from typing import List
-from OpticalNavigation.core.const import AttitudeEstimateOutput, AttitudeStateVector, CovarianceMatrix, EphemerisVector, GyroMeasurementVector, GyroVars, QuaternionVector
-from OpticalNavigation.core.const import AttitudeUKFConstants
+from core.const import AttitudeEstimateOutput, AttitudeStateVector, CovarianceMatrix, EphemerisVector, \
+    GyroMeasurementVector, GyroVars, QuaternionVector
+from core.const import AttitudeUKFConstants
 import numpy as np
 from numpy.linalg import inv
 from numpy.linalg import pinv

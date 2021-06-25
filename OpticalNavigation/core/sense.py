@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from OpticalNavigation.core.camera import Camera, CameraMux
+from core.camera import Camera, CameraMux
 
 def select_camera(id):
     """

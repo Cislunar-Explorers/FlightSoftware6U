@@ -2,8 +2,19 @@
   "ignore": [
     "drivers/nemo",
     "OpticalNavigation/tests",
-    "OpticalNavigation/simulations"
+    "OpticalNavigation/simulations",
+    "OpticalNavigation/experiments",
+    "OpticalNavigation/core/find_with_contours.py",
+    "OpticalNavigation/core/find_with_blobs.py",
+    "communications/ax5043_manager",
+    "communications/comms_driver.py"
+  ],
+  "extraPaths": [
+    "OpticalNavigation/"
   ],
   "pythonVersion": "3.7",
-  "pythonPlatform": "Linux"
+  "pythonPlatform": "Linux",
+  "reportUnboundVariable": "warning",
+  "reportSelfClsParameterName": "error",
+  "reportMissingImports": "info"
 }

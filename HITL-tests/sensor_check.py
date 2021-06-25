@@ -3,8 +3,8 @@ from drivers.rtc import RTC
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from communications.satellite_radio import Radio
-from OpticalNavigation.core.camera import Camera
-from OpticalNavigation.core.camera import CameraMux
+from core.camera import Camera
+from core.camera import CameraMux
 from drivers.nemo.nemo import Nemo
 from utils.log import get_log
 from time import time

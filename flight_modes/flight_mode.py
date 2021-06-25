@@ -108,7 +108,7 @@ class FlightMode:
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
-    def register_commands(cls):
+    def register_commands(self):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def run_mode(self):

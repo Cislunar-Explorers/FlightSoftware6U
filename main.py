@@ -35,7 +35,7 @@ from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
-import OpticalNavigation.core.camera as camera
+import core.camera as camera
 
 FOR_FLIGHT = None
 
@@ -106,10 +106,10 @@ class MainSatelliteThread(Thread):
         with open(PARAMETERS_JSON_PATH) as f:
             json_parameter_dict = load(f)
 
-        for parameter in dir(utils.parameters):
+        for parameter in dir(params):
             try:
                 if parameter[0] != '_':
-                    setattr(utils.parameters, parameter, json_parameter_dict[parameter])
+                    setattr(params, parameter, json_parameter_dict[parameter])
             except KeyError:
                 raise CislunarException(
                     f'Attempted to set parameter ' + str(parameter) +

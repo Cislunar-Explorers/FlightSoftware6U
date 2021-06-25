@@ -43,7 +43,7 @@ class GyroSensor(SynchronousSensor):
         self.rot: Tuple[float, float, float] = (float(), float(), float())  # rad/s
         self.mag: Tuple[float, float, float] = (float(), float(), float())  # microTesla
         self.acc: Tuple[float, float, float] = (float(), float(), float())  # m/s^2
-        self.tmp: float = float()  # deg C
+        self.tmp: int = int()  # deg C
 
     def poll(self):
         super().poll()

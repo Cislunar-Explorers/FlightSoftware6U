@@ -1,11 +1,12 @@
 from typing import List
-from OpticalNavigation.core.const import AttitudeEstimateOutput, AttitudeStateVector, CovarianceMatrix, GyroMeasurementVector, GyroVars, QuaternionVector
+from core.const import AttitudeEstimateOutput, AttitudeStateVector, CovarianceMatrix, GyroMeasurementVector, GyroVars, \
+    QuaternionVector
 import pytest
 
-from OpticalNavigation.core.attitude import runAttitudeUKF
-from OpticalNavigation.simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
-from OpticalNavigation.simulations.sim import isOrthogonal 
-from OpticalNavigation.core.ukf import __attitudeMatrix
+from core.attitude import runAttitudeUKF
+from simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
+from simulations.sim import isOrthogonal
+from core.ukf import __attitudeMatrix
 
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
@@ -16,7 +17,7 @@ from copy import deepcopy
 from scipy.interpolate import InterpolatedUnivariateSpline
 from tqdm import tqdm
 
-import OpticalNavigation.tests.gen_opnav_data as generator
+import tests.gen_opnav_data as generator
 
 def test_attitude_6_hours():
     secPerMin = 60

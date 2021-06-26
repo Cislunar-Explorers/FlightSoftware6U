@@ -6,8 +6,20 @@
     "OpticalNavigation/experiments",
     "OpticalNavigation/core/find_with_contours.py",
     "OpticalNavigation/core/find_with_blobs.py",
+    "OpticalNavigation/core/find_with_kmeans.py",
+    "OpticalNavigation/core/camera.py",
+    "OpticalNavigation/core/const.py",
+    "OpticalNavigation/core/preprocess.py",
     "communications/ax5043_manager",
-    "communications/comms_driver.py"
+    "communications/comms_driver.py",
+    "HITL-tests/comms_hardware_transmit.py",
+    "HITL-tests/comms_security_test.py",
+    "HITL-tests/file_transmitter.py",
+    "HITL-tests/flight_unit_downlink.py",
+    "HITL-tests/flight_unit_receive.py",
+    "HITL-tests/hitl_groundstation_tx.py",
+    "HITL-tests/signal_test_satellite.py",
+    "flight_modes/opnav_flightmode.py"
   ],
   "extraPaths": [
     "OpticalNavigation/"
@@ -16,5 +28,5 @@
   "pythonPlatform": "Linux",
   "reportUnboundVariable": "warning",
   "reportSelfClsParameterName": "error",
-  "reportMissingImports": "info"
+  "reportMissingImports": "information"
 }

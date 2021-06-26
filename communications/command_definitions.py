@@ -424,7 +424,8 @@ class CommandDefinitions:
         self.parent.radio.transmit(fx_data)
 
     @staticmethod
-    def pi_shutdown(self):
+    def pi_shutdown(**kwargs):
+        # TODO: do this more gracefully
         os.system('sudo poweroff')
 
     def edit_file_at_line(self, **kwargs):
@@ -716,7 +717,7 @@ def dict_from_eps_config(config: ps.eps_config_t) -> dict:
 
 def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     ppt_mode = kwargs.get(PPT_MODE)
-    heater_mode = int(kwargs.get(BATTHEATERMODE))  # BATTHEATERMODE is transmitted as a bool, then cast to 0/1
+    heater_mode = int(kwargs[BATTHEATERMODE])  # BATTHEATERMODE is transmitted as a bool, then cast to 0/1
     heater_low = kwargs.get(BATTHEATERLOW)
     heater_high = kwargs.get(BATTHEATERHIGH)
     normal_output: List[bool] = cast('List[bool]', [kwargs.get(OUTPUT_NORMAL1),

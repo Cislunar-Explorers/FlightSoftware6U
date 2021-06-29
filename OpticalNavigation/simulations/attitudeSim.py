@@ -2,16 +2,17 @@ import pandas as pd
 import numpy as np
 import math
 import os
-from OpticalNavigation.simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
-from OpticalNavigation.simulations.sim import isOrthogonal 
-from OpticalNavigation.tests.gen_opnav_data import generateSyntheticData
-from OpticalNavigation.core.ukf import __attitudeMatrix
+from simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
+from simulations.sim import isOrthogonal
+from tests.gen_opnav_data import generateSyntheticData
+from core.ukf import __attitudeMatrix
 import argparse
 
 ### FOR CAMERA ORIENTATION ###
 from scipy.linalg import expm, norm
 from numpy import cross, eye, dot
-import math 
+import math
+
 
 def M(axis, theta):
     """

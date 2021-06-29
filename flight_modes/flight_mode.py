@@ -108,7 +108,7 @@ class FlightMode:
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
-    def register_commands(cls):
+    def register_commands(self):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def run_mode(self):
@@ -123,19 +123,18 @@ class FlightMode:
             finished_commands = []
 
             for command in self.parent.commands_to_execute:
-
                 bogus = False
+                mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(
+                    command)
+                logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                 try:
-                    mac, counter, command_fm, command_id, command_kwargs = self.parent.command_handler.unpack_command(
-                        command)
-                    logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self.parent.command_definitions.COMMAND_DICT
                     assert command_id in self.parent.command_definitions.COMMAND_DICT[command_fm]
                 except AssertionError:
                     logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
                     bogus = True
 
-                if bogus is not True:
+                if not bogus:
                     # changes the flight mode if command's FM is different.
                     if command_fm != self.flight_mode_id:
                         self.parent.replace_flight_mode_by_id(command_fm)
@@ -145,7 +144,7 @@ class FlightMode:
                     downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
 
                     # Pack downlink given what the command returned
-                    if downlink_args != None:
+                    if downlink_args is not None:
                         downlink = self.parent.downlink_handler.pack_downlink(
                             self.parent.downlink_counter, command_fm, command_id,
                             **downlink_args)
@@ -301,6 +300,7 @@ class CommsMode(FlightMode):
         super_fm = super().update_state()
         if super_fm != NO_FM_CHANGE:
             return super_fm
+        return NO_FM_CHANGE
 
     def run_mode(self):
         if not self.parent.downlink_queue.empty():
@@ -414,10 +414,6 @@ class SafeMode(FlightMode):
 
 
 class NormalMode(FlightMode):
-
-    def register_commands(cls):
-        pass
-
     flight_mode_id = FMEnum.Normal.value
 
     command_codecs = {

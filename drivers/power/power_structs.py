@@ -333,7 +333,7 @@ def toBytes(i, num):
 
     acc = []
     for n in range(num):
-        acc += [int(bytes[8 * n : 8 * (n + 1)], 2)]
+        acc += [int(bytes[8 * n: 8 * (n + 1)], 2)]
 
     return bytearray(acc)
 
@@ -356,7 +356,7 @@ def c_structToBytes(s):
 # bytearray -> c_bytearray -> struct
 # converts a python bytearray [i] to a struct [s].
 # raises: TODO: how to check types of ctypes
-def c_bytesToStruct(i, s):
+def c_bytesToStruct(i: bytearray, s: str):
     assert type(i) == bytearray
     assert type(s) == str
     return c_byteArrayToStruct(c_bytesToByteArray(i), s)
@@ -494,7 +494,7 @@ def displayHK(hk):
     #    + "%s"
     #    % R(
     #        (
-    #                hk.channel_status
+    #                hk.channel_status # I will give $5 to whoever can explain wtf is going on here
     #                >> _
     #                >> bin
     #                >> _

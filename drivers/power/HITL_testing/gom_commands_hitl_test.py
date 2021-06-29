@@ -43,7 +43,7 @@ sleep(2)
 
 test.burnwire1(5)
 
-test.burnwire2(5)
+# test.burnwire2(5)
 
 sleep(3)
 

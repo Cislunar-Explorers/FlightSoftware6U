@@ -1,16 +1,19 @@
-from OpticalNavigation.core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, TrajUKFConstants, TrajectoryStateVector
-from OpticalNavigation.core.acquisition import startAcquisition, readOmega
-from OpticalNavigation.core.cam_meas import cameraMeasurements
-import OpticalNavigation.core.ukf as traj_ukf
-import OpticalNavigation.core.attitude as attitude
-from OpticalNavigation.core.sense import select_camera, record_video, record_gyro
-from OpticalNavigation.core.preprocess import extract_frames
-from OpticalNavigation.core.find_with_contours import *
-from OpticalNavigation.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
+from core.const import AttitudeStateVector, CameraMeasurementVector, CameraParameters, CameraRecordingParameters, \
+    CovarianceMatrix, EphemerisVector, GyroVars, ImageDetectionCircles, MainThrustInfo, QuaternionVector, \
+    TrajUKFConstants, TrajectoryStateVector
+from core.acquisition import startAcquisition, readOmega
+from core.cam_meas import cameraMeasurements
+import core.ukf as traj_ukf
+import core.attitude as attitude
+from core.sense import select_camera, record_video, record_gyro
+from core.preprocess import extract_frames
+from core.find_with_contours import *
+from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
 import numpy as np
 import traceback
 from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
-from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
+from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, \
+    RebootsModel
 from utils.constants import DB_FILE
 from utils.log import *
 from datetime import datetime, timedelta
@@ -88,7 +91,7 @@ def __closest(session: session.Session, ts, model):
     # if an event is None its diff will always be greater as we set it to infinity
     return gt_event if gt_diff < lt_diff else lt_event
 
-def __calculate_cam_measurements(body1:np.ndarray, body2:np.ndarray) -> np.float:
+def __calculate_cam_measurements(body1: np.ndarray, body2: np.ndarray) -> float:
     """
     Calculates angular separation between two bodies.
     Source: https://stackoverflow.com/questions/52210911/great-circle-distance-between-two-p-x-y-z-points-on-a-unit-sphere
@@ -98,7 +101,7 @@ def __calculate_cam_measurements(body1:np.ndarray, body2:np.ndarray) -> np.float
     @return
     angular separation in radians
     """
-    d_em = math.sqrt((body1[0]-body2[0])**2+(body1[1]-body2[1])**2+(body1[2]-body2[2])**2)
+    d_em = math.sqrt((body1[0] - body2[0]) ** 2 + (body1[1] - body2[1]) ** 2 + (body1[2] - body2[2]) ** 2)
     return 2 * math.asin(d_em/2)
 ################################
 
@@ -163,28 +166,30 @@ def __observe(session: session.Session, gyro_count: int, camera_params:CameraPar
     #frames2 = extract_frames(vid_dir=recordings[2][0], endTimestamp = recordings[2][1])
     #frames3 = extract_frames(vid_dir=recordings[3][0], endTimestamp = recordings[3][1])
     #frames4 = extract_frames(vid_dir=recordings[4][0], endTimestamp = recordings[4][1])
-    #frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
-    #frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
+    # frames5 = extract_frames(vid_dir=recordings[5][0], endTimestamp = recordings[5][1])
+    # frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
-    #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
+    # frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
     frames = glob.glob("/home/pi/surrender_images/*.jpg")
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
-    #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
-    earthDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
-    moonDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
-    sunDetectionArray = np.zeros((len(frames), 4), dtype = np.float)
+    # These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
+    earthDetectionArray = np.zeros((len(frames), 4), dtype=float)
+    moonDetectionArray = np.zeros((len(frames), 4), dtype=float)
+    sunDetectionArray = np.zeros((len(frames), 4), dtype=float)
     logger.info("[OPNAV]: Finding...")
     progress = 1
     for f in range(len(frames)):
         logger.info(f"[OPNAV]: Image {progress}/96: {frames[f]}")
-        imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
+        imageDetectionCircles = find(
+            frames[f])  # Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
-        logger.info(f"[OPNAV]: Result: Earth: {imageDetectionCircles.get_earth_detection()}, Moon: {imageDetectionCircles.get_moon_detection()}, Sun: {imageDetectionCircles.get_sun_detection()}")
+        logger.info(
+            f"[OPNAV]: Result: Earth: {imageDetectionCircles.get_earth_detection()}, Moon: {imageDetectionCircles.get_moon_detection()}, Sun: {imageDetectionCircles.get_sun_detection()}")
         progress += 1
 
 

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, List
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
@@ -19,6 +19,8 @@ import subprocess
 
 import os
 import utils.parameters as params
+
+
 # from telemetry.telemetry import Telemetry
 
 
@@ -26,7 +28,7 @@ def verification(**kwargs):
     """CQC Comms Verification
     For more info see https://cornell.app.box.com/file/766365097328
     Assuming a data rate of 50 bits/second, 30 minutes of data transmission gives 78 data blocks"""
-    num_blocks = kwargs.get(NUM_BLOCKS)
+    num_blocks: int = cast('int', kwargs.get(NUM_BLOCKS))
 
     data_block_sequence_num = 0
     team_bytes = team_identifier.to_bytes(4, 'big')
@@ -209,23 +211,23 @@ class CommandDefinitions:
         self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
         self.parent.logger.info("Setting RTC time to 1e9")
-        self.parent.rtc.set_time(1e9)
+        self.parent.rtc.set_time(int(1e9))
         self.parent.logger.info("New RTC Time: {self.parent.rtc.get_time()}")
         # time.sleep(1)
         self.parent.logger.info("Incrementing RTC Time by 5555 seconds")
         self.parent.rtc.increment_rtc(5555)
         self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
         self.parent.logger.info("Disabling Oscillator, waiting 10 seconds")
-        self.parent.rtc.disable_oscillator()
+        # self.parent.rtc.disable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
         self.parent.logger.info("Enabling Oscillator, waiting 10 seconds")
-        self.parent.rtc.enable_oscillator()
+        # self.parent.rtc.enable_oscillator()
         time.sleep(10)
         self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
         self.parent.logger.info("Disabling Oscillator")
-        self.parent.rtc.disable_oscillator()
-        self.parent.handle_sigint()
+        # self.parent.rtc.disable_oscillator()
+        self.parent.handle_sigint(None, None)
 
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
@@ -261,7 +263,7 @@ class CommandDefinitions:
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
         initial_value = getattr(params, name)
-        params.__setattr__(name, value)
+        setattr(params, name, value)
 
         # Hard sets new parameter value into JSON file
         if hard_set:
@@ -376,7 +378,7 @@ class CommandDefinitions:
         self.parent.logger.info(f"{index}:{value}")
 
     def reboot_gom(self):
-        self.parent.gom.gom.reboot()
+        self.parent.gom.pc.reboot()
 
     def power_cycle(self, **kwargs):
         passcode = kwargs.get('passcode', 'bogus')
@@ -413,14 +415,17 @@ class CommandDefinitions:
 
         gyro = self.parent.gyro.get_gyro()
 
-        fx_data = self.parent.downlink_handler.pack_downlink(FMEnum.TestMode.value,
+        fx_data = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
+                                                             FMEnum.TestMode.value,
                                                              TestCommandEnum.CommsDriver.value,
                                                              gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
 
         time.sleep(5)
         self.parent.radio.transmit(fx_data)
 
-    def pi_shutdown(self):
+    @staticmethod
+    def pi_shutdown(**kwargs):
+        # TODO: do this more gracefully
         os.system('sudo poweroff')
 
     def edit_file_at_line(self, **kwargs):
@@ -461,7 +466,7 @@ class CommandDefinitions:
     def set_file_to_update(self, **kwargs):
 
         file_path = kwargs['file_path']
-        params.__setattr__('FILE_UPDATE_PATH', file_path)
+        setattr(params, 'FILE_UPDATE_PATH', file_path)
 
     def add_file_block(self, **kwargs):
 
@@ -479,8 +484,8 @@ class CommandDefinitions:
 
     def get_file_blocks_info(self, **kwargs):
         """Downlink checksum of file blocks and any missing block numbers"""
-        
-        time.sleep(15) #For testing only
+
+        time.sleep(15)  # For testing only
 
         total_blocks = kwargs['total_blocks']
         full_file_text = ''
@@ -496,7 +501,7 @@ class CommandDefinitions:
                 missing_blocks += str(i) + ','
 
         checksum = hashlib.md5(full_file_text.encode('utf-8')).hexdigest()
-        
+
         return ({
             'checksum': checksum,
             'missing_blocks': missing_blocks
@@ -628,7 +633,7 @@ class CommandDefinitions:
 
     def get_gom_conf1(self, **kwargs):
         if self.parent.gom is not None:
-            current_config = self.parent.gom.get_health_data(level="config")
+            current_config: ps.eps_config_t = cast('ps.eps_config_t', self.parent.gom.get_health_data(level="config"))
             ps.displayConfig(current_config)
             current_config_dict = dict_from_eps_config(current_config)
             # acknowledgement = self.parent.downlink_handler.pack_downlink(
@@ -644,7 +649,7 @@ class CommandDefinitions:
 
     def get_gom_conf2(self, **kwargs):
         if self.parent.gom is not None:
-            current_conf2 = self.parent.gom.get_health_data(level='config2')
+            current_conf2 = cast('ps.eps_config2_t', self.parent.gom.get_health_data(level='config2'))
             ps.displayConfig2(current_conf2)
             current_config2_dict = dict_from_eps_config2(current_conf2)
             # acknowledgement = self.parent.downlink_handler.pack_downlink(
@@ -652,17 +657,8 @@ class CommandDefinitions:
             #    **current_config2_dict)
             # self.parent.downlink_queue.put(acknowledgement)
 
-    def get_gom_conf1(self, **kwargs):
-        raise NotImplementedError
-
-    def set_gom_conf2(self, **kwargs):
-        raise NotImplementedError
-
-    def get_gom_conf2(self, **kwargs):
-        raise NotImplementedError
-
     def shell_command(self, **kwargs):
-        cmd: str = kwargs.get(CMD)
+        cmd: str = cast('str', kwargs.get(CMD))
         self.parent.logger.info(f"Running {cmd}")
         output = subprocess.run(cmd, shell=True)
 
@@ -674,17 +670,17 @@ class CommandDefinitions:
 
     def sudo_command(self, **kwargs):
         """Same as shell_command, but prepends 'sudo ' to the command"""
-        cmd: str = kwargs.get(CMD)
+        cmd: str = cast('str', kwargs.get(CMD))
         command = 'sudo ' + cmd
         self.shell_command(cmd=command)
 
     def picberry(self, **kwargs):
-        cmd: str = kwargs.get(CMD)
+        cmd: str = cast('str', kwargs.get(CMD))
         base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
         subprocess.run(base_command + cmd, shell=True)
 
     def exec_py_file(self, **kwargs):
-        filename: str = kwargs.get(FNAME)
+        filename: str = cast('str', kwargs.get(FNAME))
         filename += '.py'
         self.parent.logger.debug(f"CWD: {os.getcwd()}")
         exec(open(filename).read())
@@ -721,30 +717,30 @@ def dict_from_eps_config(config: ps.eps_config_t) -> dict:
 
 def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     ppt_mode = kwargs.get(PPT_MODE)
-    heater_mode = int(kwargs.get(BATTHEATERMODE))  # BATTHEATERMODE is transmitted as a bool, then cast to 0/1
+    heater_mode = int(kwargs[BATTHEATERMODE])  # BATTHEATERMODE is transmitted as a bool, then cast to 0/1
     heater_low = kwargs.get(BATTHEATERLOW)
     heater_high = kwargs.get(BATTHEATERHIGH)
-    normal_output = [kwargs.get(OUTPUT_NORMAL1),
-                     kwargs.get(OUTPUT_NORMAL2),
-                     kwargs.get(OUTPUT_NORMAL3),
-                     kwargs.get(OUTPUT_NORMAL4),
-                     kwargs.get(OUTPUT_NORMAL5),
-                     kwargs.get(OUTPUT_NORMAL6),
-                     kwargs.get(OUTPUT_NORMAL7),
-                     kwargs.get(OUTPUT_NORMAL8)]
+    normal_output: List[bool] = cast('List[bool]', [kwargs.get(OUTPUT_NORMAL1),
+                                                    kwargs.get(OUTPUT_NORMAL2),
+                                                    kwargs.get(OUTPUT_NORMAL3),
+                                                    kwargs.get(OUTPUT_NORMAL4),
+                                                    kwargs.get(OUTPUT_NORMAL5),
+                                                    kwargs.get(OUTPUT_NORMAL6),
+                                                    kwargs.get(OUTPUT_NORMAL7),
+                                                    kwargs.get(OUTPUT_NORMAL8)])
 
-    normal_output = list(map(int, normal_output))  # transmitted as bools, convert to ints
+    normal_output_int = list(map(int, normal_output))  # transmitted as bools, convert to ints
 
-    safe_output = [kwargs.get(OUTPUT_SAFE1),
-                   kwargs.get(OUTPUT_SAFE2),
-                   kwargs.get(OUTPUT_SAFE3),
-                   kwargs.get(OUTPUT_SAFE4),
-                   kwargs.get(OUTPUT_SAFE5),
-                   kwargs.get(OUTPUT_SAFE6),
-                   kwargs.get(OUTPUT_SAFE7),
-                   kwargs.get(OUTPUT_SAFE8)]
+    safe_output: List[bool] = cast('List[bool]', [kwargs.get(OUTPUT_SAFE1),
+                                                  kwargs.get(OUTPUT_SAFE2),
+                                                  kwargs.get(OUTPUT_SAFE3),
+                                                  kwargs.get(OUTPUT_SAFE4),
+                                                  kwargs.get(OUTPUT_SAFE5),
+                                                  kwargs.get(OUTPUT_SAFE6),
+                                                  kwargs.get(OUTPUT_SAFE7),
+                                                  kwargs.get(OUTPUT_SAFE8)])
 
-    safe_output = list(map(int, safe_output))  # transmitted as bools, convert to ints
+    safe_output_int: List[int] = list(map(int, safe_output))  # transmitted as bools, convert to ints
 
     # this means that all outputs have the same on/off delay
     initial_on_delay = [kwargs.get(OUTPUT_ON_DELAY)] * 8
@@ -758,23 +754,23 @@ def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     new_config.battheater_low = heater_low
     new_config.battheater_high = heater_high
 
-    new_config.output_normal_value[0] = normal_output[0]
-    new_config.output_normal_value[1] = normal_output[1]
-    new_config.output_normal_value[2] = normal_output[2]
-    new_config.output_normal_value[3] = normal_output[3]
-    new_config.output_normal_value[4] = normal_output[4]
-    new_config.output_normal_value[5] = normal_output[5]
-    new_config.output_normal_value[6] = normal_output[6]
-    new_config.output_normal_value[7] = normal_output[7]
+    new_config.output_normal_value[0] = normal_output_int[0]
+    new_config.output_normal_value[1] = normal_output_int[1]
+    new_config.output_normal_value[2] = normal_output_int[2]
+    new_config.output_normal_value[3] = normal_output_int[3]
+    new_config.output_normal_value[4] = normal_output_int[4]
+    new_config.output_normal_value[5] = normal_output_int[5]
+    new_config.output_normal_value[6] = normal_output_int[6]
+    new_config.output_normal_value[7] = normal_output_int[7]
 
-    new_config.output_safe_value[0] = safe_output[0]
-    new_config.output_safe_value[1] = safe_output[1]
-    new_config.output_safe_value[2] = safe_output[2]
-    new_config.output_safe_value[3] = safe_output[3]
-    new_config.output_safe_value[4] = safe_output[4]
-    new_config.output_safe_value[5] = safe_output[5]
-    new_config.output_safe_value[6] = safe_output[6]
-    new_config.output_safe_value[7] = safe_output[7]
+    new_config.output_safe_value[0] = safe_output_int[0]
+    new_config.output_safe_value[1] = safe_output_int[1]
+    new_config.output_safe_value[2] = safe_output_int[2]
+    new_config.output_safe_value[3] = safe_output_int[3]
+    new_config.output_safe_value[4] = safe_output_int[4]
+    new_config.output_safe_value[5] = safe_output_int[5]
+    new_config.output_safe_value[6] = safe_output_int[6]
+    new_config.output_safe_value[7] = safe_output_int[7]
 
     new_config.output_initial_on_delay[0] = initial_on_delay[0]
     new_config.output_initial_on_delay[1] = initial_on_delay[1]

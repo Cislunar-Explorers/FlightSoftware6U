@@ -10,6 +10,7 @@
 # Status: Main functionality completed
 #         Higher level functions completed
 #         Some testing necessary
+from typing import cast
 
 import pigpio
 import drivers.power.power_structs as ps
@@ -316,7 +317,7 @@ class Power:
     def config_get(self) -> ps.eps_config_t:
         ps.gom_logger.debug("Getting current config")
         self.write(CMD_CONFIG_GET, [])
-        return ps.c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
+        return cast('ps.eps_config_t', ps.c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t"))
 
     # takes eps_config_t struct and sets configuration
     # Input struct is of type eps_config_t

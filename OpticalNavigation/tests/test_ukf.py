@@ -1,5 +1,6 @@
-from OpticalNavigation.tests.const import CesiumTestCameraParameters
-from OpticalNavigation.core.const import CameraMeasurementVector, CovarianceMatrix, EphemerisVector, TrajectoryEstimateOutput, TrajectoryStateVector
+from tests.const import CesiumTestCameraParameters
+from core.const import CameraMeasurementVector, CovarianceMatrix, EphemerisVector, TrajectoryEstimateOutput, \
+    TrajectoryStateVector
 import pytest
 import pandas as pd
 import numpy as np
@@ -97,7 +98,7 @@ def cislunar1_timestep(visual_analysis, state_error, kickTime=None):
     """
     [part_start, part_end): start (inclusive) and end (exclusive) indices of trajectory
     """
-    from OpticalNavigation.tests.const import TEST_CISLUNAR_meas, TEST_CISLUNAR_moonEph, TEST_CISLUNAR_sunEph, \
+    from tests.const import TEST_CISLUNAR_meas, TEST_CISLUNAR_moonEph, TEST_CISLUNAR_sunEph, \
         TEST_CISLUNAR_traj
     # d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime = get6HoursBatch(part_start, part_end, part_start, timestep, np.array([1,1,1,1,1,1]), np.array([1,1,1]), np.array([1,1,1,1]), 1, 1, 1, att_meas=False)
     d_traj = pd.read_csv(TEST_CISLUNAR_traj).to_dict()

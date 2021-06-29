@@ -19,7 +19,14 @@
     "HITL-tests/flight_unit_receive.py",
     "HITL-tests/hitl_groundstation_tx.py",
     "HITL-tests/signal_test_satellite.py",
-    "flight_modes/opnav_flightmode.py"
+    "flight_modes/opnav_flightmode.py",
+    "communications/downlink.py"
+    "OpticalNavigation/core/ukf.py",
+    "OpticalNavigation/core/opnav.py",
+    "OpticalNavigation/core/find.py",
+    "OpticalNavigation/core/find_with_blobs.py",
+    "OpticalNavigation/core/find_with_kmeans.py",
+    "tests/commands_flight_mode_test.py"
   ],
   "extraPaths": [
     "OpticalNavigation/"
@@ -28,5 +35,8 @@
   "pythonPlatform": "Linux",
   "reportUnboundVariable": "warning",
   "reportSelfClsParameterName": "error",
-  "reportMissingImports": "information"
+  "reportMissingImports": "information",
+  "reportImportCycles": "none",
+  "reportUnusedImport": "warning",
+  "reportUnusedVariable": "warning"
 }

@@ -188,7 +188,7 @@ class Telemetry(SynchronousSensor):
         if (time() - self.poll_time) > 3600:
             self.poll()
 
-        if any(i > MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
+        if any([abs(i) > MAX_GYRO_RATE for i in self.gyr.rot]):
             self.parent.logger.error("Gyro not functioning properly")
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 

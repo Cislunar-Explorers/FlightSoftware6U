@@ -274,7 +274,12 @@ def UKFSingle(cameradt: float, gyroVars: GyroVars, P0: np.ndarray,
     """
     # assert(omegas[0].shape[0] == biases.shape[0] == estimatedSatState.shape[0] == moonEph.shape[0] == sunEph.shape[0])
     n = moonEph.shape[0]
-    (gyro_sigma, gyro_sample_rate, Q, R) = gyroVars
+    # (gyro_sigma, gyro_sample_rate, Q, R) = gyroVars
+    # Not sure if the following lines are what the above line meant to be:
+    gyro_sigma = gyroVars.gyro_sigma
+    gyro_sample_rate = gyroVars.gyro_sample_rate
+    Q = gyroVars.get_Q_matrix()
+    R = gyroVars.get_R_matrix()
 
     # Phist = np.zeros((int(n/gyroSampleCount), 6, 6))
     # qhist = np.zeros((int(n/gyroSampleCount), 4, 1))

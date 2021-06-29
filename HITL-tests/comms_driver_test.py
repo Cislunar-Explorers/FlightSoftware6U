@@ -24,7 +24,7 @@ while True:
 
     if downlink is not None:
         print('Downlink Received:')
-        data = dh.unpack_downlink(downlink)[2]
+        data = dh.unpack_downlink(downlink)[-1]
         print('Gyro: ' + str(data['gyro1']) + ', ' + str(data['gyro2']) + ', ' + str(data['gyro3']))
         break
 

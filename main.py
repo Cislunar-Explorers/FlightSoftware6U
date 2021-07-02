@@ -82,9 +82,6 @@ class MainSatelliteThread(Thread):
         self.camera: Optional[camera.Camera] = None
         self.init_sensors()
 
-        # Telemetry
-        self.tlm = Telemetry(self)
-
         # Opnav subprocess variables
         self.opnav_proc_queue = Queue()
         self.opnav_process = Process()  # define the subprocess
@@ -96,6 +93,7 @@ class MainSatelliteThread(Thread):
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
+        self.tlm = Telemetry(self)
 
     def init_comms(self):
         self.comms = CommunicationsSystem(

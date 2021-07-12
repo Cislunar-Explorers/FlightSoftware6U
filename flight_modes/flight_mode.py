@@ -185,7 +185,6 @@ class FlightMode:
         logger.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
             logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
-            log_error(tb, exc_type=1)
 
 
 # Model for FlightModes that require precise timing

@@ -17,6 +17,7 @@ from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 
 from datetime import datetime
+from Typing import Union
 
 
 class Radio():
@@ -48,7 +49,7 @@ class Radio():
             return self.mgr.outbox.get()
 
     #Downlink given bytearray to ground station
-    def transmit(self, signal:bytearray):
+    def transmit(self, signal: Union[bytearray, bytes]):
 
         self.mgr.tx_enabled = True
         self.mgr.inbox.put(signal)
@@ -56,7 +57,7 @@ class Radio():
         cycles = 0
 
         while True:
-           
+
             self.mgr.dispatch()
             self.monitorHealth()
 

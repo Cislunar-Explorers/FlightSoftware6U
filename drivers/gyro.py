@@ -6,7 +6,7 @@ if board_id and board_id != 'GENERIC_LINUX_PC':
     import busio
 import adafruit_fxos8700
 import adafruit_fxas21002c
-from typing import Tuple
+from typing import Tuple, List, cast
 from utils.constants import GYRO_RANGE
 import utils.parameters as params
 
@@ -29,19 +29,20 @@ class GyroSensor:  # TODO rename class and file to something more representative
     def get_gyro(self) -> Tuple[float, float, float]:
         return self.fxas.gyroscope  # rad/s
 
-    def get_gyro_corrected(self):
+    def get_gyro_corrected(self) -> Tuple[float, float, float]:
         """Returns gyro data with corrections for measured bias"""
         gyro_data = self.get_gyro()
         delta_gyro_temp = self.get_temp() - params.GYRO_BIAS_TEMPERATURE
         corrected_gyro_data = [0.0, 0.0, 0.0]
         for i in range(3):
             corrected_gyro_data[i] = gyro_data[i] - gyro_biases[i]
-            corrected_gyro_data[i] = corrected_gyro_data[i] + gyro_biases_temperature_dependence[i] * delta_gyro_temp
-
-        return tuple(corrected_gyro_data)
+            corrected_gyro_data[i] = corrected_gyro_data[i] + gyro_biases_temperature_dependence[i] * float(
+                delta_gyro_temp)
+        return_tuple: Tuple[float, float, float] = cast('Tuple[float, float, float]', tuple(corrected_gyro_data))
+        return return_tuple
 
     def get_mag(self) -> Tuple[float, float, float]:
         return self.fxos.magnetometer  # microTeslas
 
-    def get_temp(self) -> float:
+    def get_temp(self) -> int:
         return self.fxas._read_u8(0x12)

@@ -14,7 +14,7 @@ ch = CommandHandler()
 
 #Pack command into a bytearray
 gs.registerCommand(ch,1,2,number1=7, number2=4)
-command = ch.pack_command(1,2,number1=7, number2=4)
+command = ch.pack_command(1, 1, 2, number1=7, number2=4)
 
 #Send the command to the satellite
 gs.transmitCommand(mgr, command)

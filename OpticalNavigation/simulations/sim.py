@@ -27,11 +27,11 @@ import numpy as np
 import math
 import os
 from tqdm import tqdm
-from OpticalNavigation.simulations.animations import LiveMultipleTrajectoryPlot
+from simulations.animations import LiveMultipleTrajectoryPlot
 import argparse
-from OpticalNavigation.simulations.getManeuvers import extractCheckpoints, getMissionTimeline, createDiscreteAttitudeManeuvers
+from simulations.getManeuvers import extractCheckpoints, getMissionTimeline, createDiscreteAttitudeManeuvers
 from datetime import datetime
-from OpticalNavigation.core.ukf import __attitudeMatrix
+from core.ukf import __attitudeMatrix
 
 def isOrthogonal(a, b):
     err = abs((a*b).sum())

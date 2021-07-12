@@ -30,14 +30,13 @@ from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
 
 from communications.comms_driver import CommunicationsSystem
-
 from communications.satellite_radio import Radio
 from drivers.gom import Gomspace
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
-import OpticalNavigation.core.camera as camera
+import core.camera as camera
 
 FOR_FLIGHT = None
 
@@ -72,14 +71,14 @@ class MainSatelliteThread(Thread):
         self.attach_sigint_handler()  # FIXME
         self.file_block_bank = {}
         self.need_to_reboot = False
-
-        self.gom: Optional[Gomspace] = None
-        self.gyro: Optional[GyroSensor] = None
-        self.adc: Optional[ADC] = None
-        self.rtc: Optional[RTC] = None
-        self.radio: Optional[Radio] = None
-        self.mux: Optional[camera.CameraMux] = None
-        self.camera: Optional[camera.Camera] = None
+        self.gom: Gomspace
+        self.gyro: GyroSensor
+        self.adc: ADC
+        self.rtc: RTC
+        self.radio: Radio
+        self.mux: camera.CameraMux
+        self.camera: camera.Camera
+        self.nemo_manager: NemoManager
         self.init_sensors()
 
         # Opnav subprocess variables
@@ -105,28 +104,26 @@ class MainSatelliteThread(Thread):
         )
         self.comms.listen()
 
-    def init_parameters(self):
-        try:
-            with open(PARAMETERS_JSON_PATH) as f:
-                json_parameter_dict = load(f)
+    @staticmethod
+    def init_parameters():
+        with open(PARAMETERS_JSON_PATH) as f:
+            json_parameter_dict = load(f)
 
+        for parameter in dir(params):
             try:
-                for parameter in utils.parameters.__dir__():
-                    if parameter[0] != '_':
-                        utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
-            except:
+                if parameter[0] != '_':
+                    setattr(params, parameter, json_parameter_dict[parameter])
+            except KeyError:
                 raise CislunarException(
                     f'Attempted to set parameter ' + str(parameter) +
                     ', which could not be found in parameters.json'
                 )
-        except Exception as e:
-            log_error(e)
 
     def init_sensors(self) -> int:
         try:
             self.gom = Gomspace()
         except Exception as e:
-            self.gom = None
+            # self.gom = None
             log_error(e)
             logger.error("GOM initialization failed")
         else:
@@ -135,7 +132,7 @@ class MainSatelliteThread(Thread):
         try:
             self.gyro = GyroSensor()
         except Exception as e:
-            self.gyro = None
+            # self.gyro = None
             log_error(e)
             logger.error("GYRO initialization failed")
         else:
@@ -145,7 +142,7 @@ class MainSatelliteThread(Thread):
             self.adc = ADC(self.gyro)
             self.adc.read_temperature()
         except Exception as e:
-            self.adc = None
+            # self.adc = None
             log_error(e)
             logger.error("ADC initialization failed")
         else:
@@ -155,7 +152,7 @@ class MainSatelliteThread(Thread):
             self.rtc = RTC()
             self.rtc.get_time()
         except Exception as e:
-            self.rtc = None
+            # self.rtc = None
             log_error(e)
             logger.error("RTC initialization failed")
         else:
@@ -164,7 +161,7 @@ class MainSatelliteThread(Thread):
         try:
             self.nemo_manager = NemoManager(port_id=3, data_dir=NEMO_DIR, reset_gpio_ch=16)
         except Exception as e:
-            self.nemo_manager = None
+            # self.nemo_manager = None
             log_error(e)
             logger.error("NEMO initialization failed")
         else:
@@ -173,7 +170,7 @@ class MainSatelliteThread(Thread):
         try:
             self.radio = Radio()
         except Exception as e:
-            self.radio = None
+            # self.radio = None
             log_error(e)
             logger.error("RADIO initialization failed")
         else:
@@ -184,7 +181,7 @@ class MainSatelliteThread(Thread):
             self.mux = camera.CameraMux()
             self.mux.selectCamera(1)
         except Exception as e:
-            self.mux = None
+            # self.mux = None
             log_error(e)
             logger.error("MUX initialization failed")
         else:
@@ -211,7 +208,7 @@ class MainSatelliteThread(Thread):
                 if 0 in cameras_list:
                     raise Exception
             except Exception:
-                self.camera = None
+                # self.camera = None
                 logger.error(f"Cameras initialization failed")
             else:
                 logger.info("Cameras initialized")

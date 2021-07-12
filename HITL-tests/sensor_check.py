@@ -3,8 +3,8 @@ from drivers.rtc import RTC
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from communications.satellite_radio import Radio
-from OpticalNavigation.core.camera import Camera
-from OpticalNavigation.core.camera import CameraMux
+from core.camera import Camera
+from core.camera import CameraMux
 from drivers.nemo.nemo import Nemo
 from utils.log import get_log
 from time import time
@@ -32,14 +32,17 @@ def check_sensor_board():
     else:
         logger.info(f"Gyro initialization successful. Gyro rates: {gyro_data}")
 
-    try:
-        adc = ADC(gyro)
-        temp = adc.read_temperature()
-        pressure = adc.read_pressure()
-    except Exception:
-        logger.error("ADC init failed. Check power, gnd, and SDA/SCL connections to sensor board")
+    if gyro:
+        try:
+            adc = ADC(gyro)
+            temp = adc.read_temperature()
+            pressure = adc.read_pressure()
+        except Exception:
+            logger.error("ADC init failed. Check power, gnd, and SDA/SCL connections to sensor board")
+        else:
+            logger.info(f"ADC initialization successful. Pressure:{pressure}, Thermocouple:{temp}")
     else:
-        logger.info(f"ADC initialization successful. Pressure:{pressure}, Thermocouple:{temp}")
+        logger.warning("Not initializing ADC because Gyro failed")
 
     try:
         rtc = RTC()
@@ -61,7 +64,7 @@ def check_radio():
 
 def check_nemo():
     try:
-        nemo = Nemo(reset_gpio_ch=16)
+        nemo = Nemo(port_id=3, reset_gpio_ch=16)
         nemo.self_test()
     except Exception:
         logger.error("NEMO init failed. Check 'i2cdetect -y 3' for device address 0x13")

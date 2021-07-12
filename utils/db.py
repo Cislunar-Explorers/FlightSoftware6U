@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import Float, DateTime, Boolean
 from sqlalchemy.dialects import postgresql
 
-from OpticalNavigation.core.const import CameraMeasurementVector
+from core.const import CameraMeasurementVector
 from drivers.power.power_structs import eps_hk_t
 
 create_session = sessionmaker()

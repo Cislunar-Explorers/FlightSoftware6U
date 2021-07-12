@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import CameraParameters
+from core.const import CameraParameters
 import os
 import numpy as np
 import pytest

@@ -10,23 +10,27 @@ from datetime import datetime, timedelta
 from time import sleep
 # from sqlalchemy.orm import session
 
-from OpticalNavigation.core.ukf import runTrajUKF
-from OpticalNavigation.tests.const import POS_ERROR_6HOURS, VEL_ERROR_6HOURS
-from OpticalNavigation.tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
-from OpticalNavigation.tests.const import MatlabTestCameraParameters
-from OpticalNavigation.simulations.animations import LiveTrajectoryPlot
-from OpticalNavigation.tests.gen_opnav_data import get6HoursBatch
-from OpticalNavigation.tests.const import TEST_6HOURS_meas, TEST_6HOURS_moonEph, TEST_6HOURS_sunEph, TEST_6HOURS_traj
-from OpticalNavigation.core.const import AttitudeEstimateOutput, AttitudeStateVector, CameraMeasurementVector, CovarianceMatrix, EphemerisVector, Matrix6x6, OPNAV_EXIT_STATUS, QuaternionVector, TrajUKFConstants, TrajectoryEstimateOutput, TrajectoryStateVector
-from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel
+from core.ukf import runTrajUKF
+from tests.const import POS_ERROR_6HOURS, VEL_ERROR_6HOURS
+from tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
+from tests.const import MatlabTestCameraParameters
+from simulations.animations import LiveTrajectoryPlot
+from tests.gen_opnav_data import get6HoursBatch
+from tests.const import TEST_6HOURS_meas, TEST_6HOURS_moonEph, TEST_6HOURS_sunEph, TEST_6HOURS_traj
+from core.const import AttitudeEstimateOutput, AttitudeStateVector, CameraMeasurementVector, CovarianceMatrix, \
+    EphemerisVector, Matrix6x6, OPNAV_EXIT_STATUS, QuaternionVector, TrajUKFConstants, TrajectoryEstimateOutput, \
+    TrajectoryStateVector
+from FlightSoftware.utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, \
+    OpNavGyroMeasurementModel
 from FlightSoftware.utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
-import OpticalNavigation.core.opnav as opnav
+import core.opnav as opnav
 
 SQL_PREFIX = "sqlite:///"
 sql_path = SQL_PREFIX + os.path.join("D:", "OpNav", "db", "satellite-db.sqlite")
 
+
 def calculate_position_error(true_state, est_state):
-    return math.sqrt( np.sum((true_state[:3] - est_state[:3])**2) )
+    return math.sqrt(np.sum((true_state[:3] - est_state[:3]) ** 2))
 
 def calculate_velocity_error(true_state, est_state):
     return math.sqrt( np.sum((true_state[3:6] - est_state[3:6])**2) )
@@ -212,22 +216,25 @@ def sixhours_db_test(mocker, state_error, part_start, part_end, timestep):
         measurements.pop(0)
         progress_bar.update(1)
         return OPNAV_EXIT_STATUS.SUCCESS
-    mocker.patch('OpticalNavigation.core.opnav.__observe', side_effect=observe_mock)
+
+    mocker.patch('core.opnav.__observe', side_effect=observe_mock)
 
     def process_propulsion_events_mock(*args, **kwargs):
         return OPNAV_EXIT_STATUS.SUCCESS
-    mocker.patch('OpticalNavigation.core.opnav.__process_propulsion_events', side_effect=process_propulsion_events_mock)
+
+    mocker.patch('core.opnav.__process_propulsion_events', side_effect=process_propulsion_events_mock)
 
     def run_attitude_ukf_mock(*args, **kwargs):
         return AttitudeEstimateOutput(new_state=AttitudeStateVector(0,0,0,0,0,0),
                                                     new_P=CovarianceMatrix(matrix=np.zeros((6,6))), 
                                                     new_quat=QuaternionVector(0, 0, 0, 0))
-    mocker.patch('OpticalNavigation.core.attitude.runAttitudeUKF', side_effect=run_attitude_ukf_mock)
+
+    mocker.patch('core.attitude.runAttitudeUKF', side_effect=run_attitude_ukf_mock)
 
     # def run_trajectory_ukf_mock(*args, **kwargs):
     #     print("----------TrajUKF Mock----------")
     #     return TrajectoryEstimateOutput(new_state=TrajectoryStateVector(0,0,0,0,0,0), new_P=CovarianceMatrix(matrix=np.zeros((6,6))), K=Matrix6x6(matrix=np.zeros((6,6))))
-    # mocker.patch('OpticalNavigation.core.ukf.runTrajUKF', side_effect=run_trajectory_ukf_mock)
+    # mocker.patch('core.ukf.runTrajUKF', side_effect=run_trajectory_ukf_mock)
     
     temp_db_len = len(session.query(OpNavTrajectoryStateModel).all())
     assert temp_db_len == 1, f'Expected 1 trajectory state in db, got {temp_db_len}'

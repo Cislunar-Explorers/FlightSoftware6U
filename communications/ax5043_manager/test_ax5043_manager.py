@@ -1,8 +1,9 @@
 import unittest
 import logging
-from ax5043_manager import Manager
-from mock_ax5043_driver import MockAx5043
-from ax5043_driver import Reg, Bits
+from communications.ax5043_manager.ax5043_manager import Manager
+from communications.ax5043_manager.mock_ax5043_driver import MockAx5043
+from communications.ax5043_manager.ax5043_driver import Reg, Bits
+
 
 class TestManager(unittest.TestCase):
     def test_autorange_slow_xtal(self):
@@ -49,6 +50,7 @@ class TestManager(unittest.TestCase):
         self.assertTrue(isinstance(mgr.state, Manager.Receiving))
         mgr.dispatch()
         self.assertFalse(mgr.is_faulted())
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

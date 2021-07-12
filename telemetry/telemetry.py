@@ -44,7 +44,7 @@ class GyroSensor(SynchronousSensor):
         self.rot: Tuple[float, float, float] = (float(), float(), float())  # rad/s
         self.mag: Tuple[float, float, float] = (float(), float(), float())  # microTesla
         self.acc: Tuple[float, float, float] = (float(), float(), float())  # m/s^2
-        self.tmp: float = float()  # deg C
+        self.tmp: int = int()  # deg C
 
     def poll(self):
         super().poll()
@@ -190,7 +190,7 @@ class Telemetry(SynchronousSensor):
         if (time() - self.poll_time) > 3600:
             self.poll()
 
-        if any(i > MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
+        if any([abs(i) > MAX_GYRO_RATE for i in self.gyr.rot]):
             self.parent.logger.error("Gyro not functioning properly")
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
@@ -326,7 +326,7 @@ class Telemetry(SynchronousSensor):
                 GYRO_mag_z=bz,
                 GYRO_temperature=self.gyr.tmp,
                 THERMOCOUPLE_temperature=self.thm.tmp,
-                PRESSURE_pressure=self.pressure
+                PRESSURE_pressure=self.prs.pressure
             )
             self.session.add(telemetry_data)
             self.session.commit()

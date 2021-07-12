@@ -15,14 +15,17 @@ def test_parameters():
     with open(os.fspath(filepath)) as f:
         json_parameter_dict = load(f)
 
-    try:
-        for parameter in utils.parameters.__dir__():
-            if parameter[0] != '_':
-                utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
+    parameters_missing = []
+    for parameter in dir(utils.parameters):
+        if parameter[0] != '_':
+            try:
+                setattr(utils.parameters, parameter, json_parameter_dict[parameter])
+            except KeyError:
+                parameters_missing.append(parameter)
 
-    except:
+    if len(parameters_missing) > 0:
         raise CislunarException(
-            f'Attempted to set parameter {parameter}, which could not be found in parameters.json'
+            f'Attempted to set parameter(s) {parameters_missing}, which could not be found in parameters.json'
         )
 
 

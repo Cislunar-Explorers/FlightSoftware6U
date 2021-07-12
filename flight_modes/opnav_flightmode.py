@@ -41,7 +41,7 @@ class OpNavMode(PauseBackgroundMode):
             self.most_recent_result, position_acquired_at
         )
         try:
-            session = self.parent.create_session()
+            session = self._parent.create_session()
             session.add(opnav_model)
             session.commit()
         finally:
@@ -52,11 +52,11 @@ class OpNavMode(PauseBackgroundMode):
             return self.most_recent_result
         else:
             try:
-                session = self.parent.create_session()
+                session = self._parent.create_session()
                 last_measurement = (
                     session.query(OpNavCoordinatesModel)
-                    .order_by(OpNavCoordinatesModel.measurement_taken)
-                    .first()
+                        .order_by(OpNavCoordinatesModel.measurement_taken)
+                        .first()
                 )
                 if last_measurement is None:
                     raise Exception("No record of previous OpNav runs")
@@ -68,7 +68,7 @@ class OpNavMode(PauseBackgroundMode):
     def run_mode(self):
         if not self.opnav_process.is_alive():
             logger.info("[OPNAV]: Able to run next opnav")
-            self.parent.last_opnav_run = datetime.now()
+            self._parent.last_opnav_run = datetime.now()
             logger.info("[OPNAV]: Starting opnav subprocess")
             self.opnav_process = Process(target=self.opnav_subprocess, args=())
             self.opnav_process.start()

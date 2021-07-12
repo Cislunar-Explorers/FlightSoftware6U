@@ -6,12 +6,10 @@ from datetime import datetime
 from queue import Queue
 import signal
 from utils.log import get_log, log_error
-from typing import Optional
 
 from json import load
 from time import sleep
 
-import utils.constants
 from utils.constants import *
 import utils.parameters as params
 from utils.exceptions import CislunarException
@@ -202,7 +200,7 @@ class MainSatelliteThread(Thread):
                         logger.error(f"CAM{i} initialization failed")
                         cameras_list[i - 1] = 0
                     else:
-                        logger.info(f"Cam{i} initialized")
+                        logger.info(f"Cam{i} initialized with {f}:{t}")
                         cameras_list[i - 1] = 1
 
                 if 0 in cameras_list:

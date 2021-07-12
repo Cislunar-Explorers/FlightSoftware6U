@@ -3,11 +3,9 @@ from core.const import AttitudeEstimateOutput, AttitudeStateVector, CovarianceMa
     GyroMeasurementVector, GyroVars, QuaternionVector
 from core.const import AttitudeUKFConstants
 import numpy as np
-from numpy.linalg import inv
+# from numpy.linalg import inv
 from numpy.linalg import pinv
-from scipy.stats import norm
 from numpy import random
-from tqdm import tqdm
 
 NX = AttitudeUKFConstants.NX
 LAM = AttitudeUKFConstants.LAM

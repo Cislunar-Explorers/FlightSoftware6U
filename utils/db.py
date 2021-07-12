@@ -1,18 +1,20 @@
-from numpy.testing._private.utils import measure
-from sys import float_repr_style
+# from numpy.testing._private.utils import measure
+# from sys import float_repr_style
 from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import Float, DateTime, Boolean
-from sqlalchemy.dialects import postgresql
+# from sqlalchemy.dialects import postgresql
 
 from core.const import CameraMeasurementVector
-from drivers.power.power_structs import eps_hk_t
+
+# from drivers.power.power_structs import eps_hk_t
 
 create_session = sessionmaker()
 
 # declarative_base for WalletModel used by WalletManager
 SQLAlchemyTableBase = declarative_base()
+
 
 # NOTE do not use foreign key in any of these tables
 
@@ -45,12 +47,18 @@ class OpNavTrajectoryStateModel(SQLAlchemyTableBase):
     velocity_y = Column(Float)
     velocity_z = Column(Float)
     # Covariance Matrix
-    r1c1, r1c2, r1c3, r1c4, r1c5, r1c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r2c1, r2c2, r2c3, r2c4, r2c5, r2c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r3c1, r3c2, r3c3, r3c4, r3c5, r3c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r4c1, r4c2, r4c3, r4c4, r4c5, r4c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r5c1, r5c2, r5c3, r5c4, r5c5, r5c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r6c1, r6c2, r6c3, r6c4, r6c5, r6c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
+    r1c1, r1c2, r1c3, r1c4, r1c5, r1c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r2c1, r2c2, r2c3, r2c4, r2c5, r2c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r3c1, r3c2, r3c3, r3c4, r3c5, r3c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r4c1, r4c2, r4c3, r4c4, r4c5, r4c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r5c1, r5c2, r5c3, r5c4, r5c5, r5c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r6c1, r6c2, r6c3, r6c4, r6c5, r6c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
 
     """
     Create an OpNavTrajectoryStateModel instance
@@ -73,12 +81,12 @@ class OpNavTrajectoryStateModel(SQLAlchemyTableBase):
             position_x=position_x,
             position_y=position_y,
             position_z=position_z,
-            r1c1 = P[0,0], r1c2 = P[0,1], r1c3 = P[0,2], r1c4 = P[0,3], r1c5 = P[0,4], r1c6 = P[0,5],
-            r2c1 = P[1,0], r2c2 = P[1,1], r2c3 = P[1,2], r2c4 = P[1,3], r2c5 = P[1,4], r2c6 = P[1,5],
-            r3c1 = P[2,0], r3c2 = P[2,1], r3c3 = P[2,2], r3c4 = P[2,3], r3c5 = P[2,4], r3c6 = P[2,5],
-            r4c1 = P[3,0], r4c2 = P[3,1], r4c3 = P[3,2], r4c4 = P[3,3], r4c5 = P[3,4], r4c6 = P[3,5],
-            r5c1 = P[4,0], r5c2 = P[4,1], r5c3 = P[4,2], r5c4 = P[4,3], r5c5 = P[4,4], r5c6 = P[4,5],
-            r6c1 = P[5,0], r6c2 = P[5,1], r6c3 = P[5,2], r6c4 = P[5,3], r6c5 = P[5,4], r6c6 = P[5,5],
+            r1c1=P[0, 0], r1c2=P[0, 1], r1c3=P[0, 2], r1c4=P[0, 3], r1c5=P[0, 4], r1c6=P[0, 5],
+            r2c1=P[1, 0], r2c2=P[1, 1], r2c3=P[1, 2], r2c4=P[1, 3], r2c5=P[1, 4], r2c6=P[1, 5],
+            r3c1=P[2, 0], r3c2=P[2, 1], r3c3=P[2, 2], r3c4=P[2, 3], r3c5=P[2, 4], r3c6=P[2, 5],
+            r4c1=P[3, 0], r4c2=P[3, 1], r4c3=P[3, 2], r4c4=P[3, 3], r4c5=P[3, 4], r4c6=P[3, 5],
+            r5c1=P[4, 0], r5c2=P[4, 1], r5c3=P[4, 2], r5c4=P[4, 3], r5c5=P[4, 4], r5c6=P[4, 5],
+            r6c1=P[5, 0], r6c2=P[5, 1], r6c3=P[5, 2], r6c4=P[5, 3], r6c5=P[5, 4], r6c6=P[5, 5],
         )
 
     def __repr__(self):
@@ -87,7 +95,7 @@ class OpNavTrajectoryStateModel(SQLAlchemyTableBase):
             f", velocity=({self.velocity_x}, {self.velocity_y}, "
             f"{self.velocity_z}), position=({self.position_x}, "
             f"{self.position_y}, {self.position_z}), "
-            f"covariance matrix trace=({self.r1c1+self.r2c2+self.r3c3+self.r4c4+self.r5c5+self.r6c6}))>"
+            f"covariance matrix trace=({self.r1c1 + self.r2c2 + self.r3c3 + self.r4c4 + self.r5c5 + self.r6c6}))>"
         )
 
 
@@ -107,12 +115,18 @@ class OpNavAttitudeStateModel(SQLAlchemyTableBase):
     b2 = Column(Float)
     b3 = Column(Float)
     # Covariance Matrix
-    r1c1, r1c2, r1c3, r1c4, r1c5, r1c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r2c1, r2c2, r2c3, r2c4, r2c5, r2c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r3c1, r3c2, r3c3, r3c4, r3c5, r3c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r4c1, r4c2, r4c3, r4c4, r4c5, r4c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r5c1, r5c2, r5c3, r5c4, r5c5, r5c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
-    r6c1, r6c2, r6c3, r6c4, r6c5, r6c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(Float), Column(Float)
+    r1c1, r1c2, r1c3, r1c4, r1c5, r1c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r2c1, r2c2, r2c3, r2c4, r2c5, r2c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r3c1, r3c2, r3c3, r3c4, r3c5, r3c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r4c1, r4c2, r4c3, r4c4, r4c5, r4c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r5c1, r5c2, r5c3, r5c4, r5c5, r5c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
+    r6c1, r6c2, r6c3, r6c4, r6c5, r6c6 = Column(Float), Column(Float), Column(Float), Column(Float), Column(
+        Float), Column(Float)
 
     """
     Create an OpNavAttitudeStateModel instance
@@ -122,6 +136,7 @@ class OpNavAttitudeStateModel(SQLAlchemyTableBase):
     [P]: covariance matrix output (6x6 numpy matrix)
     [time]: mission time of the measurements when attitude quantities were calculated
     """
+
     @staticmethod
     def from_tuples(quat, rod_params, biases, P, time):
         q1, q2, q3, q4 = quat
@@ -139,12 +154,12 @@ class OpNavAttitudeStateModel(SQLAlchemyTableBase):
             b1=b1,
             b2=b2,
             b3=b3,
-            r1c1 = P[0,0], r1c2 = P[0,1], r1c3 = P[0,2], r1c4 = P[0,3], r1c5 = P[0,4], r1c6 = P[0,5],
-            r2c1 = P[1,0], r2c2 = P[1,1], r2c3 = P[1,2], r2c4 = P[1,3], r2c5 = P[1,4], r2c6 = P[1,5],
-            r3c1 = P[2,0], r3c2 = P[2,1], r3c3 = P[2,2], r3c4 = P[2,3], r3c5 = P[2,4], r3c6 = P[2,5],
-            r4c1 = P[3,0], r4c2 = P[3,1], r4c3 = P[3,2], r4c4 = P[3,3], r4c5 = P[3,4], r4c6 = P[3,5],
-            r5c1 = P[4,0], r5c2 = P[4,1], r5c3 = P[4,2], r5c4 = P[4,3], r5c5 = P[4,4], r5c6 = P[4,5],
-            r6c1 = P[5,0], r6c2 = P[5,1], r6c3 = P[5,2], r6c4 = P[5,3], r6c5 = P[5,4], r6c6 = P[5,5],
+            r1c1=P[0, 0], r1c2=P[0, 1], r1c3=P[0, 2], r1c4=P[0, 3], r1c5=P[0, 4], r1c6=P[0, 5],
+            r2c1=P[1, 0], r2c2=P[1, 1], r2c3=P[1, 2], r2c4=P[1, 3], r2c5=P[1, 4], r2c6=P[1, 5],
+            r3c1=P[2, 0], r3c2=P[2, 1], r3c3=P[2, 2], r3c4=P[2, 3], r3c5=P[2, 4], r3c6=P[2, 5],
+            r4c1=P[3, 0], r4c2=P[3, 1], r4c3=P[3, 2], r4c4=P[3, 3], r4c5=P[3, 4], r4c6=P[3, 5],
+            r5c1=P[4, 0], r5c2=P[4, 1], r5c3=P[4, 2], r5c4=P[4, 3], r5c5=P[4, 4], r5c6=P[4, 5],
+            r6c1=P[5, 0], r6c2=P[5, 1], r6c3=P[5, 2], r6c4=P[5, 3], r6c5=P[5, 4], r6c6=P[5, 5],
         )
 
     def __repr__(self):
@@ -153,7 +168,7 @@ class OpNavAttitudeStateModel(SQLAlchemyTableBase):
             f", quaternion=({self.q1}, {self.q2}, {self.q3}, {self.q4}), "
             f"rodriguez_params=({self.r1}, {self.r2}, {self.r3}), "
             f"baises=({self.b1}, {self.b2}, {self.b3}), "
-            f"covariance matrix trace=({self.r1c1+self.r2c2+self.r3c3+self.r4c4+self.r5c5+self.r6c6}))>"
+            f"covariance matrix trace=({self.r1c1 + self.r2c2 + self.r3c3 + self.r4c4 + self.r5c5 + self.r6c6}))>"
         )
 
 
@@ -182,6 +197,7 @@ class OpNavEphemerisModel(SQLAlchemyTableBase):
     [moon_eph]: moon ephemeris tuple in J2000 ECI: (x (km), y (km), z (km), vx (km/s), vy (km/s), vz (km/s))
     [time]: mission time
     """
+
     @staticmethod
     def from_tuples(sun_eph, moon_eph, time):
         sx, sy, sz, svx, svy, svz = sun_eph
@@ -221,7 +237,7 @@ class OpNavCameraMeasurementModel(SQLAlchemyTableBase):
     e_dia = Column(Float)
     m_dia = Column(Float)
     s_dia = Column(Float)
-    
+
     """
     Create an OpNavCameraMeasurementModel instance
     @params
@@ -234,8 +250,9 @@ class OpNavCameraMeasurementModel(SQLAlchemyTableBase):
                 z6 = angular Sun size)
     [time]: mission time of the measurements when trajectory quantities were calculated
     """
+
     @staticmethod
-    def from_tuples(measurement:CameraMeasurementVector, time):
+    def from_tuples(measurement: CameraMeasurementVector, time):
         z1 = measurement.get_angular_separation_earth_moon()
         z2 = measurement.get_angular_separation_earth_sun()
         z3 = measurement.get_angular_separation_moon_sun()
@@ -275,6 +292,7 @@ class OpNavGyroMeasurementModel(SQLAlchemyTableBase):
         Format: (omegax, omegay, omegaz)
     [time]: mission time of the gyro reading
     """
+
     @staticmethod
     def from_tuples(measurement, time):
         omegax, omegay, omegaz = measurement
@@ -307,6 +325,7 @@ class OpNavPropulsionModel(SQLAlchemyTableBase):
     [time_start]: mission time of main thrust fire start
     [time_end]: mission time of main thrust fire end
     """
+
     @staticmethod
     def from_tuples(acceleration, time_start, time_end):
         return OpNavPropulsionModel(
@@ -450,9 +469,9 @@ class TelemetryModel(SQLAlchemyTableBase):
             f"RPI_cpu={self.RPI_cpu}, "
             f"RPI_ram={self.RPI_ram}, "
             f"RPI_dsk={self.RPI_dsk}, "
-            f"RPI_tmp={self.RPI_tmp}, "            
+            f"RPI_tmp={self.RPI_tmp}, "
             f"RPI_boot={self.RPI_boot}, "
-            f"RPI_uptime={self.RPI_uptime}, "           
+            f"RPI_uptime={self.RPI_uptime}, "
             f"GYRO_gyr_x={self.GYRO_gyr_x}, "
             f"GYRO_gyr_y={self.GYRO_gyr_y}, "
             f"GYRO_gyr_z={self.GYRO_gyr_z}, "

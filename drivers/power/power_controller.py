@@ -16,8 +16,8 @@ import pigpio
 import drivers.power.power_structs as ps
 from utils.constants import GomOutputs
 import utils.parameters as params
-from utils.exceptions import PowerException, PowerInputError, PowerReadError
-from time import time, sleep
+from utils.exceptions import PowerInputError, PowerReadError  # , PowerException
+from time import sleep
 
 # power device address
 POWER_ADDRESS = 0x02
@@ -401,6 +401,7 @@ class Power:
     # delay of [delay] seconds.
     # output must be off before the function is called
     def solenoid(self, spike, hold):
+        raise DeprecationWarning
         ps.gom_logger.warning("DEPRECATED FUNCTION Power().solenoid")
         ps.gom_logger.debug(
             "Spiking solenoid for %i ms, holding for %i ms, with a delay of %i sec",
@@ -425,6 +426,8 @@ class Power:
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_OFF_LIST)
 
     def calculate_solenoid_wave(self):
+        # see http://abyz.me.uk/rpi/pigpio/python.html#wave_add_generic
+        # and https://github.com/joan2937/pigpio/blob/master/EXAMPLES/Python/MORSE_CODE/morse_code.py
         self.solenoid_wave = []
         self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, params.ACS_SPIKE_DURATION * 1000))
         self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))

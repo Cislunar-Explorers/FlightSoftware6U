@@ -1,9 +1,3 @@
-# Packing Imports
-import utils.struct as us
-from utils.constants import FMEnum
-from utils.exceptions import UnknownFlightModeException, SerializationException
-from sys import maxsize, float_info
-
 # Transimission Imports
 import logging
 import time
@@ -17,10 +11,10 @@ from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 
 from datetime import datetime
-from Typing import Union
+from typing import Union
 
 
-class Radio():
+class Radio:
 
     def __init__(self):
 
@@ -36,19 +30,19 @@ class Radio():
             self.mgr.reset_requested = True
             return None
 
-    #Gets the signal from the radio board and returns it in a bytearray
+    # Gets the signal from the radio board and returns it in a bytearray
     def receiveSignal(self):
 
         self.mgr.rx_enabled = True
         self.mgr.dispatch()
         self.monitorHealth()
-        
+
         if self.mgr.outbox.empty():
             return None
         else:
             return self.mgr.outbox.get()
 
-    #Downlink given bytearray to ground station
+    # Downlink given bytearray to ground station
     def transmit(self, signal: Union[bytearray, bytes]):
 
         self.mgr.tx_enabled = True
@@ -71,5 +65,5 @@ class Radio():
         self.mgr.tx_enabled = False
         self.mgr.rx_enabled = False
         self.mgr.dispatch()
-        
+
         self.last_transmit_time = datetime.today()

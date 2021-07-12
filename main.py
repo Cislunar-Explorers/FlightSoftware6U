@@ -54,13 +54,13 @@ class MainSatelliteThread(Thread):
         self.FMQueue = Queue()
         self.commands_to_execute = []
         self.downlinks_to_execute = []
-        self.telemetry = Telemetry(self)
         self.burn_queue = Queue()
         self.reorientation_queue = Queue()
         self.reorientation_list = []
         self.maneuver_queue = Queue()  # maneuver queue
         self.opnav_queue = Queue()  # determine state of opnav success
         # self.init_comms()
+        logger.info("Initializing commands and downlinks")
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
         self.command_counter = 0
@@ -87,13 +87,17 @@ class MainSatelliteThread(Thread):
         self.opnav_process = Process()  # define the subprocess
 
         if os.path.isdir(self.log_dir):
+            logger.info("We are in Restart Mode")
             self.flight_mode = RestartMode(self)
         else:
+            logger.info("We are in Bootup Mode")
             os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
             os.mkdir(LOG_DIR)
             self.flight_mode = BootUpMode(self)
         self.create_session = create_sensor_tables_from_path(DB_FILE)
-        self.tlm = Telemetry(self)
+        logger.info("Initializing Telemetry")
+        self.telemetry = Telemetry(self)
+        logger.info("Done intializing")
 
     def init_comms(self):
         self.comms = CommunicationsSystem(

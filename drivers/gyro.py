@@ -1,6 +1,9 @@
 import time
-import board
-import busio
+from adafruit_blinka.agnostic import board_id
+
+if board_id and board_id != 'GENERIC_LINUX_PC':
+    import board
+    import busio
 import adafruit_fxos8700
 import adafruit_fxas21002c
 from typing import Tuple, List, cast

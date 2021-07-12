@@ -17,7 +17,7 @@ from queue import Empty
 from utils.constants import *
 
 import utils.parameters as params
-from utils.log import get_log
+from utils.log import get_log, log_error
 
 from utils.exceptions import UnknownFlightModeException
 
@@ -184,7 +184,6 @@ class FlightMode:
         logger.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
             logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
-            logger.error(f"Failed with traceback:\n {tb}")
 
 
 # Model for FlightModes that require precise timing

@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Tuple
+from typing import Callable
 from logging.handlers import RotatingFileHandler
 import sys
 

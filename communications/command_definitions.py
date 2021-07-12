@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from main import MainSatelliteThread
 # for an explanation of the above 4 lines of code, see
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-# It lets your IDE know what type(self.parent) is, without causing any circular imports at runtime.
+# It lets your IDE know what type(self._parent) is, without causing any circular imports at runtime.
 
 from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import drivers.power.power_structs as ps
@@ -76,7 +76,7 @@ def verification(**kwargs):
 
 class CommandDefinitions:
     def __init__(self, parent: MainSatelliteThread):
-        self.parent = parent
+        self._parent = parent
         self.bootup_commands = {1: self.split}
         self.restart_commands = {}
         self.normal_commands = {
@@ -182,66 +182,66 @@ class CommandDefinitions:
             value[0] = self.switch  # adds 0 to all of the dict entries in COMMAND_DICT
 
     def switch(self):
-        self.parent.logger.critical("Manual FM switch commanded")
+        self._parent.logger.critical("Manual FM switch commanded")
 
     def split(self):
         # for demo, delay of 0
-        self.parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION, delay=0)
+        self._parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION, delay=0)
         # Tell gom to power burnwires in five seconds
-        # self.parent.gom.burnwire1(constants.SPLIT_BURNWIRE_DURATION, delay=5)
+        # self._parent.gom.burnwire1(constants.SPLIT_BURNWIRE_DURATION, delay=5)
         # start reading gyro info
         # read gyro rotation rate data after split - need to downlink these to make sure of successful split
 
     def adc_test(self):
         # tests integration of ADC into the rest of the FSW
-        self.parent.logger.info("Cold junction temperature for gyro sensor in Celsius:")
-        self.parent.logger.info(self.parent.adc.get_gyro_temp())
+        self._parent.logger.info("Cold junction temperature for gyro sensor in Celsius:")
+        self._parent.logger.info(self._parent.adc.get_gyro_temp())
 
-        self.parent.logger.info(f"Pressure: {self.parent.adc.read_pressure()} psi")
-        self.parent.logger.info(f"Temperature: {self.parent.adc.read_temperature()} deg C")
+        self._parent.logger.info(f"Pressure: {self._parent.adc.read_pressure()} psi")
+        self._parent.logger.info(f"Temperature: {self._parent.adc.read_temperature()} deg C")
 
-        self.parent.logger.info("Conversion sanity check: 25.6 degrees")
-        self.parent.logger.info(self.parent.adc.convert_volt_to_temp(self.parent.adc.convert_temp_to_volt(25.6)))
-        self.parent.logger.info("Conversion sanity check: 2.023 mV")
-        self.parent.logger.info(self.parent.adc.convert_temp_to_volt(self.parent.adc.convert_volt_to_temp(2.023)))
+        self._parent.logger.info("Conversion sanity check: 25.6 degrees")
+        self._parent.logger.info(self._parent.adc.convert_volt_to_temp(self._parent.adc.convert_temp_to_volt(25.6)))
+        self._parent.logger.info("Conversion sanity check: 2.023 mV")
+        self._parent.logger.info(self._parent.adc.convert_temp_to_volt(self._parent.adc.convert_volt_to_temp(2.023)))
 
     def rtc_test(self):
-        self.parent.logger.info(f"Oscillator Disabled: {self.parent.rtc.ds3231.disable_oscillator}")
-        self.parent.logger.info(f"RTC Temp: {self.parent.rtc.get_temp()}")
-        self.parent.logger.info(f"RTC Time: {self.parent.rtc.get_time()}")
+        self._parent.logger.info(f"Oscillator Disabled: {self._parent.rtc.ds3231.disable_oscillator}")
+        self._parent.logger.info(f"RTC Temp: {self._parent.rtc.get_temp()}")
+        self._parent.logger.info(f"RTC Time: {self._parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info("Setting RTC time to 1e9")
-        self.parent.rtc.set_time(int(1e9))
-        self.parent.logger.info("New RTC Time: {self.parent.rtc.get_time()}")
+        self._parent.logger.info("Setting RTC time to 1e9")
+        self._parent.rtc.set_time(int(1e9))
+        self._parent.logger.info("New RTC Time: {self._parent.rtc.get_time()}")
         # time.sleep(1)
-        self.parent.logger.info("Incrementing RTC Time by 5555 seconds")
-        self.parent.rtc.increment_rtc(5555)
-        self.parent.logger.info(f"New RTC Time: {self.parent.rtc.get_time()}")
-        self.parent.logger.info("Disabling Oscillator, waiting 10 seconds")
-        # self.parent.rtc.disable_oscillator()
+        self._parent.logger.info("Incrementing RTC Time by 5555 seconds")
+        self._parent.rtc.increment_rtc(5555)
+        self._parent.logger.info(f"New RTC Time: {self._parent.rtc.get_time()}")
+        self._parent.logger.info("Disabling Oscillator, waiting 10 seconds")
+        # self._parent.rtc.disable_oscillator()
         time.sleep(10)
-        self.parent.logger.info(f"RTC Time after disabling oscillator: {self.parent.rtc.get_time()}")
-        self.parent.logger.info("Enabling Oscillator, waiting 10 seconds")
-        # self.parent.rtc.enable_oscillator()
+        self._parent.logger.info(f"RTC Time after disabling oscillator: {self._parent.rtc.get_time()}")
+        self._parent.logger.info("Enabling Oscillator, waiting 10 seconds")
+        # self._parent.rtc.enable_oscillator()
         time.sleep(10)
-        self.parent.logger.info(f"RTC Time after re-enabling oscillator: {self.parent.rtc.get_time()}")
-        self.parent.logger.info("Disabling Oscillator")
-        # self.parent.rtc.disable_oscillator()
-        self.parent.handle_sigint(None, None)
+        self._parent.logger.info(f"RTC Time after re-enabling oscillator: {self._parent.rtc.get_time()}")
+        self._parent.logger.info("Disabling Oscillator")
+        # self._parent.rtc.disable_oscillator()
+        self._parent.handle_sigint(None, None)
 
     def separation_test(self):
         gyro_threader = Thread(target=self.gyro_thread)
         gyro_threader.start()
-        self.parent.gom.burnwire1(2)
+        self._parent.gom.burnwire1(2)
         gyro_threader.join()
 
     def gyro_thread(self):
         freq = 250  # Hz
         duration = 3  # sec
         gyro_data = []
-        self.parent.logger.info("Reading Gyro data (rad/s)")
+        self._parent.logger.info("Reading Gyro data (rad/s)")
         for i in range(int(duration * freq)):
-            gyro_reading = self.parent.gyro.get_gyro()
+            gyro_reading = self._parent.gyro.get_gyro()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
             gyro_list.append(gyro_time)
@@ -249,13 +249,13 @@ class CommandDefinitions:
             time.sleep(1.0 / freq)
 
         # writes gyro data to gyro_data.txt. Caution, this file will be overwritten with every successive test
-        self.parent.logger.info("Writing gyro data to file")
+        self._parent.logger.info("Writing gyro data to file")
         with open('gyro_data.txt', 'w') as filehandle:
             filehandle.writelines("%s\n" % line for line in gyro_data)
 
     def run_opnav(self):
         """Schedules Opnav mode into the FM queue"""
-        self.parent.FMQueue.put(FMEnum.OpNav.value)
+        self._parent.FMQueue.put(FMEnum.OpNav.value)
 
     def set_parameter(self, **kwargs):
         """Changes the values of a parameter in utils/parameters.py or .json if hard_set"""
@@ -272,11 +272,11 @@ class CommandDefinitions:
             json_parameter_dict[name] = value
             dump(json_parameter_dict, open(PARAMETERS_JSON_PATH, 'w'), indent=0)
 
-        acknowledgement = self.parent.downlink_handler.pack_downlink(
-            self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
-        self.parent.downlink_queue.put(acknowledgement)
+        acknowledgement = self._parent.downlink_handler.pack_downlink(
+            self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
+        self._parent.downlink_queue.put(acknowledgement)
 
-        self.parent.logger.info(f"Changed constant {name} from {initial_value} to {value}")
+        self._parent.logger.info(f"Changed constant {name} from {initial_value} to {value}")
 
     def set_exit_lowbatt_threshold(self, **kwargs):
         """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
@@ -285,12 +285,12 @@ class CommandDefinitions:
         try:
             assert 0 < value < 1.0 and float(value) is float
             if value >= params.ENTER_LOW_BATTERY_MODE_THRESHOLD:
-                self.parent.logger.error(
+                self._parent.logger.error(
                     f"New value for Exit LB thresh must be less than current Enter LB thresh value")
                 assert False
             self.set_parameter(name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
         except AssertionError:
-            self.parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
+            self._parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
 
     def set_opnav_interval(self, **kwargs):
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
@@ -300,7 +300,7 @@ class CommandDefinitions:
             assert value > 1
             self.set_parameter(name="OPNAV_INTERVAL", value=value)
         except AssertionError:
-            self.parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
+            self._parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
     # def change_attitude(self, **kwargs):
     #     theta = kwargs.get(AZIMUTH)
@@ -309,7 +309,7 @@ class CommandDefinitions:
     #     assert 0 <= theta < 6.28318530718
     #     assert 0 <= phi < 3.14159265359
     #
-    #     self.parent.reorientation_queue.put((theta, phi))
+    #     self._parent.reorientation_queue.put((theta, phi))
 
     def acs_pulse_timing(self, **kwargs):
         pulse_start_time = kwargs[START]  # float, seconds
@@ -325,7 +325,7 @@ class CommandDefinitions:
         except AssertionError:
             raise CommandArgException
 
-        self.parent.reorientation_queue.put((pulse_start_time, pulse_duration, pulse_num, pulse_dt))
+        self._parent.reorientation_queue.put((pulse_start_time, pulse_duration, pulse_num, pulse_dt))
 
     def gather_critical_telem(self):
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
@@ -334,7 +334,7 @@ class CommandDefinitions:
 
     def gather_basic_telem(self):
         # what's defined in section 3.6.1 of https://cornell.app.box.com/file/629596158344 would be a good packet
-        return self.parent.telemetry.standard_packet_dict()
+        return self._parent.telemetry.standard_packet_dict()
 
     def gather_detailed_telem(self):
         # here we'd gather as much data about the satellite as possible
@@ -344,16 +344,16 @@ class CommandDefinitions:
         state = kwargs[STATE]
         delay = kwargs.get(DELAY, 0)
         assert type(state) is bool
-        self.parent.gom.set_electrolysis(state, delay=delay)
+        self._parent.gom.set_electrolysis(state, delay=delay)
 
     def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
-        self.parent.logger.info("Scheduling a maneuver at: " + str(float(time_burn)))
+        self._parent.logger.info("Scheduling a maneuver at: " + str(float(time_burn)))
         self.set_parameter(name="SCHEDULED_BURN_TIME", value=float(time_burn), hard_set=True)
-        self.parent.maneuver_queue.put(FMEnum.Maneuver.value)
+        self._parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
     def return_to_normal(self):
-        self.parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+        self._parent.replace_flight_mode_by_id(FMEnum.Normal.value)
 
     @staticmethod
     def reboot_pi():
@@ -362,7 +362,7 @@ class CommandDefinitions:
 
     def cease_comms(self):
         # I'm actually unsure of how to do this. Maybe do something with the GPIO pins so that the pi can't transmit
-        self.parent.logger.critical("Ceasing all communications")
+        self._parent.logger.critical("Ceasing all communications")
         # definitely should implement some sort of password and double verification to prevent accidental triggering
         raise NotImplementedError
 
@@ -375,53 +375,53 @@ class CommandDefinitions:
     def print_parameter(self, **kwargs):
         index = kwargs["index"]
         value = getattr(params, str(index))
-        self.parent.logger.info(f"{index}:{value}")
+        self._parent.logger.info(f"{index}:{value}")
 
     def reboot_gom(self):
-        self.parent.gom.pc.reboot()
+        self._parent.gom.pc.reboot()
 
     def power_cycle(self, **kwargs):
         passcode = kwargs.get('passcode', 'bogus')
-        self.parent.gom.hard_reset(passcode)
+        self._parent.gom.hard_reset(passcode)
 
     def gom_outputs(self, **kwargs):
         output_channel = kwargs['output_channel']
         state = kwargs.get('state', 0)  # if 'state' is not found in kwargs, assume we want it to turn off
         delay = kwargs.get('delay', 0)  # if 'delay' is not found in kwargs, assume we want it immediately
-        self.parent.gom.set_output(output_channel, state, delay=delay)
+        self._parent.gom.set_output(output_channel, state, delay=delay)
 
     def gom_command(self, command_string: str, args: dict):
         """Generalized Gom command - very powerful and possibly dangerous.
         Make sure you know exactly what you're doing when calling this."""
-        method_to_call = getattr(self.parent.gom, command_string)
+        method_to_call = getattr(self._parent.gom, command_string)
         try:
             result = method_to_call(**args)
             return result
         except TypeError:
-            self.parent.logger.error(f"Incorrect args: {args} for gom method {command_string}")
+            self._parent.logger.error(f"Incorrect args: {args} for gom method {command_string}")
 
     def general_command(self, method_name: str, args: dict):
         """Generalized satellite action command - very powerful and possibly dangerous.
             Make sure you know exactly what you're doing when calling this."""
 
-        method_to_call = getattr(self.parent, method_name)
+        method_to_call = getattr(self._parent, method_name)
         try:
             result = method_to_call(**args)
             return result
         except TypeError:
-            self.parent.logger.error(f"Incorrect arguments: {args} for method {method_name}")
+            self._parent.logger.error(f"Incorrect arguments: {args} for method {method_name}")
 
     def comms_driver_test(self):
 
-        gyro = self.parent.gyro.get_gyro()
+        gyro = self._parent.gyro.get_gyro()
 
-        fx_data = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
-                                                             FMEnum.TestMode.value,
-                                                             TestCommandEnum.CommsDriver.value,
-                                                             gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
+        fx_data = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
+                                                              FMEnum.TestMode.value,
+                                                              TestCommandEnum.CommsDriver.value,
+                                                              gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
 
         time.sleep(5)
-        self.parent.radio.transmit(fx_data)
+        self._parent.radio.transmit(fx_data)
 
     @staticmethod
     def pi_shutdown(**kwargs):
@@ -473,14 +473,14 @@ class CommandDefinitions:
         block_number = kwargs['block_number']
         block_text = kwargs['block_text']
 
-        self.parent.file_block_bank[block_number] = block_text
+        self._parent.file_block_bank[block_number] = block_text
 
         # Downlink acknowledgment with block number
-        acknowledgement = self.parent.downlink_handler.pack_downlink(
-            self.parent.downlink_counter, FMEnum.Command.value,
+        acknowledgement = self._parent.downlink_handler.pack_downlink(
+            self._parent.downlink_counter, FMEnum.Command.value,
             CommandCommandEnum.AddFileBlock.value, successful=True,
             block_number=block_number)
-        # self.parent.downlink_queue.put(acknowledgement)
+        # self._parent.downlink_queue.put(acknowledgement)
 
     def get_file_blocks_info(self, **kwargs):
         """Downlink checksum of file blocks and any missing block numbers"""
@@ -494,7 +494,7 @@ class CommandDefinitions:
         for i in range(total_blocks):
 
             try:
-                block = self.parent.file_block_bank[i]
+                block = self._parent.file_block_bank[i]
                 full_file_text += block
 
             except KeyError:
@@ -513,13 +513,13 @@ class CommandDefinitions:
         total_blocks = kwargs['total_blocks']
         local_file_name = kwargs['file_path']
 
-        assert (total_blocks == len(self.parent.file_block_bank))
+        assert (total_blocks == len(self._parent.file_block_bank))
 
         full_file_text = ''
 
         # Assemble file from blocks
         for i in range(total_blocks):
-            full_file_text += self.parent.file_block_bank[i]
+            full_file_text += self._parent.file_block_bank[i]
 
         # Create backup with the original if the file already exists
         if os.path.exists(file_path):
@@ -536,7 +536,7 @@ class CommandDefinitions:
         original_file.seek(0)
         original_file.write(full_file_text)
 
-        self.parent.file_block_bank = {}
+        self._parent.file_block_bank = {}
 
     def print_long_string(self, **kwargs):
         number = kwargs['some_number']
@@ -546,127 +546,127 @@ class CommandDefinitions:
         print(string)
 
     def nemo_write_register(self, **kwargs):
-        if self.parent.nemo_manager is not None:
+        if self._parent.nemo_manager is not None:
             reg_address = kwargs[REG_ADDRESS]
             values = [kwargs[REG_VALUE]]
 
-            self.parent.nemo_manager.write_register(reg_address, values)
+            self._parent.nemo_manager.write_register(reg_address, values)
         else:
-            self.parent.logger.error("CMD: nemo_write_register() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_write_register() failed, nemo_manager not initialized")
 
     def nemo_read_register(self, **kwargs):
-        if self.parent.nemo_manager is not None:
+        if self._parent.nemo_manager is not None:
             reg_address = kwargs[REG_ADDRESS]
             size = kwargs[REG_SIZE]
 
-            self.parent.nemo_manager.read_register(reg_address, size)
+            self._parent.nemo_manager.read_register(reg_address, size)
         else:
-            self.parent.logger.error("CMD: nemo_read_register() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_read_register() failed, nemo_manager not initialized")
 
     def nemo_set_config(self, **kwargs):
-        if self.parent.nemo_manager is not None:
-            self.parent.nemo_manager.set_config(**kwargs)
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.set_config(**kwargs)
         else:
-            self.parent.logger.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
 
     def nemo_power_off(self):
-        if self.parent.nemo_manager is not None:
-            self.parent.nemo_manager.power_off()
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.power_off()
         else:
-            self.parent.logger.error("CMD: nemo_power_off() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_power_off() failed, nemo_manager not initialized")
 
     def nemo_power_on(self):
-        if self.parent.nemo_manager is not None:
-            self.parent.nemo_manager.power_on()
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.power_on()
         else:
-            self.parent.logger.error("CMD: nemo_power_on() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_power_on() failed, nemo_manager not initialized")
 
     def nemo_reboot(self):
-        if self.parent.nemo_manager is not None:
-            self.parent.nemo_manager.reboot()
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.reboot()
         else:
-            self.parent.logger.error("CMD: nemo_reboot() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_reboot() failed, nemo_manager not initialized")
 
     def nemo_process_rate_data(self, **kwargs):
-        if self.parent.nemo_manager is not None:
+        if self._parent.nemo_manager is not None:
             t_start = kwargs[T_START]
             t_stop = kwargs[T_STOP]
             decimation_factor = kwargs[DECIMATION_FACTOR]
 
-            self.parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+            self._parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
         else:
-            self.parent.logger.error("CMD: nemo_process_rate_data() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_process_rate_data() failed, nemo_manager not initialized")
 
     def nemo_process_histograms(self, **kwargs):
-        if self.parent.nemo_manager is not None:
+        if self._parent.nemo_manager is not None:
             t_start = kwargs[T_START]
             t_stop = kwargs[T_STOP]
             decimation_factor = kwargs[DECIMATION_FACTOR]
 
-            self.parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
+            self._parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
         else:
-            self.parent.logger.error("CMD: nemo_process_histograms() failed, nemo_manager not initialized")
+            self._parent.logger.error("CMD: nemo_process_histograms() failed, nemo_manager not initialized")
 
     def set_gom_conf1(self, **kwargs):
         new_config = eps_config_from_dict(**kwargs)
-        self.parent.logger.info("New config to be set:")
+        self._parent.logger.info("New config to be set:")
         ps.displayConfig(new_config)
 
-        if self.parent.gom is not None:
+        if self._parent.gom is not None:
             try:
-                self.parent.gom.pc.config_set(new_config)
-                updated_config: ps.eps_config_t = self.parent.gom.pc.config_get()
+                self._parent.gom.pc.config_set(new_config)
+                updated_config: ps.eps_config_t = self._parent.gom.pc.config_get()
 
                 new_config_dict = dict_from_eps_config(updated_config)
-                acknowledgement = self.parent.downlink_handler.pack_downlink(
-                    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Set.value,
+                acknowledgement = self._parent.downlink_handler.pack_downlink(
+                    self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Set.value,
                     **new_config_dict)
 
             except Exception:
-                self.parent.logger.error("Could not set new gom config")
-            #     acknowledgement = self.parent.downlink_handler.pack_downlink(
-            #         self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.CommandStatus.value,
-            #         fmid=self.parent.flight_mode.flight_mode_id, cid=NormalCommandEnum.GomConf1Set.value,
+                self._parent.logger.error("Could not set new gom config")
+            #     acknowledgement = self._parent.downlink_handler.pack_downlink(
+            #         self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.CommandStatus.value,
+            #         fmid=self._parent.flight_mode.flight_mode_id, cid=NormalCommandEnum.GomConf1Set.value,
             #         successful=False)
             #
-            # self.parent.downlink_queue.put(acknowledgement)
+            # self._parent.downlink_queue.put(acknowledgement)
 
     def get_gom_conf1(self, **kwargs):
-        if self.parent.gom is not None:
-            current_config: ps.eps_config_t = cast('ps.eps_config_t', self.parent.gom.get_health_data(level="config"))
+        if self._parent.gom is not None:
+            current_config: ps.eps_config_t = cast('ps.eps_config_t', self._parent.gom.get_health_data(level="config"))
             ps.displayConfig(current_config)
             current_config_dict = dict_from_eps_config(current_config)
-            # acknowledgement = self.parent.downlink_handler.pack_downlink(
-            #     self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Get.value,
+            # acknowledgement = self._parent.downlink_handler.pack_downlink(
+            #     self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Get.value,
             #     **current_config_dict)
-            # self.parent.downlink_queue.put(acknowledgement)
+            # self._parent.downlink_queue.put(acknowledgement)
 
     def set_gom_conf2(self, **kwargs):
-        if self.parent.gom is not None:
+        if self._parent.gom is not None:
             new_conf2 = eps_config2_from_dict(kwargs)
-            self.parent.gom.pc.config2_set(new_conf2)
-            self.parent.gom.pc.config2_cmd(2)
+            self._parent.gom.pc.config2_set(new_conf2)
+            self._parent.gom.pc.config2_cmd(2)
 
     def get_gom_conf2(self, **kwargs):
-        if self.parent.gom is not None:
-            current_conf2 = cast('ps.eps_config2_t', self.parent.gom.get_health_data(level='config2'))
+        if self._parent.gom is not None:
+            current_conf2 = cast('ps.eps_config2_t', self._parent.gom.get_health_data(level='config2'))
             ps.displayConfig2(current_conf2)
             current_config2_dict = dict_from_eps_config2(current_conf2)
-            # acknowledgement = self.parent.downlink_handler.pack_downlink(
-            #    self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
+            # acknowledgement = self._parent.downlink_handler.pack_downlink(
+            #    self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
             #    **current_config2_dict)
-            # self.parent.downlink_queue.put(acknowledgement)
+            # self._parent.downlink_queue.put(acknowledgement)
 
     def shell_command(self, **kwargs):
         cmd: str = cast('str', kwargs.get(CMD))
-        self.parent.logger.info(f"Running {cmd}")
+        self._parent.logger.info(f"Running {cmd}")
         output = subprocess.run(cmd, shell=True)
 
-        response = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
-                                                              self.parent.flight_mode.flight_mode_id,
-                                                              NormalCommandEnum.ShellCommand.value,
-                                                              return_code=output.returncode)
-        self.parent.downlink_queue.put(response)
+        response = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
+                                                               self._parent.flight_mode.flight_mode_id,
+                                                               NormalCommandEnum.ShellCommand.value,
+                                                               return_code=output.returncode)
+        self._parent.downlink_queue.put(response)
 
     def sudo_command(self, **kwargs):
         """Same as shell_command, but prepends 'sudo ' to the command"""
@@ -682,7 +682,7 @@ class CommandDefinitions:
     def exec_py_file(self, **kwargs):
         filename: str = cast('str', kwargs.get(FNAME))
         filename += '.py'
-        self.parent.logger.debug(f"CWD: {os.getcwd()}")
+        self._parent.logger.debug(f"CWD: {os.getcwd()}")
         exec(open(filename).read())
 
 

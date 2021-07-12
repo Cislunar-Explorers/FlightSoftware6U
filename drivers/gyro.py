@@ -1,4 +1,3 @@
-import time
 from adafruit_blinka.agnostic import board_id
 
 if board_id and board_id != 'GENERIC_LINUX_PC':
@@ -6,7 +5,7 @@ if board_id and board_id != 'GENERIC_LINUX_PC':
     import busio
 import adafruit_fxos8700
 import adafruit_fxas21002c
-from typing import Tuple, List, cast
+from typing import Tuple, cast
 from utils.constants import GYRO_RANGE
 import utils.parameters as params
 

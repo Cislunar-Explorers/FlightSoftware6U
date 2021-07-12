@@ -29,9 +29,9 @@ class GomSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.gom is not None:
-            self.hk = self.parent.gom.get_health_data(level="eps")
-            self.hkparam = self.parent.gom.get_health_data()
+        if self._parent.gom is not None:
+            self.hk = self._parent.gom.get_health_data(level="eps")
+            self.hkparam = self._parent.gom.get_health_data()
             battery_voltage = self.hk.vbatt  # mV
             self.percent = (battery_voltage - params.GOM_VOLTAGE_MIN) / \
                            (params.GOM_VOLTAGE_MAX - params.GOM_VOLTAGE_MIN)
@@ -48,11 +48,11 @@ class GyroSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.gyro is not None:
-            self.rot = self.parent.gyro.get_gyro_corrected()
-            self.mag = self.parent.gyro.get_mag()
-            self.acc = self.parent.gyro.get_acceleration()
-            self.tmp = self.parent.gyro.get_temp()
+        if self._parent.gyro is not None:
+            self.rot = self._parent.gyro.get_gyro_corrected()
+            self.mag = self._parent.gyro.get_mag()
+            self.acc = self._parent.gyro.get_acceleration()
+            self.tmp = self._parent.gyro.get_temp()
 
     def poll_smoothed(self, freq=10, duration=1, samples=10):
         # poll and smooth gyro data
@@ -60,7 +60,7 @@ class GyroSensor(SynchronousSensor):
         n_data = freq * duration
         data = [None] * n_data
         for i in range(n_data):
-            data[i] = self.parent.gyro.get_gyro_corrected()
+            data[i] = self._parent.gyro.get_gyro_corrected()
             sleep(1.0 / freq)
 
         data = np.asarray(data).T
@@ -91,8 +91,8 @@ class PressureSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.adc is not None:
-            self.pressure = self.parent.adc.read_pressure()
+        if self._parent.adc is not None:
+            self.pressure = self._parent.adc.read_pressure()
 
 
 class ThermocoupleSensor(SynchronousSensor):
@@ -102,8 +102,8 @@ class ThermocoupleSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.adc is not None:
-            self.tmp = self.parent.adc.read_temperature()
+        if self._parent.adc is not None:
+            self.tmp = self._parent.adc.read_temperature()
 
 
 class PiSensor(SynchronousSensor):
@@ -142,8 +142,8 @@ class RtcSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.rtc is not None:
-            self.rtc_time = self.parent.rtc.get_time()
+        if self._parent.rtc is not None:
+            self.rtc_time = self._parent.rtc.get_time()
 
 
 class OpNavSensor(SynchronousSensor):
@@ -160,7 +160,7 @@ class OpNavSensor(SynchronousSensor):
 class Telemetry(SynchronousSensor):
     def __init__(self, parent):
         # The purpose of the parent object is to ensure that only one object is defined for each sensor/component
-        # So almost all calls to sensors will be made through self.parent.<insert sensor stuff here>
+        # So almost all calls to sensors will be made through self._parent.<insert sensor stuff here>
         super().__init__(parent)
 
         self.gom = GomSensor(parent)
@@ -191,23 +191,23 @@ class Telemetry(SynchronousSensor):
             self.poll()
 
         if any([abs(i) > MAX_GYRO_RATE for i in self.gyr.rot]):
-            self.parent.logger.error("Gyro not functioning properly")
+            self._parent.logger.error("Gyro not functioning properly")
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
         if self.prs.pressure < 0 or self.prs.pressure > 2000:
-            self.parent.logger.error("Pressure sensor not functioning properly")
+            self._parent.logger.error("Pressure sensor not functioning properly")
             raise PressureError(f"Unreasonable pressure: {self.prs.pressure}")
 
         if self.thm.tmp < -200 or self.thm.tmp > 200:
-            self.parent.logger.error("Thermocouple not functioning properly")
+            self._parent.logger.error("Thermocouple not functioning properly")
             raise ThermocoupleError(f"Unreasonable fuel tank temperature: {self.thm.tmp}")
 
         if self.gom.percent < 0 or self.gom.percent > 1.5:
-            self.parent.logger.error("Gom HK not functioning properly")
+            self._parent.logger.error("Gom HK not functioning properly")
             raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
 
         if any(i < 0 for i in self.rpi.all):
-            self.parent.logger.error("RPi sensors not functioning properly")
+            self._parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
 
     def standard_packet(self):

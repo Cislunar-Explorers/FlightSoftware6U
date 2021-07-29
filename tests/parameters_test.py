@@ -1,33 +1,36 @@
-import utils.parameters
-from utils.exceptions import CislunarException
-from json import load
 import os
+from utils import parameter_utils, parameters
+import json
+import unittest
 
 
-def test_parameters():
-    """Copied from main.py's init_parameters"""
-    print(os.getcwd())
-    if 'FlightSoftware/FlightSoftware/' not in os.getcwd():  # checks if running pytest
-        filepath = 'utils/parameters.json'
-    else:
-        filepath = '../utils/parameters.json'
+class ParametersTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        print(os.getcwd())
+        if 'FlightSoftware/FlightSoftware/' not in os.getcwd():  # checks if running pytest
+            self.filepath = 'utils/parameters.json'
+        else:
+            self.filepath = '../utils/parameters.json'
 
-    with open(os.fspath(filepath)) as f:
-        json_parameter_dict = load(f)
+    def test_parameter_consistency(self):
+        """Tests whether the parameters defined in parameters.json are consistent with those defined in parameters.py"""
 
-    parameters_missing = []
-    for parameter in dir(utils.parameters):
-        if parameter[0] != '_':
-            try:
-                setattr(utils.parameters, parameter, json_parameter_dict[parameter])
-            except KeyError:
-                parameters_missing.append(parameter)
+        py_list = parameter_utils.get_parameter_list()
+        json_list = parameter_utils.get_parameter_list(hard=True, filename=self.filepath)
+        inconsistencies = set(py_list).symmetric_difference(json_list)
+        if not inconsistencies:
+            raise ValueError(f"These parameter names are not consistent: {inconsistencies}")
 
-    if len(parameters_missing) > 0:
-        raise CislunarException(
-            f'Attempted to set parameter(s) {parameters_missing}, which could not be found in parameters.json'
-        )
+    def test_parameters_init(self):
+        parameter_utils.init_parameters(filename=self.filepath)
+
+    def test_parameter_set(self):
+        param_name = 'ACS_SPIKE_DURATION'
+        new_parm_value = 20
+        parameter_utils.set_parameter(param_name, new_parm_value, True, filename=self.filepath)
+        self.assertEqual(new_parm_value, parameters.ACS_SPIKE_DURATION)
+        self.assertEqual(new_parm_value, json.load(open(self.filepath))[param_name])
 
 
 if __name__ == '__main__':
-    test_parameters()
+    unittest.main()

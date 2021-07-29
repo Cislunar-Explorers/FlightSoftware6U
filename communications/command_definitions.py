@@ -13,7 +13,7 @@ import time
 import hashlib
 from threading import Thread
 from utils.constants import *
-from json import load, dump
+from utils.parameter_utils import set_parameter
 from utils.exceptions import CommandArgException
 import subprocess
 
@@ -34,7 +34,7 @@ def verification(**kwargs):
     team_bytes = team_identifier.to_bytes(4, 'big')
     data_transmission_sequence = bytes()
 
-    for x in range(num_blocks):
+    for _ in range(num_blocks):
         # header calculation:
         sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
         # get current time
@@ -240,7 +240,7 @@ class CommandDefinitions:
         duration = 3  # sec
         gyro_data = []
         self._parent.logger.info("Reading Gyro data (rad/s)")
-        for i in range(int(duration * freq)):
+        for _ in range(int(duration * freq)):
             gyro_reading = self._parent.gyro.get_gyro()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
@@ -262,15 +262,7 @@ class CommandDefinitions:
         name = kwargs[NAME]
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
-        initial_value = getattr(params, name)
-        setattr(params, name, value)
-
-        # Hard sets new parameter value into JSON file
-        if hard_set:
-            with open(PARAMETERS_JSON_PATH) as f:
-                json_parameter_dict = load(f)
-            json_parameter_dict[name] = value
-            dump(json_parameter_dict, open(PARAMETERS_JSON_PATH, 'w'), indent=0)
+        initial_value = set_parameter(name, value, hard_set)
 
         acknowledgement = self._parent.downlink_handler.pack_downlink(
             self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
@@ -298,7 +290,7 @@ class CommandDefinitions:
         value = kwargs[INTERVAL]
         try:
             assert value > 1
-            self.set_parameter(name="OPNAV_INTERVAL", value=value)
+            self.set_parameter(name="OPNAV_INTERVAL", value=value, hard_set=True)
         except AssertionError:
             self._parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 

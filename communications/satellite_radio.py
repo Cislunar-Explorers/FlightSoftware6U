@@ -6,7 +6,7 @@ from adafruit_blinka.agnostic import board_id
 if board_id and board_id != 'GENERIC_LINUX_PC':
     import board
     import busio
-from adafruit_bus_device.spi_device import SPIDevice
+    from adafruit_bus_device.spi_device import SPIDevice
 from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 

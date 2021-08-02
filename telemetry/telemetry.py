@@ -22,7 +22,7 @@ def moving_average(x, w):
 class GomSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.hk: eps_hk_t = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
+        self.hk = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
         self.hkparam = hkparam_t()  # hkparam_t struct
         self.percent = float()
         self.is_electrolyzing = bool()

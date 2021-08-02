@@ -16,4 +16,5 @@ astropy
 numba
 uptime
 opencv-python-headless
+bitstring
 

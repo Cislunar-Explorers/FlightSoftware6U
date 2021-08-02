@@ -5,14 +5,12 @@ from time import time
 from datetime import datetime
 from queue import Queue
 import signal
+from typing import Optional
 from utils.log import get_log, log_error
-
-from json import load
 from time import sleep
 
 from utils.constants import *
 import utils.parameters as params
-from utils.exceptions import CislunarException
 from utils.db import create_sensor_tables_from_path
 
 # from drivers.dummy_sensors import PressureSensor
@@ -35,6 +33,7 @@ from drivers.ADCDriver import ADC
 from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
 import core.camera as camera
+from utils.parameter_utils import init_parameters
 
 FOR_FLIGHT = None
 
@@ -45,7 +44,7 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         logger.info("Initializing...")
-        self.init_parameters()
+        init_parameters()
         self.command_queue = Queue()
         self.downlink_queue = Queue()
         self.FMQueue = Queue()
@@ -69,15 +68,14 @@ class MainSatelliteThread(Thread):
         self.attach_sigint_handler()  # FIXME
         self.file_block_bank = {}
         self.need_to_reboot = False
-        self.gom: Gomspace
-        self.gyro: GyroSensor
-        self.adc: ADC
-        self.rtc: RTC
-        self.radio: Radio
-        self.mux: camera.CameraMux
-        self.camera: camera.Camera
-        self.nemo_manager: NemoManager
-        self.init_sensors()
+        self.gom: Optional[Gomspace] = None
+        self.gyro: Optional[GyroSensor] = None
+        self.adc: Optional[ADC] = None
+        self.rtc: Optional[RTC] = None
+        self.radio: Optional[Radio] = None
+        self.mux: Optional[camera.CameraMux] = None
+        self.camera: Optional[camera.Camera] = None
+        self.nemo_manager: Optional[NemoManager] = None
 
         # Opnav subprocess variables
         self.opnav_proc_queue = Queue()
@@ -101,21 +99,6 @@ class MainSatelliteThread(Thread):
             queue=self.command_queue, use_ax5043=False
         )
         self.comms.listen()
-
-    @staticmethod
-    def init_parameters():
-        with open(PARAMETERS_JSON_PATH) as f:
-            json_parameter_dict = load(f)
-
-        for parameter in dir(params):
-            try:
-                if parameter[0] != '_':
-                    setattr(params, parameter, json_parameter_dict[parameter])
-            except KeyError:
-                raise CislunarException(
-                    f'Attempted to set parameter ' + str(parameter) +
-                    ', which could not be found in parameters.json'
-                )
 
     def init_sensors(self) -> int:
         try:
@@ -314,6 +297,7 @@ class MainSatelliteThread(Thread):
     # Wrap in try finally block to ensure it stays live
     def run(self):
         """This is the main loop of the Cislunar Explorers FSW and runs constantly during flight."""
+        self.init_sensors()
         try:
             while True:
                 sleep(2)  # TODO remove when flight modes execute real tasks
@@ -341,6 +325,7 @@ class MainSatelliteThread(Thread):
             self.nemo_manager.close()
         logger.critical("Shutting down flight software")
         # self.comms.stop()
+
 
 if __name__ == "__main__":
     FOR_FLIGHT = False

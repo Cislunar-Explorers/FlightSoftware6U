@@ -121,6 +121,7 @@ class Gomspace:
         return bool(output_struct.output[GomOutputs.electrolyzer.value])
 
     def read_battery_percentage(self):
+        # DEPRECATED. Use self.get_health_data(level=Hk.EPS.value).vbatt instead
         battery_data = self.get_health_data(level=Hk.VI.value)
         battery_voltage = battery_data.vbatt
         vmin = params.GOM_VOLTAGE_MIN

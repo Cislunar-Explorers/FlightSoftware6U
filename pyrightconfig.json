@@ -38,5 +38,7 @@
   "reportMissingImports": "information",
   "reportImportCycles": "none",
   "reportUnusedImport": "warning",
-  "reportUnusedVariable": "warning"
+  "reportUnusedVariable": "warning",
+  "reportOptionalMemberAccess": "none",
+  "reportDuplicateImport": "error"
 }

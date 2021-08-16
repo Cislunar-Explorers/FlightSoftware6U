@@ -91,14 +91,14 @@ class FlightMode:
             return FMEnum.AttitudeAdjustment.value
 
         # if battery is low, go to low battery mode
-        batt_percent = self._parent.telemetry.gom.percent
-        if (batt_percent < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
+        batt_voltage = self._parent.telemetry.gom.hk.vbatt
+        if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
         if sum(self._parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT \
-                and batt_percent < params.ENTER_ECLIPSE_MODE_THRESHOLD \
+                and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
@@ -367,7 +367,7 @@ class LowBatterySafetyMode(FlightMode):
 
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
-        if self._parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
+        if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
     def __enter__(self):

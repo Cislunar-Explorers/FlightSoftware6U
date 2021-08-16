@@ -1,3 +1,4 @@
+from main import MainSatelliteThread
 from communications.command_definitions import CommandDefinitions
 from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatterySafetyCommandEnum, \
     SafetyCommandEnum, OpNavCommandEnum, ManeuverCommandEnum, SensorsCommandEnum, CommsCommandEnum, TestCommandEnum, \
@@ -9,7 +10,7 @@ command_enums = [BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatt
 
 
 def testFlightCommands():
-    cd = CommandDefinitions(None)
+    cd = CommandDefinitions(MainSatelliteThread())
     all_modes = list(map(int, FMEnum))
 
     zipped_enums_command_dicts = list(zip(command_enums, cd.COMMAND_DICT.values()))

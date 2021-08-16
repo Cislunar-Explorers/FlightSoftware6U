@@ -13,6 +13,7 @@
 # https://cornell.app.box.com/file/664230352636
 
 from adafruit_blinka.agnostic import board_id
+from typing import Optional
 
 if board_id and board_id != 'GENERIC_LINUX_PC':
     import ADS1115
@@ -48,7 +49,7 @@ class ADC:
     Q1T = -1.3948675e-3
     Q2T = -6.7976627e-5
 
-    def __init__(self, gyro: GyroSensor):
+    def __init__(self, gyro: Optional[GyroSensor]):
         self.ads = ADS1115.ADS1115()
         self.gyro = gyro
 
@@ -71,7 +72,8 @@ class ADC:
         return temperature
 
     def get_gyro_temp(self):
-        return self.gyro.get_temp()
+        if self.gyro is not None:
+            return self.gyro.get_temp()
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

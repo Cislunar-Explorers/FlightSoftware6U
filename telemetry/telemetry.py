@@ -11,6 +11,7 @@ from utils.db import TelemetryModel, create_sensor_tables_from_path
 from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
 import utils.parameters as params
 from typing import Tuple
+from adafruit_blinka.agnostic import board_id
 
 
 def moving_average(x, w):
@@ -28,9 +29,9 @@ class GomSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.gom is not None:
-            self.hk = self.parent.gom.get_health_data(level="eps")
-            self.hkparam = self.parent.gom.get_health_data()
+        if self._parent.gom is not None:
+            self.hk = self._parent.gom.get_health_data(level="eps")
+            self.hkparam = self._parent.gom.get_health_data()
             battery_voltage = self.hk.vbatt  # mV
             self.percent = (battery_voltage - params.GOM_VOLTAGE_MIN) / \
                            (params.GOM_VOLTAGE_MAX - params.GOM_VOLTAGE_MIN)
@@ -43,23 +44,23 @@ class GyroSensor(SynchronousSensor):
         self.rot: Tuple[float, float, float] = (float(), float(), float())  # rad/s
         self.mag: Tuple[float, float, float] = (float(), float(), float())  # microTesla
         self.acc: Tuple[float, float, float] = (float(), float(), float())  # m/s^2
-        self.tmp: float = float()  # deg C
+        self.tmp: int = int()  # deg C
 
     def poll(self):
         super().poll()
-        if self.parent.gyro is not None:
-            self.rot = self.parent.gyro.get_gyro_corrected()
-            self.mag = self.parent.gyro.get_mag()
-            self.acc = self.parent.gyro.get_acceleration()
-            self.tmp = self.parent.gyro.get_temp()
+        if self._parent.gyro is not None:
+            self.rot = self._parent.gyro.get_gyro_corrected()
+            self.mag = self._parent.gyro.get_mag()
+            self.acc = self._parent.gyro.get_acceleration()
+            self.tmp = self._parent.gyro.get_temp()
 
-    def poll_smoothed(self, freq=10, duration=3, samples=5):
+    def poll_smoothed(self, freq=10, duration=1, samples=10):
         # poll and smooth gyro data
 
         n_data = freq * duration
-        data = [] * n_data
+        data = [None] * n_data
         for i in range(n_data):
-            data[i] = self.parent.gyro.get_gyro_corrected()
+            data[i] = self._parent.gyro.get_gyro_corrected()
             sleep(1.0 / freq)
 
         data = np.asarray(data).T
@@ -82,17 +83,6 @@ class GyroSensor(SynchronousSensor):
     def get_mag(self):
         return self.mag
 
-    # def write(self):
-    #     gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
-    #     gyro_model = GyroModel.gyro_from_tuple(gyro_tuple)
-    #
-    #     try:
-    #         session = self.parent.create_session()
-    #         session.add(gyro_model)
-    #         session.commit()
-    #     finally:
-    #         session.close()
-
 
 class PressureSensor(SynchronousSensor):
     def __init__(self, parent):
@@ -101,8 +91,8 @@ class PressureSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.adc is not None:
-            self.pressure = self.parent.adc.read_pressure()
+        if self._parent.adc is not None:
+            self.pressure = self._parent.adc.read_pressure()
 
 
 class ThermocoupleSensor(SynchronousSensor):
@@ -112,8 +102,8 @@ class ThermocoupleSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.adc is not None:
-            self.tmp = self.parent.adc.read_temperature()
+        if self._parent.adc is not None:
+            self.tmp = self._parent.adc.read_temperature()
 
 
 class PiSensor(SynchronousSensor):
@@ -134,7 +124,8 @@ class PiSensor(SynchronousSensor):
         self.disk = int(psutil.disk_usage("/").percent)
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
-        self.tmp = float(popen("vcgencmd measure_temp").readline().strip()[5:-2])
+        if board_id and board_id != 'GENERIC_LINUX_PC':
+            self.tmp = float(popen("vcgencmd measure_temp").readline().strip()[5:-2])
         self.all = (self.cpu,
                     self.ram,
                     self.disk,
@@ -151,8 +142,8 @@ class RtcSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self.parent.rtc is not None:
-            self.rtc_time = self.parent.rtc.get_time()
+        if self._parent.rtc is not None:
+            self.rtc_time = self._parent.rtc.get_time()
 
 
 class OpNavSensor(SynchronousSensor):
@@ -169,7 +160,7 @@ class OpNavSensor(SynchronousSensor):
 class Telemetry(SynchronousSensor):
     def __init__(self, parent):
         # The purpose of the parent object is to ensure that only one object is defined for each sensor/component
-        # So almost all calls to sensors will be made through self.parent.<insert sensor stuff here>
+        # So almost all calls to sensors will be made through self._parent.<insert sensor stuff here>
         super().__init__(parent)
 
         self.gom = GomSensor(parent)
@@ -199,24 +190,24 @@ class Telemetry(SynchronousSensor):
         if (time() - self.poll_time) > 3600:
             self.poll()
 
-        if any(i > MAX_GYRO_RATE for i in tuple(map(abs, self.gyr.rot))):
-            self.parent.logger.error("Gyro not functioning properly")
+        if any([abs(i) > MAX_GYRO_RATE for i in self.gyr.rot]):
+            self._parent.logger.error("Gyro not functioning properly")
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
         if self.prs.pressure < 0 or self.prs.pressure > 2000:
-            self.parent.logger.error("Pressure sensor not functioning properly")
+            self._parent.logger.error("Pressure sensor not functioning properly")
             raise PressureError(f"Unreasonable pressure: {self.prs.pressure}")
 
         if self.thm.tmp < -200 or self.thm.tmp > 200:
-            self.parent.logger.error("Thermocouple not functioning properly")
+            self._parent.logger.error("Thermocouple not functioning properly")
             raise ThermocoupleError(f"Unreasonable fuel tank temperature: {self.thm.tmp}")
 
         if self.gom.percent < 0 or self.gom.percent > 1.5:
-            self.parent.logger.error("Gom HK not functioning properly")
+            self._parent.logger.error("Gom HK not functioning properly")
             raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
 
         if any(i < 0 for i in self.rpi.all):
-            self.parent.logger.error("RPi sensors not functioning properly")
+            self._parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
 
     def standard_packet(self):
@@ -297,12 +288,7 @@ class Telemetry(SynchronousSensor):
                 GOM_curout4=self.gom.hk.curout[3],
                 GOM_curout5=self.gom.hk.curout[4],
                 GOM_curout6=self.gom.hk.curout[5],
-
-                # TODO figure out if this is just one or array
-                # GOM_outputs = Column(Integer),
-                GOM_outputs=self.gom.hk.outputs[0],
-
-
+                GOM_outputs=int(str(eps_hk_t.output).replace(',', '').replace(' ', '')[1:-1], 2),
                 GOM_latchup1=self.gom.hk.latchup[0],
                 GOM_latchup2=self.gom.hk.latchup[1],
                 GOM_latchup3=self.gom.hk.latchup[2],
@@ -323,12 +309,12 @@ class Telemetry(SynchronousSensor):
                 GOM_pptmode=self.gom.hk.pptmode,
                 GOM_reserved2=self.gom.hk.reserved2,
                 RTC_measurement_taken=self.rtc.rtc_time,
-                RPI_cpu=self.cpu,  # TODO: fix this
-                RPI_ram=self.ram,
-                RPI_dsk=self.disk,
-                RPI_tmp=self.tmp,
-                RPI_boot=self.boot_time,
-                RPI_uptime=self.up_time,
+                RPI_cpu=self.rpi.cpu,
+                RPI_ram=self.rpi.ram,
+                RPI_dsk=self.rpi.disk,
+                RPI_tmp=self.rpi.tmp,
+                RPI_boot=self.rpi.boot_time,
+                RPI_uptime=self.rpi.up_time,
                 GYRO_gyr_x=gx,
                 GYRO_gyr_y=gy,
                 GYRO_gyr_z=gz,
@@ -339,64 +325,10 @@ class Telemetry(SynchronousSensor):
                 GYRO_mag_y=by,
                 GYRO_mag_z=bz,
                 GYRO_temperature=self.gyr.tmp,
-                THERMOCOUPLE_pressure=self.thm.tmp,
-                PRESSURE_pressure=self.pressure
+                THERMOCOUPLE_temperature=self.thm.tmp,
+                PRESSURE_pressure=self.prs.pressure
             )
             self.session.add(telemetry_data)
             self.session.commit()
         finally:
             self.session.close()
-
-    def query_telem(self, sensor):
-        if sensor.equals("all"):
-            self.query_all()
-        elif sensor.equals("gom"):
-            self.query_gom()
-        elif sensor.equals("rtc"):
-            self.query_rtc()
-        elif sensor.equals("rpi"):
-            self.query_rpi()
-        elif sensor.equals("gyro"):
-            self.query_gyro()
-        elif sensor.equals("thm"):
-            self.query_thm()
-        elif sensor.equals("pressure"):
-            self.query_pressure()
-        else:
-            raise ValueError
-
-    def query_all(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries:
-            print(entry)
-
-    def query_gom(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[1:37]:
-            print(entry)
-
-    def query_rtc(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[37:38]:
-            print(entry)
-
-    def query_rpi(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[38:44]:
-            print(entry)
-
-    def query_gyro(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[44:55]:
-            print(entry)
-
-    def query_thm(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[55:56]:
-            print(entry)
-
-    def query_pressure(self):
-        entries = self.session.query(TelemetryModel).all()
-        for entry in entries[56:57]:
-            print(entry)
-

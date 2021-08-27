@@ -7,16 +7,21 @@ from sys import maxsize, float_info
 #Transimission Imports
 import logging
 import time
-import board
-import busio
+from adafruit_blinka.agnostic import board_id
+
+if board_id and board_id != 'GENERIC_LINUX_PC':
+    import board
+    import busio
 from adafruit_bus_device.spi_device import SPIDevice
 from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 from bitstring import BitArray
 
 from datetime import datetime
+from typing import Union
 
-class Radio():
+
+class Radio:
 
     def __init__(self):
 
@@ -32,20 +37,20 @@ class Radio():
             self.mgr.reset_requested = True
             return None
 
-    #Gets the signal from the radio board and returns it in a bytearray
+    # Gets the signal from the radio board and returns it in a bytearray
     def receiveSignal(self):
 
         self.mgr.rx_enabled = True
         self.mgr.dispatch()
         self.monitorHealth()
-        
+
         if self.mgr.outbox.empty():
             return None
         else:
             return self.mgr.outbox.get()
 
-    #Downlink given bytearray to ground station
-    def transmit(self, signal:bytearray):
+    # Downlink given bytearray to ground station
+    def transmit(self, signal: Union[bytearray, bytes]):
 
         self.mgr.tx_enabled = True
 
@@ -56,7 +61,7 @@ class Radio():
         cycles = 0
 
         while True:
-           
+
             self.mgr.dispatch()
             self.monitorHealth()
 

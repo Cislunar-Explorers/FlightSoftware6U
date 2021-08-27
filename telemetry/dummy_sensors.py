@@ -1,4 +1,4 @@
-from utils.constants import HIGH_CRACKING_PRESSURE
+from utils.parameters import HIGH_CRACKING_PRESSURE
 from telemetry.sensor import SynchronousSensor
 
 

@@ -137,6 +137,7 @@ CISLUNAR_BASE_DIR = os.path.join(
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
+DB_ENTRY_LIMIT = 1000  # maximum number of entries in any of the databases
 
 a = 1664525
 b = 1013904223

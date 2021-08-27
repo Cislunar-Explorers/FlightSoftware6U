@@ -1,8 +1,7 @@
-import datetime
 from time import time
 
-
-from utils.db import create_sensor_tables_from_path, PressureModel, TelemetryModel
+from utils.db import create_sensor_tables_from_path, TelemetryModel
+from utils import db_functions
 
 MEMORY_DB_PATH = "sqlite://"
 
@@ -10,10 +9,81 @@ MEMORY_DB_PATH = "sqlite://"
 def test_telemetry_model():
     create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
     session = create_session()
-    telemetry_measurements = session.query(TelemetryModel).all()
-    assert 0 == len(telemetry_measurements)
 
-    measurement_taken = time()  # FIXME the telem db model's time_polled field needs to be a double!
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 0 == len(telemetry_measurements), "FAIL"
+    print("Creation of empty session -- PASS")
+    print()
+
+    make_entry(session)
+
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 1 == len(telemetry_measurements), "FAIL"
+
+    make_entry(session)
+    make_entry(session)
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 3 == len(telemetry_measurements), "FAIL"
+    print("Creation of 3 entries -- PASS")
+    print()
+
+    print("displaying all TelemetryModel entries:")
+    db_functions.display_model("Telemetry", session)
+    print()
+
+    print("display_model -- PASS")
+    print()
+
+    print("displaying two (out of three) most recent entries in TelemetryModel:")
+    db_functions.display_model_amount("Telemetry", 2, session)
+    print()
+
+    print("display_model_amount -- PASS")
+    print()
+
+    print("displaying most recent RPI entry:")
+    db_functions.telemetry_query("RPI", 1, session)
+    print()
+
+    print("displaying 3 most recent GYRO entries:")
+    db_functions.telemetry_query("GYRO", 3, session)
+    print()
+
+    print("telemetry_query -- PASS")
+    print()
+
+    print("... making another entry to TelemetryModel...")
+    print("currently 4 entries")
+    print()
+    make_entry(session)
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 4 == len(telemetry_measurements), "FAIL"
+
+    print("cleaning TelemetryModel with entry_limit=2 \nonly two entries now:")
+    db_functions.clean("Telemetry", session, 2)
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 2 == len(telemetry_measurements), "FAIL"
+    db_functions.display_model("Telemetry", session)
+    print("length of TelemetryModel:", len(telemetry_measurements))
+    print()
+
+    print("clean -- PASS")
+    print()
+
+    print("wiping TelemetryModel of all entries")
+    print("length before wiping:", len(telemetry_measurements))
+    db_functions.wipe("Telemetry", session)
+    telemetry_measurements = session.query(TelemetryModel).all()
+    assert 0 == len(telemetry_measurements), "FAIL"
+    db_functions.display_model("Telemetry", session)
+    print("length after wiping:", len(telemetry_measurements))
+    print()
+
+    print("ALL TESTS PASS")
+
+
+def make_entry(session):
+    measurement_taken = time()
 
     new_measurement = TelemetryModel(
         time_polled=measurement_taken,
@@ -80,7 +150,7 @@ def test_telemetry_model():
         GYRO_temperature=54.0,
 
         # THERMOCOUPLE DATA
-        THERMOCOUPLE_pressure=55.0,
+        THERMOCOUPLE_temperature=55.0,
 
         # PRESSURE DATA
         PRESSURE_pressure=56.0
@@ -88,44 +158,7 @@ def test_telemetry_model():
 
     session.add(new_measurement)
     session.commit()
-    assert 1 == len(telemetry_measurements)
-
-    entries = session.query(TelemetryModel).all()
-    for entry in entries:
-        print(entry)
 
 
-def test_pressure_model():
-    create_session = create_sensor_tables_from_path(MEMORY_DB_PATH)
-    session = create_session()
-    pressure_measurements = session.query(PressureModel).all()
-    assert 0 == len(pressure_measurements)
-
-    measurement_taken = datetime.datetime.now()
-    pressure = 15.0
-
-    new_measurement = PressureModel(
-        measurement_taken=measurement_taken, pressure=pressure
-    )
-    session.add(new_measurement)
-    session.commit()
-    pressure_measurements = session.query(PressureModel).all()
-
-    assert 1 == len(pressure_measurements)
-    last_measurement = pressure_measurements[0]
-    assert last_measurement.measurement_taken == measurement_taken
-    assert last_measurement.pressure == pressure
-
-    session.close()
-    session = create_session()
-
-    pressure_measurements = session.query(PressureModel).all()
-
-    assert 1 == len(pressure_measurements)
-    last_measurement = pressure_measurements[0]
-    assert last_measurement.measurement_taken == measurement_taken
-    assert last_measurement.pressure == pressure
-
-
-if __name__ == "main":
+if __name__ == "__main__":
     test_telemetry_model()

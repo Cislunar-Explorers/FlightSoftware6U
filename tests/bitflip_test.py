@@ -4,9 +4,9 @@ from utils import constants, log
 from typing import List
 import logging
 
-DEBUG = True
+DEBUG = False
 
-from utils.exceptions import CommandUnpackingException
+from utils.exceptions import DeserializationException
 
 
 class BitFlips(unittest.TestCase):
@@ -44,7 +44,7 @@ class BitFlips(unittest.TestCase):
                 bad_indecies.append(i)
                 if DEBUG:
                     log.log_error(ae, logging.error)
-            except CommandUnpackingException as cue:
+            except DeserializationException as cue:
                 # if the command unpacker catches the error, we're good.
                 if DEBUG:
                     log.log_error(cue, logging.warning)

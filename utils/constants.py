@@ -1,6 +1,5 @@
 from enum import IntEnum, unique
 import os
-import hashlib
 
 # unit conversions
 

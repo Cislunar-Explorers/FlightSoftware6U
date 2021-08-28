@@ -10,7 +10,6 @@ from utils.constants import (
     ID_OFFSET,
     DATA_LEN_OFFSET,
     DATA_OFFSET,
-    MAC_OFFSET,
     MAC_LENGTH,
     MAC_KEY,
     COUNTER_OFFSET,
@@ -20,11 +19,11 @@ from utils.exceptions import (
     SerializationException,
     CommandPackingException,
     CommandUnpackingException,
+    DeserializationException
 )
 from utils.struct import (
     pack_unsigned_short,
     unpack_unsigned_short,
-    pack_unsigned_int,
     packer_dict
 )
 
@@ -45,12 +44,7 @@ def pack_command_bytes(counter: int, mode: int, command_id: int, data: bytes):
 
 
 def unpack_command_bytes(data: bytes):
-    recieved_mac = data[:MAC_LENGTH]
-    mac_data = data[MAC_LENGTH:]
-    computed_mac = hashlib.blake2s(mac_data, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
-    if recieved_mac != computed_mac:
-        raise CommandUnpackingException(
-            f"MAC not consistent with data. Recieved vs. Computed: {recieved_mac}, {computed_mac}")
+    mac = data[:MAC_LENGTH]
     counter = int.from_bytes(data[COUNTER_OFFSET:COUNTER_OFFSET + COUNTER_SIZE], 'big')
     mode = data[MODE_OFFSET]
     command_id = data[ID_OFFSET]
@@ -61,7 +55,7 @@ def unpack_command_bytes(data: bytes):
             f"{data_len + DATA_OFFSET} for command with Mode: {mode}"
             f"CommandID: {command_id}"
         )
-    return computed_mac, counter, mode, command_id, data[DATA_OFFSET:]
+    return mac, counter, mode, command_id, data[DATA_OFFSET:]
 
 
 class CommandHandler:
@@ -117,14 +111,19 @@ class CommandHandler:
                 )
 
     def unpack_command(self, data: bytes):
-
-        mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
+        recieved_mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
+        mac_data = data[MAC_LENGTH:]
+        computed_mac = hashlib.blake2s(mac_data, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
+        if recieved_mac != computed_mac:
+            raise DeserializationException(
+                f"MAC not consistent with data. Recieved vs. Computed: {recieved_mac}, {computed_mac}")
         try:
             func_args, buffer_size = self.command_dict[mode][command_id]
         except KeyError:
             raise CommandUnpackingException(
                 f'Unknown command received:{mode}:{command_id}'
             )
+
         if (buffer_size + DATA_OFFSET) != len(data):
             raise CommandUnpackingException(
                 f"Received command with data len: {len(data)}, but expected length: {buffer_size}; "
@@ -136,7 +135,7 @@ class CommandHandler:
             off, value = self.unpackers[arg](arg_data, offset)
             kwargs[arg] = value
             offset += off
-        return mac, counter, mode, command_id, kwargs
+        return recieved_mac, counter, mode, command_id, kwargs
 
     def register_commands(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
@@ -175,7 +174,6 @@ class CommandHandler:
                     totalBytes += 195
 
             command_args = list(kwargs.keys())
-            command_data_tuple = (command_args, totalBytes)
             self.command_dict[mode_id][command_id] = (command_args, totalBytes)
 
         except:

@@ -8,13 +8,13 @@ DEG2RAD = 3.14159265359 / 180
 
 # Delay to wait on BootUp
 # TODO change back to 30.0
-BOOTUP_SEPARATION_DELAY = 5.0
+BOOTUP_SEPARATION_DELAY = 5.0  # seconds
 
 # Verification Key Parameters
 MAC_LENGTH = 4
-MAC_DATA = b'Hello'  # FIXME for flight
-MAC_KEY = b'World'
-MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
+# MAC_DATA = b'Hello'
+MAC_KEY = b'World'  # FIXME for flight
+# MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
 # Serialization Sizes
 MODE_SIZE = 1

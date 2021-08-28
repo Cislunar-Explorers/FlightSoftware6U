@@ -4,7 +4,7 @@ from utils import constants, log
 from typing import List
 import logging
 
-DEBUG = False
+DEBUG = True
 
 from utils.exceptions import CommandUnpackingException
 
@@ -18,6 +18,7 @@ class BitFlips(unittest.TestCase):
         self.command_handler = commands.CommandHandler()
 
     def bit_flip_tester(self, flip_bit: bool):
+        rejected_by_mac = 0
         COUNTER = 0
         FMID = constants.FMEnum.Normal.value
         cmd_id = constants.NormalCommandEnum.SetParam.value
@@ -31,10 +32,9 @@ class BitFlips(unittest.TestCase):
             received_bytes = received_bits.to_bytes(len(bytes_to_transmit), 'big')  # repack bitflipped data into bytes
             try:
                 mac, counter, mode, command_id, arg_data = self.command_handler.unpack_command(received_bytes)
-                if flip_bit and DEBUG:
+                if DEBUG:
                     print(
                         f"{received_bytes.hex()}: MAC:{mac.hex()}, Counter:{counter}, Mode: {mode}, CID: {command_id}, kwargs: {arg_data}")
-                self.assertEqual(mac, constants.MAC)
                 self.assertEqual(counter, COUNTER)
                 self.assertEqual(mode, FMID)
                 self.assertEqual(command_id, cmd_id)
@@ -48,12 +48,15 @@ class BitFlips(unittest.TestCase):
                 # if the command unpacker catches the error, we're good.
                 if DEBUG:
                     log.log_error(cue, logging.warning)
+                    rejected_by_mac += 1
             except Exception as e:
                 # if something else fails, that's bad
                 bad_indecies.append(i)
                 if DEBUG:
                     log.log_error(e, logging.error)
 
+        if DEBUG:
+            print(f"Rejected by MAC: {rejected_by_mac}/{len(bin(bits_to_transmit)[2:])}")
         self.assertListEqual(bad_indecies, [])
 
     def test_no_bit_flips(self):

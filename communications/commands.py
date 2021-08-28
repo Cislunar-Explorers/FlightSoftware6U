@@ -1,6 +1,7 @@
 from struct import error as StructError
 from sys import maxsize, float_info
 import utils.struct as us
+import hashlib
 
 from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
 from utils.constants import (
@@ -11,7 +12,7 @@ from utils.constants import (
     DATA_OFFSET,
     MAC_OFFSET,
     MAC_LENGTH,
-    MAC,
+    MAC_KEY,
     COUNTER_OFFSET,
     COUNTER_SIZE
 )
@@ -27,32 +28,40 @@ from utils.struct import (
     packer_dict
 )
 
+
 def calc_command_size(data: bytes):
     return MIN_COMMAND_SIZE + len(data)
 
+
 def pack_command_bytes(counter: int, mode: int, command_id: int, data: bytes):
     buf = bytearray(calc_command_size(data))
-    buf[COUNTER_OFFSET - MAC_LENGTH: COUNTER_OFFSET - MAC_LENGTH + COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE,'big')
+    buf[COUNTER_OFFSET - MAC_LENGTH: COUNTER_OFFSET - MAC_LENGTH + COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE, 'big')
     buf[MODE_OFFSET - MAC_LENGTH] = mode
-    buf[ID_OFFSET- MAC_LENGTH] = command_id
-    pack_unsigned_short(buf, DATA_LEN_OFFSET- MAC_LENGTH, len(data))
-    buf[DATA_OFFSET- MAC_LENGTH:] = data
-    return MAC + bytes(buf)
+    buf[ID_OFFSET - MAC_LENGTH] = command_id
+    pack_unsigned_short(buf, DATA_LEN_OFFSET - MAC_LENGTH, len(data))
+    buf[DATA_OFFSET - MAC_LENGTH:] = data
+    mac = hashlib.blake2s(bytes(buf), digest_size=MAC_LENGTH, key=MAC_KEY).digest()
+    return mac + bytes(buf)
 
 
 def unpack_command_bytes(data: bytes):
-    mac = data[:MAC_LENGTH]
-    counter = int.from_bytes(data[COUNTER_OFFSET:COUNTER_OFFSET + COUNTER_SIZE],'big')
+    recieved_mac = data[:MAC_LENGTH]
+    mac_data = data[MAC_LENGTH:]
+    computed_mac = hashlib.blake2s(mac_data, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
+    if recieved_mac != computed_mac:
+        raise CommandUnpackingException(
+            f"MAC not consistent with data. Recieved vs. Computed: {recieved_mac}, {computed_mac}")
+    counter = int.from_bytes(data[COUNTER_OFFSET:COUNTER_OFFSET + COUNTER_SIZE], 'big')
     mode = data[MODE_OFFSET]
     command_id = data[ID_OFFSET]
-    data_len = unpack_unsigned_short(data, DATA_LEN_OFFSET)[1]
+    data_len = unpack_unsigned_short(data, DATA_LEN_OFFSET)[1]  # TODO can this be replaced with uint8?
     if data_len + DATA_OFFSET != len(data):
         raise CommandUnpackingException(
             f"Incorrect data buffer size: {len(data)}, expected "
             f"{data_len + DATA_OFFSET} for command with Mode: {mode}"
             f"CommandID: {command_id}"
         )
-    return mac, counter, mode, command_id, data[DATA_OFFSET:]
+    return computed_mac, counter, mode, command_id, data[DATA_OFFSET:]
 
 
 class CommandHandler:
@@ -64,7 +73,7 @@ class CommandHandler:
         # Enforced in practice
         self.register_codecs()
         self.register_commands()
-    
+
     def register_codecs(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
             for argname, arg_type in mode_name.command_arg_types.items():
@@ -108,13 +117,13 @@ class CommandHandler:
                 )
 
     def unpack_command(self, data: bytes):
-        
+
+        mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
         try:
-            mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
             func_args, buffer_size = self.command_dict[mode][command_id]
-        except:
+        except KeyError:
             raise CommandUnpackingException(
-                'Unknown command received.'
+                f'Unknown command received:{mode}:{command_id}'
             )
         if (buffer_size + DATA_OFFSET) != len(data):
             raise CommandUnpackingException(
@@ -128,43 +137,43 @@ class CommandHandler:
             kwargs[arg] = value
             offset += off
         return mac, counter, mode, command_id, kwargs
-    
+
     def register_commands(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():
-            
+
             command_dict = {}
 
             for command_id, command_data_tuple in mode_name.command_codecs.items():
-                
                 command_dict[command_id] = command_data_tuple
-                self.command_dict[mode_id] = command_dict 
+                self.command_dict[mode_id] = command_dict
 
-    #Used only for testing
-    def register_new_command(self, mode_id:int, command_id:int, **kwargs):
-        
+                # Used only for testing
+
+    def register_new_command(self, mode_id: int, command_id: int, **kwargs):
+
         totalBytes = 0
 
         try:
             for arg in kwargs:
-                if isinstance(kwargs[arg], bool): #boolean
-                    self.register_new_codec(arg,us.pack_bool, us.unpack_bool)
+                if isinstance(kwargs[arg], bool):  # boolean
+                    self.register_new_codec(arg, us.pack_bool, us.unpack_bool)
                     totalBytes += 1
-                elif isinstance(kwargs[arg], int) and abs(kwargs[arg]) <= maxsize: #int
-                    self.register_new_codec(arg,us.pack_unsigned_int, us.unpack_unsigned_int)
+                elif isinstance(kwargs[arg], int) and abs(kwargs[arg]) <= maxsize:  # int
+                    self.register_new_codec(arg, us.pack_unsigned_int, us.unpack_unsigned_int)
                     totalBytes += 4
-                elif isinstance(kwargs[arg], int): #long
-                    self.register_new_codec(arg,us.pack_unsigned_long, us.unpack_unsigned_long)
+                elif isinstance(kwargs[arg], int):  # long
+                    self.register_new_codec(arg, us.pack_unsigned_long, us.unpack_unsigned_long)
                     totalBytes += 8
-                elif isinstance(kwargs[arg], float) and abs(kwargs[arg]) <= float_info.max: #float
-                    self.register_new_codec(arg,us.pack_float, us.unpack_float)
+                elif isinstance(kwargs[arg], float) and abs(kwargs[arg]) <= float_info.max:  # float
+                    self.register_new_codec(arg, us.pack_float, us.unpack_float)
                     totalBytes += 4
-                elif isinstance(kwargs[arg], float): #double
-                    self.register_new_codec(arg,us.pack_double, us.unpack_double)
+                elif isinstance(kwargs[arg], float):  # double
+                    self.register_new_codec(arg, us.pack_double, us.unpack_double)
                     totalBytes += 8
-                elif isinstance(kwargs[arg], str): #string
-                    self.register_new_codec(arg,us.pack_str, us.unpack_str)
+                elif isinstance(kwargs[arg], str):  # string
+                    self.register_new_codec(arg, us.pack_str, us.unpack_str)
                     totalBytes += 195
-            
+
             command_args = list(kwargs.keys())
             command_data_tuple = (command_args, totalBytes)
             self.command_dict[mode_id][command_id] = (command_args, totalBytes)

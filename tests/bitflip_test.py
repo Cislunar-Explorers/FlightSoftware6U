@@ -1,7 +1,12 @@
 import unittest
 from communications import commands
-from utils import constants
-import bitstring
+from utils import constants, log
+from typing import List
+import logging
+
+DEBUG = False
+
+from utils.exceptions import CommandUnpackingException
 
 
 class BitFlips(unittest.TestCase):
@@ -20,15 +25,36 @@ class BitFlips(unittest.TestCase):
         bytes_to_transmit = self.command_handler.pack_command(COUNTER, FMID, cmd_id, **command_kwargs)
         bits_to_transmit = int.from_bytes(bytes_to_transmit, 'big')  # bits that get transmitted
 
+        bad_indecies: List[int] = []
         for i in range(len(bin(bits_to_transmit)[2:])):
             received_bits = bits_to_transmit ^ flip_bit << i  # emulate bitflip at position i using XOR
             received_bytes = received_bits.to_bytes(len(bytes_to_transmit), 'big')  # repack bitflipped data into bytes
-            mac, counter, mode, command_id, arg_data = self.command_handler.unpack_command(received_bytes)
-            self.assertEqual(mac, constants.MAC)
-            self.assertEqual(counter, COUNTER)
-            self.assertEqual(mode, FMID)
-            self.assertEqual(command_id, cmd_id)
-            self.assertEqual(arg_data, command_kwargs)
+            try:
+                mac, counter, mode, command_id, arg_data = self.command_handler.unpack_command(received_bytes)
+                if flip_bit and DEBUG:
+                    print(
+                        f"{received_bytes.hex()}: MAC:{mac.hex()}, Counter:{counter}, Mode: {mode}, CID: {command_id}, kwargs: {arg_data}")
+                self.assertEqual(mac, constants.MAC)
+                self.assertEqual(counter, COUNTER)
+                self.assertEqual(mode, FMID)
+                self.assertEqual(command_id, cmd_id)
+                self.assertEqual(arg_data, command_kwargs)
+            except AssertionError as ae:
+                # if the assertions fail, the data was corrupted and we couldn't do anything about it
+                bad_indecies.append(i)
+                if DEBUG:
+                    log.log_error(ae, logging.error)
+            except CommandUnpackingException as cue:
+                # if the command unpacker catches the error, we're good.
+                if DEBUG:
+                    log.log_error(cue, logging.warning)
+            except Exception as e:
+                # if something else fails, that's bad
+                bad_indecies.append(i)
+                if DEBUG:
+                    log.log_error(e, logging.error)
+
+        self.assertListEqual(bad_indecies, [])
 
     def test_no_bit_flips(self):
         self.bit_flip_tester(False)

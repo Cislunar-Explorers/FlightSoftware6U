@@ -111,12 +111,12 @@ class CommandHandler:
                 )
 
     def unpack_command(self, data: bytes):
-        recieved_mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
+        received_mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
         mac_data = data[MAC_LENGTH:]
         computed_mac = hashlib.blake2s(mac_data, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
-        if recieved_mac != computed_mac:
+        if received_mac != computed_mac:
             raise DeserializationException(
-                f"MAC not consistent with data. Recieved vs. Computed: {recieved_mac}, {computed_mac}")
+                f"MAC not consistent with data. Recieved vs. Computed: {received_mac}, {computed_mac}")
         try:
             func_args, buffer_size = self.command_dict[mode][command_id]
         except KeyError:
@@ -135,7 +135,7 @@ class CommandHandler:
             off, value = self.unpackers[arg](arg_data, offset)
             kwargs[arg] = value
             offset += off
-        return recieved_mac, counter, mode, command_id, kwargs
+        return received_mac, counter, mode, command_id, kwargs
 
     def register_commands(self):
         for mode_id, mode_name in FLIGHT_MODE_DICT.items():

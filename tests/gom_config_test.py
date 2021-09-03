@@ -1,7 +1,7 @@
 from random import randint
 import drivers.power.power_structs as ps
 from communications.commands import CommandHandler
-from utils.constants import FMEnum, NormalCommandEnum, MAC
+from utils.constants import FMEnum, NormalCommandEnum
 from communications.command_definitions import dict_from_eps_config, eps_config_from_dict, dict_from_eps_config2, \
     eps_config2_from_dict
 
@@ -61,9 +61,8 @@ def test_config_command():
     ch = CommandHandler()
 
     command_bytes = ch.pack_command(COUNTER, FMEnum.Normal.value, NormalCommandEnum.GomConf1Set.value, **config_dict)
-    mac, counter, mode, command_id, kwargs = ch.unpack_command(command_bytes)
+    _, counter, mode, command_id, kwargs = ch.unpack_command(command_bytes)
 
-    assert mac == MAC
     assert counter == COUNTER
     assert mode == FMEnum.Normal.value
     assert command_id == NormalCommandEnum.GomConf1Set.value
@@ -117,9 +116,8 @@ def test_config2_command():
     ch = CommandHandler()
 
     command_bytes = ch.pack_command(COUNTER, FMEnum.Normal.value, NormalCommandEnum.GomConf2Set.value, **config2_dict)
-    mac, counter, mode, command_id, kwargs = ch.unpack_command(command_bytes)
+    _, counter, mode, command_id, kwargs = ch.unpack_command(command_bytes)
 
-    assert mac == MAC
     assert counter == COUNTER
     assert mode == FMEnum.Normal.value
     assert command_id == NormalCommandEnum.GomConf2Set.value

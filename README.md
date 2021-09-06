@@ -4,7 +4,7 @@
 ## About
 
 ### Mission
-The Cislunar Explorers are a pair of CubeSats in a 6U configuration that are launching as a secondary payload onboard NASA's Artemis-1 launch. The mission objectives are to:
+The Cislunar Explorers are a pair of CubeSats in a 6U configuration that will be a secondary payload onboard a future launch. The mission objectives are to:
 - Demonstrate a water electrolysis-based propulsion system
 - Demonstrate an optical attitude and position determination system running on inexpensive COTS hardware
 - Achieve Lunar orbit
@@ -16,8 +16,8 @@ The software in this repository will run the satellite's flight computers, with 
 See [CQP-STF-001](https://cornell.app.box.com/file/795910589458)
 
 ### Contact Info
-- Software Lead: tmf97@cornell.edu
-- Mission Manager: apz24@cornell.edu
+- Software Leads: sjz38@cornell.edu & tmf97@cornell.edu 
+- Mission Manager: cr462@cornell.edu
 
 
 ## Tips for getting set up for developers:

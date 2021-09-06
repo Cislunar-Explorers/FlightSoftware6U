@@ -3,7 +3,7 @@ from math import *
 import cv2
 import os
 import numpy as np
-from OpticalNavigation.core.const import CisLunarCameraParameters, CisLunarCamRecParams
+from core.const import CisLunarCameraParameters, CisLunarCamRecParams
 import time
 
 def rolling_shutter(img):
@@ -22,8 +22,8 @@ def extract_frames(vid_dir, endTimestamp):
     @returns
     [frames]: returns list of paths to extracted frames
     """
-    # return np.zeros((10, int(CisLunarCameraParameters.hPix), int(CisLunarCameraParameters.vPix), 3), dtype=np.float)
-    #time.sleep(3)
+    # return np.zeros((10, int(CisLunarCameraParameters.hPix), int(CisLunarCameraParameters.vPix), 3), dtype=float)
+    # time.sleep(3)
     #raise NotImplementedError("implement frame extraction")
     """Convertes and mjpeg video into a list of jpeg images"""
     src = cv2.VideoCapture(vid_dir)

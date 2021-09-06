@@ -1,4 +1,4 @@
-from power_structs import *
+from drivers.power.power_structs import *
 
 
 if __name__ == "__main__":

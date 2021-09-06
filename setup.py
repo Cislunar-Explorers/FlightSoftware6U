@@ -17,12 +17,10 @@ REQUIRES_PYTHON = ">=3.6"
 VERSION = "0.1"
 
 INSTALL_REQUIRES = [
-    "requests",
     "numpy",
     "opencv-python",
     "SQLAlchemy",
     "scipy",
-    "python-dotenv",
 ]
 
 PI_INSTALL_REQUIRES = [

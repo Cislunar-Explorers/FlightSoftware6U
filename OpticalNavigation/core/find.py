@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import ImageDetectionCircles
+from core.const import ImageDetectionCircles
 import numpy as np
 #import scipy as sp
 import cv2

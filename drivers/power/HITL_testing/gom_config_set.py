@@ -1,5 +1,6 @@
 # Unsuccessful attempt at changing boot config
 from drivers.power.power_controller import *
+from drivers.power.power_structs import eps_config_t, displayConfig
 
 HITL_test = Power()
 

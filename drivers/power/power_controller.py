@@ -10,14 +10,14 @@
 # Status: Main functionality completed
 #         Higher level functions completed
 #         Some testing necessary
+from typing import cast
 
 import pigpio
 import drivers.power.power_structs as ps
 from utils.constants import GomOutputs
 import utils.parameters as params
-from utils.exceptions import PowerException, PowerInputError, PowerReadError
-from time import time, sleep
-
+from utils.exceptions import PowerInputError, PowerReadError  # , PowerException
+from time import sleep
 
 # power device address
 POWER_ADDRESS = 0x02
@@ -67,7 +67,6 @@ OUT_6 = 5  # 3.3V
 OUT_HEATER = 6
 OUT_SWITCH = 7
 
-
 # Outputs on board:
 #
 #       H1
@@ -79,8 +78,8 @@ OUT_SWITCH = 7
 #
 
 # GPIO outputs
-RF_RX_EN = 19  # Physical pin 35
-RF_TX_EN = 26  # Physical pin 37
+RF_RX_EN = 26  # Physical pin 37
+RF_TX_EN = 19  # Physical pin 35
 PA_EN = 27  # Physical pin 13
 OUT_PI_SOLENOID_ENABLE = 13  # Physical pin 33
 
@@ -318,7 +317,7 @@ class Power:
     def config_get(self) -> ps.eps_config_t:
         ps.gom_logger.debug("Getting current config")
         self.write(CMD_CONFIG_GET, [])
-        return ps.c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t")
+        return cast('ps.eps_config_t', ps.c_bytesToStruct(self.read(SIZE_EPS_CONFIG_T), "eps_config_t"))
 
     # takes eps_config_t struct and sets configuration
     # Input struct is of type eps_config_t
@@ -402,6 +401,7 @@ class Power:
     # delay of [delay] seconds.
     # output must be off before the function is called
     def solenoid(self, spike, hold):
+        raise DeprecationWarning
         ps.gom_logger.warning("DEPRECATED FUNCTION Power().solenoid")
         ps.gom_logger.debug(
             "Spiking solenoid for %i ms, holding for %i ms, with a delay of %i sec",
@@ -426,6 +426,8 @@ class Power:
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_OFF_LIST)
 
     def calculate_solenoid_wave(self):
+        # see http://abyz.me.uk/rpi/pigpio/python.html#wave_add_generic
+        # and https://github.com/joan2937/pigpio/blob/master/EXAMPLES/Python/MORSE_CODE/morse_code.py
         self.solenoid_wave = []
         self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, params.ACS_SPIKE_DURATION * 1000))
         self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
@@ -486,7 +488,7 @@ class Power:
             # Set transmitting side of RF switch to transmit
             self._pi.write(RF_TX_EN, pigpio.HIGH)
 
-    def rf_receiving_switch(self,receive:bool = True):
+    def rf_receiving_switch(self, receive: bool = True):
         if receive:
             # Set receiving RF switch to receive
             self._pi.write(RF_RX_EN, pigpio.HIGH)

@@ -1,6 +1,7 @@
 from enum import IntEnum, unique
 import time
 
+
 @unique
 class Reg(IntEnum):
     SILICONREVISION = 0x000
@@ -288,17 +289,19 @@ class Reg(IntEnum):
     MODCFGP = 0xF5F
     TUNE_F72 = 0xF72
 
+
 @unique
 class Pwrmode(IntEnum):
     POWERDOWN = 0x0
     DEEPSLEEP = 0x1
     STANDBY = 0x5
-    FIFOON  = 0x7
+    FIFOON = 0x7
     SYNTHRX = 0x8
     FULLRX = 0x9
     WORRX = 0xB
     SYNTHTX = 0xC
     FULLTX = 0xD
+
 
 class Bits(IntEnum):
     # POWSTAT
@@ -309,12 +312,15 @@ class Bits(IntEnum):
     RNG_START = 0x10
     RNGERR = 0x20
 
+
 @unique
 class Fifocmd(IntEnum):
     CLEAR_DATA_FLAGS = 0x03
     COMMIT = 0x04
 
+
 class Chunk:
+    @staticmethod
     def from_bytes(buf):
         chunk_size = Chunk.check_length(buf)
         if not chunk_size: return (None, buf)
@@ -340,49 +346,65 @@ class Chunk:
         else:
             return (UnknownChunk(buf[0:chunk_size]), rem)
 
+    @staticmethod
     def check_length(buf):
         assert len(buf) > 0
         top = buf[0] & 0xE0
-        if top == 0x00: return True
-        elif top == 0x20: return 2*(len(buf) >= 2)
-        elif top == 0x40: return 3*(len(buf) >= 3)
-        elif top == 0x60: return 4*(len(buf) >= 4)
+        if top == 0x00:
+            return True
+        elif top == 0x20:
+            return 2 * (len(buf) >= 2)
+        elif top == 0x40:
+            return 3 * (len(buf) >= 3)
+        elif top == 0x60:
+            return 4 * (len(buf) >= 4)
         elif top == 0xE0:
-            if len(buf) < 1: return False
+            if len(buf) < 1:
+                return False
             else:
                 length = buf[1]
-                return (length + 2)*(len(buf) >= length + 2)
+                return (length + 2) * (len(buf) >= length + 2)
         else:
             raise RuntimeError('Invalid top bits: %02X' % top)
 
+    @staticmethod
     def signed_byte(b):
-        if b < 128: return b
-        else: return b - 256
+        if b < 128:
+            return b
+        else:
+            return b - 256
+
 
 class RssiChunk(Chunk):
     def __init__(self, rssi):
         self.rssi = Chunk.signed_byte(rssi)
 
+
 class FreqoffsChunk(Chunk):
     def __init__(self, freqoffs1, freqoffs0):
         self.freqoffs = (freqoffs1 << 8) | freqoffs0
+
 
 class Antrssi2Chunk(Chunk):
     def __init__(self, rssi, bgndnoise):
         self.rssi = Chunk.signed_byte(rssi)
         self.bgndnoise = Chunk.signed_byte(bgndnoise)
 
+
 class TimerChunk(Chunk):
     def __init__(self, timer2, timer1, timer0):
         self.timer = (timer2 << 16) | (timer1 << 8) | timer0
+
 
 class RffreqoffsChunk(Chunk):
     def __init__(self, rffreqoffs2, rffreqoffs1, rffreqoffs0):
         self.rffreqoffs = (rffreqoffs2 << 16) | (rffreqoffs1 << 8) | rffreqoffs0
 
+
 class DatarateChunk(Chunk):
     def __init__(self, datarate2, datarate1, datarate0):
         self.datarate = (datarate2 << 16) | (datarate1 << 8) | datarate0
+
 
 class Antrssi3Chunk(Chunk):
     def __init__(self, antorssi2, antorssi1, antorssi0):
@@ -391,14 +413,17 @@ class Antrssi3Chunk(Chunk):
         self.antorssi1 = antorssi1
         self.antorssi0 = antorssi0
 
+
 class DataChunk(Chunk):
     def __init__(self, flags, data):
         self.flags = flags
         self.data = data
 
+
 class UnknownChunk(Chunk):
     def __init__(self, buf):
         self.buf = buf
+
 
 # Note: CE0 is used as CS pin by Linux system calls (and is NOT held between
 # Python calls, even in the same context), so all reads must use write_readinto.
@@ -435,7 +460,8 @@ class Ax5043:
         else:
             addr_wvals = bytearray([0x70 | (addr >> 8), addr & 0xFF, 0])
         rvals = bytearray(len(addr_wvals))
-        with self._bus as spi: spi.write_readinto(addr_wvals, rvals)
+        with self._bus as spi:
+            spi.write_readinto(addr_wvals, rvals)
         return rvals[-1]
 
     def read_16(self, addr):
@@ -444,7 +470,8 @@ class Ax5043:
         else:
             addr_wvals = bytearray([0x70 | (addr >> 8), addr & 0xFF, 0, 0])
         rvals = bytearray(len(addr_wvals))
-        with self._bus as spi: spi.write_readinto(addr_wvals, rvals)
+        with self._bus as spi:
+            spi.write_readinto(addr_wvals, rvals)
         return (rvals[-2] << 8) | rvals[-1]
 
     def set_pwrmode(self, mode):

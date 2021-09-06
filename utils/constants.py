@@ -1,6 +1,5 @@
 from enum import IntEnum, unique
 import os
-import hashlib
 
 # unit conversions
 
@@ -8,13 +7,13 @@ DEG2RAD = 3.14159265359 / 180
 
 # Delay to wait on BootUp
 # TODO change back to 30.0
-BOOTUP_SEPARATION_DELAY = 5.0
+BOOTUP_SEPARATION_DELAY = 5.0  # seconds
 
 # Verification Key Parameters
 MAC_LENGTH = 4
-MAC_DATA = b'Hello'  # FIXME for flight
-MAC_KEY = b'World'
-MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
+# MAC_DATA = b'Hello'
+MAC_KEY = b'World'  # FIXME for flight
+# MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
 # Serialization Sizes
 MODE_SIZE = 1
@@ -31,8 +30,9 @@ ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
 DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
-# Parameters.json path
-PARAMETERS_JSON_PATH = '/home/pi/FlightSoftware/utils/parameters.json'
+# Important paths
+FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
+PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -62,6 +62,11 @@ TIME = "time"
 
 HARD_SET = "hard_set"
 
+
+FILE_PATH = "file_path"
+BLOCK_NUMBER = "block_number"
+BLOCK_TEXT = "block_text"
+TOTAL_BLOCKS = "total_blocks"
 REG_ADDRESS = "reg_address"
 REG_VALUE = "reg_value"
 REG_SIZE = "reg_size"
@@ -123,6 +128,9 @@ PROP_TANK_PRESSURE = "prs_pressure"
 
 SUCCESSFUL = "successful"
 
+MISSING_BLOCKS = "missing_blocks"
+CHECKSUM = "checksum"
+
 # SQL Stuff
 SQL_PREFIX = "sqlite:///"
 CISLUNAR_BASE_DIR = os.path.join(
@@ -131,6 +139,7 @@ CISLUNAR_BASE_DIR = os.path.join(
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
+DB_ENTRY_LIMIT = 1000  # maximum number of entries in any of the databases
 
 a = 1664525
 b = 1013904223
@@ -151,7 +160,7 @@ GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 # Gyro specific constants
 # TODO: make sure that we change this to 500 if need be
-GYRO_RANGE = 250  # degrees per second
+GYRO_RANGE = 500  # degrees per second
 
 # Gom config command args:
 PPT_MODE = "ppt_mode"
@@ -180,6 +189,18 @@ VBOOST1 = "vboost1"
 VBOOST2 = "vboost2"
 VBOOST3 = "vboost3"
 
+MAX_VOLTAGE = 'max_voltage'
+NORM_VOLTAGE = 'norm_voltage'
+SAFE_VOLTAGE = 'safe_voltage'
+CRIT_VOLTAGE = 'crit_voltage'
+
+CMD = 'cmd'
+RETURN_CODE = 'return_code'
+
+FNAME = 'filename'
+
+ZERO_WORD = b'\xcb\x51'
+ONE_WORD = b'\xdc\x2c'
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -224,7 +245,7 @@ class RestartCommandEnum(IntEnum):
 class NormalCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     RunOpNav = 1  # no args
-    SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
+    # SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
     SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
     # Really not sure what 3 and 4 are supposed to do:
     # SetAccelerate = 3  # arg=true/false
@@ -236,9 +257,9 @@ class NormalCommandEnum(IntEnum):
     Verification = 9
     GetParam = 11
     SetOpnavInterval = 12
-    WhenReorient = 13  # when we want to schedule a reorientation maneuver
-                       # 2 args, unix time stamp and spin axis vector (2 floats)
-    ScheduleReorientation = 14
+    #    WhenReorient = 13  # when we want to schedule a reorientation maneuver
+    # 2 args, unix time stamp and spin axis vector (2 floats)
+    #    ScheduleReorientation = 14
     ScheduleManeuver = 15
     ACSPulsing = 16
     NemoWriteRegister = 17
@@ -254,7 +275,12 @@ class NormalCommandEnum(IntEnum):
     GomConf2Set = 32
     GomConf2Get = 33
 
-    CommandStatus = 99
+    ShellCommand = 50
+    SudoCommand = 51
+    Picberry = 52
+    ExecPyFile = 53
+
+    # CommandStatus = 99
 
 
 @unique
@@ -272,7 +298,7 @@ class LowBatterySafetyCommandEnum(IntEnum):
 class SafetyCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     ExitSafetyMode = 1
-    SetExitSafetyMode = 2
+    # SetExitSafetyMode = 2
     SetParameter = 5
     CritTelem = 6
     BasicTelem = 7
@@ -282,51 +308,48 @@ class SafetyCommandEnum(IntEnum):
 @unique
 class OpNavCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    SetInterval = 2  # arg=interval in minutes packed as an int
+    # RunOpNav = 1  # no args
+    # SetInterval = 2  # arg=interval in minutes packed as an int
 
 
 @unique
 class ManeuverCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    SetDesiredAttitude = 2  # arg=attitude
-    SetAccelerate = 3  # arg=true/false
-    SetBreakpoint = 4  # arg=?
-    SetBurnTime = 9  # 1 arg: time at which thruster fires
 
 
 @unique
 class SensorsCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    Thermocouple = 1
-    PressureTransducer = 2
-    Gomspace = 3
-    CameraMux = 4
-    Gyro = 5
-    RTC = 6
-    AX5043 = 7
+    # Thermocouple = 1
+    # PressureTransducer = 2
+    # Gomspace = 3
+    # CameraMux = 4
+    # Gyro = 5
+    # RTC = 6
+    # AX5043 = 7
 
 
 @unique
 class TestCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    SetTestMode = 1  # no args
+    # SetTestMode = 1  # no args
     TriggerBurnWire = 2  # no args
     RunOpNav = 3  # no args
     ADCTest = 4
     SeparationTest = 5
     GomPin = 6
     CommsDriver = 7
-    PiShutdown = 11
     RTCTest = 8
+    LongString = 9
+    PiShutdown = 11
+
 
 
 @unique
 class CommsCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    DownlinkFullDataPacket = 4  # no args
-    SetDataPacket = 5  # arg=data packet id
+    # DownlinkFullDataPacket = 4  # no args
+    # SetDataPacket = 5  # arg=data packet id
 
 
 @unique
@@ -340,4 +363,9 @@ class CommandCommandEnum(IntEnum):
     GomPin = 6  # 1 arg: which gom pin to toggle
     GomGeneralCmd = 7
     GeneralCmd = 8
+    SetUpdatePath = 9
+    AddFileBlock = 10
+    GetFileBlocksInfo = 11
+    ActivateFile = 12
+    ShellCommand = 50
     CeaseComms = 170

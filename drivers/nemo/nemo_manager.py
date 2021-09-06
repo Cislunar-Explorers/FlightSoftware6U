@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Interface between Cislunar FSW and Nemo v3.4
+Interface between Cislunar FSW and Nemo v3.5
 """
 
 import os
@@ -21,11 +21,11 @@ class NemoManager(Thread):
     Saves NEMO data to files and provides high level command interface.
     """
 
-    def __init__(self, data_dir='.', reset_gpio_ch=5):
+    def __init__(self, data_dir='.', port_id=3, reset_gpio_ch=16):
         """NemoManager class constructor"""
         self._data_dir = data_dir
 
-        self._nemo = nemo.Nemo(log=False, reset_gpio_ch=reset_gpio_ch)
+        self._nemo = nemo.Nemo(log=False, port_id=port_id, reset_gpio_ch=reset_gpio_ch)
 
         self._config = util.Configuration(config_fname=os.path.join(self._data_dir, 'config.json'))
 

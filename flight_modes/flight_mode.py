@@ -65,13 +65,14 @@ class FlightMode:
                 if not self._parent.opnav_process.is_alive():
                     self._parent.opnav_process.terminate()
                     logger.info("[OPNAV]: Process Terminated")
-
+        
         flight_mode_id = self.flight_mode_id
 
         if flight_mode_id not in all_modes:
             raise UnknownFlightModeException(flight_mode_id)
-
+        
         if self.task_completed:
+       
             if self._parent.FMQueue.empty():
                 return FMEnum.Normal.value
             else:
@@ -647,7 +648,7 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
-        self.completed_task()
+        #self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):

@@ -1,26 +1,25 @@
+# Packing Imports
+
+# Transimission Imports
+
+# Transimission Imports
 import logging
 import time
+from datetime import datetime
 
-from adafruit_blinka.agnostic import board_id
-
-from utils.constants import ZERO_WORD, ONE_WORD
-
-if board_id and board_id != 'GENERIC_LINUX_PC':
-    import board
-    import busio
-    from adafruit_bus_device.spi_device import SPIDevice
+import board
+import busio
+from adafruit_bus_device.spi_device import SPIDevice
+from bitstring import BitArray
 
 from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
-from bitstring import BitArray
-
-from datetime import datetime
+from utils.constants import ZERO_WORD, ONE_WORD
 
 
-class Radio:
+class Groundstation:
 
     def __init__(self):
-
         self.driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
         self.mgr = Manager(self.driver)
         self.last_transmit_time = datetime.today()
@@ -43,16 +42,14 @@ class Radio:
         if self.mgr.outbox.empty():
             return None
         else:
-            return self.mgr.outbox.get()
+            downlink = self.mgr.outbox.get()
+            print('Inflated Bytes: ' + str(downlink))
+            return self.bit_deflation(downlink, ZERO_WORD, ONE_WORD)
 
     # Downlink given bytearray to ground station
     def transmit(self, signal: bytes):
-
         self.mgr.tx_enabled = True
-
-        inflatedSignal = self.bit_inflation(signal, ZERO_WORD, ONE_WORD)
-        print('Inflated Bytes: ' + str(inflatedSignal))
-        self.mgr.inbox.put(inflatedSignal)
+        self.mgr.inbox.put(signal)
 
         cycles = 0
 
@@ -65,7 +62,8 @@ class Radio:
             # After 5s, break for clean shutdown
             # (TODO: use interrupt handler to ensure clean shutdown when killed,
             # or monitor transmitting state and exit when complete)
-            if cycles >= 10: break
+            if cycles >= 10:
+                break
             time.sleep(1)
 
         self.mgr.tx_enabled = False
@@ -74,18 +72,20 @@ class Radio:
 
         self.last_transmit_time = datetime.today()
 
-    def bit_inflation(self, downlink: bytes, zero_word: bytes, one_word: bytes) -> bytearray:
+    def bit_deflation(self, downlink: bytearray, zero_word: bytes, one_word: bytes):
 
-        # Convert bytes to bits
-        downlinkBitString = BitArray(bytes=downlink).bin
+        deflatedBitArray = BitArray('', bin='')
 
-        inflatedByteArray = bytearray('', encoding='utf-8')
+        # Recover
+        for i in range(len(downlink) // 2):
+            byte = downlink[i * 2:(i * 2) + 2]
 
-        # Add two bytes for every bit corresponding to the appropriate word
-        for bit in downlinkBitString:
-            if bit == '0':
-                inflatedByteArray += zero_word
+            if byte == zero_word:
+                deflatedBitArray += '0b0'
+            elif byte == one_word:
+                deflatedBitArray += '0b1'
             else:
-                inflatedByteArray += one_word
+                # TODO try and figure out whether it's a 1 or 0
+                pass
 
-        return inflatedByteArray
+        return deflatedBitArray.bytes

@@ -80,11 +80,10 @@ class DownlinkHandler:
                 )
 
     def unpack_downlink(self, data: bytes):
-
         try:
             mac, counter, mode, downlink_id, arg_data = unpack_downlink_bytes(data)
             func_args, buffer_size = self.downlink_dict[mode][downlink_id]
-        except:
+        except Exception:
             raise DownlinkUnpackingException(
                 f'Unknown downlink received. Mode: {mode}, Downlink ID: {downlink_id}'
             )
@@ -110,8 +109,7 @@ class DownlinkHandler:
                 downlink_dict[downlink_id] = downlink_data_tuple
                 self.downlink_dict[mode_id] = downlink_dict
 
-                # Used only for testing
-
+    # Used only for testing
     def register_new_downlink(self, mode_id: int, downlink_id: int, **kwargs):
 
         totalBytes = 0
@@ -138,7 +136,7 @@ class DownlinkHandler:
             downlink_data_tuple = (downlink_args, totalBytes)
             self.downlink_dict[mode_id][downlink_id] = downlink_data_tuple
 
-        except:
+        except Exception:
             raise SerializationException()
 
 
@@ -156,18 +154,3 @@ def bit_inflation(downlink: bytearray, zero_word: bytes, one_word: bytes):
             inflatedByteArray += one_word
 
     return inflatedByteArray
-
-
-def bit_deflation(downlink: bytearray, zero_word: bytearray, one_word: bytearray):
-    deflatedBitArray = BitArray('', bin='')
-
-    # Recover
-    for i in range(len(downlink) // 2):
-        byte = downlink[i * 2:(i * 2) + 2]
-
-        if byte == zero_word:
-            deflatedBitArray += '0b0'
-        else:
-            deflatedBitArray += '0b1'
-
-    return deflatedBitArray.bytes

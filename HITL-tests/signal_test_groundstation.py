@@ -1,35 +1,29 @@
-import communications.groundstation as gs
-from communications.commands import CommandHandler
-import board
-import busio
 import time
-from adafruit_bus_device.spi_device import SPIDevice
-from communications.ax5043_manager.ax5043_driver import Ax5043
-from communications.ax5043_manager.ax5043_manager import Manager
 
-#Radio setup
-driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
-mgr = Manager(driver)
+from communications.groundstation import Groundstation
+from communications.commands import CommandHandler
+
+# Radio setup
+gs = Groundstation()
 ch = CommandHandler()
-
-#Pack command into a bytearray
-gs.registerCommand(ch,1,2,number1=7, number2=4)
+# Pack command into a bytearray
+ch.register_new_command(1, 2, number1=7, number2=4)
 command = ch.pack_command(1, 1, 2, number1=7, number2=4)
 
-#Send the command to the satellite
-gs.transmitCommand(mgr, command)
+# Send the command to the satellite
+gs.transmit(command)
 
 print('Transmitted')
 print('Entering Receiving Mode')
 
 cycleNumber = 1
 
-#Enter listening mode
+# Enter listening mode
 while True:
 
     print('Cycle: ' + str(cycleNumber))
 
-    message = gs.receiveSignal(mgr)
+    message = gs.receiveSignal()
 
     if message is not None:
         print(ch.unpack_command(message))

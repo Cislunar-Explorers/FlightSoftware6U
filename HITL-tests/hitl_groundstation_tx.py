@@ -1,4 +1,4 @@
-from communications.satellite_radio import Radio
+from communications.groundstation import Groundstation
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
@@ -9,7 +9,7 @@ logger = get_log()
 
 ch = CommandHandler()
 dh = DownlinkHandler()
-groundstation = Radio()
+groundstation = Groundstation()
 commandCounter = 1
 transmitInterval = 3
 rx_wait_time = 20  # seconds

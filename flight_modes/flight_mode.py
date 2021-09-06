@@ -406,19 +406,19 @@ class LowBatterySafetyMode(FlightMode):
         if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
-        time_for_opnav = (time() - self.parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
-        time_for_telem = (time() - self.parent.last_telem_downlink) // 60 < params.LB_TLM_INTERVAL
+        time_for_opnav = (time() - self._parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
+        time_for_telem = (time() - self._parent.last_telem_downlink) // 60 < params.LB_TLM_INTERVAL
 
-        if time_for_opnav and FMEnum.Opnav.value not in self.parent.FMQueue:
-            self.parent.FMQueue.put(FMEnum.Opnav.value)
+        if time_for_opnav and FMEnum.Opnav.value not in self._parent.FMQueue:
+            self._parent.FMQueue.put(FMEnum.Opnav.value)
 
         if time_for_telem:
-            telem = self.parent.telemetry.minimal_packet()
-            downlink = self.parent.downlink_handler.pack_downlink(self.parent.downlink_counter,
-                                                                  FMEnum.LowBatterySafety.value,
-                                                                  LowBatterySafetyCommandEnum.CritTelem.value,
-                                                                  **telem)
-            self.parent.downlink_queue.put(downlink)
+            telem = self._parent.telemetry.minimal_packet()
+            downlink = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
+                                                                   FMEnum.LowBatterySafety.value,
+                                                                   LowBatterySafetyCommandEnum.CritTelem.value,
+                                                                   **telem)
+            self._parent.downlink_queue.put(downlink)
 
     def __enter__(self):
         super().__enter__()
@@ -668,10 +668,10 @@ class NormalMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self.parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
-        time_for_telem = (time() - self.parent.last_telem_downlink) // 60 < params.TELEM_INTERVAL
-        need_to_electrolyze = self.parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
-        currently_electrolyzing = self.parent.telemetry.gom.is_electrolyzing
+        time_for_opnav = (time() - self._parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
+        time_for_telem = (time() - self._parent.last_telem_downlink) // 60 < params.TELEM_INTERVAL
+        need_to_electrolyze = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        currently_electrolyzing = self._parent.telemetry.gom.is_electrolyzing
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
@@ -697,12 +697,12 @@ class NormalMode(FlightMode):
             return FMEnum.OpNav.value
 
         if time_for_telem:
-            telem = self.parent.telemetry.standard_packet_dict()
-            downlink = self.parent.downlink_handler.pack_downlink(
-                self.parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.BasicTelem.value,
+            telem = self._parent.telemetry.standard_packet_dict()
+            downlink = self._parent.downlink_handler.pack_downlink(
+                self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.BasicTelem.value,
                 **telem)
 
-            self.parent.downlink_queue.put(downlink)
+            self._parent.downlink_queue.put(downlink)
 
         # if we have data to downlink, change to comms mode
         if not (self._parent.downlink_queue.empty()):

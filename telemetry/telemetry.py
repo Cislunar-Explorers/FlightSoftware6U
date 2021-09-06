@@ -86,7 +86,7 @@ class GyroSensor(SynchronousSensor):
         gyro_model = GyroModel.from_tuple(gyro_tuple)
 
         try:
-            session = self.parent.create_session()
+            session = self._parent.create_session()
             session.add(gyro_model)
             session.commit()
         finally:

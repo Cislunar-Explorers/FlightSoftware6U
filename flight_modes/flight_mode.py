@@ -72,7 +72,6 @@ class FlightMode:
             raise UnknownFlightModeException(flight_mode_id)
 
         if self.task_completed:
-
             if self._parent.FMQueue.empty():
                 return FMEnum.Normal.value
             else:
@@ -91,6 +90,10 @@ class FlightMode:
         if (not self._parent.reorientation_queue.empty()) or self._parent.reorientation_list:
             return FMEnum.AttitudeAdjustment.value
 
+        # go to comms mode if there is something in the comms queue
+        if not self._parent.downlink_queue.empty():
+            return FMEnum.CommsMode.value
+
         # if battery is low, go to low battery mode
         batt_voltage = self._parent.telemetry.gom.hk.vbatt
         if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
@@ -102,10 +105,6 @@ class FlightMode:
                 and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
-
-        # go to comms mode if there is something in the comms queue
-        if not self._parent.downlink_queue.empty():
-            return FMEnum.CommsMode.value
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 

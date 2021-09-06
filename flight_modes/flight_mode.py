@@ -263,12 +263,12 @@ class CommsMode(FlightMode):
         self._parent.gom.rf_transmitting_switch(receive=False)
 
         # Turn on power amplifier
-        self._parent.gom.set_PA(on=True)
+        self._parent.gom.set_pa(on=True)
 
     def exit_transmit_safe_mode(self):
 
         # Turn off power amplifier
-        self._parent.gom.set_PA(on=False)
+        self._parent.gom.set_pa(on=False)
 
         # Set RF transmitting side to low
         self._parent.gom.rf_transmitting_switch(receive=True)
@@ -349,6 +349,10 @@ class SensorMode(FlightMode):
 
 
 class LowBatterySafetyMode(FlightMode):
+    """FMID 3: Low Battery Safety Mode: the main goal here is to save power as much as possible in case we are in a
+    low-power state. We enter Low battery mode whenever we are low on battery (duh...) as defined by
+    parameters.ENTER_LOW_BATTERY_MODE_THRESHOLD and whenever we aren't getting any current from our solar panels,
+    which can happen in either an eclipse, or if our harnessing or solar panels break"""
     flight_mode_id = FMEnum.LowBatterySafety.value
 
     command_codecs = {}
@@ -390,10 +394,11 @@ class LowBatterySafetyMode(FlightMode):
         if self.task_completed:
             sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         else:
-            self._parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
+            self._parent.gom.all_off()  # turns everything off initially upon entering mode to preserve power
             self._parent.gom.rf_transmitting_switch(
                 receive=True)  # make sure to listen for commands instead of transmitting
             self._parent.gom.rf_receiving_switch(receive=True)
+            self._parent.gom.lna(True)  # Turn the receiving amplifier back on (gom.all_off() turns it off too)
             self.completed_task()
 
     def poll_inputs(self):
@@ -423,6 +428,7 @@ class LowBatterySafetyMode(FlightMode):
         super().__enter__()
         self._parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
         self._parent.gom.pc.set_GPIO_low()
+        return self
 
 
 class ManeuverMode(PauseBackgroundMode):

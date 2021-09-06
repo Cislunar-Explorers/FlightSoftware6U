@@ -496,7 +496,8 @@ class Power:
             # Set receiving RF switch to transmit
             self._pi.write(RF_RX_EN, pigpio.LOW)
 
-    def set_PA(self, on: bool):
+    def set_pa(self, on: bool):
+        """Turns the power relay on/off via the GPIO"""
         self._pi.write(PA_EN, int(on))
 
     # Toggles receiving comms amp on/off

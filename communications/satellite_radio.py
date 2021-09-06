@@ -1,24 +1,20 @@
-#Packing Imports
-import utils.struct as us
-from utils.constants import FMEnum, ZERO_WORD, ONE_WORD
-from utils.exceptions import UnknownFlightModeException, SerializationException
-from sys import maxsize, float_info
-
-#Transimission Imports
 import logging
 import time
+
 from adafruit_blinka.agnostic import board_id
+
+from utils.constants import ZERO_WORD, ONE_WORD
 
 if board_id and board_id != 'GENERIC_LINUX_PC':
     import board
     import busio
-from adafruit_bus_device.spi_device import SPIDevice
+    from adafruit_bus_device.spi_device import SPIDevice
+
 from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 from bitstring import BitArray
 
 from datetime import datetime
-from typing import Union
 
 
 class Radio:
@@ -50,7 +46,7 @@ class Radio:
             return self.mgr.outbox.get()
 
     # Downlink given bytearray to ground station
-    def transmit(self, signal: Union[bytearray, bytes]):
+    def transmit(self, signal: bytes):
 
         self.mgr.tx_enabled = True
 
@@ -75,17 +71,17 @@ class Radio:
         self.mgr.tx_enabled = False
         self.mgr.rx_enabled = False
         self.mgr.dispatch()
-        
+
         self.last_transmit_time = datetime.today()
 
-    def bit_inflation(self, downlink: bytearray, zero_word:bytes, one_word:bytes):
-   
-    #Convert bytes to bits
+    def bit_inflation(self, downlink: bytes, zero_word: bytes, one_word: bytes) -> bytearray:
+
+        # Convert bytes to bits
         downlinkBitString = BitArray(bytes=downlink).bin
 
-        inflatedByteArray = bytearray('',encoding='utf-8')
-        
-        #Add two bytes for every bit corresponding to the appropriate word
+        inflatedByteArray = bytearray('', encoding='utf-8')
+
+        # Add two bytes for every bit corresponding to the appropriate word
         for bit in downlinkBitString:
             if bit == '0':
                 inflatedByteArray += zero_word

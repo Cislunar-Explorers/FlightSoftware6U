@@ -25,8 +25,7 @@
     "OpticalNavigation/core/opnav.py",
     "OpticalNavigation/core/find.py",
     "OpticalNavigation/core/find_with_blobs.py",
-    "OpticalNavigation/core/find_with_kmeans.py",
-    "tests/commands_flight_mode_test.py"
+    "OpticalNavigation/core/find_with_kmeans.py"
   ],
   "extraPaths": [
     "OpticalNavigation/"
@@ -38,5 +37,7 @@
   "reportMissingImports": "information",
   "reportImportCycles": "none",
   "reportUnusedImport": "warning",
-  "reportUnusedVariable": "warning"
+  "reportUnusedVariable": "warning",
+  "reportOptionalMemberAccess": "none",
+  "reportDuplicateImport": "error"
 }

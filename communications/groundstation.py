@@ -47,7 +47,7 @@ class Groundstation:
             return self.bit_deflation(downlink, ZERO_WORD, ONE_WORD)
 
     # Downlink given bytearray to ground station
-    def transmit(self, signal: bytearray):
+    def transmit(self, signal: bytes):
         self.mgr.tx_enabled = True
         self.mgr.inbox.put(signal)
 

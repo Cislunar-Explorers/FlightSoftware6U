@@ -9,7 +9,6 @@ from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroE
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
 from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
-import utils.parameters as params
 from typing import Tuple
 from adafruit_blinka.agnostic import board_id
 
@@ -24,7 +23,6 @@ class GomSensor(SynchronousSensor):
         super().__init__(parent)
         self.hk = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
         self.hkparam = hkparam_t()  # hkparam_t struct
-        self.percent = float()
         self.is_electrolyzing = bool()
 
     def poll(self):
@@ -32,9 +30,6 @@ class GomSensor(SynchronousSensor):
         if self._parent.gom is not None:
             self.hk = self._parent.gom.get_health_data(level="eps")
             self.hkparam = self._parent.gom.get_health_data()
-            battery_voltage = self.hk.vbatt  # mV
-            self.percent = (battery_voltage - params.GOM_VOLTAGE_MIN) / \
-                           (params.GOM_VOLTAGE_MAX - params.GOM_VOLTAGE_MIN)
             self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
 
 
@@ -58,9 +53,9 @@ class GyroSensor(SynchronousSensor):
         # poll and smooth gyro data
 
         n_data = freq * duration
-        data = [None] * n_data
-        for i in range(n_data):
-            data[i] = self._parent.gyro.get_gyro_corrected()
+        data = []
+        for _ in range(n_data):
+            data.append(self._parent.gyro.get_gyro_corrected())
             sleep(1.0 / freq)
 
         data = np.asarray(data).T
@@ -202,9 +197,9 @@ class Telemetry(SynchronousSensor):
             self._parent.logger.error("Thermocouple not functioning properly")
             raise ThermocoupleError(f"Unreasonable fuel tank temperature: {self.thm.tmp}")
 
-        if self.gom.percent < 0 or self.gom.percent > 1.5:
+        if self.gom.hk.vbatt < 5500 or self.gom.hk.vbatt > 8500:
             self._parent.logger.error("Gom HK not functioning properly")
-            raise GomSensorError(f"Unreasonable battery percentage: {self.gom.percent}")
+            raise GomSensorError(f"Unreasonable battery voltage: {self.gom.hk.vbatt}")
 
         if any(i < 0 for i in self.rpi.all):
             self._parent.logger.error("RPi sensors not functioning properly")

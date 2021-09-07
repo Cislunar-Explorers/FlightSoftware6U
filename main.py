@@ -46,7 +46,7 @@ class MainSatelliteThread(Thread):
         logger.info("Initializing...")
         self.command_queue = Queue()
         self.downlink_queue = Queue()
-        self.FMQueue = Queue()
+        self.FMQueue: Queue[int] = Queue()
         self.commands_to_execute = []
         self.downlinks_to_execute = []
         self.burn_queue = Queue()

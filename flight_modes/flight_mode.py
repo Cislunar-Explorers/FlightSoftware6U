@@ -71,12 +71,6 @@ class FlightMode:
         if flight_mode_id not in all_modes:
             raise UnknownFlightModeException(flight_mode_id)
 
-        if self.task_completed:
-            if self._parent.FMQueue.empty():
-                return FMEnum.Normal.value
-            else:
-                return self._parent.FMQueue.get()
-
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
@@ -105,6 +99,12 @@ class FlightMode:
                 and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
+
+        if self.task_completed:
+            if self._parent.FMQueue.empty():
+                return FMEnum.Normal.value
+            else:
+                return self._parent.FMQueue.get()
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
@@ -314,7 +314,7 @@ class OpNavMode(FlightMode):
         # TODO: overhaul so opnav calculation only occur while in opnav mode
         if not self._parent.opnav_process.is_alive():
             logger.info("[OPNAV]: Able to run next opnav")
-            self._parent.last_opnav_run = datetime.now()
+            self._parent.last_opnav_run = time()
             logger.info("[OPNAV]: Starting opnav subprocess")
             self._parent.opnav_process = Process(target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,))
             self._parent.opnav_process.start()
@@ -413,8 +413,8 @@ class LowBatterySafetyMode(FlightMode):
         time_for_opnav = (time() - self._parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
         time_for_telem = (time() - self._parent.last_telem_downlink) // 60 < params.LB_TLM_INTERVAL
 
-        if time_for_opnav and FMEnum.Opnav.value not in self._parent.FMQueue:
-            self._parent.FMQueue.put(FMEnum.Opnav.value)
+        if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._parent.FMQueue:
+            self._parent.FMQueue.put(FMEnum.OpNav.value)
 
         if time_for_telem:
             telem = self._parent.telemetry.minimal_packet()

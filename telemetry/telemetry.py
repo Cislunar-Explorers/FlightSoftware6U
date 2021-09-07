@@ -1,19 +1,19 @@
-from time import time, sleep
 from os import popen
-import psutil
-from uptime import uptime
-from telemetry.sensor import SynchronousSensor
+from time import time, sleep
+from typing import Tuple
+
 import numpy as np
+import psutil
+from adafruit_blinka.agnostic import board_id
+from uptime import uptime
+
 from drivers.power.power_structs import eps_hk_t, hkparam_t
-from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
+from telemetry.sensor import SynchronousSensor
+from utils.constants import DB_FILE
+from utils.constants import MAX_GYRO_RATE, GomOutputs, BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
-from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
-from typing import Tuple
-from adafruit_blinka.agnostic import board_id
-from utils.db import GyroModel
-from utils.constants import MAX_GYRO_RATE, GomOutputs, BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE
-import utils.parameters as params
+from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
 
 
 def moving_average(x, w):
@@ -82,15 +82,16 @@ class GyroSensor(SynchronousSensor):
         return self.mag
 
     def write(self):
-        gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
-        gyro_model = GyroModel.from_tuple(gyro_tuple)
-
-        try:
-            session = self._parent.create_session()
-            session.add(gyro_model)
-            session.commit()
-        finally:
-            session.close()
+        pass
+        # gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
+        # gyro_model = GyroModel.from_tuple(gyro_tuple)
+        #
+        # try:
+        #     session = self._parent.create_session()
+        #     session.add(gyro_model)
+        #     session.commit()
+        # finally:
+        #     session.close()
 
 
 class PressureSensor(SynchronousSensor):

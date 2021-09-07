@@ -217,7 +217,7 @@ class MainSatelliteThread(Thread):
         # TODO: move this following if block to the telemetry file
         if self.radio is not None:
             # Telemetry downlink
-            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:
+            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_INTERVAL:
                 telemetry = self.command_definitions.gather_basic_telem()
                 telem_downlink = (
                     self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,

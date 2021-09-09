@@ -160,7 +160,7 @@ class FlightMode:
 
     def poll_inputs(self):
         if self._parent.gom is not None:
-            self._parent.gom.tick_wdt()
+            self._parent.gom.tick_wdt()  # FIXME; we don't want this for flight
         self._parent.telemetry.poll()
 
     def completed_task(self):
@@ -211,8 +211,8 @@ class TestMode(PauseBackgroundMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def update_state(self):
-        pass  # this is intentional - we don't want the FM to update if we are testing something
+    def update_state(self) -> int:
+        return NO_FM_CHANGE  # this is intentional - we don't want the FM to update if we are testing something
 
     def run_mode(self):
         pass
@@ -344,7 +344,7 @@ class SensorMode(FlightMode):
         super().__init__(parent)
         raise NotImplementedError
 
-    def update_state(self):
+    def update_state(self) -> int:
         return NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
 
 
@@ -394,18 +394,22 @@ class LowBatterySafetyMode(FlightMode):
         if self.task_completed:
             sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         else:
-            self._parent.gom.all_off()  # turns everything off initially upon entering mode to preserve power
-            self._parent.gom.rf_transmitting_switch(
-                receive=True)  # make sure to listen for commands instead of transmitting
-            self._parent.gom.rf_receiving_switch(receive=True)
-            self._parent.gom.lna(True)  # Turn the receiving amplifier back on (gom.all_off() turns it off too)
+            if self._parent.gom is not None:
+                self._parent.gom.all_off()  # turns everything off initially upon entering mode to preserve power
+                self._parent.gom.rf_transmitting_switch(
+                    receive=True)  # make sure to listen for commands instead of transmitting
+                self._parent.gom.rf_receiving_switch(receive=True)
+                self._parent.gom.lna(True)  # Turn the receiving amplifier back on (gom.all_off() turns it off too)
             self.completed_task()
 
     def poll_inputs(self):
         super().poll_inputs()
 
-    def update_state(self):
-        super().update_state()  # if there are maneuvers, reorientations, opnav, to be done, then switch
+    def update_state(self) -> int:
+        super_fm = super().update_state()  # if there are maneuvers, reorientations, opnav, to be done, then switch
+        if super_fm != NO_FM_CHANGE:
+            return super_fm
+
         # check power supply to see if I can transition back to NormalMode
         if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
@@ -423,6 +427,9 @@ class LowBatterySafetyMode(FlightMode):
                                                                    LowBatterySafetyCommandEnum.CritTelem.value,
                                                                    **telem)
             self._parent.downlink_queue.put(downlink)
+            self._parent.last_telem_downlink = time()
+
+        return NO_FM_CHANGE
 
     def __enter__(self):
         super().__enter__()
@@ -667,9 +674,8 @@ class NormalMode(FlightMode):
     def poll_inputs(self):
         super().poll_inputs()
 
-    def update_state(self):
+    def update_state(self) -> int:
         super_fm = super().update_state()
-
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
@@ -713,6 +719,8 @@ class NormalMode(FlightMode):
         if not (self._parent.downlink_queue.empty()):
             return FMEnum.CommsMode.value
 
+        return NO_FM_CHANGE
+
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
         #self.completed_task()
@@ -754,7 +762,7 @@ class CommandMode(PauseBackgroundMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def update_state(self):
+    def update_state(self) -> int:
         # DO NOT TICK THE WDT
         super_fm = super().update_state()
         if super_fm != NO_FM_CHANGE:

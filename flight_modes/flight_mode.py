@@ -395,11 +395,16 @@ class LowBatterySafetyMode(FlightMode):
             sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
         else:
             if self._parent.gom is not None:
-                self._parent.gom.all_off()  # turns everything off initially upon entering mode to preserve power
-                self._parent.gom.rf_transmitting_switch(
-                    receive=True)  # make sure to listen for commands instead of transmitting
+                # turn off all devices except for LNA. Most of this stuff is redundant, but better safe than sorry
+                self._parent.gom.set_pa(False)
                 self._parent.gom.rf_receiving_switch(receive=True)
-                self._parent.gom.lna(True)  # Turn the receiving amplifier back on (gom.all_off() turns it off too)
+                self._parent.gom.rf_transmitting_switch(receive=True)
+                self._parent.gom.set_electrolysis(False)
+                self._parent.gom.burnwire1(False)
+                self._parent.gom.glowplug(False)
+                self._parent.gom.glowplug2(False)
+                self._parent.gom.pc.set_single_output(4, False, 0)
+
             self.completed_task()
 
     def poll_inputs(self):

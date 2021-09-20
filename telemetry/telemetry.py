@@ -82,6 +82,7 @@ class GyroSensor(SynchronousSensor):
         return self.mag
 
     def write(self):
+        # TODO
         pass
         # gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
         # gyro_model = GyroModel.from_tuple(gyro_tuple)

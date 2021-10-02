@@ -236,6 +236,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
+    """Find funtion: get_detections(frames) -> earthDetectionArray, moonDetectionArray,sunDetectionArray"""
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
     earthDetectionArray = np.zeros((len(frames), 4), dtype = float)
     moonDetectionArray = np.zeros((len(frames), 4), dtype = float)
@@ -254,6 +255,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     # best___Tuple is tuple of file, distance and vector of best result
 
+    """Find best detection function: get_best_detection(earthDetectionArray, moonDetectionArray, sunDetectionArray) -> bestEarthTuple, bestMoonTuple, bestSunTuple"""
     # Find the distance to center
     logger.info("[OPNAV]: Finding best frames...")
     earthCenterDistances = []
@@ -295,6 +297,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     # We now have the best result for earth, moon and sun; time to rotate vectors
 
+    """Camera to body function: cam_to_body_transform(best[E/M/S]Tuple) -> best[E/M/S]Tuple"""
     logger.info("[OPNAV]: Performing camera to body rotations...")
     for data in bestEarthTuple, bestMoonTuple, bestSunTuple:
         coordArray = np.array([data[2][0], data[2][1], data[2][2]]).reshape(3, 1)
@@ -308,6 +311,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         data[2][0] = coordArray[0]
         data[2][1] = coordArray[1]
         data[2][2] = coordArray[2]
+
 
     logger.info("[OPNAV]: Gathering gyro measurements...")
     gyro_meas = record_gyro(count=gyro_count)
@@ -325,10 +329,11 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     logger.info("[OPNAV]: Body to T0 rotation...")
     avgGyroY = np.mean(gyro_meas, axis = 0)[1]
     # Rotation is product of angular speed and time between frame and start of observation
-    lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first()
-    lastReboot = lastRebootRow.reboot_at
-    lastReboot = datetime(2020, 7, 28, 22, 8, 3)
+    #lastRebootRow = session.query(RebootsModel).order_by(desc('reboot_at')).first()
+    #lastReboot = lastRebootRow.reboot_at
+    #lastReboot = datetime(2020, 7, 28, 22, 8, 3)
 
+    """Body to T0 transform: body_to_T0_transform(best[E/M/S]Tuple, timeDeltaAvgs, observeStart"""
     if not np.isnan(bestEarthTuple[1]):
         earthTimeElapsed = __get_elapsed_time(bestEarthTuple, timeDeltaAvgs, observeStart)
         logger.info(f"[OPNAV]: earthTimeElapsed= {earthTimeElapsed}")
@@ -336,9 +341,10 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         tZeroEarthRotation = np.array([math.cos(earthRotation), 0, math.sin(earthRotation), 0, 1, 0, -1 * math.sin(earthRotation), 0, math.cos(earthRotation)]).reshape(3, 3)
         coordArray = np.array([bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2]]).reshape(3, 1)
         coordArray = tZeroEarthRotation.dot(coordArray)
+        bestEarthTuple[2][0] = coordArray[0]
         bestEarthTuple[2][1] = coordArray[1]
         bestEarthTuple[2][2] = coordArray[2]
-        bestEarthTuple[2][0] = coordArray[0]
+
 
     if not np.isnan(bestMoonTuple[1]):
         moonTimeElapsed = __get_elapsed_time(bestMoonTuple, timeDeltaAvgs, observeStart)
@@ -347,9 +353,10 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         tZeroMoonRotation = np.array([math.cos(moonRotation), 0, math.sin(moonRotation), 0, 1, 0, -1 * math.sin(moonRotation), 0, math.cos(moonRotation)]).reshape(3, 3)
         coordArray = np.array([bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2]]).reshape(3, 1)
         coordArray = tZeroMoonRotation.dot(coordArray)
+        bestMoonTuple[2][0] = coordArray[0]
         bestMoonTuple[2][1] = coordArray[1]
         bestMoonTuple[2][2] = coordArray[2]
-        bestMoonTuple[2][0] = coordArray[0]
+
 
     if not np.isnan(bestSunTuple[1]):
         sunTimeElapsed = __get_elapsed_time(bestSunTuple, timeDeltaAvgs, observeStart)
@@ -358,9 +365,10 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
         tZeroSunRotation = np.array([math.cos(sunRotation), 0, math.sin(sunRotation), 0, 1, 0, -1 * math.sin(sunRotation), 0, math.cos(sunRotation)]).reshape(3, 3)
         coordArray = np.array([bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2]]).reshape(3, 1)
         coordArray = tZeroSunRotation.dot(coordArray)
+        bestSunTuple[2][0] = coordArray[0]
         bestSunTuple[2][1] = coordArray[1]
         bestSunTuple[2][2] = coordArray[2]
-        bestSunTuple[2][0] = coordArray[0]
+
 
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2], bestEarthTuple[2][3])
@@ -391,6 +399,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     session.add(new_entry)
     
     '''
+    """Ephemeris function"""
     current_time = observeStart
     observeStart = observeStart - timedelta(microseconds=11716*1000)
     sun_init_au = get_sun(Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format='isot', scale='tdb')).cartesian 

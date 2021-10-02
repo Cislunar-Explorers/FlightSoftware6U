@@ -386,11 +386,13 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
             elif earth is None and (index != 0 or np.max(areas) < 400) and (index != 1 or area < 400):#TODO: Placeholder
                 moon = measureMoon(f)
                 if moon is not None:
-                    mXst, mYst = None,None	
-                    if index == 1:	
-                        mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)	
-                    if index == 0:	
+                    (mX, mY), mR = moon
+                    mXst, mYst = None,None
+                    # Checks whether moon contour is first or second contour
+                    if index == 0:
                         mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
+                    if index == 1:
+                        mXst, mYst = cam.normalize_st(bbst2.x0 + mX, bbst2.y0 + mY)
                     mRho2 = mXst ** 2 + mYst ** 2
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)

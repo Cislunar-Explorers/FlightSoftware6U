@@ -1,18 +1,18 @@
 # Camera mux imports
 # pip3 install adafruit-circuitpython-busdevice vcgencmd Adafruit-Blinka
 
-import board
-import busio
-from digitalio import DigitalInOut, Direction
-from adafruit_bus_device.i2c_device import I2CDevice
-from vcgencmd import Vcgencmd
+#import board
+#import busio
+#from digitalio import DigitalInOut, Direction
+#from adafruit_bus_device.i2c_device import I2CDevice
+#from vcgencmd import Vcgencmd
 
 # Video capture imports
 import time
 from math import ceil, floor
 from fractions import Fraction
-from picamera import PiCamera, mmal, PiVideoFrameType
-from picamera.mmalobj import to_rational
+#from picamera import PiCamera, mmal, PiVideoFrameType
+#from picamera.mmalobj import to_rational
 
 
 class CameraMux:

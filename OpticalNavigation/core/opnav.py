@@ -27,7 +27,7 @@ import os
 from astropy.time import Time  
 from astropy.coordinates import get_sun,get_moon,CartesianRepresentation
 
-from picamera import PiCamera
+#from picamera import PiCamera
 
 logger = get_log()
 
@@ -180,7 +180,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     observeStart = int(observeStart.replace(tzinfo=timezone.utc).timestamp() * 10**6) # In unix time
     recordings = []
     timeDeltaAvgs = [0, 0, 0]
-
+    '''
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
 
@@ -223,13 +223,16 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     frames4 = extract_frames(vid_dir=recordings[4][0], timestamps = recordings[4][1], cameraRecParams=camera_rec_params)
     frames5 = extract_frames(vid_dir=recordings[5][0], timestamps = recordings[5][1], cameraRecParams=camera_rec_params)
     frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
+    '''
+
     #####
     # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
     #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
 
     # Overwrite frames to separate path
-    frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
+    #frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
+    frames = glob.glob("/home/stephen_z/Desktop/surrender_images/cislunar_case1c/*.jpg")
 
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
@@ -387,7 +390,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     )
     session.add(new_entry)
     
-    
+    '''
     current_time = observeStart
     observeStart = observeStart - timedelta(microseconds=11716*1000)
     sun_init_au = get_sun(Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format='isot', scale='tdb')).cartesian 
@@ -417,7 +420,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
             time=current_time 
     )
     session.add(new_entry1)
-    
+    '''
     
     
     session.commit()

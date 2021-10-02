@@ -28,8 +28,8 @@ import utils.parameters as params
 # from tests.animations import LiveTrajectoryPlot
 
 SQL_PREFIX = "sqlite:///"
-#sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
-sql_path = DB_FILE
+sql_path = SQL_PREFIX + os.path.join("/home", "stephen_z", "Desktop", "test.sqlite")
+#sql_path = DB_FILE
 
 def setup_function(function):
     # Reset databases

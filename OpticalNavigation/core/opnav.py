@@ -35,6 +35,8 @@ logger = get_log()
 Entry point into OpNav. This method calls observe() and process().
 """
 ####### helper functions #######
+
+
 def __get_covariance_matrix_from_state(state_entry) -> CovarianceMatrix:
     """
     Obtains 6x6 covariance matrix from state entry. Column names should be in the following format:
@@ -50,6 +52,7 @@ def __get_covariance_matrix_from_state(state_entry) -> CovarianceMatrix:
     ]
     return CovarianceMatrix(matrix=np.array(a_P, dtype=float).reshape(6, 6))
 
+
 def __process_propulsion_events(session: session.Session) -> OPNAV_EXIT_STATUS:
     """
     Processes propulsion events (if there are any) using the trajectory ukf.
@@ -62,12 +65,12 @@ def __process_propulsion_events(session: session.Session) -> OPNAV_EXIT_STATUS:
     logger.info("[OPNAV]: process propulsion...")
     for entry_index, entry in enumerate(entries):
         logger.info(f'[OPNAV]: propulsion event: {entry_index+1}/{num_entries}')
-        logger.info(f'[OPNAV]: ----------PROPULSION EVENT----------')
+        logger.info('[OPNAV]: ----------PROPULSION EVENT----------')
         logger.info(entry)
         exit_status = __process_propulsion(session, entry)
         if exit_status is not OPNAV_EXIT_STATUS.SUCCESS:
             return exit_status
-        logger.info(f'[OPNAV] -------------------------------------')
+        logger.info('[OPNAV] -------------------------------------')
     # clear table
     try:
         num_rows_deleted = session.query(OpNavPropulsionModel).delete()
@@ -77,6 +80,7 @@ def __process_propulsion_events(session: session.Session) -> OPNAV_EXIT_STATUS:
     except:
         session.rollback()
         return OPNAV_EXIT_STATUS.FAILURE
+
 
 def __closest(session: session.Session, ts, model):
     """
@@ -97,6 +101,7 @@ def __closest(session: session.Session, ts, model):
     # if an event is None its diff will always be greater as we set it to infinity
     return gt_event if gt_diff < lt_diff else lt_event
 
+
 def __calculate_cam_measurements(body1:np.ndarray, body2:np.ndarray) -> np.float:
     """
     Calculates angular separation between two bodies.
@@ -110,18 +115,20 @@ def __calculate_cam_measurements(body1:np.ndarray, body2:np.ndarray) -> np.float
     d_em = math.sqrt((body1[0]-body2[0])**2+(body1[1]-body2[1])**2+(body1[2]-body2[2])**2)
     return 2 * math.asin(d_em/2)
 
+
 def __get_elapsed_time(bestTuple, timeDeltaAvgs, observeStart):
     """
     Calculates the elapsed time (in seconds, floating pt) between the beginning of the opnav observe call and the timestamp of a selected frame
     """
-    timestamp = int(re.search(r'[t](\d+)', bestTuple[0]).group(1))*1000 # factor of 1000 is ONLY for case1c
+    timestamp = int(re.search(r'[t](\d+)', bestTuple[0]).group(1))*1000  # factor of 1000 is ONLY for case1c
     camNum = int(re.search(r'[cam](\d+)', bestTuple[0]).group(1))
     timestampUnix = timestamp + timeDeltaAvgs[camNum-1]
     timeElapsed = (timestampUnix - observeStart) * 10**-6
     return timeElapsed
 ################################
 
-def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars(), camera_params:CameraParameters=CisLunarCameraParameters) -> OPNAV_EXIT_STATUS:
+
+def start(sql_path=DB_FILE, num_runs=1, gyro_count=4, gyro_vars:GyroVars=GyroVars(), camera_params:CameraParameters=CisLunarCameraParameters) -> OPNAV_EXIT_STATUS:
     """
     Entry point into OpNav System.
     [sql_path]: path to .sqlite file with the SQL prefix
@@ -146,8 +153,6 @@ def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()
         rm_cmd = 'rm -f' + OPNAV_MEDIA_PATH + '*'
         os.system(rm_cmd)
 
-
-
     propulsion_exit_status = __process_propulsion_events(session)
     if propulsion_exit_status is not OPNAV_EXIT_STATUS.SUCCESS:
         print(f'propulsion processing result: {propulsion_exit_status}')
@@ -165,6 +170,7 @@ def start(sql_path=DB_FILE,num_runs=1,gyro_count=4,gyro_vars:GyroVars=GyroVars()
 
     return OPNAV_EXIT_STATUS.SUCCESS
 
+
 def __observe(session: session.Session, gyro_count: int, camera_rec_params:CameraRecordingParameters, camera_params:CameraParameters=CisLunarCameraParameters) -> OPNAV_EXIT_STATUS:
     """
     Begin OpNav acquisition and storing process. The system will record videos from
@@ -180,6 +186,8 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     observeStart = int(observeStart.replace(tzinfo=timezone.utc).timestamp() * 10**6) # In unix time
     recordings = []
     timeDeltaAvgs = [0, 0, 0]
+    
+    """Acquisituion function: acquire(recordings, timeDeltaAvgs)"""
     '''
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
@@ -238,14 +246,14 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     """Find funtion: get_detections(frames) -> earthDetectionArray, moonDetectionArray,sunDetectionArray"""
     #These arrays take the form (number if frame number): [[x0,y0,z0,diameter0], [x1,y1,z1,diameter1], ...]
-    earthDetectionArray = np.zeros((len(frames), 4), dtype = float)
-    moonDetectionArray = np.zeros((len(frames), 4), dtype = float)
-    sunDetectionArray = np.zeros((len(frames), 4), dtype = float)
+    earthDetectionArray = np.zeros((len(frames), 4), dtype=float)
+    moonDetectionArray = np.zeros((len(frames), 4), dtype=float)
+    sunDetectionArray = np.zeros((len(frames), 4), dtype=float)
     logger.info("[OPNAV]: Finding...")
     progress = 1
     for f in range(len(frames)):
         logger.info(f"[OPNAV]: Image {progress}/{len(frames)}: {frames[f]}")
-        imageDetectionCircles = find(frames[f])# Puts results in ImageDetectionCircles object which is then accessed by next lines
+        imageDetectionCircles = find(frames[f]) # Puts results in ImageDetectionCircles object which is then accessed by next lines
         earthDetectionArray[f, ...] = imageDetectionCircles.get_earth_detection()
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()

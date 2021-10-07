@@ -24,6 +24,7 @@ from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
+from udp_client.client import Client
 
 from communications.comms_driver import CommunicationsSystem
 from communications.satellite_radio import Radio
@@ -34,6 +35,7 @@ from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
 import core.camera as camera
 from utils.parameter_utils import init_parameters
+
 
 FOR_FLIGHT = None
 
@@ -91,6 +93,11 @@ class MainSatelliteThread(Thread):
         self.create_session = create_sensor_tables_from_path(DB_FILE)
         logger.info("Initializing Telemetry")
         self.telemetry = Telemetry(self)
+
+        #_____________need the ground station pi IP address + server port for the socket ______
+        # logger.info("opening UDP client socket")
+        # self.client = Client(self, "", 1)
+        
         logger.info("Done intializing")
 
     def init_comms(self):

@@ -32,7 +32,7 @@ all_modes = list(map(int, FMEnum))
 
 logger = get_log()
 
-NONE = NONE
+NONE = ([], 0)
 
 class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
@@ -725,22 +725,7 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
-        if not params.FOR_FLIGHT:
-            # log relevant data
-            gom_voltage = self._parent.telemetry.gom.hk.vbatt
-            current_in = self._parent.telemetry.gom.hk.cursun
-            current_out = self._parent.telemetry.gom.hk.cursys
-            pressure = self._parent.telemetry.prs.pressure
-            poll_time = self._parent.telemetry.poll_time
-        if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
-            self._parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
-        self._parent.gom.pc.set_GPIO_low()
-        data = [poll_time, gom_voltage, current_in, current_out, pressure]
-        data_str = ','.join([str(elem) for elem in data])
-        with open("fill_and_fire.csv", 'a') as ff:
-            ff.write(data_str)
-
-    self.completed_task()
+        self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):
@@ -758,7 +743,7 @@ class CommandMode(PauseBackgroundMode):
         CommandCommandEnum.GomPin: ([OUTPUT_CHANNEL, STATE, DELAY], 4),
         CommandCommandEnum.GeneralCmd.value: ([CMD], 24),  # TODO
         CommandCommandEnum.GomGeneralCmd.value: ([CMD], 24),  # TODO
-        CommandCommandEnum.CeaseComms.value: ([PASSWORD], 8)
+        CommandCommandEnum.CeaseComms.value: ([PASSWORD], 8),
         CommandCommandEnum.SetUpdatePath.value: ([FILE_PATH], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.AddFileBlock.value: ([BLOCK_NUMBER, BLOCK_TEXT], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([TOTAL_BLOCKS], 2),

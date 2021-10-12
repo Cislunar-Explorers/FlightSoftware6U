@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -32,7 +33,8 @@ all_modes = list(map(int, FMEnum))
 
 logger = get_log()
 
-NONE = ([], 0)
+NO_ARGS = ([], 0)
+
 
 class FlightMode:
     # Override in Subclasses to tell CommandHandler the functions and arguments this flight mode takes
@@ -225,34 +227,28 @@ class PauseBackgroundMode(FlightMode):
     def __enter__(self):
         super().__enter__()
         self._parent.nemo_manager.pause()
+        # TODO: Pause Opnav process if running
         gc.disable()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
         self._parent.nemo_manager.resume()
+        # TODO: Resume Opnav process if previously running
         super().__exit__(exc_type, exc_val, exc_tb)
 
 
 class TestMode(PauseBackgroundMode):
     """FMID 8: Testing Flight Mode
-        Used to run tests while software is still in development"""
+    Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
+
     flight_mode_id = FMEnum.TestMode.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def update_state(self):
-        pass  # this is intentional - we don't want the FM to update if we are testing something
-
-    def run_mode(self):
-        pass
-
-    command_codecs = {TestCommandEnum.SeparationTest.value: NONE,
-                      TestCommandEnum.ADCTest.value: NONE,
-                      TestCommandEnum.CommsDriver.value: NONE,
-                      TestCommandEnum.PiShutdown.value: NONE,
-                      TestCommandEnum.RTCTest.value: NONE,
+    command_codecs = {TestCommandEnum.Switch.value: NO_ARGS,
+                      TestCommandEnum.SeparationTest.value: NO_ARGS,
+                      TestCommandEnum.ADCTest.value: NO_ARGS,
+                      TestCommandEnum.CommsDriver.value: NO_ARGS,
+                      TestCommandEnum.PiShutdown.value: NO_ARGS,
+                      TestCommandEnum.RTCTest.value: NO_ARGS,
                       TestCommandEnum.LongString.value: (['some_number', 'long_string'], 180)
                       }
 
@@ -269,6 +265,15 @@ class TestMode(PauseBackgroundMode):
         'gyro3': 'float',
     }
 
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def update_state(self):
+        pass  # this is intentional - we don't want the FM to update if we are testing something
+
+    def run_mode(self):
+        pass
+
 
 class CommsMode(FlightMode):
     """FMID 9: Downlinking Flight Mode
@@ -277,7 +282,7 @@ class CommsMode(FlightMode):
     and transmitting a signal from the RF Board."""
 
     flight_mode_id = FMEnum.CommsMode.value
-    command_codecs = {CommsCommandEnum.Switch.value: NONE}
+    command_codecs = {CommsCommandEnum.Switch.value: NO_ARGS}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -346,7 +351,7 @@ class OpNavMode(FlightMode):
     This flight mode is dedicated to starting the Opnav process"""
     # TODO: Flight Software/Opnav interface
     flight_mode_id = FMEnum.OpNav.value
-    command_codecs = {OpNavCommandEnum.Switch.value: NONE}
+    command_codecs = {OpNavCommandEnum.Switch.value: NO_ARGS}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -384,6 +389,7 @@ class SensorMode(FlightMode):
     go into this mode whenever we want a high poll rate of all of our sensors to collect sensor info at as high of a
     rate as we can."""
     flight_mode_id = FMEnum.SensorMode.value
+    command_codecs = {SensorsCommandEnum.Switch.value: NO_ARGS}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -398,11 +404,11 @@ class LowBatterySafetyMode(FlightMode):
     This flight mode tries to save as much power as possible while still keeping the craft operational.
     For inspiration, see https://cornell.app.box.com/folder/69212991152"""
     flight_mode_id = FMEnum.LowBatterySafety.value
-    command_codecs = {LowBatterySafetyCommandEnum.Switch.value: NONE,
-                      LowBatterySafetyCommandEnum.BasicTelem.value: NONE,
-                      LowBatterySafetyCommandEnum.CritTelem.value: NONE,
-                      LowBatterySafetyCommandEnum.DetailedTelem.value: NONE,
-                      LowBatterySafetyCommandEnum.ExitLBSafetyMode: NONE,
+    command_codecs = {LowBatterySafetyCommandEnum.Switch.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.BasicTelem.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.CritTelem.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.DetailedTelem.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.ExitLBSafetyMode: NO_ARGS,
                       LowBatterySafetyCommandEnum.SetExitLBSafetyMode: ([VBATT], 2),
                       LowBatterySafetyCommandEnum.SetParam: ([NAME, VALUE, HARD_SET], 33)
                       }
@@ -432,7 +438,7 @@ class ManeuverMode(PauseBackgroundMode):
     """FMID 6: Maneuver Mode
     This flight mode is dedicated to accurately firing our electrolysis thruster to make orbital changes"""
     flight_mode_id = FMEnum.Maneuver.value
-    command_codecs = {ManeuverCommandEnum.Switch.value: NONE}
+    command_codecs = {ManeuverCommandEnum.Switch.value: NO_ARGS}
     command_arg_unpackers = {}
 
     def __init__(self, parent):
@@ -460,11 +466,11 @@ class SafeMode(FlightMode):
     """FMID 4: Safe Mode
     This flight mode is where we go to if there is any software fault during flight, or there is something awry."""
     flight_mode_id = FMEnum.Safety.value
-    command_codecs = {SafetyCommandEnum.Switch.value: NONE,
-                      SafetyCommandEnum.DetailedTelem.value: NONE,
-                      SafetyCommandEnum.CritTelem.value: NONE,
-                      SafetyCommandEnum.BasicTelem.value: NONE,
-                      SafetyCommandEnum.ExitSafetyMode.value: NONE,
+    command_codecs = {SafetyCommandEnum.Switch.value: NO_ARGS,
+                      SafetyCommandEnum.DetailedTelem.value: NO_ARGS,
+                      SafetyCommandEnum.CritTelem.value: NO_ARGS,
+                      SafetyCommandEnum.BasicTelem.value: NO_ARGS,
+                      SafetyCommandEnum.ExitSafetyMode.value: NO_ARGS,
                       SafetyCommandEnum.SetParameter.value: ([NAME, VALUE, HARD_SET], 33), }
 
     def __init__(self, parent):
@@ -483,15 +489,15 @@ class NormalMode(FlightMode):
     flight_mode_id = FMEnum.Normal.value
 
     command_codecs = {
-        NormalCommandEnum.Switch.value: NONE,
-        NormalCommandEnum.RunOpNav.value: NONE,
+        NormalCommandEnum.Switch.value: NO_ARGS,
+        NormalCommandEnum.RunOpNav.value: NO_ARGS,
         # NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
-        # NormalCommandEnum.SetBreakpoint.value: NONE,  # TODO define exact parameters
+        # NormalCommandEnum.SetBreakpoint.value: NO_ARGS,  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
-        NormalCommandEnum.CritTelem.value: NONE,
-        NormalCommandEnum.BasicTelem.value: NONE,
-        NormalCommandEnum.DetailedTelem.value: NONE,
+        NormalCommandEnum.CritTelem.value: NO_ARGS,
+        NormalCommandEnum.BasicTelem.value: NO_ARGS,
+        NormalCommandEnum.DetailedTelem.value: NO_ARGS,
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
@@ -519,9 +525,9 @@ class NormalMode(FlightMode):
                                                     RATE_DATA_ROTATE_PERIOD,
                                                     HISTOGRAM_ROTATE_PERIOD,
                                                 ], 32),
-        NormalCommandEnum.NemoPowerOff.value: NONE,
-        NormalCommandEnum.NemoPowerOn.value: NONE,
-        NormalCommandEnum.NemoReboot.value: NONE,
+        NormalCommandEnum.NemoPowerOff.value: NO_ARGS,
+        NormalCommandEnum.NemoPowerOn.value: NO_ARGS,
+        NormalCommandEnum.NemoReboot.value: NO_ARGS,
         NormalCommandEnum.NemoProcessRateData.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
         NormalCommandEnum.NemoProcessHistograms.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
         NormalCommandEnum.GomConf1Set.value: ([PPT_MODE, BATTHEATERMODE, BATTHEATERLOW, BATTHEATERHIGH, OUTPUT_NORMAL1,
@@ -535,9 +541,9 @@ class NormalMode(FlightMode):
         NormalCommandEnum.ShellCommand.value: ([CMD], 24),
         NormalCommandEnum.SudoCommand.value: ([CMD], 24),
         NormalCommandEnum.Picberry.value: ([CMD], 24),
-        NormalCommandEnum.GomConf1Get.value: NONE,
+        NormalCommandEnum.GomConf1Get.value: NO_ARGS,
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
-        NormalCommandEnum.GomConf2Get.value: NONE,
+        NormalCommandEnum.GomConf2Get.value: NO_ARGS,
         NormalCommandEnum.ExecPyFile.value: ([FNAME], 36),
         NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1)
     }
@@ -729,17 +735,17 @@ class NormalMode(FlightMode):
 
 
 class CommandMode(PauseBackgroundMode):
-    """Command Mode: a Flight Mode that listens for and runs commands and nothing else."""
+    """FMID 10; Command Mode: a Flight Mode that listens for and runs commands and nothing else."""
 
     flight_mode_id = FMEnum.Command.value
 
     command_codecs = {
-        CommandCommandEnum.Switch.value: NONE,
+        CommandCommandEnum.Switch.value: NO_ARGS,
         CommandCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
         CommandCommandEnum.SetSystemTime: ([TIME], 8),
-        CommandCommandEnum.RebootPi: NONE,
-        CommandCommandEnum.RebootGom: NONE,
-        CommandCommandEnum.PowerCycle: NONE,
+        CommandCommandEnum.RebootPi: NO_ARGS,
+        CommandCommandEnum.RebootGom: NO_ARGS,
+        CommandCommandEnum.PowerCycle: NO_ARGS,
         CommandCommandEnum.GomPin: ([OUTPUT_CHANNEL, STATE, DELAY], 4),
         CommandCommandEnum.GeneralCmd.value: ([CMD], 24),  # TODO
         CommandCommandEnum.GomGeneralCmd.value: ([CMD], 24),  # TODO

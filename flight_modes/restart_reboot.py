@@ -5,7 +5,7 @@ from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE
 from flight_modes.flight_mode import FlightMode
 import os
 from utils.log import get_log
-from utils.constants import FMEnum, BootCommandEnum
+from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
 import psutil
 
 logger = get_log()

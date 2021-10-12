@@ -95,14 +95,14 @@ class FlightMode:
             return FMEnum.AttitudeAdjustment.value
 
         # if battery is low, go to low battery mode
-        batt_percent = self._parent.telemetry.gom.percent
-        if (batt_percent < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
+        batt_voltage = self._parent.telemetry.gom.hk.vbatt
+        if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
         if sum(self._parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT \
-                and batt_percent < params.ENTER_ECLIPSE_MODE_THRESHOLD \
+                and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD \
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
@@ -112,7 +112,7 @@ class FlightMode:
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
 
-    def register_commands(cls):
+    def register_commands(self):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def run_mode(self):
@@ -129,10 +129,11 @@ class FlightMode:
             for command in self._parent.commands_to_execute:
 
                 bogus = False
+                mac, counter, command_fm, command_id, command_kwargs = self._parent.command_handler.unpack_command(
+                    command)
+                logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
+
                 try:
-                    mac, counter, command_fm, command_id, command_kwargs = self._parent.command_handler.unpack_command(
-                        command)
-                    logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
                     assert command_fm in self._parent.command_definitions.COMMAND_DICT
                     assert command_id in self._parent.command_definitions.COMMAND_DICT[command_fm]
                 except AssertionError:
@@ -425,7 +426,7 @@ class LowBatterySafetyMode(FlightMode):
 
     def update_state(self):
         # check power supply to see if I can transition back to NormalMode
-        if self._parent.telemetry.gom.percent > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
+        if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
     def __enter__(self):

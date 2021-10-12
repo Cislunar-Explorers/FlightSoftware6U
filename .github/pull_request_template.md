@@ -1,5 +1,5 @@
 ### Summary
-<!-- What features were added? What bugs were fixed? -->
+<!-- What changes were made? What features were added? What bugs were fixed? -->
 
 
 ### Testing

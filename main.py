@@ -96,7 +96,7 @@ class MainSatelliteThread(Thread):
 
         #_____________need the ground station pi IP address + server port for the socket ______
         logger.info("opening UDP client socket")
-        self.client = Client("192.168.0.101", 1)
+        self.client = Client("192.168.0.101", 3333)
         
         logger.info("Done intializing")
 

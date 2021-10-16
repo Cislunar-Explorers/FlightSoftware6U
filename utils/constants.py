@@ -35,7 +35,7 @@ DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
 PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
 #OPNAV_MEDIA_PATH = FLIGHT_SOFTWARE_PATH + 'OpticalNavigation/opnav_media/'
-OPNAV_MEDIA_PATH = "/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/opnav_media/"
+OPNAV_MEDIA_PATH = "/home/stephen/code/FlightSoftware/OpticalNavigation/opnav_media/"
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"

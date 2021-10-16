@@ -55,11 +55,7 @@ class AAMode(PauseBackgroundMode):
         # self.latest_opnav_time = float()
 
     def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm
-
-        return NO_FM_CHANGE
+        return super().update_state()
 
     # check if exit condition has completed
     def run_mode(self):

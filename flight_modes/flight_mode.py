@@ -65,14 +65,14 @@ class FlightMode:
                 if not self._parent.opnav_process.is_alive():
                     self._parent.opnav_process.terminate()
                     logger.info("[OPNAV]: Process Terminated")
-        
+
         flight_mode_id = self.flight_mode_id
 
         if flight_mode_id not in all_modes:
             raise UnknownFlightModeException(flight_mode_id)
-        
+
         if self.task_completed:
-       
+
             if self._parent.FMQueue.empty():
                 return FMEnum.Normal.value
             else:
@@ -297,10 +297,7 @@ class CommsMode(FlightMode):
             sleep(params.DOWNLINK_BUFFER_TIME)
 
     def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm
-        return NO_FM_CHANGE
+        return super().update_state()
 
     def run_mode(self):
         if not self._parent.downlink_queue.empty():
@@ -328,13 +325,8 @@ class OpNavMode(FlightMode):
         self.completed_task()
 
     def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm
-
+        return super().update_state()
         # check if opnav db has been updated, then set self.task_completed true
-
-        return NO_FM_CHANGE
 
     def opnav_subprocess(self, q):
         # TODO change from pytest to actual opnav
@@ -431,24 +423,24 @@ class NormalMode(FlightMode):
         NormalCommandEnum.NemoWriteRegister.value: ([REG_ADDRESS, REG_VALUE], 2),
         NormalCommandEnum.NemoReadRegister.value: ([REG_ADDRESS, REG_SIZE], 2),
         NormalCommandEnum.NemoSetConfig.value: ([
-                                                    DET_ENABLE_UINT8,
-                                                    DET0_BIAS_UINT8,
-                                                    DET1_BIAS_UINT8,
-                                                    DET0_THRESHOLD_UINT8,
-                                                    DET1_THRESHOLD_UINT8,
-                                                    RATE_WIDTH_MIN,
-                                                    RATE_WIDTH_MAX,
-                                                    BIN_WIDTH,
-                                                    BIN_0_MIN_WIDTH,
-                                                    RATE_INTERVAL,
-                                                    VETO_THRESHOLD_MIN,
-                                                    VETO_THRESHOLD_MAX,
-                                                    CONFIG_WRITE_PERIOD,
-                                                    CONFIG_ROTATE_PERIOD,
-                                                    DATE_WRITE_PERIOD,
-                                                    RATE_DATA_ROTATE_PERIOD,
-                                                    HISTOGRAM_ROTATE_PERIOD,
-                                                ], 32),
+            DET_ENABLE_UINT8,
+            DET0_BIAS_UINT8,
+            DET1_BIAS_UINT8,
+            DET0_THRESHOLD_UINT8,
+            DET1_THRESHOLD_UINT8,
+            RATE_WIDTH_MIN,
+            RATE_WIDTH_MAX,
+            BIN_WIDTH,
+            BIN_0_MIN_WIDTH,
+            RATE_INTERVAL,
+            VETO_THRESHOLD_MIN,
+            VETO_THRESHOLD_MAX,
+            CONFIG_WRITE_PERIOD,
+            CONFIG_ROTATE_PERIOD,
+            DATE_WRITE_PERIOD,
+            RATE_DATA_ROTATE_PERIOD,
+            HISTOGRAM_ROTATE_PERIOD,
+        ], 32),
         NormalCommandEnum.NemoPowerOff.value: ([], 0),
         NormalCommandEnum.NemoPowerOn.value: ([], 0),
         NormalCommandEnum.NemoReboot.value: ([], 0),
@@ -648,7 +640,7 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
-        #self.completed_task()
+        # self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):
@@ -691,7 +683,7 @@ class CommandMode(PauseBackgroundMode):
         # DO NOT TICK THE WDT
         super_fm = super().update_state()
         if super_fm != NO_FM_CHANGE:
-            return super_fm  # 
+            return super_fm  #
 
     def run_mode(self):
         pass  # intentional

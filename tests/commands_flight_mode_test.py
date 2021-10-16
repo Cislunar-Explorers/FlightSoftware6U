@@ -1,10 +1,9 @@
-from main import MainSatelliteThread
 from communications.command_definitions import CommandDefinitions
-from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatterySafetyCommandEnum, \
+from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
+from main import MainSatelliteThread
+from utils.constants import BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatterySafetyCommandEnum, \
     SafetyCommandEnum, OpNavCommandEnum, ManeuverCommandEnum, SensorsCommandEnum, CommsCommandEnum, TestCommandEnum, \
     CommandCommandEnum
-
-from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
 
 command_enums = [BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatterySafetyCommandEnum,
                  SafetyCommandEnum, OpNavCommandEnum, ManeuverCommandEnum, SensorsCommandEnum, TestCommandEnum,
@@ -12,6 +11,8 @@ command_enums = [BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatt
 
 
 def testFlightCommands():
+    """Compares the command IDs that are defined in the flight mode's command lists with those that are defined in
+    the enums in constants.py"""
     cd = CommandDefinitions(MainSatelliteThread())
     # all_modes = list(map(int, FMEnum))
 
@@ -37,6 +38,7 @@ def testFlightCommands():
 
 
 def testFlightCodecs():
+    """"""
     flight_mode_objs = list(FLIGHT_MODE_DICT.values())
     fm_enums_zipped = list(zip(flight_mode_objs, command_enums))
     # print(fm_enums_zipped)

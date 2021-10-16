@@ -16,7 +16,7 @@ class ServerTester:
 		print("UDP server up and listening")
 	
 
-	def binary_to_dict(the_data):
+	def binary_to_dict(self, the_data):
 		"""
 		decode binary dict data to python string dict
 		"""

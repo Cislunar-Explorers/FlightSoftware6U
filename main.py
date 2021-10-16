@@ -95,8 +95,8 @@ class MainSatelliteThread(Thread):
         self.telemetry = Telemetry(self)
 
         #_____________need the ground station pi IP address + server port for the socket ______
-        # logger.info("opening UDP client socket")
-        # self.client = Client(self, "", 1)
+        logger.info("opening UDP client socket")
+        self.client = Client(self, "", 1)
         
         logger.info("Done intializing")
 
@@ -310,6 +310,10 @@ class MainSatelliteThread(Thread):
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
+
+                #________________send data udp  _______________________#
+                self.client.send_data(self.telemetry.standard_packet_dict())
+                
         except Exception as e:
             log_error(e, exc_info=1)
             logger.error("Error in main loop. Transitioning to SAFE mode")

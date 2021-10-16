@@ -353,7 +353,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
 
     # Overwrite frames to separate path
     #frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
-    frames = glob.glob("/home/stephen/Desktop/surrender_images/cislunar_case1c/*.jpg")
+    frames = glob.glob("/Users/adam/Desktop/College/Fall2021/CislunarFA2021/cislunar_case1c/*.jpg")
 
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 

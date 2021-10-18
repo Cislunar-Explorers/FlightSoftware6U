@@ -74,6 +74,6 @@ def test_flight_arg_types():
 
 
 if __name__ == '__main__':
-    testFlightCommands()
-    testFlightCodecs()
-    testFlightArgTypes()
+    test_flight_commands()
+    test_flight_codecs()
+    test_flight_arg_types()

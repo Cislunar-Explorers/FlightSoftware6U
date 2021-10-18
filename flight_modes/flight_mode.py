@@ -436,12 +436,6 @@ class LowBatterySafetyMode(FlightMode):
 
         return NO_FM_CHANGE
 
-    def __enter__(self):
-        super().__enter__()
-        self._parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
-        self._parent.gom.pc.set_GPIO_low()
-        return self
-
 
 class ManeuverMode(PauseBackgroundMode):
     flight_mode_id = FMEnum.Maneuver.value
@@ -719,6 +713,7 @@ class NormalMode(FlightMode):
                 **telem)
 
             self._parent.downlink_queue.put(downlink)
+            self._parent.last_telem_downlink = time()
 
         # if we have data to downlink, change to comms mode
         if not (self._parent.downlink_queue.empty()):

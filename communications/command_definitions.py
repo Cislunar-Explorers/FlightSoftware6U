@@ -137,7 +137,7 @@ class CommandDefinitions:
         self.test_commands = {
             TestCommandEnum.ADCTest.value: self.adc_test,
             TestCommandEnum.SeparationTest.value: self.separation_test,
-            7: self.comms_driver_test,
+            TestCommandEnum.CommsDriver.value: self.comms_driver_test,
             TestCommandEnum.LongString.value: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
             TestCommandEnum.RTCTest.value: self.rtc_test
@@ -341,20 +341,6 @@ class CommandDefinitions:
         ignore = kwargs[IGNORE]
         params.IGNORE_LOW_BATTERY = ignore
 
-    # def burn(self, **kwargs):
-    #     time_burn = kwargs['time']
-    #     absolute = kwargs['absolute']
-    #
-    #     if absolute:  # i.e. if we want to burn at a specific absolute time
-    #         delay = time_burn - datetime.now()
-    #     else:  # if we want to burn exactly x seconds from receiving the command
-    #         delay = time
-    #
-    #     if delay < 0:
-    #         self.parent.logger.error("Burn delay calculated from time was negative. Aborting burn")
-    #     else:
-    #         self.parent.gom.glowplug(params.GLOWPLUG_DURATION, delay=delay)
-
     def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
         self._parent.logger.info("Scheduling a maneuver at: " + str(float(time_burn)))
@@ -366,7 +352,8 @@ class CommandDefinitions:
 
     @staticmethod
     def reboot_pi():
-        os.system("reboot")
+        # TODO: make rebooting less janky
+        os.system("sudo reboot")
         # add something here that adds to the restarts db that this restart was commanded
 
     def cease_comms(self, **kwargs):

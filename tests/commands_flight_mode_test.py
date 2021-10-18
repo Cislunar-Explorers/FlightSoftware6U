@@ -38,7 +38,8 @@ def testFlightCommands():
 
 
 def testFlightCodecs():
-    """"""
+    """Verifies that the command codecs (which define how arguments get packed into bits) are consistent between the
+    enums in constants.py and the command_codecs attribute of each flight mode """
     flight_mode_objs = list(FLIGHT_MODE_DICT.values())
     fm_enums_zipped = list(zip(flight_mode_objs, command_enums))
     # print(fm_enums_zipped)
@@ -60,6 +61,9 @@ def testFlightCodecs():
 
 
 def testFlightArgTypes():
+    """Verifies that all command arguments defined in each flight mode's command_arg_types attribute are unique among
+    all flight modes."""
+
     flight_mode_objs = list(FLIGHT_MODE_DICT.values())
     all_command_arg_types = []
     for fm_obj in flight_mode_objs:

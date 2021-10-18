@@ -10,7 +10,7 @@ command_enums = [BootCommandEnum, RestartCommandEnum, NormalCommandEnum, LowBatt
                  CommsCommandEnum, CommandCommandEnum]
 
 
-def testFlightCommands():
+def test_flight_commands():
     """Compares the command IDs that are defined in the flight mode's command lists with those that are defined in
     the enums in constants.py"""
     cd = CommandDefinitions(MainSatelliteThread())
@@ -37,7 +37,7 @@ def testFlightCommands():
         raise AssertionError(error_msg)
 
 
-def testFlightCodecs():
+def test_flight_codecs():
     """Verifies that the command codecs (which define how arguments get packed into bits) are consistent between the
     enums in constants.py and the command_codecs attribute of each flight mode """
     flight_mode_objs = list(FLIGHT_MODE_DICT.values())
@@ -60,7 +60,7 @@ def testFlightCodecs():
         raise AssertionError(error_msg)
 
 
-def testFlightArgTypes():
+def test_flight_arg_types():
     """Verifies that all command arguments defined in each flight mode's command_arg_types attribute are unique among
     all flight modes."""
 

@@ -346,7 +346,14 @@ class Telemetry(SynchronousSensor):
             constants.MAGZ: bz,
             constants.GYRO_TEMP: self.gyr.tmp,
             constants.THERMOCOUPLE_TEMP: self.thm.tmp,
-            constants.PROP_TANK_PRESSURE: self.prs.pressure
+            constants.PROP_TANK_PRESSURE: self.prs.pressure,
+            constants.POSITION_X: 0,
+            constants.POSITION_Y: 1,
+            constants.POSITION_Z: 2,
+            constants.ATT_1: 3,
+            constants.ATT_2: 4,
+            constants.ATT_3: 5,
+            constants.ATT_4: 6,
         }
 
     def write_telem(self):

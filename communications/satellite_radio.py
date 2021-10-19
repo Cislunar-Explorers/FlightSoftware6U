@@ -14,8 +14,7 @@ from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 from bitstring import BitArray
 
-from datetime import datetime
-
+from time import time
 
 class Radio:
 
@@ -23,8 +22,7 @@ class Radio:
 
         self.driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
         self.mgr = Manager(self.driver)
-        self.last_transmit_time = datetime.today()
-        self.last_telemetry_time = datetime.today()
+        self.last_transmit_time = time()
 
     # Monitor radio health, request reset if faulted
     def monitorHealth(self):
@@ -72,7 +70,7 @@ class Radio:
         self.mgr.rx_enabled = False
         self.mgr.dispatch()
 
-        self.last_transmit_time = datetime.today()
+        self.last_transmit_time = time()
 
     def bit_inflation(self, downlink: bytes, zero_word: bytes, one_word: bytes) -> bytearray:
 

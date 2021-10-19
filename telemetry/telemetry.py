@@ -352,6 +352,6 @@ class Telemetry(SynchronousSensor):
             self.session.close()
 
     def query_telem(self):
-        # FIXME
+        # TODO
         # querys telemetry from database
         raise NotImplementedError

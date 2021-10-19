@@ -84,7 +84,8 @@ class FlightMode:
         if (not self._parent.reorientation_queue.empty()) or self._parent.reorientation_list:
             return FMEnum.AttitudeAdjustment.value
 
-        # go to comms mode if there is something in the comms queue
+        # go to comms mode if there is something in the comms queue to downlink
+
         if not self._parent.downlink_queue.empty():
             return FMEnum.CommsMode.value
 
@@ -420,7 +421,7 @@ class LowBatterySafetyMode(FlightMode):
             return FMEnum.Normal.value
 
         time_for_opnav = (time() - self._parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
-        time_for_telem = (time() - self._parent.last_telem_downlink) // 60 < params.LB_TLM_INTERVAL
+        time_for_telem = (time() - self._parent.radio.last_transmit_time) // 60 < params.LB_TLM_INTERVAL
 
         if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._parent.FMQueue:
             self._parent.FMQueue.put(FMEnum.OpNav.value)
@@ -432,7 +433,6 @@ class LowBatterySafetyMode(FlightMode):
                                                                    LowBatterySafetyCommandEnum.CritTelem.value,
                                                                    **telem)
             self._parent.downlink_queue.put(downlink)
-            self._parent.last_telem_downlink = time()
 
         return NO_FM_CHANGE
 
@@ -678,9 +678,9 @@ class NormalMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self._parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
-        time_for_telem = (time() - self._parent.last_telem_downlink) // 60 < params.TELEM_INTERVAL
-        need_to_electrolyze = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        time_for_opnav: bool = (time() - self._parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
+        time_for_telem: bool = (time() - self._parent.radio.last_transmit_time) // 60 < params.TELEM_INTERVAL
+        need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self._parent.telemetry.gom.is_electrolyzing
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
@@ -704,7 +704,7 @@ class NormalMode(FlightMode):
 
         if time_for_opnav:
             logger.info("Time to run Opnav")
-            return FMEnum.OpNav.value
+            self._parent.FMQueue.put(FMEnum.OpNav.value)
 
         if time_for_telem:
             telem = self._parent.telemetry.standard_packet_dict()
@@ -713,11 +713,6 @@ class NormalMode(FlightMode):
                 **telem)
 
             self._parent.downlink_queue.put(downlink)
-            self._parent.last_telem_downlink = time()
-
-        # if we have data to downlink, change to comms mode
-        if not (self._parent.downlink_queue.empty()):
-            return FMEnum.CommsMode.value
 
         return NO_FM_CHANGE
 

@@ -62,7 +62,6 @@ TIME = "time"
 
 HARD_SET = "hard_set"
 
-
 FILE_PATH = "file_path"
 BLOCK_NUMBER = "block_number"
 BLOCK_TEXT = "block_text"
@@ -108,7 +107,7 @@ HK_TEMP_3 = "hk_temp_3"
 HK_TEMP_4 = "hk_temp_4"
 GYRO_TEMP = "gyro_temp"
 
-THERMOCOUPLER_TEMP = "thermo_temp"
+THERMOCOUPLE_TEMP = "thermo_temp"
 
 CURRENT_IN_1 = "curin_1"
 CURRENT_IN_2 = "curin_2"
@@ -119,7 +118,48 @@ VBOOST_2 = "vboost_2"
 VBOOST_3 = "vboost_3"
 
 SYSTEM_CURRENT = "cursys"
+CURSUN = "sun_current"
 BATTERY_VOLTAGE = "vbatt"
+RESERVED1 = 'reserved1'
+CUROUT1 = "curout1"
+CUROUT2 = "curout2"
+CUROUT3 = "curout3"
+CUROUT4 = "curout4"
+CUROUT5 = "curout5"
+CUROUT6 = "curout6"
+OUTPUTS = 'outputs'
+LATCHUPS1 = "latchup1"
+LATCHUPS2 = "latchup2"
+LATCHUPS3 = "latchup3"
+LATCHUPS4 = "latchup4"
+LATCHUPS5 = "latchup5"
+LATCHUPS6 = "latchup6"
+WDT_TIME_LEFT_I2C = "wdt_time_i2c"
+WDT_TIME_LEFT_GND = "wdt_time_gnd"
+GOM_BOOTS = "gom_boots"
+WDT_COUNTS_I2C = "wdt_counts_i2c"
+WDT_COUNTS_GND = "wdt_counts_gnd"
+GOM_BOOTCAUSE = 'bootcause'
+GOM_BATTMODE = 'battmode'
+GOM_PPT_MODE = 'ppt_mode'
+RESERVED2 = 'reserved2'
+
+RPI_CPU = "rpi_cpu"
+RPI_RAM = "rpi_ram"
+RPI_DSK = "rpi_disk"
+RPI_TEMP = "rpi_temp"
+RPI_BOOT = 'rpi_boot'
+RPI_UPTIME = 'rpi_uptime'
+
+GYROX = "gyro_x"
+GYROY = "gyro_y"
+GYROZ = "gyro_z"
+MAGX = "mag_x"
+MAGY = "mag_y"
+MAGZ = "mag_z"
+ACCX = "acc_x"
+ACCY = "acc_y"
+ACCZ = "acc_z"
 
 PROP_TANK_PRESSURE = "prs_pressure"
 

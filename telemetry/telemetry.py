@@ -1,16 +1,38 @@
-from time import time, sleep
 from os import popen
-import psutil
-from uptime import uptime
-from telemetry.sensor import SynchronousSensor
+from time import time, sleep
+from typing import NamedTuple
+from typing import Tuple
+
 import numpy as np
+import psutil
+from adafruit_blinka.agnostic import board_id
+from uptime import uptime
+
+import utils.constants as constants
 from drivers.power.power_structs import eps_hk_t, hkparam_t
-from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
+from telemetry.sensor import SynchronousSensor
+from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
-from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
-from typing import Tuple
-from adafruit_blinka.agnostic import board_id
+from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
+
+
+class ImuResult(NamedTuple):
+    # TODO
+    # gyro values (degrees/second)
+    gyrox: float
+    gyroy: float
+    gyroz: float
+
+    # magnetometer values (microTesla?)
+    magx: float
+    magy: float
+    magz: float
+
+    # accelerometer values (m/s^2)
+    accx: float
+    accy: float
+    accz: float
 
 
 def moving_average(x, w):
@@ -36,9 +58,9 @@ class GomSensor(SynchronousSensor):
 class GyroSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.rot: Tuple[float, float, float] = (float(), float(), float())  # rad/s
-        self.mag: Tuple[float, float, float] = (float(), float(), float())  # microTesla
-        self.acc: Tuple[float, float, float] = (float(), float(), float())  # m/s^2
+        self.rot: Tuple[float, float, float] = tuple()  # rad/s
+        self.mag: Tuple[float, float, float] = tuple()  # microTesla
+        self.acc: Tuple[float, float, float] = tuple()  # m/s^2
         self.tmp: int = int()  # deg C
 
     def poll(self):
@@ -48,6 +70,8 @@ class GyroSensor(SynchronousSensor):
             self.mag = self._parent.gyro.get_mag()
             self.acc = self._parent.gyro.get_acceleration()
             self.tmp = self._parent.gyro.get_temp()
+
+        self.result = ImuResult(*self.rot, *self.mag, *self.acc)
 
     def poll_smoothed(self, freq=10, duration=1, samples=10):
         # poll and smooth gyro data
@@ -257,6 +281,73 @@ class Telemetry(SynchronousSensor):
                 'cursys': self.gom.hk.cursys,  # ushort
                 'vbatt': self.gom.hk.vbatt,  # ushort
                 'prs_pressure': self.prs.pressure}
+
+    def detailed_packet_dict(self):
+        """Returns a dictionary of every possible data point we'd want to downlink. The implementation of this is
+        barbaric at best, but works. Something like a NamedTuple would work fantastic here, but would require
+        overhaul of quite a bit of FSW"""
+
+        gx, gy, gz = self.gyr.get_rot()  # rot
+        ax, ay, az = self.gyr.get_acc()  # acc
+        bx, by, bz = self.gyr.get_mag()  # mag
+        return {
+            constants.TIME: self.poll_time,
+            constants.VBOOST_1: self.gom.hk.vboost[0],
+            constants.VBOOST_2: self.gom.hk.vboost[1],
+            constants.VBOOST_3: self.gom.hk.vboost[2],
+            constants.BATTERY_VOLTAGE: self.gom.hk.vbatt,
+            constants.CURRENT_IN_1: self.gom.hk.curin[0],
+            constants.CURRENT_IN_2: self.gom.hk.curin[1],
+            constants.CURRENT_IN_3: self.gom.hk.curin[2],
+            constants.CURSUN: self.gom.hk.cursun,
+            constants.SYSTEM_CURRENT: self.gom.hk.cursys,
+            constants.RESERVED1: self.gom.hk.reserved1,
+            constants.CUROUT1: self.gom.hk.curout[0],
+            constants.CUROUT2: self.gom.hk.curout[1],
+            constants.CUROUT3: self.gom.hk.curout[2],
+            constants.CUROUT4: self.gom.hk.curout[3],
+            constants.CUROUT5: self.gom.hk.curout[4],
+            constants.CUROUT6: self.gom.hk.curout[5],
+            constants.OUTPUTS: int(str(eps_hk_t.output).replace(',', '').replace(' ', '')[1:-1], 2),
+            constants.LATCHUPS1: self.gom.hk.latchup[0],
+            constants.LATCHUPS2: self.gom.hk.latchup[1],
+            constants.LATCHUPS3: self.gom.hk.latchup[2],
+            constants.LATCHUPS4: self.gom.hk.latchup[3],
+            constants.LATCHUPS5: self.gom.hk.latchup[4],
+            constants.LATCHUPS6: self.gom.hk.latchup[5],
+            constants.WDT_TIME_LEFT_I2C: self.gom.hk.wdt_i2c_time_left,
+            constants.WDT_TIME_LEFT_GND: self.gom.hk.wdt_gnd_time_left,
+            constants.WDT_COUNTS_I2C: self.gom.hk.counter_wdt_i2c,
+            constants.WDT_COUNTS_GND: self.gom.hk.counter_wdt_gnd,
+            constants.GOM_BOOTS: self.gom.hk.counter_boot,
+            constants.GOM_BOOTCAUSE: self.gom.hk.bootcause,
+            constants.GOM_BATTMODE: self.gom.hk.battmodeColumn,
+            constants.HK_TEMP_1: self.gom.hk.temp[0],
+            constants.HK_TEMP_2: self.gom.hk.temp[1],
+            constants.HK_TEMP_3: self.gom.hk.temp[2],
+            constants.HK_TEMP_4: self.gom.hk.temp[3],
+            constants.GOM_PPT_MODE: self.gom.hk.pptmode,
+            constants.RESERVED2: self.gom.hk.reserved2,
+            constants.RTC_TIME: self.rtc.rtc_time,
+            constants.RPI_CPU: self.rpi.cpu,
+            constants.RPI_RAM: self.rpi.ram,
+            constants.RPI_DSK: self.rpi.disk,
+            constants.RPI_TEMP: self.rpi.tmp,
+            constants.RPI_BOOT: self.rpi.boot_time,
+            constants.RPI_UPTIME: self.rpi.up_time,
+            constants.GYROX: gx,
+            constants.GYROY: gy,
+            constants.GYROZ: gz,
+            constants.ACCX: ax,
+            constants.ACCY: ay,
+            constants.ACCZ: az,
+            constants.MAGX: bx,
+            constants.MAGY: by,
+            constants.MAGZ: bz,
+            constants.GYRO_TEMP: self.gyr.tmp,
+            constants.THERMOCOUPLE_TEMP: self.thm.tmp,
+            constants.PROP_TANK_PRESSURE: self.prs.pressure
+        }
 
     def write_telem(self):
         try:

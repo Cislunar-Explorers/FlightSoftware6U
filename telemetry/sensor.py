@@ -27,6 +27,7 @@ class SynchronousSensor:
         #  i.e. __init__(self, sensor: GyroSensor); self.sensor = sensor
         self._parent = parent
         self.poll_time = -1.0
+        # self.result = None
 
     # poll should poll the sensor and update all of the sensors fields
     def poll(self):

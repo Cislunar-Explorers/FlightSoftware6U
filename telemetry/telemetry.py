@@ -71,7 +71,7 @@ class GyroSensor(SynchronousSensor):
             self.acc = self._parent.gyro.get_acceleration()
             self.tmp = self._parent.gyro.get_temp()
 
-        self.result = ImuResult(*self.rot, *self.mag, *self.acc)
+        # self.result = ImuResult(*self.rot, *self.mag, *self.acc)
 
     def poll_smoothed(self, freq=10, duration=1, samples=10):
         # poll and smooth gyro data

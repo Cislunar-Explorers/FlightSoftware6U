@@ -312,7 +312,7 @@ class MainSatelliteThread(Thread):
                 self.run_mode()
 
                 #________________send data udp  _______________________#
-                self.client.send_data(self.telemetry.standard_packet_dict())
+                self.client.send_data(self.telemetry.detailed_packet_dict())
                 
         except Exception as e:
             log_error(e, exc_info=1)

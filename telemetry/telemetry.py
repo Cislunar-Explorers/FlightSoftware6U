@@ -1,7 +1,7 @@
 from os import popen
 from time import time, sleep
 from typing import NamedTuple
-from typing import Tuple
+from typing import Tuple, Dict, Union
 
 import numpy as np
 import psutil
@@ -18,7 +18,7 @@ from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroE
 
 
 class ImuResult(NamedTuple):
-    # TODO
+    # TODO: find better implementation of data storage than dicts
     # gyro values (degrees/second)
     gyrox: float
     gyroy: float
@@ -282,7 +282,7 @@ class Telemetry(SynchronousSensor):
                 'vbatt': self.gom.hk.vbatt,  # ushort
                 'prs_pressure': self.prs.pressure}
 
-    def detailed_packet_dict(self):
+    def detailed_packet_dict(self) -> Dict[str, Union[int, float]]:
         """Returns a dictionary of every possible data point we'd want to downlink. The implementation of this is
         barbaric at best, but works. Something like a NamedTuple would work fantastic here, but would require
         overhaul of quite a bit of FSW"""

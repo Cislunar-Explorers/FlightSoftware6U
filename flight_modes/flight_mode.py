@@ -542,7 +542,7 @@ class NormalMode(FlightMode):
 
     downlink_codecs = {
         NormalCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
-                                              HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLER_TEMP,
+                                              HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLE_TEMP,
                                               CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
                                               VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
                                               PROP_TANK_PRESSURE], 84),
@@ -566,7 +566,7 @@ class NormalMode(FlightMode):
         HK_TEMP_3: 'short',
         HK_TEMP_4: 'short',
         GYRO_TEMP: 'float',
-        THERMOCOUPLER_TEMP: 'float',
+        THERMOCOUPLE_TEMP: 'float',
         CURRENT_IN_1: 'short',
         CURRENT_IN_2: 'short',
         CURRENT_IN_3: 'short',

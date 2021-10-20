@@ -142,7 +142,7 @@ WDT_COUNTS_I2C = "wdt_counts_i2c"  # number of I2C watchdog boots
 WDT_COUNTS_GND = "wdt_counts_gnd"  # number of dedicated watchdog boots
 GOM_BOOTCAUSE = 'bootcause'  # number of gomspace reboots
 GOM_BATTMODE = 'battmode'  # state machine of the gom. See the manual for more info
-GOM_PPT_MODE = 'ppt_mode'  # power point tracking mode of the solar converters. Either 1: fixed voltage or 2: MPPT
+GOM_PPT_MODE = 'ppt_mode'  # power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
 RESERVED2 = 'reserved2'  # unknown
 
 RPI_CPU = "rpi_cpu"  # percent utilization of the RPi CPU

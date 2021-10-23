@@ -213,8 +213,8 @@ def remap_roi(img, src, cam, rot):
 def bufferedRoi(x, y, w, h, wTot, hTot, b):
     xl = max(x - b, 0)
     xr = min(x + w + b, wTot)
-    yl = max(y - b, 0)
-    yr = min(y + h + b, hTot)
+    yl = max(y - b, 0) # Should be yup (or ymin)
+    yr = min(y + h + b, hTot) # Should be ydown (ymax)
     return (xl, yl, xr - xl, yr - yl)
 
 

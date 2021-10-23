@@ -76,9 +76,6 @@ def detect_circles(og, img):
     else:
       og_sml = og.copy()
       sml = img.copy()
-    
-    plt.imshow(sml)
-    plt.show()
 
     output = og_sml.copy()
 
@@ -92,7 +89,7 @@ def detect_circles(og, img):
         circles = np.round(circles[0, :]).astype("int")
         for (x, y, r) in circles:
             print("(%s, %s), radius = %s" % (x, y, r))
-            cv2.circle(output, (x, y), r, (0, 255, 0), 4)
-            cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
-        plt.imshow(output)
-        plt.show()
+            # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+            # cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+        # plt.imshow(output)
+        # plt.show()

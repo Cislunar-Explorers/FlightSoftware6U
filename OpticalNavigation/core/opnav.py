@@ -26,6 +26,7 @@ import shutil
 import os
 from astropy.time import Time  
 from astropy.coordinates import get_sun,get_moon,CartesianRepresentation
+import sys
 
 #from picamera import PiCamera
 
@@ -525,7 +526,7 @@ def __process_propagation(session:session.Session, gyro_vars:GyroVars, camera_pa
         NO_TRAJECTORY_ENTRY_FOUND: Trajectory db is empty
         NO_ATTITUDE_ENTRY_FOUND: Attitude db is empty
         NO_CAMMEAS_ENTRY_FOUND: Camera measurements db is empty
-        NO_GYROMEAS_ENTRY_FOUND: Gyro measurements db is empty
+        ONE_OR_LESS_GYROMEAS_ENTRY_FOUND: Gyro measurements db is less than one
         NO_EPHEMERIS_ENTRY_FOUND: Ephemeris db is empty
         OPNAV_EXIT_STATUS.FAILURE: TODO
         OPNAV_EXIT_STATUS.SUCCESS: otherwise

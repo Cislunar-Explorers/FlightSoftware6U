@@ -1,7 +1,6 @@
 from time import sleep, time
 
 from .flight_mode import PauseBackgroundMode
-from drivers.ADCDriver import ADC
 from utils.constants import FMEnum, NO_FM_CHANGE, GLOWPLUG_DURATION, NormalCommandEnum
 from utils.log import get_log
 from utils.parameter_utils import set_parameter
@@ -76,7 +75,7 @@ class ManeuverMode(PauseBackgroundMode):
                     if self.glowplug_index == len(self.glowplugs) - 1:
                         # TODO log?? failure of all glow plugs... do a final check?
                         return
-                    self.glow_plug_index += 1
+                    self.glowplug_index += 1
 
         # prepare next maneuver
         smallest_time_burn = None

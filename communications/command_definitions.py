@@ -341,8 +341,10 @@ class CommandDefinitions:
     def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
         self._parent.logger.info("Scheduling a maneuver at: " + str(float(time_burn)))
-        self.set_parameter(name="SCHEDULED_BURN_TIME", value=float(time_burn), hard_set=True)
-        self._parent.maneuver_queue.put(FMEnum.Maneuver.value)
+        # TODO save to disk as well
+        self._parent.maneuver_queue.put(float(time_burn))
+        smallest_time_burn = self._parent.maneuver_queue.get()
+        self.set_parameter(name="SCHEDULED_BURN_TIME", value=smallest_time_burn, hard_set=True)
 
     def return_to_normal(self):
         self._parent.replace_flight_mode_by_id(FMEnum.Normal.value)

@@ -2,7 +2,6 @@ from flight_modes.flight_mode import (
     NormalMode,
     LowBatterySafetyMode,
     SafeMode,
-    ManeuverMode,
     SensorMode,
     TestMode,
     CommsMode,
@@ -11,6 +10,7 @@ from flight_modes.flight_mode import (
 )
 
 from flight_modes.restart_reboot import RestartMode, BootUpMode
+from flight_modes.maneuver_flightmode import ManeuverMode
 from flight_modes.attitude_adjustment import AAMode
 from utils.constants import FMEnum
 from utils.exceptions import UnknownFlightModeException

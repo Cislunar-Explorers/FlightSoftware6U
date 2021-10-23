@@ -86,6 +86,7 @@ class FlightMode:
             if params.SCHEDULED_BURN_TIME > time():
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
                     return FMEnum.Maneuver.value
+            # else: log??
 
         # go to reorientation mode if there is something in the reorientation queue
         if (not self._parent.reorientation_queue.empty()) or self._parent.reorientation_list:
@@ -367,31 +368,6 @@ class LowBatterySafetyMode(FlightMode):
         super().__enter__()
         self._parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
         self._parent.gom.pc.set_GPIO_low()
-
-
-class ManeuverMode(PauseBackgroundMode):
-    flight_mode_id = FMEnum.Maneuver.value
-    command_codecs = {}
-    command_arg_unpackers = {}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def update_state(self) -> int:
-        if self.task_completed is True:
-            logger.info("Maneuver complete. Exiting maneuver mode...")
-            return FMEnum.Normal.value
-        return NO_FM_CHANGE
-
-    def run_mode(self):
-        # sleeping for 5 fewer seconds than the delay for safety
-        # TODO: clear value of params.SCHEDULE_BURN_TIME after completion of burn
-        sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
-        logger.info("Glowplug maneuver...")
-        # TODO: poll and check accelerometer values. If not acceleration seen, try other glowplug
-        self._parent.gom.glowplug(GLOWPLUG_DURATION)
-        self._parent.maneuver_queue.get()
-        self.task_completed = True
 
 
 # TODO

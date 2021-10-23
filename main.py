@@ -3,11 +3,12 @@ from threading import Thread
 from multiprocessing import Process
 from time import time
 from datetime import datetime
-from queue import Queue
+from queue import Queue, PriorityQueue
 import signal
 from typing import Optional
 from utils.log import get_log, log_error
 from time import sleep
+import os
 
 from utils.constants import *
 import utils.parameters as params
@@ -54,7 +55,7 @@ class MainSatelliteThread(Thread):
         self.burn_queue = Queue()
         self.reorientation_queue = Queue()
         self.reorientation_list = []
-        self.maneuver_queue = Queue()  # maneuver queue
+        self.maneuver_queue = PriorityQueue()
         self.opnav_queue = Queue()  # determine state of opnav success
         # self.init_comms()
         logger.info("Initializing commands and downlinks")
@@ -94,10 +95,10 @@ class MainSatelliteThread(Thread):
         logger.info("Initializing Telemetry")
         self.telemetry = Telemetry(self)
 
-        #_____________need the ground station pi IP address + server port for the socket ______
+        # _____________need the ground station pi IP address + server port for the socket ______
         logger.info("opening UDP client socket")
         self.client = Client("192.168.0.101", 3333)
-        
+
         logger.info("Done intializing")
 
     def init_comms(self):
@@ -273,7 +274,7 @@ class MainSatelliteThread(Thread):
     # Execute received commands
     def execute_commands(self):
         assert (
-                len(self.commands_to_execute) == 0
+            len(self.commands_to_execute) == 0
         ), "Didn't finish executing previous commands"
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
@@ -313,7 +314,7 @@ class MainSatelliteThread(Thread):
 
                 #________________send data udp  _______________________#
                 self.client.send_data(self.telemetry.detailed_packet_dict())
-                
+
         except Exception as e:
             log_error(e, exc_info=1)
             logger.error("Error in main loop. Transitioning to SAFE mode")

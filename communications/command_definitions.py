@@ -109,6 +109,7 @@ class CommandDefinitions:
             NormalCommandEnum.SudoCommand.value: self.sudo_command,
             NormalCommandEnum.Picberry.value: self.picberry,
             NormalCommandEnum.ExecPyFile.value: self.exec_py_file,
+            NormalCommandEnum.IgnoreLowBatt.value: self.ignore_low_battery,
         }
 
         self.low_battery_commands = {
@@ -134,12 +135,9 @@ class CommandDefinitions:
         self.sensor_commands = {}
 
         self.test_commands = {
-            2: self.split,
-            3: self.run_opnav,
             TestCommandEnum.ADCTest.value: self.adc_test,
             TestCommandEnum.SeparationTest.value: self.separation_test,
-            6: self.gom_outputs,
-            7: self.comms_driver_test,
+            TestCommandEnum.CommsDriver.value: self.comms_driver_test,
             TestCommandEnum.LongString.value: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
             TestCommandEnum.RTCTest.value: self.rtc_test
@@ -164,6 +162,8 @@ class CommandDefinitions:
             CommandCommandEnum.ShellCommand.value: self.shell_command
         }
 
+        self.attitude_commands = {}
+
         self.COMMAND_DICT = {
             FMEnum.Boot.value: self.bootup_commands,
             FMEnum.Restart.value: self.restart_commands,
@@ -175,7 +175,8 @@ class CommandDefinitions:
             FMEnum.SensorMode.value: self.sensor_commands,
             FMEnum.TestMode.value: self.test_commands,
             FMEnum.CommsMode: self.comms_commands,
-            FMEnum.Command.value: self.command_commands
+            FMEnum.Command.value: self.command_commands,
+            FMEnum.AttitudeAdjustment.value: self.attitude_commands
         }
 
         for value in self.COMMAND_DICT.values():
@@ -273,13 +274,9 @@ class CommandDefinitions:
     def set_exit_lowbatt_threshold(self, **kwargs):
         """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
         requires one kwarg and does some basic sanity checks on the passed value"""
-        value = kwargs['value']
+        value = kwargs['vbatt']
         try:
-            assert 0 < value < 1.0 and float(value) is float
-            if value >= params.ENTER_LOW_BATTERY_MODE_THRESHOLD:
-                self._parent.logger.error(
-                    f"New value for Exit LB thresh must be less than current Enter LB thresh value")
-                assert False
+            assert 6000 < value < 8400 and float(value) is float
             self.set_parameter(name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
         except AssertionError:
             self._parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
@@ -290,7 +287,7 @@ class CommandDefinitions:
         value = kwargs[INTERVAL]
         try:
             assert value > 1
-            self.set_parameter(name="OPNAV_INTERVAL", value=value, hard_set=True)
+            self.set_parameter(name="OPNAV_INTERVAL", value=value, hard_set=False)
         except AssertionError:
             self._parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
 
@@ -336,7 +333,13 @@ class CommandDefinitions:
         state = kwargs[STATE]
         delay = kwargs.get(DELAY, 0)
         assert type(state) is bool
-        self._parent.gom.set_electrolysis(state, delay=delay)
+        params.WANT_TO_ELECTROLYZE = state
+        # self._parent.gom.set_electrolysis(state, delay=delay)
+
+    def ignore_low_battery(self, **kwargs):
+        """This is obviously a very dangerous command. It's mainly meant for testing on the ground"""
+        ignore = kwargs[IGNORE]
+        params.IGNORE_LOW_BATTERY = ignore
 
     def schedule_maneuver(self, **kwargs):
         time_burn = kwargs['time']
@@ -349,14 +352,17 @@ class CommandDefinitions:
 
     @staticmethod
     def reboot_pi():
-        os.system("reboot")
+        # TODO: make rebooting less janky
+        os.system("sudo reboot")
         # add something here that adds to the restarts db that this restart was commanded
 
-    def cease_comms(self):
-        # I'm actually unsure of how to do this. Maybe do something with the GPIO pins so that the pi can't transmit
-        self._parent.logger.critical("Ceasing all communications")
-        # definitely should implement some sort of password and double verification to prevent accidental triggering
-        raise NotImplementedError
+    def cease_comms(self, **kwargs):
+        pword = kwargs[PASSWORD]
+        if pword == 123:  # TODO, change
+            # I'm actually unsure of how to do this. Maybe do something with the GPIO pins so that the pi can't transmit
+            self._parent.logger.critical("Ceasing all communications")
+            # definitely should implement some sort of password and double verification to prevent accidental triggering
+            raise NotImplementedError
 
     def set_system_clock(self, **kwargs):  # Needs validation (talk to Viraj)
         # need to validate this works, and need to integrate updating RTC
@@ -467,11 +473,11 @@ class CommandDefinitions:
 
         self._parent.file_block_bank[block_number] = block_text
 
-        # Downlink acknowledgment with block number
-        acknowledgement = self._parent.downlink_handler.pack_downlink(
-            self._parent.downlink_counter, FMEnum.Command.value,
-            CommandCommandEnum.AddFileBlock.value, successful=True,
-            block_number=block_number)
+        # TODO: Downlink acknowledgment with block number, or downlink block numbers on request
+        # acknowledgement = self._parent.downlink_handler.pack_downlink(
+        #    self._parent.downlink_counter, FMEnum.Command.value,
+        #    CommandCommandEnum.AddFileBlock.value, successful=True,
+        #    block_number=block_number)
         # self._parent.downlink_queue.put(acknowledgement)
 
     def get_file_blocks_info(self, **kwargs):

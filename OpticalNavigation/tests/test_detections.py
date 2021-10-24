@@ -46,17 +46,42 @@ class Detections(unittest.TestCase):
                 sunDetect.append(tokens[4])
                 
         # Binarizes detections and pairs them this their corresponding filename                
-        earthDetect = list(zip(filenames[1:], [0 if i == '' else 1 for i in earthDetect[1:]]))
-        #print(earthDetect)
-
+        earthDetect = dict(list(zip(filenames[1:], [0 if i == '' else 1 for i in earthDetect[1:]])))
+        moonDetect = dict(list(zip(filenames[1:], [0 if i == '' else 1 for i in moonDetect[1:]])))
+        sunDetect = dict(list(zip(filenames[1:], [0 if i == '' else 1 for i in sunDetect[1:]])))
+        
         frames = glob.glob("/home/stephen/Desktop/surrender_images/cislunar_case1c/*.jpg")
+        
         earthExp, moonExp, sunExp = self.get_detections(frames)
-        earthDetectExp = [0 if np.isnan(i[0]) else 1 for i in earthExp]
-        print(earthDetectExp)
         frames = [os.path.basename(path) for path in frames]
-        earthDetectExp = list(zip(frames, earthDetectExp))
-        print(earthDetectExp)
 
+        earthDetectExp = [0 if np.isnan(i[0]) else 1 for i in earthExp]
+        earthDetectExp = dict(list(zip(frames, earthDetectExp)))
+        
+        moonDetectExp = [0 if np.isnan(i[0]) else 1 for i in moonExp]
+        moonDetectExp = dict(list(zip(frames, moonDetectExp)))
+
+        sunDetectExp = [0 if np.isnan(i[0]) else 1 for i in sunExp]
+        sunDetectExp = dict(list(zip(frames, sunDetectExp)))
+
+
+        for i in earthDetect:
+            if earthDetect[i] == earthDetectExp[i]:
+                pass
+            else:
+                print(i)
+
+        for i in moonDetect:
+            if moonDetect[i] == moonDetectExp[i]:
+                pass
+            else:
+                print(i)
+
+        for i in sunDetect:
+            if sunDetect[i] == sunDetectExp[i]:
+                pass
+            else:
+                print(i)                
 
 if __name__ == '__main__':
     unittest.main()           

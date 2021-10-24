@@ -315,7 +315,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) is 0:
-        logger.info("[OPNAV]: No countours found")
+        #logger.info("[OPNAV]: No countours found")
         return result
 
     areas = [cv2.contourArea(c) for c in contours]
@@ -431,7 +431,13 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
-    find(args["image"])
+    
+    earthDetectionArray = np.zeros((1, 4), dtype=float)
+    moonDetectionArray = np.zeros((1, 4), dtype=float)
+    sunDetectionArray = np.zeros((1, 4), dtype=float)
+    imageDetectionCircles = find(args["image"])
+    print("Earth ", imageDetectionCircles.get_earth_detection(), " Moon ", imageDetectionCircles.get_moon_detection(),\
+         " Sun ", imageDetectionCircles.get_sun_detection())
 
 # Notes
 # * Need sanity check on contour size (not too large, not too small)

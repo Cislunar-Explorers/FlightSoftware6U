@@ -301,7 +301,7 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     recordings = []
     timeDeltaAvgs = [0, 0, 0]
     
-    """Acquisituion function: acquire(recordings, timeDeltaAvgs)"""
+    """Acquisition function: acquire(recordings, timeDeltaAvgs)"""
     '''
     for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
         select_camera(id = i)
@@ -348,13 +348,12 @@ def __observe(session: session.Session, gyro_count: int, camera_rec_params:Camer
     '''
 
     #####
-    # On Stephen's VM: /home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg
     # On HITL, path to images will be /home/pi/surrender_images/*.jpg
-    #frames = glob.glob("/home/stephen_z/PycharmProjects/FlightSoftware/OpticalNavigation/tests/surrender_images/*.jpg")
 
     # Overwrite frames to separate path
     #frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
-    frames = glob.glob("/Users/adam/Desktop/College/Fall2021/CislunarFA2021/cislunar_case1c/*.jpg")
+    #frames = glob.glob("/Users/adam/Desktop/College/Fall2021/CislunarFA2021/cislunar_case1c/*.jpg")
+    frames = glob.glob("/home/stephen/Desktop/surrender_images/cislunar_case1c/*.jpg")
 
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 

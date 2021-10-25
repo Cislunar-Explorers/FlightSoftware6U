@@ -158,18 +158,18 @@ class CommandDefinitions:
         self.attitude_commands = {}
 
         self.COMMAND_DICT = {
-            FMEnum.Boot: self.bootup_commands,
-            FMEnum.Restart: self.restart_commands,
-            FMEnum.Normal: self.normal_commands,
-            FMEnum.LowBatterySafety: self.low_battery_commands,
-            FMEnum.Safety: self.safety_commands,
-            FMEnum.OpNav: self.opnav_commands,
-            FMEnum.Maneuver: self.maneuver_commands,
-            FMEnum.SensorMode: self.sensor_commands,
-            FMEnum.TestMode: self.test_commands,
+            FMEnum.Boot.value: self.bootup_commands,
+            FMEnum.Restart.value: self.restart_commands,
+            FMEnum.Normal.value: self.normal_commands,
+            FMEnum.LowBatterySafety.value: self.low_battery_commands,
+            FMEnum.Safety.value: self.safety_commands,
+            FMEnum.OpNav.value: self.opnav_commands,
+            FMEnum.Maneuver.value: self.maneuver_commands,
+            FMEnum.SensorMode.value: self.sensor_commands,
+            FMEnum.TestMode.value: self.test_commands,
             FMEnum.CommsMode: self.comms_commands,
-            FMEnum.Command: self.command_commands,
-            FMEnum.AttitudeAdjustment: self.attitude_commands
+            FMEnum.Command.value: self.command_commands,
+            FMEnum.AttitudeAdjustment.value: self.attitude_commands
         }
 
         for value in self.COMMAND_DICT.values():

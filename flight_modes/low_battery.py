@@ -93,7 +93,7 @@ class LowBatterySafetyMode(FlightMode):
             telem = self._parent.telemetry.minimal_packet()
             downlink = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
                                                                    FMEnum.LowBatterySafety.value,
-                                                                   LowBatterySafetyCommandEnum.CritTelem.value,
+                                                                   NormalCommandEnum.CritTelem.value,
                                                                    **telem)
             self._parent.downlink_queue.put(downlink)
             logging.info("Added a minimal data packet to our downlink")

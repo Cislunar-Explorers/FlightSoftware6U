@@ -1,5 +1,5 @@
-from enum import IntEnum, unique
 import os
+from enum import IntEnum, unique
 
 # unit conversions
 
@@ -59,9 +59,12 @@ PULSE_DT = "pulse_dt"
 NUM_BLOCKS = "num_blocks"
 
 TIME = "time"
+SYS_TIME = 'sys_time'
 
 HARD_SET = "hard_set"
 
+GOM_PIN_STATE = 'gom_pin_state'
+GOM_PIN_DELAY = 'gom_pin_delay'
 
 FILE_PATH = "file_path"
 BLOCK_NUMBER = "block_number"
@@ -94,6 +97,9 @@ T_STOP = "t_stop"
 
 DECIMATION_FACTOR = "decimation_factor"
 
+INDEX = 'index'
+VBATT = 'vbatt'
+
 # Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
 
@@ -102,29 +108,71 @@ ATT_2 = "attitude_2"
 ATT_3 = "attitude_3"
 ATT_4 = "attitude_4"
 
-HK_TEMP_1 = "hk_temp_1"
+HK_TEMP_1 = "hk_temp_1"  # Gomspace temperatures, deg C
 HK_TEMP_2 = "hk_temp_2"
 HK_TEMP_3 = "hk_temp_3"
 HK_TEMP_4 = "hk_temp_4"
-GYRO_TEMP = "gyro_temp"
 
-THERMOCOUPLER_TEMP = "thermo_temp"
+GYRO_TEMP = "gyro_temp"  # temperature on the IMU, integer deg C
 
-CURRENT_IN_1 = "curin_1"
+THERMOCOUPLE_TEMP = "thermo_temp"
+
+CURRENT_IN_1 = "curin_1"  # current coming into the solar converters (mA)
 CURRENT_IN_2 = "curin_2"
 CURRENT_IN_3 = "curin_3"
 
-VBOOST_1 = "vboost_1"
+VBOOST_1 = "vboost_1"  # voltage of the solar converters (mV)
 VBOOST_2 = "vboost_2"
 VBOOST_3 = "vboost_3"
 
-SYSTEM_CURRENT = "cursys"
-BATTERY_VOLTAGE = "vbatt"
+SYSTEM_CURRENT = "cursys"  # current that being used by the whole system (mA)
+CURSUN = "sun_current"  # current coming into the system (mA)
+BATTERY_VOLTAGE = "vbatt"  # battery voltage (mV)
+RESERVED1 = 'reserved1'  # unknown
+CUROUT1 = "curout1"  # current flowing through the controllable output (mA)
+CUROUT2 = "curout2"
+CUROUT3 = "curout3"
+CUROUT4 = "curout4"
+CUROUT5 = "curout5"
+CUROUT6 = "curout6"
+OUTPUTS = 'outputs'  # bitmask of the state of the outputs
+LATCHUPS1 = "latchup1"  # number of latchup events on each controllable outputs
+LATCHUPS2 = "latchup2"
+LATCHUPS3 = "latchup3"
+LATCHUPS4 = "latchup4"
+LATCHUPS5 = "latchup5"
+LATCHUPS6 = "latchup6"
+WDT_TIME_LEFT_I2C = "wdt_time_i2c"  # seconds (?) left on the I2C watchdog timer
+WDT_TIME_LEFT_GND = "wdt_time_gnd"  # seconds (?) left on the dedicated watchdog timer
+GOM_BOOTS = "gom_boots"  # number of gomspace reboots
+WDT_COUNTS_I2C = "wdt_counts_i2c"  # number of I2C watchdog boots
+WDT_COUNTS_GND = "wdt_counts_gnd"  # number of dedicated watchdog boots
+GOM_BOOTCAUSE = 'bootcause'  # number of gomspace reboots
+GOM_BATTMODE = 'battmode'  # state machine of the gom. See the manual for more info
+GOM_PPT_MODE = 'ppt_mode'  # power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
+RESERVED2 = 'reserved2'  # unknown
+
+RPI_CPU = "rpi_cpu"  # percent utilization of the RPi CPU
+RPI_RAM = "rpi_ram"  # percent utilization of the RPi RAM
+RPI_DSK = "rpi_disk"  # percent utilization of the RPi's microSD card (Disk)
+RPI_TEMP = "rpi_temp"  # temperature on the RPi
+RPI_BOOT = 'rpi_boot'  # time at which the Pi booted (seconds: unix epoch time)
+RPI_UPTIME = 'rpi_uptime'  # how many seconds the pi has been up
 
 SUN_CURRENT = "cursun"
 BATT_MODE = "batt_mode"
 
-PROP_TANK_PRESSURE = "prs_pressure"
+GYROX = "gyro_x"  # gyro rates, degrees/s
+GYROY = "gyro_y"
+GYROZ = "gyro_z"
+MAGX = "mag_x"  # magnetometer readings, microTesla
+MAGY = "mag_y"
+MAGZ = "mag_z"
+ACCX = "acc_x"  # accelerometer readings, m/s^2
+ACCY = "acc_y"
+ACCZ = "acc_z"
+
+PROP_TANK_PRESSURE = "prs_pressure"  # pressure in the propellant tank
 
 SUCCESSFUL = "successful"
 
@@ -193,14 +241,18 @@ MAX_VOLTAGE = 'max_voltage'
 NORM_VOLTAGE = 'norm_voltage'
 SAFE_VOLTAGE = 'safe_voltage'
 CRIT_VOLTAGE = 'crit_voltage'
+OUTPUT_CHANNEL = 'output_channel'
 
 CMD = 'cmd'
 RETURN_CODE = 'return_code'
 
 FNAME = 'filename'
+IGNORE = 'ignore'
+PASSWORD = 'password'
 
 ZERO_WORD = b'\xcb\x51'
 ONE_WORD = b'\xdc\x2c'
+
 
 # GOMspace Channel designations:
 # TODO: re-evaluate and double check before flight for each satellite half
@@ -280,6 +332,8 @@ class NormalCommandEnum(IntEnum):
     Picberry = 52
     ExecPyFile = 53
 
+    IgnoreLowBatt = 60
+
     # CommandStatus = 99
 
 
@@ -333,16 +387,12 @@ class SensorsCommandEnum(IntEnum):
 class TestCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     # SetTestMode = 1  # no args
-    TriggerBurnWire = 2  # no args
-    RunOpNav = 3  # no args
     ADCTest = 4
     SeparationTest = 5
-    GomPin = 6
     CommsDriver = 7
     RTCTest = 8
     LongString = 9
     PiShutdown = 11
-
 
 
 @unique
@@ -369,3 +419,8 @@ class CommandCommandEnum(IntEnum):
     ActivateFile = 12
     ShellCommand = 50
     CeaseComms = 170
+
+
+@unique
+class AttitudeCommandEnum(IntEnum):
+    Switch = 0

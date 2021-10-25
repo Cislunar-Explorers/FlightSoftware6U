@@ -481,7 +481,6 @@ class NormalMode(FlightMode):
         T_START: 'int',
         T_STOP: 'int',
         DECIMATION_FACTOR: 'uint8',
-        TIME: 'float',
         PPT_MODE: "uint8",
         BATTHEATERMODE: "bool",
         BATTHEATERLOW: "uint8",
@@ -618,12 +617,14 @@ class NormalMode(FlightMode):
             self._parent.FMQueue.put(FMEnum.OpNav.value)
 
         if time_for_telem:
+            # Add a standard packet to the downlink queue for our period telemetry beacon
             telem = self._parent.telemetry.standard_packet_dict()
             downlink = self._parent.downlink_handler.pack_downlink(
                 self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.BasicTelem.value,
                 **telem)
 
             self._parent.downlink_queue.put(downlink)
+            logger.info("Added a standard telemetry packet to the downlink queue")
 
         return NO_FM_CHANGE
 

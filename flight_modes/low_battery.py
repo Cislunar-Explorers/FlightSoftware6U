@@ -3,13 +3,19 @@ from time import sleep, time
 from flight_modes.flight_mode import FlightMode
 from utils import parameters as params
 from utils.constants import *
+import logging
 
 
 class LowBatterySafetyMode(FlightMode):
     """FMID 3: Low Battery Safety Mode: the main goal here is to save power as much as possible in case we are in a
     low-power state. We enter Low battery mode whenever we are low on battery (duh...) as defined by
     parameters.ENTER_LOW_BATTERY_MODE_THRESHOLD and whenever we aren't getting any current from our solar panels,
-    which can happen in either an eclipse, or if our harnessing or solar panels break"""
+    which can happen in either an eclipse, or if our harnessing or solar panels break.
+
+    In Low Battery Mode we want to downlink only the most critical data for keeping the spacecraft alive. Downlinking
+    data requires a huge amount of electrical power (to power our RF Power Amplifier) so we want to minimize the
+    frequency and the size of downlinks in this mode """
+
     flight_mode_id = FMEnum.LowBatterySafety.value
 
     command_codecs = {}
@@ -83,11 +89,13 @@ class LowBatterySafetyMode(FlightMode):
             self._parent.FMQueue.put(FMEnum.OpNav.value)
 
         if time_for_telem:
+            # Add a minimal data packet to our periodic downlink beacon
             telem = self._parent.telemetry.minimal_packet()
             downlink = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
                                                                    FMEnum.LowBatterySafety.value,
                                                                    LowBatterySafetyCommandEnum.CritTelem.value,
                                                                    **telem)
             self._parent.downlink_queue.put(downlink)
+            logging.info("Added a minimal data packet to our downlink")
 
         return NO_FM_CHANGE

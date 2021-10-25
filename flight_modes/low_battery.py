@@ -1,9 +1,9 @@
+import logging
 from time import sleep, time
 
 from flight_modes.flight_mode import FlightMode
 from utils import parameters as params
 from utils.constants import *
-import logging
 
 
 class LowBatterySafetyMode(FlightMode):
@@ -18,17 +18,17 @@ class LowBatterySafetyMode(FlightMode):
 
     flight_mode_id = FMEnum.LowBatterySafety.value
 
-    command_codecs = {}
+    command_codecs = {LowBatterySafetyCommandEnum.Switch.value: ([], 0)}
     command_arg_types = {}
     downlink_codecs = {
-        LowBatterySafetyCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
-                                                        HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP,
-                                                        THERMOCOUPLER_TEMP,
-                                                        CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
-                                                        VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
-                                                        PROP_TANK_PRESSURE], 84),
+        NormalCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
+                                              HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP,
+                                              THERMOCOUPLE_TEMP,
+                                              CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
+                                              VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
+                                              PROP_TANK_PRESSURE], 84),
 
-        LowBatterySafetyCommandEnum.CritTelem.value: (
+        NormalCommandEnum.CritTelem.value: (
             [BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE], 8)
     }
 
@@ -37,7 +37,7 @@ class LowBatterySafetyMode(FlightMode):
                           ATT_1: 'float', ATT_2: 'float', ATT_3: 'float', ATT_4: 'float',
                           HK_TEMP_1: 'short', HK_TEMP_2: 'short', HK_TEMP_3: 'short', HK_TEMP_4: 'short',
                           GYRO_TEMP: 'float',
-                          THERMOCOUPLER_TEMP: 'float',
+                          THERMOCOUPLE_TEMP: 'float',
                           CURRENT_IN_1: 'short', CURRENT_IN_2: 'short', CURRENT_IN_3: 'short',
                           VBOOST_1: 'short', VBOOST_2: 'short', VBOOST_3: 'short',
                           PROP_TANK_PRESSURE: 'float',

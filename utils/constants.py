@@ -340,12 +340,12 @@ class NormalCommandEnum(IntEnum):
 @unique
 class LowBatterySafetyCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
-    ExitLBSafetyMode = 1  # no args, # XXX this is an override command
-    SetExitLBSafetyMode = 2  # define battery percentage
-    SetParam = 5
-    CritTelem = 6
-    BasicTelem = 7
-    DetailedTelem = 8
+    # ExitLBSafetyMode = 1  # no args, # XXX this is an override command
+    # SetExitLBSafetyMode = 2  # define battery percentage
+    # SetParam = 5
+    # CritTelem = 6
+    # BasicTelem = 7
+    # DetailedTelem = 8
 
 
 @unique

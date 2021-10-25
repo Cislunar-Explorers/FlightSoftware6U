@@ -238,21 +238,12 @@ class TestMode(PauseBackgroundMode):
     Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
 
     flight_mode_id = FMEnum.TestMode.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def update_state(self) -> int:
-        return NO_FM_CHANGE  # this is intentional - we don't want the FM to update if we are testing something
-
-    def run_mode(self):
-        pass
-
-    command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
-                      TestCommandEnum.ADCTest.value: ([], 0),
-                      TestCommandEnum.CommsDriver.value: ([], 0),
-                      TestCommandEnum.PiShutdown.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0),
+    command_codecs = {TestCommandEnum.Switch.value: NO_ARGS,
+                      TestCommandEnum.SeparationTest.value: NO_ARGS,
+                      TestCommandEnum.ADCTest.value: NO_ARGS,
+                      TestCommandEnum.CommsDriver.value: NO_ARGS,
+                      TestCommandEnum.PiShutdown.value: NO_ARGS,
+                      TestCommandEnum.RTCTest.value: NO_ARGS,
                       TestCommandEnum.LongString.value: (['some_number', 'long_string'], 180)
                       }
 
@@ -268,6 +259,15 @@ class TestMode(PauseBackgroundMode):
         'gyro2': 'float',
         'gyro3': 'float',
     }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def update_state(self) -> int:
+        return NO_FM_CHANGE  # this is intentional - we don't want the FM to update if we are testing something
+
+    def run_mode(self):
+        pass
 
 
 class CommsMode(FlightMode):

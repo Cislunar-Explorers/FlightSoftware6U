@@ -12,7 +12,7 @@ truthValueFile = repoPath + "OpticalNavigation/tests/truth_detections_case1c.csv
 surrenderPath = surrenderBase + "cislunar_case1c/*.jpg"
 
 class Detections(unittest.TestCase):
-    """Tests the detection acciracy of a given find algorithm. This tests whether we are able to 
+    """Tests the detection accuracy of a given find algorithm. This tests whether we are able to 
     detect the presence of the earth, moon, or sun in a set of images. The truth data is hand analyzed
     and the data is populated in a csv file."""
 

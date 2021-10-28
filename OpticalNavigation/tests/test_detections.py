@@ -4,6 +4,9 @@ import unittest
 import glob
 import os
 
+truthValueFile = '/home/stephen/Desktop/truth_detections_case1c.csv'
+surrenderPath = "/home/stephen/Desktop/surrender_images/cislunar_case1c/*.jpg"
+
 class Detections(unittest.TestCase):
     """Tests the detection acciracy of a given find algorithm. This tests whether we are able to 
     detect the presence of the earth, moon, or sun in a set of images. The truth data is hand analyzed
@@ -32,7 +35,7 @@ class Detections(unittest.TestCase):
         sunDetect = []
 
         # Get detection truth values from csv
-        with open('/home/stephen/Desktop/truth_detections_case1c.csv') as f:
+        with open(truthValueFile) as f:
             for line in f:
                 tokens = [t for t in line.split(',')]
                 filenames.append(tokens[1]) # Second col is filename
@@ -46,7 +49,7 @@ class Detections(unittest.TestCase):
         moonDetect = dict(list(zip(filenames[1:], [0 if i == '' else 1 for i in moonDetect[1:]])))
         sunDetect = dict(list(zip(filenames[1:], [0 if i == '' else 1 for i in sunDetect[1:]])))
         
-        frames = glob.glob("/home/stephen/Desktop/surrender_images/cislunar_case1c/*.jpg")
+        frames = glob.glob(surrenderPath)
         
         earthExp, moonExp, sunExp = self.get_detections(frames)
         frames = [os.path.basename(path) for path in frames]

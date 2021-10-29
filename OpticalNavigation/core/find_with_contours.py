@@ -153,30 +153,46 @@ def rotate(rot, s, row):
 
 
 def tile_transform_bb(src, cam, rot, dst):
+    # In: bounding box
+    # Out; transformed bounding box
+
+    # Convert pixel-coordinate bounding box to gnomonic (2D to 2D)
     x0, y0 = cam.normalize_gn(src.x0, src.y0)
     x1, y1 = cam.normalize_gn(src.x1(), src.y1())
 
+    # Convert gnomonic to spherical through projection
     s = gn_to_sph(np.array([x0, x1]), np.array([y0, y1]))
+    
+    # Rotates the spherical vectors by the specified rotation from gyro
+    # Outputs 3D vectors of the 4 bounding box corners
     rs = rotate(rot, s,
                 np.array([[src.y0, src.y0],
                           [src.y1(), src.y1()]]))
-
+    
+    # Stereographic projection of 4 corners
     xst, yst = sph_to_st(rs)
+
+    # Converts back to pixel coordinates (we have 4 corners in pixel)
     xstp, ystp = cam.st_to_px(xst, yst)
     xmin = floor(np.min(xstp))
     ymin = floor(np.min(ystp))
+
+    # ?
     bb = BoundingBox(xmin - dst.x0, ymin - dst.y0, ceil(np.max(xstp)) - xmin + 1, ceil(np.max(ystp)) - ymin + 1)
 
     # Coordinates relative to bounding box corner
-    a = np.array([[0, 0, 1],
-                  [0, src.h - 1, 1],
-                  [src.w - 1, 0, 1],
-                  [src.w - 1, src.h - 1, 1]], dtype=np.float32)
+    # ?
+    a = np.array([[0,           0,           1],
+                  [0,           src.h - 1,   1],
+                  [src.w - 1,   0,           1],
+                  [src.w - 1,   src.h - 1,   1]], 
+                  dtype=np.float32)
     b = np.array([[xstp[0, 0] - xmin, ystp[0, 0] - ymin],
                   [xstp[1, 0] - xmin, ystp[1, 0] - ymin],
                   [xstp[0, 1] - xmin, ystp[0, 1] - ymin],
                   [xstp[1, 1] - xmin, ystp[1, 1] - ymin]], dtype=np.float32)
     c = np.linalg.lstsq(a, b, rcond=None)[0].T
+    print(c)
     return c, bb
 
 
@@ -202,11 +218,14 @@ def remap_roi(img, src, cam, rot):
             # Perform remapping using only data from input tile (taking
             # advantage of the "transparent" border mode to avoid extrapolating
             # the map).
+            # Rolling shutter correction
             cv2.warpAffine(img[j:jb, i:ib], c, (bbc.w, bbc.h),
                            dst=out[bbc.y0:(bbc.y1() + 1), bbc.x0:(bbc.x1() + 1)],
                            flags=cv2.INTER_CUBIC,
                            borderMode=cv2.BORDER_TRANSPARENT)
 
+            # tile_transform_bb changes the bounds of a bounding box according to a specified rotation
+            # warpAffine "fills in" the image based on this new boundary (this does the rolling shutter correction)
     return out, bb0
 
 

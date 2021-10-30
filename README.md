@@ -1,5 +1,7 @@
 # Cislunar Explorers Flight Software
 
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/Cislunar-Explorers/FlightSoftware/Pytest%20testing)](https://github.com/Cislunar-Explorers/FlightSoftware/actions)
+
 ![Mission Patch](mission_patch.png)
 
 ## About

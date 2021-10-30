@@ -42,7 +42,6 @@ def test_flight_codecs():
     enums in constants.py and the command_codecs attribute of each flight mode """
     flight_mode_objs = list(FLIGHT_MODE_DICT.values())
     fm_enums_zipped = list(zip(flight_mode_objs, command_enums))
-    # print(fm_enums_zipped)
     error_msg = ""
     for fm_obj, command_enum in fm_enums_zipped:
         command_enum_list = list(map(int, command_enum))
@@ -54,9 +53,10 @@ def test_flight_codecs():
             commands_not_in_both = set(command_enum_list).symmetric_difference(command_codecs_list)
             assert len(commands_not_in_both) == 0
         except AssertionError:
-            error_msg += f"Command codec definition inconsistency. Check FM and constants: FMID: {fm_obj.flight_mode_id}, CID: {commands_not_in_both}\n"
+            error_msg += f"Check FM and constants: FMID: {fm_obj.flight_mode_id}, CID: {commands_not_in_both}\n"
 
     if error_msg != '':
+        error_msg = "Command codec definition inconsistency.\n" + error_msg
         raise AssertionError(error_msg)
 
 

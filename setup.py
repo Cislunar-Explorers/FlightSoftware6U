@@ -24,10 +24,10 @@ INSTALL_REQUIRES = [
 ]
 
 PI_INSTALL_REQUIRES = [
-    "ADS1115",
-    "picamera",
-    "pigpio",
-    "RPi.GPIO",
+    "ADS1115",  # adc, analog to digital
+    "picamera",  # access camera functions
+    "pigpio",  # gpio interface with battery
+    "RPi.GPIO",  # gpio
     "board",
     "busio",
     "adafruit-circuitpython-bno055",

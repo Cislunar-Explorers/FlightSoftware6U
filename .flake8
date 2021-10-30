@@ -3,3 +3,4 @@ max_line_length=129
 exclude = .git,__pycache__,build,dist,.eggs,.github
 ; application_import_names = 
 extend_ignore = E203
+ignore = F403, F405

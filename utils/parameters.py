@@ -22,7 +22,7 @@ SPLIT_BURNWIRE_DURATION = 1  # seconds
 ANTENNAE_BURNWIRE_DURATION = 1  # seconds
 GLOWPLUG_DURATION = 1  # seconds
 
-SCHEDULED_BURN_TIME: float  # seconds, (unix epoch time)
+SCHEDULED_BURN_TIME = -1  # seconds, (unix epoch time)
 
 ACS_SPIKE_DURATION = 15  # milliseconds
 WANT_TO_ELECTROLYZE = False

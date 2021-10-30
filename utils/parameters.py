@@ -26,6 +26,7 @@ SCHEDULED_BURN_TIME: float  # seconds, (unix epoch time)
 
 ACS_SPIKE_DURATION = 15  # milliseconds
 WANT_TO_ELECTROLYZE = False
+WANT_TO_OPNAV = False
 
 DEFAULT_ELECTROLYSIS_DELAY = 1  # seconds
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -13,6 +14,7 @@ from datetime import datetime
 from multiprocessing import Process
 import subprocess
 from queue import Empty
+from traceback import format_tb
 
 from utils.constants import *
 
@@ -24,12 +26,14 @@ from utils.exceptions import UnknownFlightModeException
 no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
-    # FMEnum.Command.value
+    FMEnum.Command.value
 ]
 # this line of code brought to you by https://stackoverflow.com/questions/29503339/
 all_modes = list(map(int, FMEnum))
 
 logger = get_log()
+
+NO_ARGS = ([], 0)
 
 
 class FlightMode:
@@ -72,7 +76,6 @@ class FlightMode:
             raise UnknownFlightModeException(flight_mode_id)
 
         if self.task_completed:
-
             if self._parent.FMQueue.empty():
                 return FMEnum.Normal.value
             else:
@@ -125,10 +128,12 @@ class FlightMode:
             finished_commands = []
 
             for command in self._parent.commands_to_execute:
+
                 bogus = False
                 mac, counter, command_fm, command_id, command_kwargs = self._parent.command_handler.unpack_command(
                     command)
                 logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
+
                 try:
                     assert command_fm in self._parent.command_definitions.COMMAND_DICT
                     assert command_id in self._parent.command_definitions.COMMAND_DICT[command_fm]
@@ -143,7 +148,7 @@ class FlightMode:
 
                     # locate which method to run:
                     method_to_run = self._parent.command_definitions.COMMAND_DICT[command_fm][command_id]
-                    downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
+                    downlink_args = method_to_run(**command_kwargs)  # run that method
 
                     # Pack downlink given what the command returned
                     if downlink_args is not None:
@@ -166,6 +171,8 @@ class FlightMode:
     def poll_inputs(self):
         if self._parent.gom is not None:
             self._parent.gom.tick_wdt()
+            # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
+            # An idea is to only pet the watchdog every time we recieve a command from the ground
         self._parent.telemetry.poll()
 
     def completed_task(self):
@@ -178,6 +185,23 @@ class FlightMode:
     def write_telemetry(self):
         pass
 
+    #    @staticmethod
+    #    def update_mission_mode(cls, mission_mode_id):
+    #        """Sets the behavior of flight modes. Acts like a meta-flight mode."""
+    #        if mission_mode_id == MissionModeEnum.Boot.value:
+    #            # set parameters for boot
+    #            params.CURRENT_MISSION_MODE = 0
+    #            params.WANT_TO_ELECTROLYZE = False
+    #            params.WANT_TO_OPNAV = False
+    #            params.TELEM_DOWNLINK_TIME = 10
+    #
+    #        if mission_mode_id == MissionModeEnum.Normal.value:
+    #            # set parameters for normal mission mode
+    #            params.CURRENT_MISSION_MODE = 1
+    #            params.WANT_TO_ELECTROLYZE = True
+    #            params.WANT_TO_OPNAV = True
+    #            params.TELEM_DOWNLINK_TIME = 60
+
     def __enter__(self):
         logger.debug(f"Starting flight mode {self.flight_mode_id}")
         return self
@@ -186,6 +210,7 @@ class FlightMode:
         logger.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
             logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
+            logger.error(f"Failed with traceback:\n {format_tb(tb)}")
 
 
 # Model for FlightModes that require precise timing
@@ -204,32 +229,28 @@ class PauseBackgroundMode(FlightMode):
     def __enter__(self):
         super().__enter__()
         self._parent.nemo_manager.pause()
+        # TODO: Pause Opnav process if running
         gc.disable()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
         self._parent.nemo_manager.resume()
+        # TODO: Resume Opnav process if previously running
         super().__exit__(exc_type, exc_val, exc_tb)
 
 
 class TestMode(PauseBackgroundMode):
+    """FMID 8: Testing Flight Mode
+    Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
+
     flight_mode_id = FMEnum.TestMode.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def update_state(self):
-        pass  # this is intentional - we don't want the FM to update if we are testing something
-
-    def run_mode(self):
-        pass
-
-    command_codecs = {TestCommandEnum.SeparationTest.value: ([], 0),
-                      TestCommandEnum.ADCTest.value: ([], 0),
-                      TestCommandEnum.CommsDriver.value: ([], 0),
-                      TestCommandEnum.PiShutdown.value: ([], 0),
-                      TestCommandEnum.RTCTest.value: ([], 0),
+    command_codecs = {TestCommandEnum.Switch.value: NO_ARGS,
+                      TestCommandEnum.SeparationTest.value: NO_ARGS,
+                      TestCommandEnum.ADCTest.value: NO_ARGS,
+                      TestCommandEnum.CommsDriver.value: NO_ARGS,
+                      TestCommandEnum.PiShutdown.value: NO_ARGS,
+                      TestCommandEnum.RTCTest.value: NO_ARGS,
                       TestCommandEnum.LongString.value: (['some_number', 'long_string'], 180)
                       }
 
@@ -246,9 +267,24 @@ class TestMode(PauseBackgroundMode):
         'gyro3': 'float',
     }
 
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def update_state(self):
+        pass  # this is intentional - we don't want the FM to update if we are testing something
+
+    def run_mode(self):
+        pass
+
 
 class CommsMode(FlightMode):
+    """FMID 9: Downlinking Flight Mode
+    This flight mode is dedicated to managing the radio and power systems to transmit data from the spacecraft
+    to the ground station. This involves getting the correct RF switch direction, turning on the RF power amplifier,
+    and transmitting a signal from the RF Board."""
+
     flight_mode_id = FMEnum.CommsMode.value
+    command_codecs = {CommsCommandEnum.Switch.value: NO_ARGS}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -295,7 +331,7 @@ class CommsMode(FlightMode):
         while not self._parent.downlink_queue.empty():
             self._parent.radio.transmit(self._parent.downlink_queue.get())
             self._parent.downlink_counter += 1
-            sleep(params.DOWNLINK_BUFFER_TIME)
+            sleep(params.DOWNLINK_BUFFER_TIME)  # TODO: revisit and see if we actually need this
 
     def update_state(self) -> int:
         return super().update_state()
@@ -310,7 +346,11 @@ class CommsMode(FlightMode):
 
 
 class OpNavMode(FlightMode):
+    """FMID 5: Optical Navigation Flight Mode
+    This flight mode is dedicated to starting the Opnav process"""
+    # TODO: Flight Software/Opnav interface
     flight_mode_id = FMEnum.OpNav.value
+    command_codecs = {OpNavCommandEnum.Switch.value: NO_ARGS}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -338,7 +378,12 @@ class OpNavMode(FlightMode):
 
 
 class SensorMode(FlightMode):
+    """FMID 7: Sensor Mode
+    This flight mode is not really well defined and has kinda been forgotten about. One potential idea for it is that we
+    go into this mode whenever we want a high poll rate of all of our sensors to collect sensor info at as high of a
+    rate as we can."""
     flight_mode_id = FMEnum.SensorMode.value
+    command_codecs = {SensorsCommandEnum.Switch.value: NO_ARGS}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -349,7 +394,20 @@ class SensorMode(FlightMode):
 
 
 class LowBatterySafetyMode(FlightMode):
+    """FMID 3: Low Battery Safety Mode
+    This flight mode tries to save as much power as possible while still keeping the craft operational.
+    For inspiration, see https://cornell.app.box.com/folder/69212991152"""
     flight_mode_id = FMEnum.LowBatterySafety.value
+    command_codecs = {LowBatterySafetyCommandEnum.Switch.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.BasicTelem.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.CritTelem.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.DetailedTelem.value: NO_ARGS,
+                      LowBatterySafetyCommandEnum.ExitLBSafetyMode: NO_ARGS,
+                      LowBatterySafetyCommandEnum.SetExitLBSafetyMode: ([VBATT], 2),
+                      LowBatterySafetyCommandEnum.SetParam: ([NAME, VALUE, HARD_SET], 33)
+                      }
+
+    command_arg_types = {VBATT: 'short'}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -372,28 +430,45 @@ class LowBatterySafetyMode(FlightMode):
 
 # TODO
 class SafeMode(FlightMode):
+    """FMID 4: Safe Mode
+    This flight mode is where we go to if there is any software fault during flight, or there is something awry."""
     flight_mode_id = FMEnum.Safety.value
+    command_codecs = {SafetyCommandEnum.Switch.value: NO_ARGS,
+                      SafetyCommandEnum.DetailedTelem.value: NO_ARGS,
+                      SafetyCommandEnum.CritTelem.value: NO_ARGS,
+                      SafetyCommandEnum.BasicTelem.value: NO_ARGS,
+                      SafetyCommandEnum.ExitSafetyMode.value: NO_ARGS,
+                      SafetyCommandEnum.SetParameter.value: ([NAME, VALUE, HARD_SET], 33), }
 
     def __init__(self, parent):
         super().__init__(parent)
 
     def run_mode(self):
+        # TODO
         logger.info("Execute safe mode")
 
 
 class NormalMode(FlightMode):
+
+    def register_commands(self):
+        pass
+
     flight_mode_id = FMEnum.Normal.value
 
     command_codecs = {
-        NormalCommandEnum.Switch.value: ([], 0),
-        NormalCommandEnum.RunOpNav.value: ([], 0),
+        NormalCommandEnum.Switch.value: NO_ARGS,
+        NormalCommandEnum.RunOpNav.value: NO_ARGS,
         # NormalCommandEnum.SetDesiredAttitude.value: ([AZIMUTH, ELEVATION], 8),
         # NormalCommandEnum.SetAccelerate.value: ([ACCELERATE], 1),
-        # NormalCommandEnum.SetBreakpoint.value: ([], 0),  # TODO define exact parameters
+        # NormalCommandEnum.SetBreakpoint.value: NO_ARGS,  # TODO define exact parameters
         NormalCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
+        NormalCommandEnum.CritTelem.value: NO_ARGS,
+        NormalCommandEnum.BasicTelem.value: NO_ARGS,
+        NormalCommandEnum.DetailedTelem.value: NO_ARGS,
         NormalCommandEnum.SetElectrolysis.value: ([STATE, DELAY], 5),
         NormalCommandEnum.SetOpnavInterval.value: ([INTERVAL], 4),
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
+        NormalCommandEnum.GetParam.value: ([INDEX], 2),
         NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4),
         NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 14),
         NormalCommandEnum.NemoWriteRegister.value: ([REG_ADDRESS, REG_VALUE], 2),
@@ -417,9 +492,9 @@ class NormalMode(FlightMode):
             RATE_DATA_ROTATE_PERIOD,
             HISTOGRAM_ROTATE_PERIOD,
         ], 32),
-        NormalCommandEnum.NemoPowerOff.value: ([], 0),
-        NormalCommandEnum.NemoPowerOn.value: ([], 0),
-        NormalCommandEnum.NemoReboot.value: ([], 0),
+        NormalCommandEnum.NemoPowerOff.value: NO_ARGS,
+        NormalCommandEnum.NemoPowerOn.value: NO_ARGS,
+        NormalCommandEnum.NemoReboot.value: NO_ARGS,
         NormalCommandEnum.NemoProcessRateData.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
         NormalCommandEnum.NemoProcessHistograms.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
         NormalCommandEnum.GomConf1Set.value: ([PPT_MODE, BATTHEATERMODE, BATTHEATERLOW, BATTHEATERHIGH, OUTPUT_NORMAL1,
@@ -433,10 +508,11 @@ class NormalMode(FlightMode):
         NormalCommandEnum.ShellCommand.value: ([CMD], 24),
         NormalCommandEnum.SudoCommand.value: ([CMD], 24),
         NormalCommandEnum.Picberry.value: ([CMD], 24),
-        NormalCommandEnum.GomConf1Get.value: ([], 0),
+        NormalCommandEnum.GomConf1Get.value: NO_ARGS,
         NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
-        NormalCommandEnum.GomConf2Get.value: ([], 0),
-        NormalCommandEnum.ExecPyFile.value: ([FNAME], 36)
+        NormalCommandEnum.GomConf2Get.value: NO_ARGS,
+        NormalCommandEnum.ExecPyFile.value: ([FNAME], 36),
+        NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1)
     }
 
     command_arg_types = {
@@ -504,8 +580,8 @@ class NormalMode(FlightMode):
         NORM_VOLTAGE: 'short',
         SAFE_VOLTAGE: 'short',
         CRIT_VOLTAGE: 'short',
-        CMD: 'string',
-        FNAME: 'string'
+        FNAME: 'string',
+        CMD: 'string', IGNORE: 'bool',
     }
 
     downlink_codecs = {
@@ -577,6 +653,9 @@ class NormalMode(FlightMode):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def poll_inputs(self):
+        super().poll_inputs()
+
     def update_state(self):
         super_fm = super().update_state()
 
@@ -589,6 +668,9 @@ class NormalMode(FlightMode):
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
+
+        # if we don't want to run opnav (per GS command), set time_for_opnav to false
+        time_for_opnav = time_for_opnav and params.WANT_TO_OPNAV
 
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
@@ -616,15 +698,25 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
-        # self.completed_task()
+        self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):
-    """Command Mode: a Flight Mode that listens for and runs commands and nothing else."""
+    """FMID 10; Command Mode: a Flight Mode that listens for and runs commands and nothing else."""
 
     flight_mode_id = FMEnum.Command.value
 
     command_codecs = {
+        CommandCommandEnum.Switch.value: NO_ARGS,
+        CommandCommandEnum.SetParam.value: ([NAME, VALUE, HARD_SET], 33),
+        CommandCommandEnum.SetSystemTime: ([TIME], 8),
+        CommandCommandEnum.RebootPi: NO_ARGS,
+        CommandCommandEnum.RebootGom: NO_ARGS,
+        CommandCommandEnum.PowerCycle: NO_ARGS,
+        CommandCommandEnum.GomPin: ([OUTPUT_CHANNEL, STATE, DELAY], 4),
+        CommandCommandEnum.GeneralCmd.value: ([CMD], 24),  # TODO
+        CommandCommandEnum.GomGeneralCmd.value: ([CMD], 24),  # TODO
+        CommandCommandEnum.CeaseComms.value: ([PASSWORD], 8),
         CommandCommandEnum.SetUpdatePath.value: ([FILE_PATH], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.AddFileBlock.value: ([BLOCK_NUMBER, BLOCK_TEXT], 195 - MIN_COMMAND_SIZE),
         CommandCommandEnum.GetFileBlocksInfo.value: ([TOTAL_BLOCKS], 2),
@@ -636,7 +728,12 @@ class CommandMode(PauseBackgroundMode):
         FILE_PATH: 'string',
         BLOCK_NUMBER: 'short',
         BLOCK_TEXT: 'string',
-        TOTAL_BLOCKS: 'short'
+        TOTAL_BLOCKS: 'short',
+        SYS_TIME: 'double',
+        GOM_PIN_STATE: 'bool',
+        GOM_PIN_DELAY: 'short',
+        OUTPUT_CHANNEL: 'uint8',
+        PASSWORD: 'long'
     }
 
     downlink_codecs = {
@@ -657,9 +754,7 @@ class CommandMode(PauseBackgroundMode):
 
     def update_state(self):
         # DO NOT TICK THE WDT
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm  #
+        return NO_FM_CHANGE  # intentional
 
     def run_mode(self):
         pass  # intentional

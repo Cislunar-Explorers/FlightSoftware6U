@@ -42,22 +42,12 @@ PI_INSTALL_REQUIRES = [
     "board",
     "busio",
     "picamera",
-    "RPi.GPIO",
     "vcgencmd",
 ]
 
-DEV_REQUIRES = [
-    "black",
-    "flake8",
-    "pip",
-    "pre-commit",
-    "watchdog"
-]
+DEV_REQUIRES = ["black", "flake8", "pip", "pre-commit", "watchdog"]
 
-DOCS_REQUIRES = [
-    "sphinx",
-    "sphinx-rtd-theme"
-]
+DOCS_REQUIRES = ["sphinx", "sphinx-rtd-theme"]
 
 TEST_REQUIRES = [
     "matplotlib",

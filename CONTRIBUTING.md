@@ -37,7 +37,7 @@ If you are proposing a feature:
 
 - Explain in detail how it would work.
 - Keep the scope as narrow as possible, to make it easier to implement.
-- Remember that this is a volunteer-driven project, and that contributions are
+- Remember that this is a student-driven project, and that contributions are
   welcome :)
 
 ## Get Started
@@ -85,71 +85,16 @@ Before you submit a pull request, check that it meets these guidelines:
 
 ## Adding Dependency Requirements to Build System
 
-For now, we have both the requirements files as well as the [setup.py](setup.py)
-file. We will eventually select only one based on what everyone finds to be the
-easiest to work with, but in the meantime we will keep both of them up to date.
-
 When you need to install a dependency that:
 
-- is **only** compatible with the Raspberry Pi: add its name to the file:
-  [requirements_pi.txt](requirements_pi.txt) and add its name to the list
+- is **only** compatible with the Raspberry Pi: add its name to the list
   variable `PI_INSTALL_REQUIRES` in [setup.py](setup.py).
 - does **not** depend exclusively on the Raspberry Pi, but will also work with
-  Linux, Mac OSX, etc., you should add it to the
-  [requirements.txt](requirements.txt) file and the `INSTALL_REQUIRES` list
+  Linux, Mac OSX, etc., you should add it to the `INSTALL_REQUIRES` list
   variable in [setup.py](setup.py).
 
-# Raspian vs. Non-Raspian
+## Credits
 
-Some modules can only be installed on Raspberry Pi while others can be installed
-on any system. In order to get around this, we use the extras_requires argument
-to setup in order to specify at the command line what version of our
-requirements we want to install.
-
-Note: OpNav currently requires python3.4 or 3.5, so we may need to downgrade
-python versions in order to use OpenCV in the future.
-
-Set up your virtual environment using virtualenv and activate it with:
-
-```bash
-virtualenv --python=python3.6 venv
-source venv/activate/bin
-```
-
-Documentation for each option is noted in the definition of EXTRAS in the
-setup.py file. In order to install one of the options, start the virtual
-environment and run the following command:
-
-```bash
-pip install -e .[option]
-```
-
-# Laptop Installation
-
-Warning: does not include installation of modules for peripherals due to the
-fact that they are not compatible with operating systems such as Linux, Windows,
-and MacOSX.
-
-```bash
-pip install -e .[dev]
-```
-
-# Installation for Raspberry Pi
-
-Installs all modules.
-
-```bash
-pip install -e [rpi-dev]
-```
-
-# Set up Environment
-
-Copy the file .env.example and create a file .env. Set the variable
-FOR_FLIGHT=FLIGHT should be configured for flight. Otherwise, this value will be
-set to false. If it's set to flight, then it will automatically restart itself
-on failure and clean up its use of storage space if it's running on the raspian
-operating system.
-
-```
-
-```
+The project uses code from the
+[audreyr/cookiecutter-pypackage](https://github.com/audreyr/cookiecutter-pypackage)
+project template.

@@ -102,12 +102,13 @@ class Detections(unittest.TestCase):
                 sunWrong += 1
                 sunTotal += 1
 
+        total_accuracy = 1 - (earthWrong + moonWrong + sunWrong) / total
         print("Earth accuracy: ", earthTotal - earthWrong, "/", earthTotal, "=", 1 - earthWrong/earthTotal,)
         print("Moon accuracy: ", moonTotal - moonWrong, "/", moonTotal, "=", 1 - moonWrong/moonTotal)
         print("Sun accuracy: ", sunTotal - sunWrong, "/", sunTotal, "=", 1 - sunWrong/sunTotal)
-        print("Total accuracy: ", total - (earthWrong + moonWrong + sunWrong), "/", total, "=", 1 - (earthWrong + moonWrong + sunWrong) / total)
+        print("Total accuracy: ", total - (earthWrong + moonWrong + sunWrong), "/", total, "=", total_accuracy)
 
-        #self.assertEqual(earthWrong + moonWrong + sunWrong, 0, "Find algorithm is not 100% accurate!")
+        self.assertGreaterEqual(total_accuracy, 0.90, "Find algorithm is not 100% accurate!")
             
 if __name__ == '__main__':
     unittest.main()

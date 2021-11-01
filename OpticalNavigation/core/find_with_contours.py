@@ -236,6 +236,7 @@ def measureEarth(img):
         max_index = np.argmax(areas)
         c = contours[max_index]
         xy, r = cv2.minEnclosingCircle(c)
+        drawContourCircle(img, xy, r, contours)
         # TODO: Shift center based on aspect ratio, center of "mass"
         return xy, r
     else:
@@ -255,10 +256,24 @@ def measureSun(img):
         max_index = np.argmax(areas)
         c = contours[max_index]
         xy, r = cv2.minEnclosingCircle(c)
+        drawContourCircle(img, xy, r, contours)
         # TODO: Shift center based on aspect ratio, center of "mass"
         return xy, r
     else:
         return None
+
+
+def drawContourCircle(img, xy, r, contours):
+    x = int(xy[0])
+    y = int(xy[1])
+    r = int(r)
+    print(x)
+    print(y)
+    print(r)
+    cv2.drawContours(img, contours[0], -1, (0, 255, 0), 3)
+    cv2.circle(img, (x, y), r, (255, 0, 0), 3)
+    cv2.imshow("name", img)
+    cv2.waitKey(0)
 
 # TODO make thresholds parameters
 # TODO add code for % white, but parameterize if we can to use it
@@ -266,7 +281,7 @@ def measureMoon(img):
     thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
     contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
-    if len(contours) is not 0:
+    if len(contours) != 0:
         areas = [cv2.contourArea(c) for c in contours]
         max_index = np.argmax(areas)
         c = contours[max_index]
@@ -299,7 +314,6 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     result = ImageDetectionCircles()
 
     img = cv2.imread(src)
-
     # In-place blur to reduce noise, avoid hot pixels
     img = cv2.GaussianBlur(img, (5, 5), 0, dst=img)
 
@@ -314,7 +328,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
-    if len(contours) is 0:
+    if len(contours) == 0:
         logger.info("[OPNAV]: No countours found")
         return result
 

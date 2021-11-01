@@ -2,7 +2,6 @@ import sys
 from threading import Thread
 from multiprocessing import Process
 from time import time
-from datetime import datetime
 from queue import Queue
 import signal
 from typing import Optional
@@ -10,7 +9,6 @@ from utils.log import get_log, log_error
 from time import sleep
 
 from utils.constants import *
-import utils.parameters as params
 from utils.db import create_sensor_tables_from_path
 
 # from drivers.dummy_sensors import PressureSensor
@@ -48,7 +46,7 @@ class MainSatelliteThread(Thread):
         logger.info("Initializing...")
         self.command_queue = Queue()
         self.downlink_queue = Queue()
-        self.FMQueue = Queue()
+        self.FMQueue: Queue[int] = Queue()
         self.commands_to_execute = []
         self.downlinks_to_execute = []
         self.burn_queue = Queue()
@@ -63,7 +61,7 @@ class MainSatelliteThread(Thread):
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
+        self.last_opnav_run = time()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
@@ -220,17 +218,8 @@ class MainSatelliteThread(Thread):
     def poll_inputs(self):
 
         self.flight_mode.poll_inputs()
-        # TODO: move this following if block to the telemetry file
+        # TODO: move this following if block to the telemetry module
         if self.radio is not None:
-            # Telemetry downlink
-            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:
-                telemetry = self.command_definitions.gather_basic_telem()
-                telem_downlink = (
-                    self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
-                                                        NormalCommandEnum.BasicTelem.value, **telemetry))
-                self.downlink_queue.put(telem_downlink)
-                self.radio.last_telemetry_time = datetime.today()
-
             # Listening for new commands
             newCommand = self.radio.receiveSignal()
             if newCommand is not None:
@@ -241,7 +230,8 @@ class MainSatelliteThread(Thread):
                         self.command_counter += 1
                     else:
                         logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
-                except:
+                except Exception as e:
+                    log_error(e, logger.error)
                     logger.error('Invalid Command Received')
             else:
                 logger.debug('Not Received')

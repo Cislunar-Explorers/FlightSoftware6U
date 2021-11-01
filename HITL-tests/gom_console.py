@@ -48,11 +48,11 @@ try:
                 gom.set_electrolysis(False)
 
             if choice == 7:
-                gom.set_PA(True)
+                gom.set_pa(True)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.set_PA(False)
+                gom.set_pa(False)
 
             if choice == 8:
                 gom.pc.set_single_output(4, 1, 0)

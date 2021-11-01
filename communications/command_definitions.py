@@ -113,12 +113,8 @@ class CommandDefinitions:
         }
 
         self.low_battery_commands = {
-            LBSCEnum.ExitLBSafetyMode.value: self.return_to_normal,
-            LBSCEnum.SetExitLBSafetyMode.value: self.set_exit_lowbatt_threshold,
-            LBSCEnum.SetParam.value: self.set_parameter,
-            LBSCEnum.CritTelem.value: self.gather_critical_telem,
             LBSCEnum.BasicTelem.value: self.gather_basic_telem,
-            LBSCEnum.DetailedTelem.value: self.gather_detailed_telem,
+            LBSCEnum.CritTelem: self.gather_critical_telem,
         }
 
         self.safety_commands = {

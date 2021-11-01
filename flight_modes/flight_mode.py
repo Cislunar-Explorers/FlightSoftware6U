@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 
 import gc
 from time import sleep, time
-from datetime import datetime
 from multiprocessing import Process
 import subprocess
 from queue import Empty
@@ -75,12 +74,6 @@ class FlightMode:
         if flight_mode_id not in all_modes:
             raise UnknownFlightModeException(flight_mode_id)
 
-        if self.task_completed:
-            if self._parent.FMQueue.empty():
-                return FMEnum.Normal.value
-            else:
-                return self._parent.FMQueue.get()
-
         if flight_mode_id in no_transition_modes:
             return flight_mode_id
 
@@ -94,6 +87,11 @@ class FlightMode:
         if (not self._parent.reorientation_queue.empty()) or self._parent.reorientation_list:
             return FMEnum.AttitudeAdjustment.value
 
+        # go to comms mode if there is something in the comms queue to downlink
+
+        if not self._parent.downlink_queue.empty():
+            return FMEnum.CommsMode.value
+
         # if battery is low, go to low battery mode
         batt_voltage = self._parent.telemetry.gom.hk.vbatt
         if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
@@ -106,14 +104,13 @@ class FlightMode:
                 and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
-        # go to comms mode if there is something in the comms queue
-        if not self._parent.downlink_queue.empty():
-            return FMEnum.CommsMode.value
+        if self.task_completed:
+            if self._parent.FMQueue.empty():
+                return FMEnum.Normal.value
+            else:
+                return self._parent.FMQueue.get()
 
         return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
-
-    def register_commands(self):
-        raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def run_mode(self):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
@@ -147,7 +144,7 @@ class FlightMode:
 
                     # locate which method to run:
                     method_to_run = self._parent.command_definitions.COMMAND_DICT[command_fm][command_id]
-                    downlink_args = method_to_run(**command_kwargs)  # run that method
+                    downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
 
                     # Pack downlink given what the command returned
                     if downlink_args is not None:
@@ -169,7 +166,7 @@ class FlightMode:
 
     def poll_inputs(self):
         if self._parent.gom is not None:
-            self._parent.gom.tick_wdt()
+            self._parent.gom.tick_wdt()  # FIXME; we don't want this for flight
             # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
             # An idea is to only pet the watchdog every time we recieve a command from the ground
         self._parent.telemetry.poll()
@@ -216,9 +213,6 @@ class FlightMode:
 # Pause garbage collection and anything else that could
 # interrupt critical thread
 class PauseBackgroundMode(FlightMode):
-    def register_commands(self):
-        super().register_commands()
-
     def run_mode(self):
         super().run_mode()
 
@@ -269,8 +263,8 @@ class TestMode(PauseBackgroundMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def update_state(self):
-        pass  # this is intentional - we don't want the FM to update if we are testing something
+    def update_state(self) -> int:
+        return NO_FM_CHANGE  # this is intentional - we don't want the FM to update if we are testing something
 
     def run_mode(self):
         pass
@@ -306,12 +300,12 @@ class CommsMode(FlightMode):
         self._parent.gom.rf_transmitting_switch(receive=False)
 
         # Turn on power amplifier
-        self._parent.gom.set_PA(on=True)
+        self._parent.gom.set_pa(on=True)
 
     def exit_transmit_safe_mode(self):
 
         # Turn off power amplifier
-        self._parent.gom.set_PA(on=False)
+        self._parent.gom.set_pa(on=False)
 
         # Set RF transmitting side to low
         self._parent.gom.rf_transmitting_switch(receive=True)
@@ -361,7 +355,7 @@ class OpNavMode(FlightMode):
         # TODO: overhaul so opnav calculation only occur while in opnav mode
         if not self._parent.opnav_process.is_alive():
             logger.info("[OPNAV]: Able to run next opnav")
-            self._parent.last_opnav_run = datetime.now()
+            self._parent.last_opnav_run = time()
             logger.info("[OPNAV]: Starting opnav subprocess")
             self._parent.opnav_process = Process(target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,))
             self._parent.opnav_process.start()
@@ -396,43 +390,8 @@ class SensorMode(FlightMode):
         super().__init__(parent)
         raise NotImplementedError
 
-    def update_state(self):
+    def update_state(self) -> int:
         return NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
-
-
-class LowBatterySafetyMode(FlightMode):
-    """FMID 3: Low Battery Safety Mode
-    This flight mode tries to save as much power as possible while still keeping the craft operational.
-    For inspiration, see https://cornell.app.box.com/folder/69212991152"""
-    flight_mode_id = FMEnum.LowBatterySafety.value
-    command_codecs = {LowBatterySafetyCommandEnum.Switch.value: NO_ARGS,
-                      LowBatterySafetyCommandEnum.BasicTelem.value: NO_ARGS,
-                      LowBatterySafetyCommandEnum.CritTelem.value: NO_ARGS,
-                      LowBatterySafetyCommandEnum.DetailedTelem.value: NO_ARGS,
-                      LowBatterySafetyCommandEnum.ExitLBSafetyMode: NO_ARGS,
-                      LowBatterySafetyCommandEnum.SetExitLBSafetyMode: ([VBATT], 2),
-                      LowBatterySafetyCommandEnum.SetParam: ([NAME, VALUE, HARD_SET], 33)
-                      }
-
-    command_arg_types = {VBATT: 'short'}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        raise NotImplementedError
-
-    def run_mode(self):
-        sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
-        raise NotImplementedError
-
-    def update_state(self):
-        # check power supply to see if I can transition back to NormalMode
-        if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
-            return FMEnum.Normal.value
-
-    def __enter__(self):
-        super().__enter__()
-        self._parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
-        self._parent.gom.pc.set_GPIO_low()
 
 
 class ManeuverMode(PauseBackgroundMode):
@@ -483,10 +442,6 @@ class SafeMode(FlightMode):
 
 
 class NormalMode(FlightMode):
-
-    def register_commands(self):
-        pass
-
     flight_mode_id = FMEnum.Normal.value
 
     command_codecs = {
@@ -690,14 +645,14 @@ class NormalMode(FlightMode):
     def poll_inputs(self):
         super().poll_inputs()
 
-    def update_state(self):
+    def update_state(self) -> int:
         super_fm = super().update_state()
-
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav = (time() - self._parent.telemetry.opn.poll_time) // 60 < params.OPNAV_INTERVAL
-        need_to_electrolyze = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        time_for_opnav: bool = (time() - self._parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
+        time_for_telem: bool = (time() - self._parent.radio.last_transmit_time) // 60 < params.TELEM_INTERVAL
+        need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self._parent.telemetry.gom.is_electrolyzing
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
@@ -724,11 +679,19 @@ class NormalMode(FlightMode):
 
         if time_for_opnav:
             logger.info("Time to run Opnav")
-            return FMEnum.OpNav.value
+            self._parent.FMQueue.put(FMEnum.OpNav.value)
 
-        # if we have data to downlink, change to comms mode
-        if not (self._parent.downlink_queue.empty()):
-            return FMEnum.CommsMode.value
+        if time_for_telem:
+            # Add a standard packet to the downlink queue for our period telemetry beacon
+            telem = self._parent.telemetry.standard_packet_dict()
+            downlink = self._parent.downlink_handler.pack_downlink(
+                self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.BasicTelem.value,
+                **telem)
+
+            self._parent.downlink_queue.put(downlink)
+            logger.info("Added a standard telemetry packet to the downlink queue")
+
+        return NO_FM_CHANGE
 
     def run_mode(self):
         logger.info(f"In NORMAL flight mode")
@@ -786,9 +749,12 @@ class CommandMode(PauseBackgroundMode):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def update_state(self):
+    def update_state(self) -> int:
         # DO NOT TICK THE WDT
-        return NO_FM_CHANGE  # intentional
+        super_fm = super().update_state()
+        if super_fm != NO_FM_CHANGE:
+            return super_fm  #
+        return NO_FM_CHANGE
 
     def run_mode(self):
         pass  # intentional

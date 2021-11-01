@@ -1,17 +1,19 @@
 from os import popen
 from time import time, sleep
+from typing import Dict, Union
 from typing import NamedTuple
-from typing import Tuple, Dict, Union
+from typing import Tuple
 
 import numpy as np
 import psutil
 from adafruit_blinka.agnostic import board_id
 from uptime import uptime
 
-import utils.constants as constants
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from telemetry.sensor import SynchronousSensor
-from utils.constants import MAX_GYRO_RATE, GomOutputs, DB_FILE
+from utils import constants
+from utils.constants import DB_FILE
+from utils.constants import MAX_GYRO_RATE, GomOutputs, BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
 from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
@@ -101,6 +103,19 @@ class GyroSensor(SynchronousSensor):
 
     def get_mag(self):
         return self.mag
+
+    def write(self):
+        # TODO
+        pass
+        # gyro_tuple = (self.rot, self.acc, self.mag, self.tmp, self.poll_time)
+        # gyro_model = GyroModel.from_tuple(gyro_tuple)
+        #
+        # try:
+        #     session = self._parent.create_session()
+        #     session.add(gyro_model)
+        #     session.commit()
+        # finally:
+        #     session.close()
 
 
 class PressureSensor(SynchronousSensor):
@@ -282,6 +297,13 @@ class Telemetry(SynchronousSensor):
                 'vbatt': self.gom.hk.vbatt,  # ushort
                 'prs_pressure': self.prs.pressure}
 
+    def minimal_packet(self):
+        return {BATTERY_VOLTAGE: self.gom.hk.vbatt,
+                SUN_CURRENT: self.gom.hk.cursun,
+                SYSTEM_CURRENT: self.gom.hk.cursys,
+                BATT_MODE: self.gom.hk.battmode,
+                PPT_MODE: self.gom.hk.pptmode}
+
     def detailed_packet_dict(self) -> Dict[str, Union[int, float]]:
         """Returns a dictionary of every possible data point we'd want to downlink. The implementation of this is
         barbaric at best, but works. Something like a NamedTuple would work fantastic here, but would require
@@ -425,3 +447,8 @@ class Telemetry(SynchronousSensor):
             self.session.commit()
         finally:
             self.session.close()
+
+    def query_telem(self):
+        # TODO
+        # querys telemetry from database
+        raise NotImplementedError

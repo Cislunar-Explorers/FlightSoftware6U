@@ -112,7 +112,10 @@ class CommandDefinitions:
             NormalCommandEnum.IgnoreLowBatt.value: self.ignore_low_battery,
         }
 
-        self.low_battery_commands = {}
+        self.low_battery_commands = {
+            LBSCEnum.BasicTelem.value: self.gather_basic_telem,
+            LBSCEnum.CritTelem: self.gather_critical_telem,
+        }
 
         self.safety_commands = {
             SafetyCommandEnum.ExitSafetyMode.value: self.return_to_normal,

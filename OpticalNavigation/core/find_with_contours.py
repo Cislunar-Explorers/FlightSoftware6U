@@ -260,7 +260,30 @@ def __findMinEnclosingCircle(img, highThresh):
         return xy, r
     return None
 
-def __findBody(img, thresh, body):
+
+def circleArea(circle):
+    r = circle[2]
+    return np.pi * r ** 2
+
+
+def __houghCircle(img, w, h):
+    maxRadius = min(w, h)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 120,
+                               param1=100, param2=30,
+                               minRadius=1, maxRadius=maxRadius)
+    areas = [circleArea(circle) for circle in circles[0]]
+    max_idx = np.argmax(areas)
+    circle = circles[0][max_idx]
+    xy = (int(circle[0]), int(circle[1]))
+    r = int(circle[2])
+    # cv2.circle(img, xy, r, (255, 0, 0), 3)
+    # cv2.imshow("name", img)
+    # cv2.waitKey(0)
+    return xy, r
+
+
+def __findBody(img, thresh, body, w, h):
     """
     Finds the earth, sun, moon
     """
@@ -280,19 +303,20 @@ def __findBody(img, thresh, body):
     if percentWhite >= percentageThresh:
         # TODO: Shift center based on aspect ratio, center of "mass"
         return __findMinEnclosingCircle(img, highThresh)
+        # return __houghCircle(img, w, h)
 
 # Threshold based primarily on blue and green channels
 # Percent of white pixels determines if earth detected
-def measureEarth(img):
-    return __findBody(img, cv2.inRange(img, EARTH_THRESH[0], EARTH_THRESH[1]), 'e')
+def measureEarth(img, w, h):
+    return __findBody(img, cv2.inRange(img, EARTH_THRESH[0], EARTH_THRESH[1]), 'e', w, h)
 
 # Measure white pixels
-def measureSun(img):
-    return __findBody(img, cv2.inRange(img, SUN_THRESH[0], SUN_THRESH[1]), 's')
+def measureSun(img, w, h):
+    return __findBody(img, cv2.inRange(img, SUN_THRESH[0], SUN_THRESH[1]), 's', w, h)
 
 # TODO add code for % white, but parameterize if we can to use it
-def measureMoon(img):
-    return __findBody(img, cv2.inRange(img, MOON_THRESH[0], MOON_THRESH[1]), 'm')
+def measureMoon(img, w, h):
+    return __findBody(img, cv2.inRange(img, MOON_THRESH[0], MOON_THRESH[1]), 'm', w, h)
 
 def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     start_time = time.time()
@@ -339,7 +363,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
     c = contours[max_index]
-    del contours[max_index]
+    # del contours[max_index]
 
     x, y, w, h = cv2.boundingRect(c)
 
@@ -373,9 +397,10 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     if "Low" in src:
         for f in [out]:
-            sun = measureSun(f)
+            sun = measureSun(f, w, h)
             if sun is not None:
                 (sX, sY), sR = sun
+                print(sun)
                 sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
                 sRho2 = sXst ** 2 + sYst ** 2
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
@@ -386,23 +411,25 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
         earth = None
         index = 0
         for f in [out, out2]:
-            if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
+            if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f, w, h) is not None:
                 continue
 
             if earth is not None:
                 earth = None
             elif np.max(areas) > 400 and index == 0: #TODO: Placeholder
-                earth = measureEarth(f)
+                earth = measureEarth(f, w, h)
 
             if earth is not None:
                 (eX, eY), eR = earth
+                print(earth)
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
                 eRho2 = eXst ** 2 + eYst ** 2
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
             elif earth is None and (index != 0 or np.max(areas) < 400) and (index != 1 or area < 400):#TODO: Placeholder
-                moon = measureMoon(f)
+                moon = measureMoon(f, w, h)
+                print(moon)
                 if moon is not None:
                     (mX, mY), mR = moon
                     mXst, mYst = None,None

@@ -256,7 +256,7 @@ def __findMinEnclosingCircle(img, highThresh):
         max_index = np.argmax(areas)
         c = contours[max_index]
         xy, r = cv2.minEnclosingCircle(c)
-        drawContourCircle(img, xy, r, contours)
+        # drawContourCircle(img, xy, r, contours)
         return xy, r
     return None
 
@@ -266,12 +266,14 @@ def circleArea(circle):
     return np.pi * r ** 2
 
 
-def __houghCircle(img, w, h):
+def __houghCircleWithContour(img, w, h, highThresh):
     maxRadius = min(w, h)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 120,
                                param1=100, param2=30,
-                               minRadius=1, maxRadius=maxRadius)
+                               minRadius=1, maxRadius=int(maxRadius/2) + 1)
+    if (circles is None):
+        return __findMinEnclosingCircle(img, highThresh)
     areas = [circleArea(circle) for circle in circles[0]]
     max_idx = np.argmax(areas)
     circle = circles[0][max_idx]
@@ -302,8 +304,8 @@ def __findBody(img, thresh, body, w, h):
         highThresh = thresh
     if percentWhite >= percentageThresh:
         # TODO: Shift center based on aspect ratio, center of "mass"
-        return __findMinEnclosingCircle(img, highThresh)
-        # return __houghCircle(img, w, h)
+        # return __findMinEnclosingCircle(img, highThresh)
+        return __houghCircleWithContour(img, w, h, highThresh)
 
 # Threshold based primarily on blue and green channels
 # Percent of white pixels determines if earth detected
@@ -398,9 +400,9 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     if "Low" in src:
         for f in [out]:
             sun = measureSun(f, w, h)
+            print(sun)
             if sun is not None:
                 (sX, sY), sR = sun
-                print(sun)
                 sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
                 sRho2 = sXst ** 2 + sYst ** 2
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
@@ -429,9 +431,9 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
             elif earth is None and (index != 0 or np.max(areas) < 400) and (index != 1 or area < 400):#TODO: Placeholder
                 moon = measureMoon(f, w, h)
-                print(moon)
                 if moon is not None:
                     (mX, mY), mR = moon
+                    print(moon)
                     mXst, mYst = None,None
                     # Checks whether moon contour is first or second contour
                     if index == 0:
@@ -443,10 +445,15 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
             index += 1
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print(time.time() - start_time)
     return result
 
-
+find("/Users/andrew/Downloads/cislunar_case1c/cam2_expLow_f0_t2094.jpg")
+find("/Users/andrew/Downloads/cislunar_case1c/cam2_expLow_f18_t3272.jpg")
+find("/Users/andrew/Downloads/cislunar_case1c/cam2_expLow_f19_t3338.jpg")
+find("/Users/andrew/Downloads/cislunar_case1c/cam3_expHigh_f16_t11519.jpg")
+find("/Users/andrew/Downloads/cislunar_case1c/cam3_expHigh_f17_t11585.jpg")
+find("/Users/andrew/Downloads/cislunar_case1c/cam3_expHigh_f18_t11650.jpg")
 
 # Shift stereographic coordinates of center to camera frame (at start of exposure)
 
@@ -469,14 +476,14 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 # * For Moon, blurry edges and non-uniform surface make picking threshold value difficult
 #   * Consider analyzing ROI of original, unblurred image
 # * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image, then scaling ROI
-if __name__ == "__main__":
-    """
-    Run "python3 find_with_contours.py -i=<IMAGE>" to test this module
-    """
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--image", help="path to the image")
-    args = vars(ap.parse_args())
-    find(args["image"])
+# if __name__ == "__main__":
+#     """
+#     Run "python3 find_with_contours.py -i=<IMAGE>" to test this module
+#     """
+#     ap = argparse.ArgumentParser()
+#     ap.add_argument("-i", "--image", help="path to the image")
+#     args = vars(ap.parse_args())
+#     find(args["image"])
 
 # Notes
 # * Need sanity check on contour size (not too large, not too small)

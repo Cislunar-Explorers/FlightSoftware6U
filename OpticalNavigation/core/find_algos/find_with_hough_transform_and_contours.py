@@ -1,5 +1,5 @@
 from OpticalNavigation.core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
-from OpticalNavigation.utils.parameters import EARTH_THRESH, SUN_THRESH, MOON_THRESH, \
+from utils.parameters import EARTH_THRESH, SUN_THRESH, MOON_THRESH, \
     EARTH_PERCENTAGE_THRESH, SUN_PERCENTAGE_THRESH, MOON_PERCENTAGE_THRESH
 from dataclasses import dataclass
 import cv2

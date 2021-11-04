@@ -373,7 +373,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
     c = contours[max_index]
-    del contours[max_index]
+    # del contours[max_index]
 
     x, y, w, h = cv2.boundingRect(c)
 

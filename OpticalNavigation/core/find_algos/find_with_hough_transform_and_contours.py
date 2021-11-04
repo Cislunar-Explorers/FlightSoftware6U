@@ -1,4 +1,6 @@
 from OpticalNavigation.core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
+from OpticalNavigation.utils.parameters import EARTH_THRESH, SUN_THRESH, MOON_THRESH, \
+    EARTH_PERCENTAGE_THRESH, SUN_PERCENTAGE_THRESH, MOON_PERCENTAGE_THRESH
 from dataclasses import dataclass
 import cv2
 import numpy as np
@@ -6,9 +8,9 @@ from math import pi, radians, tan, floor, ceil
 import argparse
 import re
 from utils.log import get_log
+import time
 
 logger = get_log()
-
 
 class Camera:
     """Encapsulate field-of-view and resolution of a camera."""
@@ -133,6 +135,9 @@ class CameraRotation:
 # row: Array of row numbers
 # Returns: Array of rotated spherical coordinates
 def rotate(rot, s, row):
+    """
+    Rotates the image based on the camera rotation
+    """
     # TODO: Optimize for row is vector, not matrix
     th = -rot.omega_dt * row
     sth = np.sin(th)
@@ -154,54 +159,43 @@ def rotate(rot, s, row):
 
 
 def tile_transform_bb(src, cam, rot, dst):
-    # In: bounding box
-    # Out; transformed bounding box
-
-    # Convert pixel-coordinate bounding box to gnomonic (2D to 2D)
+    """
+    Reprojects the image from gnomonic to a stereographic projection
+    """
     x0, y0 = cam.normalize_gn(src.x0, src.y0)
     x1, y1 = cam.normalize_gn(src.x1(), src.y1())
 
-    # Convert gnomonic to spherical through projection
     s = gn_to_sph(np.array([x0, x1]), np.array([y0, y1]))
-
-    # Rotates the spherical vectors by the specified rotation from gyro
-    # Outputs 3D vectors of the 4 bounding box corners
     rs = rotate(rot, s,
                 np.array([[src.y0, src.y0],
                           [src.y1(), src.y1()]]))
 
-    # Stereographic projection of 4 corners
     xst, yst = sph_to_st(rs)
-
-    # Converts back to pixel coordinates (we have 4 corners in pixel)
     xstp, ystp = cam.st_to_px(xst, yst)
     xmin = floor(np.min(xstp))
     ymin = floor(np.min(ystp))
-
-    # ?
     bb = BoundingBox(xmin - dst.x0, ymin - dst.y0, ceil(np.max(xstp)) - xmin + 1, ceil(np.max(ystp)) - ymin + 1)
 
     # Coordinates relative to bounding box corner
-    # ?
     a = np.array([[0, 0, 1],
                   [0, src.h - 1, 1],
                   [src.w - 1, 0, 1],
-                  [src.w - 1, src.h - 1, 1]],
-                 dtype=np.float32)
+                  [src.w - 1, src.h - 1, 1]], dtype=np.float32)
     b = np.array([[xstp[0, 0] - xmin, ystp[0, 0] - ymin],
                   [xstp[1, 0] - xmin, ystp[1, 0] - ymin],
                   [xstp[0, 1] - xmin, ystp[0, 1] - ymin],
                   [xstp[1, 1] - xmin, ystp[1, 1] - ymin]], dtype=np.float32)
     c = np.linalg.lstsq(a, b, rcond=None)[0].T
-    print(c)
     return c, bb
 
 
 def remap_roi(img, src, cam, rot):
+    """
+    Remaps the region of interest in 64x64 tiles to correct for rolling shutter
+    """
     _, bb0 = tile_transform_bb(src, cam, rot, BoundingBox(0, 0, 0, 0))
     out = np.zeros((bb0.h, bb0.w, 3), dtype=np.uint8)
     dst = BoundingBox(0, 0, bb0.w, bb0.h)
-
     # Block size
     bs = 64
     for j in range(src.y0, src.y1() + 1, bs - 1):
@@ -210,7 +204,6 @@ def remap_roi(img, src, cam, rot):
             ib = min(i + bs, src.x1() + 1)
             bsrc = BoundingBox(i, j, ib - i, jb - j)
             c, bb = tile_transform_bb(bsrc, cam, rot, bb0)
-
             bbc = bb.clamped(dst)
             # Adjust translation of map for clamping
             c[0, 2] -= bbc.x0 - bb.x0
@@ -219,85 +212,124 @@ def remap_roi(img, src, cam, rot):
             # Perform remapping using only data from input tile (taking
             # advantage of the "transparent" border mode to avoid extrapolating
             # the map).
-            # Rolling shutter correction
             cv2.warpAffine(img[j:jb, i:ib], c, (bbc.w, bbc.h),
                            dst=out[bbc.y0:(bbc.y1() + 1), bbc.x0:(bbc.x1() + 1)],
                            flags=cv2.INTER_CUBIC,
                            borderMode=cv2.BORDER_TRANSPARENT)
 
-            # tile_transform_bb changes the bounds of a bounding box according to a specified rotation
-            # warpAffine "fills in" the image based on this new boundary (this does the rolling shutter correction)
     return out, bb0
 
 
 def bufferedRoi(x, y, w, h, wTot, hTot, b):
+    """
+    Buffers the region of interest by adding to the width and height of the box
+    """
     xl = max(x - b, 0)
     xr = min(x + w + b, wTot)
-    yl = max(y - b, 0)  # Should be yup (or ymin)
-    yr = min(y + h + b, hTot)  # Should be ydown (ymax)
+    yl = max(y - b, 0)
+    yr = min(y + h + b, hTot)
     return (xl, yl, xr - xl, yr - yl)
 
+def drawContourCircle(img, xy, r, contours):
+    """
+    Draws the contour and the minimum enclosing circle on the original image
+    """
+    x = int(xy[0])
+    y = int(xy[1])
+    r = int(r)
+    print(x)
+    print(y)
+    print(r)
+    cv2.drawContours(img, contours[0], -1, (0, 255, 0), 3)
+    cv2.circle(img, (x, y), r, (255, 0, 0), 3)
+    cv2.imshow("name", img)
+    cv2.waitKey(0)
 
-# Threshold based primarily on blue and green channels
-# Percent of white pixels determines if earth detected
-# TODO make thresholds parameters
-def measureEarth(img):
-    lowThresh = cv2.inRange(img, (0, 0, 0), (255, 30, 30))  # lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
-    percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
-    if percentWhite >= 0.2:
-        highThreshRed = cv2.inRange(img, (0, 0, 5), (255, 255, 255))
-        highThreshGreen = cv2.inRange(img, (0, 5, 0), (255, 255, 255))
-        highThreshBlue = cv2.inRange(img, (5, 0, 0), (255, 255, 255))
-        highThresh = highThreshRed + highThreshGreen + highThreshBlue
-        contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contours = contours[0] if len(contours) == 2 else contours[1]
-
-        areas = [cv2.contourArea(c) for c in contours]
-        max_index = np.argmax(areas)
-        c = contours[max_index]
-        xy, r = cv2.minEnclosingCircle(c)
-        # TODO: Shift center based on aspect ratio, center of "mass"
-        return xy, r
-    else:
-        return None
-
-
-# Measure white pixels
-# TODO make thresholds parameters
-def measureSun(img):
-    highThresh = cv2.inRange(img, (225, 225, 225), (255, 255, 255))
-    percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
-    if percentWhite >= 0.18:  # Changed from 23%
-        contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contours = contours[0] if len(contours) == 2 else contours[1]
-
-        areas = [cv2.contourArea(c) for c in contours]
-        max_index = np.argmax(areas)
-        c = contours[max_index]
-        xy, r = cv2.minEnclosingCircle(c)
-        # TODO: Shift center based on aspect ratio, center of "mass"
-        return xy, r
-    else:
-        return None
-
-
-# TODO make thresholds parameters
-# TODO add code for % white, but parameterize if we can to use it
-def measureMoon(img):
-    thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
-    contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+def __findMinEnclosingCircle(img, highThresh):
+    """
+    Finds the minimum enclosing circle of the contours found on the image. This is the old algorithm for finding center
+    """
+    contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
-    if len(contours) is not 0:
+    if len(contours) != 0:
         areas = [cv2.contourArea(c) for c in contours]
         max_index = np.argmax(areas)
         c = contours[max_index]
         xy, r = cv2.minEnclosingCircle(c)
-        # TODO: Shift center based on aspect ratio, center of "mass"
+        drawContourCircle(img, xy, r, contours)
         return xy, r
     return None
 
 
-def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
+def circleArea(circle):
+    """
+    Returns the area of a circle.
+    """
+    r = circle[2]
+    return np.pi * r ** 2
+
+
+def __houghCircleWithContour(img, w, h, highThresh):
+    """
+    An algorithm that finds the circle center that uses the hough transform first with the max radius being half of the
+    minimum of the width/height of the bounding box to improve performance. If hough transform does not find anything,
+    it then turns to contour finding.
+    """
+    maxRadius = min(w, h)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 120,
+                               param1=100, param2=30,
+                               minRadius=1, maxRadius=int(maxRadius/2) + 1)
+    if (circles is None):
+        return __findMinEnclosingCircle(img, highThresh)
+    areas = [circleArea(circle) for circle in circles[0]]
+    max_idx = np.argmax(areas)
+    circle = circles[0][max_idx]
+    xy = (int(circle[0]), int(circle[1]))
+    r = int(circle[2])
+    cv2.circle(img, xy, r, (255, 0, 0), 3)
+    cv2.imshow("name", img)
+    cv2.waitKey(0)
+    return xy, r
+
+
+def __findBody(img, thresh, body, w, h):
+    """
+    Finds the earth, sun, moon
+    """
+    percentWhite = cv2.countNonZero(thresh) / (thresh.shape[0] * thresh.shape[1])
+    if (body == 'e'):
+        percentageThresh = EARTH_PERCENTAGE_THRESH
+        highThreshRed = cv2.inRange(img, (0, 0, 5), (255, 255, 255))
+        highThreshGreen = cv2.inRange(img, (0, 5, 0), (255, 255, 255))
+        highThreshBlue = cv2.inRange(img, (5, 0, 0), (255, 255, 255))
+        highThresh = highThreshRed + highThreshGreen + highThreshBlue
+    elif (body == 's'):
+        percentageThresh = SUN_PERCENTAGE_THRESH
+        highThresh = cv2.inRange(img, (225, 225, 225), (255, 255, 255))
+    else:
+        percentageThresh = MOON_PERCENTAGE_THRESH
+        highThresh = thresh
+    if percentWhite >= percentageThresh:
+        # TODO: Shift center based on aspect ratio, center of "mass"
+        # return __findMinEnclosingCircle(img, highThresh)
+        return __houghCircleWithContour(img, w, h, highThresh)
+
+# Threshold based primarily on blue and green channels
+# Percent of white pixels determines if earth detected
+def measureEarth(img, w, h):
+    return __findBody(img, cv2.inRange(img, EARTH_THRESH[0], EARTH_THRESH[1]), 'e', w, h)
+
+# Measure white pixels
+def measureSun(img, w, h):
+    return __findBody(img, cv2.inRange(img, SUN_THRESH[0], SUN_THRESH[1]), 's', w, h)
+
+# TODO add code for % white, but parameterize if we can to use it
+def measureMoon(img, w, h):
+    return __findBody(img, cv2.inRange(img, MOON_THRESH[0], MOON_THRESH[1]), 'm', w, h)
+
+def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
+    start_time = time.time()
     cam = Camera(radians(camera_params.hFov), radians(camera_params.vFov), camera_params.hPix, camera_params.vPix)
 
     # u is in body frame here
@@ -320,7 +352,6 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
     result = ImageDetectionCircles()
 
     img = cv2.imread(src)
-
     # In-place blur to reduce noise, avoid hot pixels
     img = cv2.GaussianBlur(img, (5, 5), 0, dst=img)
 
@@ -335,8 +366,8 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
 
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
-    if len(contours) is 0:
-        # logger.info("[OPNAV]: No countours found")
+    if len(contours) == 0:
+        logger.info("[OPNAV]: No countours found")
         return result
 
     areas = [cv2.contourArea(c) for c in contours]
@@ -361,12 +392,12 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
             x2, y2, w2, h2 = cv2.boundingRect(con)
             # Checks for rectangle overlap
             if (x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y):
-                c2 = con
+                c2 = con	
                 x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
-                box2 = BoundingBox(x2, y2, w2, h2)
+                box2 = BoundingBox(x2, y2, w2, h2)	
                 out2, bbst2 = remap_roi(img, box2, cam, rot)
-                break
-            else:
+                break	
+            else:	
                 x2, y2, w2, h2 = 0, 0, 0, 0
 
     # Measure body in region-of-interest
@@ -376,7 +407,8 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
 
     if "Low" in src:
         for f in [out]:
-            sun = measureSun(f)
+            sun = measureSun(f, w, h)
+            print(sun)
             if sun is not None:
                 (sX, sY), sR = sun
                 sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
@@ -389,27 +421,28 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
         earth = None
         index = 0
         for f in [out, out2]:
-            if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
+            if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f, w, h) is not None:
                 continue
 
             if earth is not None:
                 earth = None
-            elif np.max(areas) > 400 and index == 0:  # TODO: Placeholder
-                earth = measureEarth(f)
+            elif np.max(areas) > 400 and index == 0: #TODO: Placeholder
+                earth = measureEarth(f, w, h)
 
             if earth is not None:
                 (eX, eY), eR = earth
+                print(earth)
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
                 eRho2 = eXst ** 2 + eYst ** 2
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
-            elif earth is None and (index != 0 or np.max(areas) < 400) and (
-                    index != 1 or area < 400):  # TODO: Placeholder
-                moon = measureMoon(f)
+            elif earth is None and (index != 0 or np.max(areas) < 400) and (index != 1 or area < 400):#TODO: Placeholder
+                moon = measureMoon(f, w, h)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    mXst, mYst = None, None
+                    print(moon)
+                    mXst, mYst = None,None
                     # Checks whether moon contour is first or second contour
                     if index == 0:
                         mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
@@ -420,10 +453,8 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
             index += 1
-
+    print(time.time() - start_time)
     return result
-
-
 # Shift stereographic coordinates of center to camera frame (at start of exposure)
 
 # Adjust diameter for stereographic distortion
@@ -452,13 +483,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
-
-    earthDetectionArray = np.zeros((1, 4), dtype=float)
-    moonDetectionArray = np.zeros((1, 4), dtype=float)
-    sunDetectionArray = np.zeros((1, 4), dtype=float)
-    imageDetectionCircles = find(args["image"])
-    print("Earth ", imageDetectionCircles.get_earth_detection(), " Moon ", imageDetectionCircles.get_moon_detection(), \
-          " Sun ", imageDetectionCircles.get_sun_detection())
+    find(args["image"])
 
 # Notes
 # * Need sanity check on contour size (not too large, not too small)

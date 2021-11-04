@@ -247,7 +247,7 @@ def drawContourCircle(img, xy, r, contours):
 
 def __findMinEnclosingCircle(img, highThresh):
     """
-    Finds the minimum enclosing circle of the contours found on the image
+    Finds the minimum enclosing circle of the contours found on the image. This is the old algorithm for finding center
     """
     contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
@@ -262,11 +262,19 @@ def __findMinEnclosingCircle(img, highThresh):
 
 
 def circleArea(circle):
+    """
+    Returns the area of a circle.
+    """
     r = circle[2]
     return np.pi * r ** 2
 
 
 def __houghCircleWithContour(img, w, h, highThresh):
+    """
+    An algorithm that finds the circle center that uses the hough transform first with the max radius being half of the
+    minimum of the width/height of the bounding box to improve performance. If hough transform does not find anything,
+    it then turns to contour finding.
+    """
     maxRadius = min(w, h)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 120,
@@ -448,13 +456,6 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     print(time.time() - start_time)
     return result
 
-find("/Users/andrew/Downloads/cislunar_case1c/cam2_expLow_f0_t2094.jpg")
-find("/Users/andrew/Downloads/cislunar_case1c/cam2_expLow_f18_t3272.jpg")
-find("/Users/andrew/Downloads/cislunar_case1c/cam2_expLow_f19_t3338.jpg")
-find("/Users/andrew/Downloads/cislunar_case1c/cam3_expHigh_f16_t11519.jpg")
-find("/Users/andrew/Downloads/cislunar_case1c/cam3_expHigh_f17_t11585.jpg")
-find("/Users/andrew/Downloads/cislunar_case1c/cam3_expHigh_f18_t11650.jpg")
-
 # Shift stereographic coordinates of center to camera frame (at start of exposure)
 
 # Adjust diameter for stereographic distortion
@@ -476,14 +477,14 @@ find("/Users/andrew/Downloads/cislunar_case1c/cam3_expHigh_f18_t11650.jpg")
 # * For Moon, blurry edges and non-uniform surface make picking threshold value difficult
 #   * Consider analyzing ROI of original, unblurred image
 # * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image, then scaling ROI
-# if __name__ == "__main__":
-#     """
-#     Run "python3 find_with_contours.py -i=<IMAGE>" to test this module
-#     """
-#     ap = argparse.ArgumentParser()
-#     ap.add_argument("-i", "--image", help="path to the image")
-#     args = vars(ap.parse_args())
-#     find(args["image"])
+if __name__ == "__main__":
+    """
+    Run "python3 find_with_contours.py -i=<IMAGE>" to test this module
+    """
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--image", help="path to the image")
+    args = vars(ap.parse_args())
+    find(args["image"])
 
 # Notes
 # * Need sanity check on contour size (not too large, not too small)

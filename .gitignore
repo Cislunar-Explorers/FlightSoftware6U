@@ -138,3 +138,4 @@ dmypy.json
 
 # Extra
 .DS_STORE
+.idea

@@ -45,10 +45,6 @@ If you are proposing a feature:
 Ready to contribute? Here's how to set up `FlightSoftware` for local
 development.
 
-0. Install required software.
-
-   - sqlite3
-
 1. Fork or clone the repo.
 
 2. Setup the environment. The project comes with 2 optional dependency lists:

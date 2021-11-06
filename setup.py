@@ -30,9 +30,9 @@ INSTALL_REQUIRES = [
     "opencv-python",
     "pigpio",
     "psutil",
+    "python-dotenv",
     "scipy",
     "sqlalchemy",
-    "SQLAlchemy",
     "tqdm",
     "uptime",
 ]
@@ -45,21 +45,13 @@ PI_INSTALL_REQUIRES = [
     "vcgencmd",
 ]
 
-DEV_REQUIRES = ["black", "flake8", "pip", "pre-commit", "watchdog"]
+DEV_REQUIRES = ["black", "flake8", "pip", "pre-commit"]
 
-DOCS_REQUIRES = ["sphinx", "sphinx-rtd-theme"]
+DOCS_REQUIRES = ["sphinx", "sphinx-rtd-theme", "watchdog"]
 
-TEST_REQUIRES = [
-    "matplotlib",
-    "pandas",
-    "pytest",
-    "pytest-mock",
-]
+TEST_REQUIRES = ["matplotlib", "pandas", "pytest", "pytest-mock"]
 
-EXTRAS = {
-    "rpi": PI_INSTALL_REQUIRES,
-    "dev": DEV_REQUIRES + TEST_REQUIRES,
-}
+EXTRAS = {"rpi": PI_INSTALL_REQUIRES, "dev": DEV_REQUIRES + TEST_REQUIRES}
 
 setup(
     author=AUTHOR,

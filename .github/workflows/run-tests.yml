@@ -17,6 +17,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ."[dev]"
           pip install -e ./OpticalNavigation
+      - name: Make .env
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_CISLUNAR_BASE_DIR: "cislunar_data"
+          envkey_FOR_FLIGHT: "0"
+          envkey_LOG: "1"
+          file_name: .env
       - name: Test with pytest
         run: |
           pytest

@@ -1,5 +1,8 @@
 import os
 from enum import IntEnum, unique
+from dotenv import dotenv_values
+
+config = dotenv_values(".env")
 
 # unit conversions
 
@@ -12,7 +15,7 @@ BOOTUP_SEPARATION_DELAY = 5.0  # seconds
 # Verification Key Parameters
 MAC_LENGTH = 4
 # MAC_DATA = b'Hello'
-MAC_KEY = b'World'  # FIXME for flight
+MAC_KEY = b"World"  # FIXME for flight
 # MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
 # Serialization Sizes
@@ -31,8 +34,8 @@ DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
 # Important paths
-FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
-PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
+FLIGHT_SOFTWARE_PATH = "/home/pi/FlightSoftware/"
+PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + "utils/parameters.json"
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"
@@ -59,12 +62,12 @@ PULSE_DT = "pulse_dt"
 NUM_BLOCKS = "num_blocks"
 
 TIME = "time"
-SYS_TIME = 'sys_time'
+SYS_TIME = "sys_time"
 
 HARD_SET = "hard_set"
 
-GOM_PIN_STATE = 'gom_pin_state'
-GOM_PIN_DELAY = 'gom_pin_delay'
+GOM_PIN_STATE = "gom_pin_state"
+GOM_PIN_DELAY = "gom_pin_delay"
 
 FILE_PATH = "file_path"
 BLOCK_NUMBER = "block_number"
@@ -97,8 +100,8 @@ T_STOP = "t_stop"
 
 DECIMATION_FACTOR = "decimation_factor"
 
-INDEX = 'index'
-VBATT = 'vbatt'
+INDEX = "index"
+VBATT = "vbatt"
 
 # Keyword argument definitions for downlink
 RTC_TIME = "rtc_time"
@@ -128,14 +131,14 @@ VBOOST_3 = "vboost_3"
 SYSTEM_CURRENT = "cursys"  # current that being used by the whole system (mA)
 CURSUN = "sun_current"  # current coming into the system (mA)
 BATTERY_VOLTAGE = "vbatt"  # battery voltage (mV)
-RESERVED1 = 'reserved1'  # unknown
+RESERVED1 = "reserved1"  # unknown
 CUROUT1 = "curout1"  # current flowing through the controllable output (mA)
 CUROUT2 = "curout2"
 CUROUT3 = "curout3"
 CUROUT4 = "curout4"
 CUROUT5 = "curout5"
 CUROUT6 = "curout6"
-OUTPUTS = 'outputs'  # bitmask of the state of the outputs
+OUTPUTS = "outputs"  # bitmask of the state of the outputs
 LATCHUPS1 = "latchup1"  # number of latchup events on each controllable outputs
 LATCHUPS2 = "latchup2"
 LATCHUPS3 = "latchup3"
@@ -147,17 +150,19 @@ WDT_TIME_LEFT_GND = "wdt_time_gnd"  # seconds (?) left on the dedicated watchdog
 GOM_BOOTS = "gom_boots"  # number of gomspace reboots
 WDT_COUNTS_I2C = "wdt_counts_i2c"  # number of I2C watchdog boots
 WDT_COUNTS_GND = "wdt_counts_gnd"  # number of dedicated watchdog boots
-GOM_BOOTCAUSE = 'bootcause'  # number of gomspace reboots
-GOM_BATTMODE = 'battmode'  # state machine of the gom. See the manual for more info
-GOM_PPT_MODE = 'ppt_mode'  # power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
-RESERVED2 = 'reserved2'  # unknown
+GOM_BOOTCAUSE = "bootcause"  # number of gomspace reboots
+GOM_BATTMODE = "battmode"  # state machine of the gom. See the manual for more info
+GOM_PPT_MODE = (
+    "ppt_mode"
+)  # power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
+RESERVED2 = "reserved2"  # unknown
 
 RPI_CPU = "rpi_cpu"  # percent utilization of the RPi CPU
 RPI_RAM = "rpi_ram"  # percent utilization of the RPi RAM
 RPI_DSK = "rpi_disk"  # percent utilization of the RPi's microSD card (Disk)
 RPI_TEMP = "rpi_temp"  # temperature on the RPi
-RPI_BOOT = 'rpi_boot'  # time at which the Pi booted (seconds: unix epoch time)
-RPI_UPTIME = 'rpi_uptime'  # how many seconds the pi has been up
+RPI_BOOT = "rpi_boot"  # time at which the Pi booted (seconds: unix epoch time)
+RPI_UPTIME = "rpi_uptime"  # how many seconds the pi has been up
 
 SUN_CURRENT = "cursun"
 BATT_MODE = "batt_mode"
@@ -181,9 +186,7 @@ CHECKSUM = "checksum"
 
 # SQL Stuff
 SQL_PREFIX = "sqlite:///"
-CISLUNAR_BASE_DIR = os.path.join(
-    os.path.expanduser("~"), ".cislunar-flight-software"
-)
+CISLUNAR_BASE_DIR = os.path.join(os.path.expanduser("~"), ".cislunar-flight-software")
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
@@ -237,21 +240,21 @@ VBOOST1 = "vboost1"
 VBOOST2 = "vboost2"
 VBOOST3 = "vboost3"
 
-MAX_VOLTAGE = 'max_voltage'
-NORM_VOLTAGE = 'norm_voltage'
-SAFE_VOLTAGE = 'safe_voltage'
-CRIT_VOLTAGE = 'crit_voltage'
-OUTPUT_CHANNEL = 'output_channel'
+MAX_VOLTAGE = "max_voltage"
+NORM_VOLTAGE = "norm_voltage"
+SAFE_VOLTAGE = "safe_voltage"
+CRIT_VOLTAGE = "crit_voltage"
+OUTPUT_CHANNEL = "output_channel"
 
-CMD = 'cmd'
-RETURN_CODE = 'return_code'
+CMD = "cmd"
+RETURN_CODE = "return_code"
 
-FNAME = 'filename'
-IGNORE = 'ignore'
-PASSWORD = 'password'
+FNAME = "filename"
+IGNORE = "ignore"
+PASSWORD = "password"
 
-ZERO_WORD = b'\xcb\x51'
-ONE_WORD = b'\xdc\x2c'
+ZERO_WORD = b"\xcb\x51"
+ONE_WORD = b"\xdc\x2c"
 
 
 # GOMspace Channel designations:

@@ -17,6 +17,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ."[dev]"
           pip install -e ./OpticalNavigation
+      - name: Make .env
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_DATABASE_URL: ""
+          envkey_FOR_FLIGHT: "1"
+          envkey_LOG: "1"
+          file_name: .env
+      - name: Make .env.test
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_DATABASE_URL: ""
+          envkey_FOR_FLIGHT: "0"
+          envkey_LOG: "1"
+          file_name: .env.test
       - name: Test with pytest
         run: |
           pytest

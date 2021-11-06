@@ -1,5 +1,6 @@
 from OpticalNavigation.core.find_with_contours import *
 from OpticalNavigation.core.const import ImageDetectionCircles
+import numpy as np
 import unittest
 import glob
 import os

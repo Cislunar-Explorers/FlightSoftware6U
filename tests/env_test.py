@@ -1,22 +1,7 @@
-import pytest
-from dotenv import dotenv_values
-
-from utils.constants import config
+import utils.constants as consts
 
 
-@pytest.fixture
-def test_env(mocker):
-    test_config = dotenv_values(".env.test")
-    mocker.patch.dict("utils.constants.config", values=test_config)
-
-
-def test_normal_env():
-    assert "DB_FILE" in config
-    assert "FOR_FLIGHT" in config
-    assert "LOG" in config
-    assert config["FOR_FLIGHT"] == "1"
-
-
-def test_test_env(test_env):
-    assert "FOR_FLIGHT" in config
-    assert config["FOR_FLIGHT"] == "0"
+def test_env():
+    assert "CISLUNAR_BASE_DIR" in consts.config
+    assert "FOR_FLIGHT" in consts.config
+    assert "LOG" in consts.config

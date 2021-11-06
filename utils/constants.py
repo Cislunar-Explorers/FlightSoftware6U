@@ -2,11 +2,18 @@ import os
 from enum import IntEnum, unique
 from dotenv import dotenv_values
 
+# dotenv vars
 config = dotenv_values(".env")
 
-# unit conversions
+CISLUNAR_BASE_DIR = config["CISLUNAR_BASE_DIR"]
+FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
+LOG = config["LOG"] == "1"
 
-DEG2RAD = 3.14159265359 / 180
+# SQL Stuff
+DB_ENTRY_LIMIT = 1000  # TODO update # maximum number of entries in any of the databases
+DB_FILE = "sqlite:///" + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
+LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
+NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
 
 # Delay to wait on BootUp
 # TODO change back to 30.0
@@ -183,14 +190,6 @@ SUCCESSFUL = "successful"
 
 MISSING_BLOCKS = "missing_blocks"
 CHECKSUM = "checksum"
-
-# SQL Stuff
-SQL_PREFIX = "sqlite:///"
-CISLUNAR_BASE_DIR = os.path.join(os.path.expanduser("~"), ".cislunar-flight-software")
-LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
-DB_FILE = SQL_PREFIX + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
-NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
-DB_ENTRY_LIMIT = 1000  # maximum number of entries in any of the databases
 
 a = 1664525
 b = 1013904223

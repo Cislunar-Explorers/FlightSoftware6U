@@ -139,4 +139,4 @@ dmypy.json
 .DS_STORE
 
 # Other
-*.db
+cislunar_data

@@ -1,11 +1,12 @@
 import os
 from enum import IntEnum, unique
 from dotenv import dotenv_values
+from typing import cast
 
 # dotenv vars
 config = dotenv_values(".env")
 
-CISLUNAR_BASE_DIR = config["CISLUNAR_BASE_DIR"]
+CISLUNAR_BASE_DIR = cast("str", config["CISLUNAR_BASE_DIR"])
 FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
 LOG = config["LOG"] == "1"
 

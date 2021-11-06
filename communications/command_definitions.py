@@ -28,27 +28,31 @@ def verification(**kwargs):
     """CQC Comms Verification
     For more info see https://cornell.app.box.com/file/766365097328
     Assuming a data rate of 50 bits/second, 30 minutes of data transmission gives 78 data blocks"""
-    num_blocks: int = cast('int', kwargs.get(NUM_BLOCKS))
+    num_blocks: int = cast("int", kwargs.get(NUM_BLOCKS))
 
     data_block_sequence_num = 0
-    team_bytes = team_identifier.to_bytes(4, 'big')
+    team_bytes = team_identifier.to_bytes(4, "big")
     data_transmission_sequence = bytes()
 
     for _ in range(num_blocks):
         # header calculation:
-        sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
+        sequence_bytes = data_block_sequence_num.to_bytes(4, "big")
         # get current time
         timestamp = time.time()  # each block has its own timestamp
         # extract seconds and milliseconds from timestamp:
         seconds_int = int(timestamp)
-        seconds_bytes = seconds_int.to_bytes(4, 'big')
-        ms_bytes = int((timestamp - seconds_int) * (10 ** 6)).to_bytes(4, 'big')
+        seconds_bytes = seconds_int.to_bytes(4, "big")
+        ms_bytes = int((timestamp - seconds_int) * (10 ** 6)).to_bytes(4, "big")
 
         # concatenate header
         header = team_bytes + sequence_bytes + seconds_bytes + ms_bytes
 
-        operating_period_base_seed = team_identifier ^ seconds_int  # team identifier xor with timestamp seconds
-        block_seed = operating_period_base_seed ^ data_block_sequence_num  # xor previous with data block sequence num
+        operating_period_base_seed = (
+            team_identifier ^ seconds_int
+        )  # team identifier xor with timestamp seconds
+        block_seed = (
+            operating_period_base_seed ^ data_block_sequence_num
+        )  # xor previous with data block sequence num
 
         prn_length = 128 // 4  # integer division
         prn = [int()] * (prn_length + 1)  # preallocate memory for storing prn data
@@ -64,14 +68,18 @@ def verification(**kwargs):
 
         data_field = bytes()
         for j in prn:
-            data_field += j.to_bytes(4, 'big')  # concatenate prn data into bytes
+            data_field += j.to_bytes(4, "big")  # concatenate prn data into bytes
 
         data_block = header + data_field
 
-        data_transmission_sequence += data_block  # concatenate data block into transmission sequence
+        data_transmission_sequence += (
+            data_block  # concatenate data block into transmission sequence
+        )
         data_block_sequence_num += 1
 
-    return data_transmission_sequence.hex()  # TODO instead of returning, add to comms queue
+    return (
+        data_transmission_sequence.hex()
+    )  # TODO instead of returning, add to comms queue
 
 
 class CommandDefinitions:
@@ -113,12 +121,8 @@ class CommandDefinitions:
         }
 
         self.low_battery_commands = {
-            LBSCEnum.ExitLBSafetyMode.value: self.return_to_normal,
-            LBSCEnum.SetExitLBSafetyMode.value: self.set_exit_lowbatt_threshold,
-            LBSCEnum.SetParam.value: self.set_parameter,
-            LBSCEnum.CritTelem.value: self.gather_critical_telem,
             LBSCEnum.BasicTelem.value: self.gather_basic_telem,
-            LBSCEnum.DetailedTelem.value: self.gather_detailed_telem,
+            LBSCEnum.CritTelem: self.gather_critical_telem,
         }
 
         self.safety_commands = {
@@ -127,7 +131,7 @@ class CommandDefinitions:
             SafetyCommandEnum.SetParameter.value: self.set_parameter,
             SafetyCommandEnum.CritTelem.value: self.gather_critical_telem,
             SafetyCommandEnum.BasicTelem.value: self.gather_basic_telem,
-            SafetyCommandEnum.DetailedTelem.value: self.gather_detailed_telem
+            SafetyCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
         }
 
         self.opnav_commands = {}
@@ -140,7 +144,7 @@ class CommandDefinitions:
             TestCommandEnum.CommsDriver.value: self.comms_driver_test,
             TestCommandEnum.LongString.value: self.print_long_string,
             TestCommandEnum.PiShutdown.value: self.pi_shutdown,
-            TestCommandEnum.RTCTest.value: self.rtc_test
+            TestCommandEnum.RTCTest.value: self.rtc_test,
         }
 
         self.comms_commands = {}
@@ -159,7 +163,7 @@ class CommandDefinitions:
             CommandCommandEnum.AddFileBlock.value: self.add_file_block,
             CommandCommandEnum.GetFileBlocksInfo.value: self.get_file_blocks_info,
             CommandCommandEnum.ActivateFile.value: self.activate_file,
-            CommandCommandEnum.ShellCommand.value: self.shell_command
+            CommandCommandEnum.ShellCommand.value: self.shell_command,
         }
 
         self.attitude_commands = {}
@@ -176,7 +180,7 @@ class CommandDefinitions:
             FMEnum.TestMode.value: self.test_commands,
             FMEnum.CommsMode: self.comms_commands,
             FMEnum.Command.value: self.command_commands,
-            FMEnum.AttitudeAdjustment.value: self.attitude_commands
+            FMEnum.AttitudeAdjustment.value: self.attitude_commands,
         }
 
         for value in self.COMMAND_DICT.values():
@@ -195,19 +199,33 @@ class CommandDefinitions:
 
     def adc_test(self):
         # tests integration of ADC into the rest of the FSW
-        self._parent.logger.info("Cold junction temperature for gyro sensor in Celsius:")
+        self._parent.logger.info(
+            "Cold junction temperature for gyro sensor in Celsius:"
+        )
         self._parent.logger.info(self._parent.adc.get_gyro_temp())
 
         self._parent.logger.info(f"Pressure: {self._parent.adc.read_pressure()} psi")
-        self._parent.logger.info(f"Temperature: {self._parent.adc.read_temperature()} deg C")
+        self._parent.logger.info(
+            f"Temperature: {self._parent.adc.read_temperature()} deg C"
+        )
 
         self._parent.logger.info("Conversion sanity check: 25.6 degrees")
-        self._parent.logger.info(self._parent.adc.convert_volt_to_temp(self._parent.adc.convert_temp_to_volt(25.6)))
+        self._parent.logger.info(
+            self._parent.adc.convert_volt_to_temp(
+                self._parent.adc.convert_temp_to_volt(25.6)
+            )
+        )
         self._parent.logger.info("Conversion sanity check: 2.023 mV")
-        self._parent.logger.info(self._parent.adc.convert_temp_to_volt(self._parent.adc.convert_volt_to_temp(2.023)))
+        self._parent.logger.info(
+            self._parent.adc.convert_temp_to_volt(
+                self._parent.adc.convert_volt_to_temp(2.023)
+            )
+        )
 
     def rtc_test(self):
-        self._parent.logger.info(f"Oscillator Disabled: {self._parent.rtc.ds3231.disable_oscillator}")
+        self._parent.logger.info(
+            f"Oscillator Disabled: {self._parent.rtc.ds3231.disable_oscillator}"
+        )
         self._parent.logger.info(f"RTC Temp: {self._parent.rtc.get_temp()}")
         self._parent.logger.info(f"RTC Time: {self._parent.rtc.get_time()}")
         # time.sleep(1)
@@ -221,11 +239,15 @@ class CommandDefinitions:
         self._parent.logger.info("Disabling Oscillator, waiting 10 seconds")
         # self._parent.rtc.disable_oscillator()
         time.sleep(10)
-        self._parent.logger.info(f"RTC Time after disabling oscillator: {self._parent.rtc.get_time()}")
+        self._parent.logger.info(
+            f"RTC Time after disabling oscillator: {self._parent.rtc.get_time()}"
+        )
         self._parent.logger.info("Enabling Oscillator, waiting 10 seconds")
         # self._parent.rtc.enable_oscillator()
         time.sleep(10)
-        self._parent.logger.info(f"RTC Time after re-enabling oscillator: {self._parent.rtc.get_time()}")
+        self._parent.logger.info(
+            f"RTC Time after re-enabling oscillator: {self._parent.rtc.get_time()}"
+        )
         self._parent.logger.info("Disabling Oscillator")
         # self._parent.rtc.disable_oscillator()
         self._parent.handle_sigint(None, None)
@@ -251,7 +273,7 @@ class CommandDefinitions:
 
         # writes gyro data to gyro_data.txt. Caution, this file will be overwritten with every successive test
         self._parent.logger.info("Writing gyro data to file")
-        with open('gyro_data.txt', 'w') as filehandle:
+        with open("gyro_data.txt", "w") as filehandle:
             filehandle.writelines("%s\n" % line for line in gyro_data)
 
     def run_opnav(self):
@@ -266,30 +288,40 @@ class CommandDefinitions:
         initial_value = set_parameter(name, value, hard_set)
 
         acknowledgement = self._parent.downlink_handler.pack_downlink(
-            self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.SetParam.value, successful=True)
+            self._parent.downlink_counter,
+            FMEnum.Normal.value,
+            NormalCommandEnum.SetParam.value,
+            successful=True,
+        )
         self._parent.downlink_queue.put(acknowledgement)
 
-        self._parent.logger.info(f"Changed constant {name} from {initial_value} to {value}")
+        self._parent.logger.info(
+            f"Changed constant {name} from {initial_value} to {value}"
+        )
 
     def set_exit_lowbatt_threshold(self, **kwargs):
         """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
         requires one kwarg and does some basic sanity checks on the passed value"""
-        value = kwargs['vbatt']
+        value = kwargs["vbatt"]
         try:
             assert 6000 < value < 8400 and float(value) is float
             self.set_parameter(name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
         except AssertionError:
-            self._parent.logger.error(f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
+            self._parent.logger.error(
+                f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD"
+            )
 
     def set_opnav_interval(self, **kwargs):
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
-            requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
+        requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
         value = kwargs[INTERVAL]
         try:
             assert value > 1
             self.set_parameter(name="OPNAV_INTERVAL", value=value, hard_set=False)
         except AssertionError:
-            self._parent.logger.error(f"Incompatible value {value} for SET_OPNAV_INTERVAL")
+            self._parent.logger.error(
+                f"Incompatible value {value} for SET_OPNAV_INTERVAL"
+            )
 
     # def change_attitude(self, **kwargs):
     #     theta = kwargs.get(AZIMUTH)
@@ -314,7 +346,9 @@ class CommandDefinitions:
         except AssertionError:
             raise CommandArgException
 
-        self._parent.reorientation_queue.put((pulse_start_time, pulse_duration, pulse_num, pulse_dt))
+        self._parent.reorientation_queue.put(
+            (pulse_start_time, pulse_duration, pulse_num, pulse_dt)
+        )
 
     def gather_critical_telem(self):
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
@@ -331,7 +365,7 @@ class CommandDefinitions:
 
     def electrolysis(self, **kwargs):
         state = kwargs[STATE]
-        delay = kwargs.get(DELAY, 0)
+        # delay = kwargs.get(DELAY, 0)
         assert type(state) is bool
         params.WANT_TO_ELECTROLYZE = state
         # self._parent.gom.set_electrolysis(state, delay=delay)
@@ -342,14 +376,16 @@ class CommandDefinitions:
         params.IGNORE_LOW_BATTERY = ignore
 
     def schedule_maneuver(self, **kwargs):
-        time_burn = kwargs['time']
+        time_burn = kwargs["time"]
         self._parent.logger.info("Scheduling a maneuver at: " + str(float(time_burn)))
         # TODO save to disk as well
         if params.SCHEDULED_BURN_TIME > 0:
             self._parent.maneuver_queue.put(params.SCHEDULED_BURN_TIME)
         self._parent.maneuver_queue.put(float(time_burn))
         smallest_time_burn = self._parent.maneuver_queue.get()
-        self.set_parameter(name="SCHEDULED_BURN_TIME", value=smallest_time_burn, hard_set=False)  # for testing
+        self.set_parameter(
+            name="SCHEDULED_BURN_TIME", value=smallest_time_burn, hard_set=False
+        )  # for testing
 
     def return_to_normal(self):
         self._parent.replace_flight_mode_by_id(FMEnum.Normal.value)
@@ -363,14 +399,14 @@ class CommandDefinitions:
     def cease_comms(self, **kwargs):
         pword = kwargs[PASSWORD]
         if pword == 123:  # TODO, change
-            # I'm actually unsure of how to do this. Maybe do something with the GPIO pins so that the pi can't transmit
+            # I'm actually unsure of how to do this. Maybe do something with GPIO pins so that the pi can't transmit
             self._parent.logger.critical("Ceasing all communications")
-            # definitely should implement some sort of password and double verification to prevent accidental triggering
+            # should implement some sort of password and double verification to prevent accidental triggering
             raise NotImplementedError
 
     def set_system_clock(self, **kwargs):  # Needs validation (talk to Viraj)
         # need to validate this works, and need to integrate updating RTC
-        unix_epoch = kwargs['epoch']
+        unix_epoch = kwargs["epoch"]
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
 
@@ -383,13 +419,17 @@ class CommandDefinitions:
         self._parent.gom.pc.reboot()
 
     def power_cycle(self, **kwargs):
-        passcode = kwargs.get('passcode', 'bogus')
+        passcode = kwargs.get("passcode", "bogus")
         self._parent.gom.hard_reset(passcode)
 
     def gom_outputs(self, **kwargs):
-        output_channel = kwargs['output_channel']
-        state = kwargs.get('state', 0)  # if 'state' is not found in kwargs, assume we want it to turn off
-        delay = kwargs.get('delay', 0)  # if 'delay' is not found in kwargs, assume we want it immediately
+        output_channel = kwargs["output_channel"]
+        state = kwargs.get(
+            "state", 0
+        )  # if 'state' is not found in kwargs, assume we want it to turn off
+        delay = kwargs.get(
+            "delay", 0
+        )  # if 'delay' is not found in kwargs, assume we want it immediately
         self._parent.gom.set_output(output_channel, state, delay=delay)
 
     def gom_command(self, command_string: str, args: dict):
@@ -400,27 +440,35 @@ class CommandDefinitions:
             result = method_to_call(**args)
             return result
         except TypeError:
-            self._parent.logger.error(f"Incorrect args: {args} for gom method {command_string}")
+            self._parent.logger.error(
+                f"Incorrect args: {args} for gom method {command_string}"
+            )
 
     def general_command(self, method_name: str, args: dict):
         """Generalized satellite action command - very powerful and possibly dangerous.
-            Make sure you know exactly what you're doing when calling this."""
+        Make sure you know exactly what you're doing when calling this."""
 
         method_to_call = getattr(self._parent, method_name)
         try:
             result = method_to_call(**args)
             return result
         except TypeError:
-            self._parent.logger.error(f"Incorrect arguments: {args} for method {method_name}")
+            self._parent.logger.error(
+                f"Incorrect arguments: {args} for method {method_name}"
+            )
 
     def comms_driver_test(self):
 
         gyro = self._parent.gyro.get_gyro()
 
-        fx_data = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
-                                                              FMEnum.TestMode.value,
-                                                              TestCommandEnum.CommsDriver.value,
-                                                              gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
+        fx_data = self._parent.downlink_handler.pack_downlink(
+            self._parent.downlink_counter,
+            FMEnum.TestMode.value,
+            TestCommandEnum.CommsDriver.value,
+            gyro1=gyro[0],
+            gyro2=gyro[1],
+            gyro3=gyro[2],
+        )
 
         time.sleep(5)
         self._parent.radio.transmit(fx_data)
@@ -428,52 +476,52 @@ class CommandDefinitions:
     @staticmethod
     def pi_shutdown(**kwargs):
         # TODO: do this more gracefully
-        os.system('sudo poweroff')
+        os.system("sudo poweroff")
 
     def edit_file_at_line(self, **kwargs):
 
-        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
-        line_number = kwargs['line_number']
-        new_line = kwargs['new_line']
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs["file_path"]
+        line_number = kwargs["line_number"]
+        new_line = kwargs["new_line"]
 
         # Open and copy file
-        original_file = open(file_path, 'r+')
+        original_file = open(file_path, "r+")
         original_file_lines = original_file.readlines()
         new_file_lines = original_file_lines[:]
 
         # Modify copy at designated line
-        new_file_lines[line_number] = new_line + ' \n'
+        new_file_lines[line_number] = new_line + " \n"
 
         # Write copy onto original file and original file into a backup
-        backup_file = open('backup_' + file_path, 'w')
+        backup_file = open("backup_" + file_path, "w")
         backup_file.writelines(original_file_lines)
         original_file.writelines(new_file_lines)
 
     def insert_line_in_file(self, **kwargs):
 
-        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
-        line_number = kwargs['line_number']
-        new_line = kwargs['new_line']
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs["file_path"]
+        line_number = kwargs["line_number"]
+        new_line = kwargs["new_line"]
 
         # Get original file contents
-        original_file = open(file_path, 'r+')
+        original_file = open(file_path, "r+")
         my_file_lines = original_file.readlines()
         pre_contents = my_file_lines[:line_number]
         post_contents = my_file_lines[line_number:]
 
         # Write new line into file
         original_file.seek(0)
-        original_file.writelines(pre_contents + [new_line + ' \n'] + post_contents)
+        original_file.writelines(pre_contents + [new_line + " \n"] + post_contents)
 
     def set_file_to_update(self, **kwargs):
 
-        file_path = kwargs['file_path']
-        setattr(params, 'FILE_UPDATE_PATH', file_path)
+        file_path = kwargs["file_path"]
+        setattr(params, "FILE_UPDATE_PATH", file_path)
 
     def add_file_block(self, **kwargs):
 
-        block_number = kwargs['block_number']
-        block_text = kwargs['block_text']
+        block_number = kwargs["block_number"]
+        block_text = kwargs["block_text"]
 
         self._parent.file_block_bank[block_number] = block_text
 
@@ -489,9 +537,9 @@ class CommandDefinitions:
 
         time.sleep(15)  # For testing only
 
-        total_blocks = kwargs['total_blocks']
-        full_file_text = ''
-        missing_blocks = ''
+        total_blocks = kwargs["total_blocks"]
+        full_file_text = ""
+        missing_blocks = ""
 
         for i in range(total_blocks):
 
@@ -500,24 +548,21 @@ class CommandDefinitions:
                 full_file_text += block
 
             except KeyError:
-                missing_blocks += str(i) + ','
+                missing_blocks += str(i) + ","
 
-        checksum = hashlib.md5(full_file_text.encode('utf-8')).hexdigest()
+        checksum = hashlib.md5(full_file_text.encode("utf-8")).hexdigest()
 
-        return ({
-            'checksum': checksum,
-            'missing_blocks': missing_blocks
-        })
+        return {"checksum": checksum, "missing_blocks": missing_blocks}
 
     def activate_file(self, **kwargs):
 
-        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
-        total_blocks = kwargs['total_blocks']
-        local_file_name = kwargs['file_path']
+        file_path = FLIGHT_SOFTWARE_PATH + kwargs["file_path"]
+        total_blocks = kwargs["total_blocks"]
+        local_file_name = kwargs["file_path"]
 
-        assert (total_blocks == len(self._parent.file_block_bank))
+        assert total_blocks == len(self._parent.file_block_bank)
 
-        full_file_text = ''
+        full_file_text = ""
 
         # Assemble file from blocks
         for i in range(total_blocks):
@@ -525,14 +570,18 @@ class CommandDefinitions:
 
         # Create backup with the original if the file already exists
         if os.path.exists(file_path):
-            original_file = open(file_path, 'r')
+            original_file = open(file_path, "r")
             original_file_lines = original_file.readlines()
-            backup_name = FLIGHT_SOFTWARE_PATH + local_file_name[:local_file_name.index('.py')] + '_backup.py'
-            backup_file = open(backup_name, 'w')
+            backup_name = (
+                FLIGHT_SOFTWARE_PATH
+                + local_file_name[: local_file_name.index(".py")]
+                + "_backup.py"
+            )
+            backup_file = open(backup_name, "w")
             backup_file.writelines(original_file_lines)
 
         # Opens target file, creates one with the given path if it doesn't exist yet
-        original_file = open(file_path, 'w')
+        original_file = open(file_path, "w")
 
         # Write chained file blocks to the target file path
         original_file.seek(0)
@@ -541,8 +590,8 @@ class CommandDefinitions:
         self._parent.file_block_bank = {}
 
     def print_long_string(self, **kwargs):
-        number = kwargs['some_number']
-        string = kwargs['long_string']
+        number = kwargs["some_number"]
+        string = kwargs["long_string"]
 
         print(number)
         print(string)
@@ -554,7 +603,9 @@ class CommandDefinitions:
 
             self._parent.nemo_manager.write_register(reg_address, values)
         else:
-            self._parent.logger.error("CMD: nemo_write_register() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_write_register() failed, nemo_manager not initialized"
+            )
 
     def nemo_read_register(self, **kwargs):
         if self._parent.nemo_manager is not None:
@@ -563,31 +614,41 @@ class CommandDefinitions:
 
             self._parent.nemo_manager.read_register(reg_address, size)
         else:
-            self._parent.logger.error("CMD: nemo_read_register() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_read_register() failed, nemo_manager not initialized"
+            )
 
     def nemo_set_config(self, **kwargs):
         if self._parent.nemo_manager is not None:
             self._parent.nemo_manager.set_config(**kwargs)
         else:
-            self._parent.logger.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_set_config() failed, nemo_manager not initialized"
+            )
 
     def nemo_power_off(self):
         if self._parent.nemo_manager is not None:
             self._parent.nemo_manager.power_off()
         else:
-            self._parent.logger.error("CMD: nemo_power_off() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_power_off() failed, nemo_manager not initialized"
+            )
 
     def nemo_power_on(self):
         if self._parent.nemo_manager is not None:
             self._parent.nemo_manager.power_on()
         else:
-            self._parent.logger.error("CMD: nemo_power_on() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_power_on() failed, nemo_manager not initialized"
+            )
 
     def nemo_reboot(self):
         if self._parent.nemo_manager is not None:
             self._parent.nemo_manager.reboot()
         else:
-            self._parent.logger.error("CMD: nemo_reboot() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_reboot() failed, nemo_manager not initialized"
+            )
 
     def nemo_process_rate_data(self, **kwargs):
         if self._parent.nemo_manager is not None:
@@ -595,9 +656,13 @@ class CommandDefinitions:
             t_stop = kwargs[T_STOP]
             decimation_factor = kwargs[DECIMATION_FACTOR]
 
-            self._parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+            self._parent.nemo_manager.process_rate_data(
+                t_start, t_stop, decimation_factor
+            )
         else:
-            self._parent.logger.error("CMD: nemo_process_rate_data() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_process_rate_data() failed, nemo_manager not initialized"
+            )
 
     def nemo_process_histograms(self, **kwargs):
         if self._parent.nemo_manager is not None:
@@ -605,9 +670,13 @@ class CommandDefinitions:
             t_stop = kwargs[T_STOP]
             decimation_factor = kwargs[DECIMATION_FACTOR]
 
-            self._parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
+            self._parent.nemo_manager.process_histograms(
+                t_start, t_stop, decimation_factor
+            )
         else:
-            self._parent.logger.error("CMD: nemo_process_histograms() failed, nemo_manager not initialized")
+            self._parent.logger.error(
+                "CMD: nemo_process_histograms() failed, nemo_manager not initialized"
+            )
 
     def set_gom_conf1(self, **kwargs):
         new_config = eps_config_from_dict(**kwargs)
@@ -620,9 +689,13 @@ class CommandDefinitions:
                 updated_config: ps.eps_config_t = self._parent.gom.pc.config_get()
 
                 new_config_dict = dict_from_eps_config(updated_config)
-                acknowledgement = self._parent.downlink_handler.pack_downlink(
-                    self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Set.value,
-                    **new_config_dict)
+                # acknowledgement =
+                self._parent.downlink_handler.pack_downlink(
+                    self._parent.downlink_counter,
+                    FMEnum.Normal.value,
+                    NormalCommandEnum.GomConf1Set.value,
+                    **new_config_dict,
+                )
 
             except Exception:
                 self._parent.logger.error("Could not set new gom config")
@@ -635,9 +708,11 @@ class CommandDefinitions:
 
     def get_gom_conf1(self, **kwargs):
         if self._parent.gom is not None:
-            current_config: ps.eps_config_t = cast('ps.eps_config_t', self._parent.gom.get_health_data(level="config"))
+            current_config: ps.eps_config_t = cast(
+                "ps.eps_config_t", self._parent.gom.get_health_data(level="config")
+            )
             ps.displayConfig(current_config)
-            current_config_dict = dict_from_eps_config(current_config)
+            # current_config_dict = dict_from_eps_config(current_config)
             # acknowledgement = self._parent.downlink_handler.pack_downlink(
             #     self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf1Get.value,
             #     **current_config_dict)
@@ -651,98 +726,119 @@ class CommandDefinitions:
 
     def get_gom_conf2(self, **kwargs):
         if self._parent.gom is not None:
-            current_conf2 = cast('ps.eps_config2_t', self._parent.gom.get_health_data(level='config2'))
+            current_conf2 = cast(
+                "ps.eps_config2_t", self._parent.gom.get_health_data(level="config2")
+            )
             ps.displayConfig2(current_conf2)
-            current_config2_dict = dict_from_eps_config2(current_conf2)
+            # current_config2_dict = dict_from_eps_config2(current_conf2)
             # acknowledgement = self._parent.downlink_handler.pack_downlink(
             #    self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.GomConf2Get.value,
             #    **current_config2_dict)
             # self._parent.downlink_queue.put(acknowledgement)
 
     def shell_command(self, **kwargs):
-        cmd: str = cast('str', kwargs.get(CMD))
+        cmd: str = cast("str", kwargs.get(CMD))
         self._parent.logger.info(f"Running {cmd}")
         output = subprocess.run(cmd, shell=True)
 
-        response = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
-                                                               self._parent.flight_mode.flight_mode_id,
-                                                               NormalCommandEnum.ShellCommand.value,
-                                                               return_code=output.returncode)
+        response = self._parent.downlink_handler.pack_downlink(
+            self._parent.downlink_counter,
+            self._parent.flight_mode.flight_mode_id,
+            NormalCommandEnum.ShellCommand.value,
+            return_code=output.returncode,
+        )
         self._parent.downlink_queue.put(response)
 
     def sudo_command(self, **kwargs):
         """Same as shell_command, but prepends 'sudo ' to the command"""
-        cmd: str = cast('str', kwargs.get(CMD))
-        command = 'sudo ' + cmd
+        cmd: str = cast("str", kwargs.get(CMD))
+        command = "sudo " + cmd
         self.shell_command(cmd=command)
 
     def picberry(self, **kwargs):
-        cmd: str = cast('str', kwargs.get(CMD))
+        cmd: str = cast("str", kwargs.get(CMD))
         base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
         subprocess.run(base_command + cmd, shell=True)
 
     def exec_py_file(self, **kwargs):
-        filename: str = cast('str', kwargs.get(FNAME))
-        filename += '.py'
+        filename: str = cast("str", kwargs.get(FNAME))
+        filename += ".py"
         self._parent.logger.debug(f"CWD: {os.getcwd()}")
         exec(open(filename).read())
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:
-    return {PPT_MODE: config.ppt_mode,
-            BATTHEATERMODE: bool(config.battheater_mode),
-            BATTHEATERLOW: config.battheater_low,
-            BATTHEATERHIGH: config.battheater_high,
-            OUTPUT_NORMAL1: bool(config.output_normal_value[0]),
-            OUTPUT_NORMAL2: bool(config.output_normal_value[1]),
-            OUTPUT_NORMAL3: bool(config.output_normal_value[2]),
-            OUTPUT_NORMAL4: bool(config.output_normal_value[3]),
-            OUTPUT_NORMAL5: bool(config.output_normal_value[4]),
-            OUTPUT_NORMAL6: bool(config.output_normal_value[5]),
-            OUTPUT_NORMAL7: bool(config.output_normal_value[6]),
-            OUTPUT_NORMAL8: bool(config.output_normal_value[7]),
-            OUTPUT_SAFE1: bool(config.output_safe_value[0]),
-            OUTPUT_SAFE2: bool(config.output_safe_value[1]),
-            OUTPUT_SAFE3: bool(config.output_safe_value[2]),
-            OUTPUT_SAFE4: bool(config.output_safe_value[3]),
-            OUTPUT_SAFE5: bool(config.output_safe_value[4]),
-            OUTPUT_SAFE6: bool(config.output_safe_value[5]),
-            OUTPUT_SAFE7: bool(config.output_safe_value[6]),
-            OUTPUT_SAFE8: bool(config.output_safe_value[7]),
-            OUTPUT_ON_DELAY: config.output_initial_on_delay[0],
-            OUTPUT_OFF_DELAY: config.output_initial_off_delay[0],
-            VBOOST1: config.vboost[0],
-            VBOOST2: config.vboost[1],
-            VBOOST3: config.vboost[2],
-            }
+    return {
+        PPT_MODE: config.ppt_mode,
+        BATTHEATERMODE: bool(config.battheater_mode),
+        BATTHEATERLOW: config.battheater_low,
+        BATTHEATERHIGH: config.battheater_high,
+        OUTPUT_NORMAL1: bool(config.output_normal_value[0]),
+        OUTPUT_NORMAL2: bool(config.output_normal_value[1]),
+        OUTPUT_NORMAL3: bool(config.output_normal_value[2]),
+        OUTPUT_NORMAL4: bool(config.output_normal_value[3]),
+        OUTPUT_NORMAL5: bool(config.output_normal_value[4]),
+        OUTPUT_NORMAL6: bool(config.output_normal_value[5]),
+        OUTPUT_NORMAL7: bool(config.output_normal_value[6]),
+        OUTPUT_NORMAL8: bool(config.output_normal_value[7]),
+        OUTPUT_SAFE1: bool(config.output_safe_value[0]),
+        OUTPUT_SAFE2: bool(config.output_safe_value[1]),
+        OUTPUT_SAFE3: bool(config.output_safe_value[2]),
+        OUTPUT_SAFE4: bool(config.output_safe_value[3]),
+        OUTPUT_SAFE5: bool(config.output_safe_value[4]),
+        OUTPUT_SAFE6: bool(config.output_safe_value[5]),
+        OUTPUT_SAFE7: bool(config.output_safe_value[6]),
+        OUTPUT_SAFE8: bool(config.output_safe_value[7]),
+        OUTPUT_ON_DELAY: config.output_initial_on_delay[0],
+        OUTPUT_OFF_DELAY: config.output_initial_off_delay[0],
+        VBOOST1: config.vboost[0],
+        VBOOST2: config.vboost[1],
+        VBOOST3: config.vboost[2],
+    }
 
 
 def eps_config_from_dict(**kwargs) -> ps.eps_config_t:
     ppt_mode = kwargs.get(PPT_MODE)
-    heater_mode = int(kwargs[BATTHEATERMODE])  # BATTHEATERMODE is transmitted as a bool, then cast to 0/1
+    heater_mode = int(
+        kwargs[BATTHEATERMODE]
+    )  # BATTHEATERMODE is transmitted as a bool, then cast to 0/1
     heater_low = kwargs.get(BATTHEATERLOW)
     heater_high = kwargs.get(BATTHEATERHIGH)
-    normal_output: List[bool] = cast('List[bool]', [kwargs.get(OUTPUT_NORMAL1),
-                                                    kwargs.get(OUTPUT_NORMAL2),
-                                                    kwargs.get(OUTPUT_NORMAL3),
-                                                    kwargs.get(OUTPUT_NORMAL4),
-                                                    kwargs.get(OUTPUT_NORMAL5),
-                                                    kwargs.get(OUTPUT_NORMAL6),
-                                                    kwargs.get(OUTPUT_NORMAL7),
-                                                    kwargs.get(OUTPUT_NORMAL8)])
+    normal_output: List[bool] = cast(
+        "List[bool]",
+        [
+            kwargs.get(OUTPUT_NORMAL1),
+            kwargs.get(OUTPUT_NORMAL2),
+            kwargs.get(OUTPUT_NORMAL3),
+            kwargs.get(OUTPUT_NORMAL4),
+            kwargs.get(OUTPUT_NORMAL5),
+            kwargs.get(OUTPUT_NORMAL6),
+            kwargs.get(OUTPUT_NORMAL7),
+            kwargs.get(OUTPUT_NORMAL8),
+        ],
+    )
 
-    normal_output_int = list(map(int, normal_output))  # transmitted as bools, convert to ints
+    normal_output_int = list(
+        map(int, normal_output)
+    )  # transmitted as bools, convert to ints
 
-    safe_output: List[bool] = cast('List[bool]', [kwargs.get(OUTPUT_SAFE1),
-                                                  kwargs.get(OUTPUT_SAFE2),
-                                                  kwargs.get(OUTPUT_SAFE3),
-                                                  kwargs.get(OUTPUT_SAFE4),
-                                                  kwargs.get(OUTPUT_SAFE5),
-                                                  kwargs.get(OUTPUT_SAFE6),
-                                                  kwargs.get(OUTPUT_SAFE7),
-                                                  kwargs.get(OUTPUT_SAFE8)])
+    safe_output: List[bool] = cast(
+        "List[bool]",
+        [
+            kwargs.get(OUTPUT_SAFE1),
+            kwargs.get(OUTPUT_SAFE2),
+            kwargs.get(OUTPUT_SAFE3),
+            kwargs.get(OUTPUT_SAFE4),
+            kwargs.get(OUTPUT_SAFE5),
+            kwargs.get(OUTPUT_SAFE6),
+            kwargs.get(OUTPUT_SAFE7),
+            kwargs.get(OUTPUT_SAFE8),
+        ],
+    )
 
-    safe_output_int: List[int] = list(map(int, safe_output))  # transmitted as bools, convert to ints
+    safe_output_int: List[int] = list(
+        map(int, safe_output)
+    )  # transmitted as bools, convert to ints
 
     # this means that all outputs have the same on/off delay
     initial_on_delay = [kwargs.get(OUTPUT_ON_DELAY)] * 8
@@ -816,7 +912,9 @@ def eps_config2_from_dict(config_dict: dict) -> ps.eps_config2_t:
 
 
 def dict_from_eps_config2(conf2: ps.eps_config2_t) -> dict:
-    return {MAX_VOLTAGE: conf2.batt_maxvoltage,
-            NORM_VOLTAGE: conf2.batt_normalvoltage,
-            SAFE_VOLTAGE: conf2.batt_safevoltage,
-            CRIT_VOLTAGE: conf2.batt_criticalvoltage}
+    return {
+        MAX_VOLTAGE: conf2.batt_maxvoltage,
+        NORM_VOLTAGE: conf2.batt_normalvoltage,
+        SAFE_VOLTAGE: conf2.batt_safevoltage,
+        CRIT_VOLTAGE: conf2.batt_criticalvoltage,
+    }

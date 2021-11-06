@@ -32,7 +32,7 @@ gom.rf_transmitting_switch(receive=False)
 print('RF transmitting set to high')
 
 #Turn on power amplifier
-gom.set_PA(on=True)
+gom.set_pa(on=True)
 print('Power amplifier turned on')
 #–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 #Downlink
@@ -45,7 +45,7 @@ for i in range(1, repetitions+1):
 #Enter Receiving Mode
 
 #Turn off power amplifier
-gom.set_PA(on=False)
+gom.set_pa(on=False)
 print('Power amplifier turned off')
 
 #Set RF transmitting side to low

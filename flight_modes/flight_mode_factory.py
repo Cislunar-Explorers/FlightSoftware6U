@@ -1,13 +1,14 @@
 from flight_modes.flight_mode import (
     NormalMode,
-    LowBatterySafetyMode,
     SafeMode,
     SensorMode,
     TestMode,
     CommsMode,
     OpNavMode,
-    CommandMode
+    CommandMode,
 )
+
+from flight_modes.low_battery import LowBatterySafetyMode
 
 from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.maneuver_flightmode import ManeuverMode
@@ -27,7 +28,7 @@ FLIGHT_MODE_DICT = {
     FMEnum.TestMode.value: TestMode,
     FMEnum.CommsMode.value: CommsMode,
     FMEnum.Command.value: CommandMode,
-    FMEnum.AttitudeAdjustment.value: AAMode
+    FMEnum.AttitudeAdjustment.value: AAMode,
 }
 
 

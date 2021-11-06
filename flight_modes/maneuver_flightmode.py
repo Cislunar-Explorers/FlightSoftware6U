@@ -11,6 +11,9 @@ NO_ARGS = ([], 0)
 
 
 class ManeuverMode(PauseBackgroundMode):
+    """FMID 6: Maneuver Mode
+    This flight mode is dedicated to accurately firing our electrolysis thruster to make orbital changes"""
+
     flight_mode_id = consts.FMEnum.Maneuver.value
     command_codecs = {consts.ManeuverCommandEnum.Switch.value: NO_ARGS}
     command_arg_unpackers = {}
@@ -25,7 +28,10 @@ class ManeuverMode(PauseBackgroundMode):
 
     def valid_glowplug(self, current_pressure, prior_pressure):
         """Check pressure in place of acceleration for glowplug validation."""
-        return current_pressure <= consts.PRESSURE_THRESHOLD and current_pressure - prior_pressure <= consts.PRESSURE_DELTA
+        return (
+            current_pressure <= consts.PRESSURE_THRESHOLD
+            and current_pressure - prior_pressure <= consts.PRESSURE_DELTA
+        )
 
     def update_state(self) -> int:
         if self.task_completed is True:
@@ -51,13 +57,17 @@ class ManeuverMode(PauseBackgroundMode):
                 self._parent.gom.glowplug(consts.GLOWPLUG_DURATION)
                 sleep(consts.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
-                self.task_completed = self.valid_glowplug(current_pressure, prior_pressure)
+                self.task_completed = self.valid_glowplug(
+                    current_pressure, prior_pressure
+                )
                 self.glowplug1_valid = self.task_completed
             if not self.glowplug1_valid and self.glowplug2_valid:
                 self._parent.gom.glowplug2(consts.GLOWPLUG_DURATION)
                 sleep(consts.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
-                self.task_completed = self.valid_glowplug(current_pressure, prior_pressure)
+                self.task_completed = self.valid_glowplug(
+                    current_pressure, prior_pressure
+                )
                 self.glowplug2_valid = self.task_completed
             if not self.glowplug1_valid and not self.glowplug2_valid:
                 # TODO ground msg?... do a final check?

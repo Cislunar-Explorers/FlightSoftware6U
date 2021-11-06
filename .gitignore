@@ -135,6 +135,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
 # Extra
 .DS_STORE
+
+# Other
+cislunar_data

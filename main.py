@@ -1,24 +1,19 @@
-import sys
-from threading import Thread
 from multiprocessing import Process
-from time import time
-from datetime import datetime
 from queue import Queue, PriorityQueue
-import signal
-from typing import Optional
-from utils.log import get_log, log_error
+from threading import Thread
 from time import sleep
+from time import time
+from typing import Optional
 import os
+import signal
+import sys
 
-from utils.constants import *
-import utils.parameters as params
+import utils.constants as consts
 from utils.db import create_sensor_tables_from_path
+from utils.log import get_log, log_error
 
 # from drivers.dummy_sensors import PressureSensor
-from flight_modes.restart_reboot import (
-    RestartMode,
-    BootUpMode,
-)
+from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.flight_mode_factory import build_flight_mode
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
@@ -38,8 +33,6 @@ import core.camera as camera
 from utils.parameter_utils import init_parameters
 
 
-FOR_FLIGHT = None
-
 logger = get_log()
 
 
@@ -49,7 +42,7 @@ class MainSatelliteThread(Thread):
         logger.info("Initializing...")
         self.command_queue = Queue()
         self.downlink_queue = Queue()
-        self.FMQueue = Queue()
+        self.FMQueue: Queue[int] = Queue()
         self.commands_to_execute = []
         self.downlinks_to_execute = []
         self.burn_queue = Queue()
@@ -64,8 +57,8 @@ class MainSatelliteThread(Thread):
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
-        self.log_dir = LOG_DIR
+        self.last_opnav_run = time()  # Figure out what to set to for first opnav run
+        self.log_dir = consts.LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
         self.file_block_bank = {}
@@ -88,10 +81,10 @@ class MainSatelliteThread(Thread):
             self.flight_mode = RestartMode(self)
         else:
             logger.info("We are in Bootup Mode")
-            os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
-            os.mkdir(LOG_DIR)
+            os.makedirs(consts.CISLUNAR_BASE_DIR, exist_ok=True)
+            os.mkdir(consts.LOG_DIR)
             self.flight_mode = BootUpMode(self)
-        self.create_session = create_sensor_tables_from_path(DB_FILE)
+        self.create_session = create_sensor_tables_from_path(consts.DB_FILE)
         logger.info("Initializing Telemetry")
         self.telemetry = Telemetry(self)
 
@@ -102,9 +95,7 @@ class MainSatelliteThread(Thread):
         logger.info("Done intializing")
 
     def init_comms(self):
-        self.comms = CommunicationsSystem(
-            queue=self.command_queue, use_ax5043=False
-        )
+        self.comms = CommunicationsSystem(queue=self.command_queue, use_ax5043=False)
         self.comms.listen()
 
     def init_sensors(self) -> int:
@@ -147,7 +138,9 @@ class MainSatelliteThread(Thread):
             logger.info("RTC initialized")
 
         try:
-            self.nemo_manager = NemoManager(port_id=3, data_dir=NEMO_DIR, reset_gpio_ch=16)
+            self.nemo_manager = NemoManager(
+                port_id=3, data_dir=consts.NEMO_DIR, reset_gpio_ch=16
+            )
         except Exception as e:
             # self.nemo_manager = None
             log_error(e)
@@ -184,7 +177,9 @@ class MainSatelliteThread(Thread):
                 for i in [1, 2, 3]:
                     try:
                         self.mux.selectCamera(i)
-                        f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
+                        f, t = self.camera.rawObservation(
+                            f"initialization-{i}-{int(time())}"
+                        )
                     except Exception as e:
                         log_error(e)
                         logger.error(f"CAM{i} initialization failed")
@@ -197,17 +192,25 @@ class MainSatelliteThread(Thread):
                     raise Exception
             except Exception:
                 # self.camera = None
-                logger.error(f"Cameras initialization failed")
+                logger.error("Cameras initialization failed")
             else:
                 logger.info("Cameras initialized")
         else:
             self.need_to_reboot = True
 
         # make a bitmask of the initialized sensors for downlinking
-        sensors = [self.gom, self.radio, self.gyro, self.adc, self.rtc, self.mux, self.camera]
+        sensors = [
+            self.gom,
+            self.radio,
+            self.gyro,
+            self.adc,
+            self.rtc,
+            self.mux,
+            self.camera,
+        ]
         sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
         sensor_functioning_list.extend(cameras_list)
-        sensor_bitmask = ''.join(map(str, sensor_functioning_list))
+        sensor_bitmask = "".join(map(str, sensor_functioning_list))
         logger.debug(f"Sensors: {sensor_bitmask}")
         return int(sensor_bitmask, 2)
 
@@ -221,17 +224,8 @@ class MainSatelliteThread(Thread):
     def poll_inputs(self):
 
         self.flight_mode.poll_inputs()
-        # TODO: move this following if block to the telemetry file
+        # TODO: move this following if block to the telemetry module
         if self.radio is not None:
-            # Telemetry downlink
-            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:
-                telemetry = self.command_definitions.gather_basic_telem()
-                telem_downlink = (
-                    self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
-                                                        NormalCommandEnum.BasicTelem.value, **telemetry))
-                self.downlink_queue.put(telem_downlink)
-                self.radio.last_telemetry_time = datetime.today()
-
             # Listening for new commands
             newCommand = self.radio.receiveSignal()
             if newCommand is not None:
@@ -241,11 +235,15 @@ class MainSatelliteThread(Thread):
                         self.command_queue.put(bytes(newCommand))
                         self.command_counter += 1
                     else:
-                        logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
-                except:
-                    logger.error('Invalid Command Received')
+                        logger.warning(
+                            "Command with Invalid Counter Received. Counter: "
+                            + str(unpackedCommand[1])
+                        )
+                except Exception as e:
+                    log_error(e, logger.error)
+                    logger.error("Invalid Command Received")
             else:
-                logger.debug('Not Received')
+                logger.debug("Not Received")
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -260,7 +258,10 @@ class MainSatelliteThread(Thread):
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
         if fm_to_update_to is None:
             pass
-        elif fm_to_update_to != NO_FM_CHANGE and fm_to_update_to != self.flight_mode.flight_mode_id:
+        elif (
+            fm_to_update_to != consts.NO_FM_CHANGE
+            and fm_to_update_to != self.flight_mode.flight_mode_id
+        ):
             self.replace_flight_mode_by_id(fm_to_update_to)
 
     def clear_command_queue(self):
@@ -312,7 +313,7 @@ class MainSatelliteThread(Thread):
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
 
-                #________________send data udp  _______________________#
+                # ________________send data udp  _______________________#
                 self.client.send_data(self.telemetry.detailed_packet_dict())
 
         except Exception as e:
@@ -320,8 +321,8 @@ class MainSatelliteThread(Thread):
             logger.error("Error in main loop. Transitioning to SAFE mode")
         finally:
             # TODO handle failure gracefully
-            if FOR_FLIGHT is True:
-                self.replace_flight_mode_by_id(FMEnum.Safety.value)
+            if consts.FOR_FLIGHT:
+                self.replace_flight_mode_by_id(consts.FMEnum.Safety.value)
                 self.run()
             else:
                 self.shutdown()
@@ -336,6 +337,5 @@ class MainSatelliteThread(Thread):
 
 
 if __name__ == "__main__":
-    FOR_FLIGHT = False
     main = MainSatelliteThread()
     main.run()

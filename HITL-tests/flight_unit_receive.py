@@ -6,7 +6,7 @@ gom = Gomspace()
 transmissionCounter = 0
 
 #Turn off power amplifier
-gom.set_PA(on=False)
+gom.set_pa(on=False)
 print('Power amplifier turned off')
 
 #Set RF transmitting side to low

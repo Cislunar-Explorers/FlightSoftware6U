@@ -17,9 +17,7 @@ class ParametersTestCase(unittest.TestCase):
 
         py_list = parameter_utils.get_parameter_list()
         json_list = parameter_utils.get_parameter_list(hard=True, filename=self.filepath)
-        inconsistencies = set(py_list).symmetric_difference(json_list)
-        if not inconsistencies:
-            raise ValueError(f"These parameter names are not consistent: {inconsistencies}")
+        self.assertCountEqual(py_list, json_list)
 
     def test_parameters_init(self):
         parameter_utils.init_parameters(filename=self.filepath)

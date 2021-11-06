@@ -11,7 +11,7 @@ def test_env(mocker):
 
 
 def test_normal_env():
-    assert "DATABASE_URL" in config
+    assert "DB_FILE" in config
     assert "FOR_FLIGHT" in config
     assert "LOG" in config
     assert config["FOR_FLIGHT"] == "1"

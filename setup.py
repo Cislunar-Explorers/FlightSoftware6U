@@ -33,7 +33,6 @@ INSTALL_REQUIRES = [
     "python-dotenv",
     "scipy",
     "sqlalchemy",
-    "SQLAlchemy",
     "tqdm",
     "uptime",
 ]

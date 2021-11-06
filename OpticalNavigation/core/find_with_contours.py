@@ -192,7 +192,7 @@ def tile_transform_bb(src, cam, rot, dst):
                   [xstp[0, 1] - xmin, ystp[0, 1] - ymin],
                   [xstp[1, 1] - xmin, ystp[1, 1] - ymin]], dtype=np.float32)
     c = np.linalg.lstsq(a, b, rcond=None)[0].T
-    print(c)
+    #print(c)
     return c, bb
 
 
@@ -340,7 +340,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
     c = contours[max_index]
-    del contours[max_index]
+    #del contours[max_index]
 
     x, y, w, h = cv2.boundingRect(c)
 

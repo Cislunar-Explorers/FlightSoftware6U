@@ -1,180 +1,76 @@
-from struct import error as StructError
-from sys import maxsize, float_info
-import utils.struct as us
-import hashlib
+from __future__ import annotations
 
-from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
-from utils.constants import (
-    MIN_COMMAND_SIZE,
-    MODE_OFFSET,
-    ID_OFFSET,
-    DATA_LEN_OFFSET,
-    DATA_OFFSET,
-    MAC_LENGTH,
-    MAC_KEY,
-    COUNTER_OFFSET,
-    COUNTER_SIZE
-)
-from utils.exceptions import (
-    SerializationException,
-    CommandPackingException,
-    CommandUnpackingException,
-    DeserializationException
-)
-from utils.struct import (
-    pack_unsigned_short,
-    unpack_unsigned_short,
-    packer_dict
-)
+from abc import ABC, abstractmethod, abstractproperty
+from utils.constants import MIN_COMMAND_SIZE
+from utils.exceptions import CommandException
+from typing import TYPE_CHECKING, Union, Dict, List, Any, Optional
+from communications.codec import Codec
+import logging
+
+from utils.log import log_error
+
+if TYPE_CHECKING:
+    from main import MainSatelliteThread
 
 
-def calc_command_size(data: bytes):
-    return MIN_COMMAND_SIZE + len(data)
+class Command(ABC):
+    uplink_args: List[Codec]
+    downlink_telem: List[Codec]
+    id: int  # ID must be between 0 and 255 - every command ID must be different. I can't think of a way to autogenerate these, so this will have to be enforced in practice
 
+    def __init__(self) -> None:
+        self.uplink_buffer_size = sum(
+            [codec.num_bytes for codec in self.uplink_args])
+        if self.uplink_buffer_size > 200 - MIN_COMMAND_SIZE:
+            logging.error(
+                f"Buffer size too big: {self.uplink_buffer_size} > {200 - MIN_COMMAND_SIZE}")
+        self.downlink_buffer_size = sum(
+            [codec.num_bytes for codec in self.downlink_telem])
 
-def pack_command_bytes(counter: int, mode: int, command_id: int, data: bytes):
-    buf = bytearray(calc_command_size(data))
-    buf[COUNTER_OFFSET - MAC_LENGTH: COUNTER_OFFSET - MAC_LENGTH + COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE, 'big')
-    buf[MODE_OFFSET - MAC_LENGTH] = mode
-    buf[ID_OFFSET - MAC_LENGTH] = command_id
-    pack_unsigned_short(buf, DATA_LEN_OFFSET - MAC_LENGTH, len(data))
-    buf[DATA_OFFSET - MAC_LENGTH:] = data
-    mac = hashlib.blake2s(bytes(buf), digest_size=MAC_LENGTH, key=MAC_KEY).digest()
-    return mac + bytes(buf)
+    @abstractmethod
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+        pass
 
-
-def unpack_command_bytes(data: bytes):
-    mac = data[:MAC_LENGTH]
-    counter = int.from_bytes(data[COUNTER_OFFSET:COUNTER_OFFSET + COUNTER_SIZE], 'big')
-    mode = data[MODE_OFFSET]
-    command_id = data[ID_OFFSET]
-    data_len = unpack_unsigned_short(data, DATA_LEN_OFFSET)[1]  # TODO can this be replaced with uint8?
-    if data_len + DATA_OFFSET != len(data):
-        raise CommandUnpackingException(
-            f"Incorrect data buffer size: {len(data)}, expected "
-            f"{data_len + DATA_OFFSET} for command with Mode: {mode}"
-            f"CommandID: {command_id}"
-        )
-    return mac, counter, mode, command_id, data[DATA_OFFSET:]
-
-
-class CommandHandler:
-    def __init__(self):
-        self.command_dict = dict()
-        self.packers = dict()
-        self.unpackers = dict()
-        # Packers and unpackers will always have identical set of keys
-        # Enforced in practice
-        self.register_codecs()
-        self.register_commands()
-
-    def register_codecs(self):
-        for mode_id, mode_name in FLIGHT_MODE_DICT.items():
-            for argname, arg_type in mode_name.command_arg_types.items():
-                pack_tuple = packer_dict[arg_type]
-                packer, unpacker = pack_tuple
-                self.register_new_codec(argname, packer, unpacker)
-
-    def get_command_size(self, mode: int, application_id: int):
-        return self.command_dict[mode][application_id][1] + DATA_OFFSET
-
-    def register_new_codec(self, arg: str, packer, unpacker):
-        if arg in self.packers:
-            raise SerializationException(
-                "Trying to register a codec for an existing argument"
-            )
-
-        self.packers[arg] = packer
-        self.unpackers[arg] = unpacker
-
-    def pack_command(self, counter: int, mode: int, command_id: int, **kwargs) -> bytes:
-        func_args, buffer_size = self.command_dict[mode][command_id]
-        data_buffer = bytearray(buffer_size)
+    @staticmethod
+    def _unpack(data: bytes, codec_list: List[Codec]) -> Dict[str, Any]:
         offset = 0
-        try:
-            for arg in func_args:
-                off = self.packers[arg](data_buffer, offset, kwargs[arg])
-                offset += off
-            return pack_command_bytes(counter, mode, command_id, data_buffer)
-        except StructError as exc:
-            raise CommandPackingException(str(exc))
-        except KeyError as exc:
-            if arg is not None:
-                raise CommandPackingException(
-                    f"KeyError occured for arg: {arg}, using Mode: {mode}; CommandID: {command_id} "
-                    f"KeyError was: {str(exc)}"
-                )
-            else:
-                raise CommandPackingException(
-                    f"KeyError occurred, no such command: {command_id} for mode: {mode} "
-                    f"KeyError was: {str(exc)}"
-                )
+        kwargs = {}
+        for point in codec_list:
+            kwarg = point.unpack(data[offset:offset+point.num_bytes])
+            kwargs.update(kwarg)
+            offset += point.num_bytes
 
-    def unpack_command(self, data: bytes):
-        received_mac, counter, mode, command_id, arg_data = unpack_command_bytes(data)
-        mac_data = data[MAC_LENGTH:]
-        computed_mac = hashlib.blake2s(mac_data, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
-        if received_mac != computed_mac:
-            raise DeserializationException(
-                f"MAC not consistent with data. Recieved vs. Computed: {received_mac}, {computed_mac}")
-        try:
-            func_args, buffer_size = self.command_dict[mode][command_id]
-        except KeyError:
-            raise CommandUnpackingException(
-                f'Unknown command received:{mode}:{command_id}'
-            )
+        return kwargs
 
-        if (buffer_size + DATA_OFFSET) != len(data):
-            raise CommandUnpackingException(
-                f"Received command with data len: {len(data)}, but expected length: {buffer_size}; "
-                f"for command with Mode: {mode}, CommandID: {command_id}"
-            )
+    @staticmethod
+    def _pack(kwargs: Dict[str, Any], codecs: List[Codec], buffer_size: int) -> bytes:
+        buffer = bytearray(buffer_size)
         offset = 0
-        kwargs = dict()
-        for arg in func_args:
-            off, value = self.unpackers[arg](arg_data, offset)
-            kwargs[arg] = value
-            offset += off
-        return received_mac, counter, mode, command_id, kwargs
 
-    def register_commands(self):
-        for mode_id, mode_name in FLIGHT_MODE_DICT.items():
+        for name, value in kwargs.items():
+            codec = [p for p in codecs if p.name == name][0]
+            buffer[offset:offset+codec.num_bytes] = codec.pack(value)
+            offset += codec.num_bytes
 
-            command_dict = {}
+        return bytes(buffer)
 
-            for command_id, command_data_tuple in mode_name.command_codecs.items():
-                command_dict[command_id] = command_data_tuple
-                self.command_dict[mode_id] = command_dict
+    def unpack_args(self, arg_data: Optional[bytes]) -> Dict[str, Any]:
+        return self._unpack(arg_data, self.uplink_args)
 
-                # Used only for testing
+    def pack_args(self, kwargs: Dict[str, Any]) -> bytes:
+        return self._pack(kwargs, self.uplink_args, self.uplink_buffer_size)
 
-    def register_new_command(self, mode_id: int, command_id: int, **kwargs):
+    def unpack_telem(self, arg_data: Optional[bytes]) -> Dict[str, Any]:
+        return self._unpack(arg_data, self.downlink_telem)
 
-        totalBytes = 0
+    def pack_telem(self, kwargs: Dict[str, Any]) -> bytes:
+        return self._pack(kwargs, self.downlink_telem, self.downlink_buffer_size)
 
+    def run(self,  parent: Optional[MainSatelliteThread] = None, **kwargs):
         try:
-            for arg in kwargs:
-                if isinstance(kwargs[arg], bool):  # boolean
-                    self.register_new_codec(arg, us.pack_bool, us.unpack_bool)
-                    totalBytes += 1
-                elif isinstance(kwargs[arg], int) and abs(kwargs[arg]) <= maxsize:  # int
-                    self.register_new_codec(arg, us.pack_unsigned_int, us.unpack_unsigned_int)
-                    totalBytes += 4
-                elif isinstance(kwargs[arg], int):  # long
-                    self.register_new_codec(arg, us.pack_unsigned_long, us.unpack_unsigned_long)
-                    totalBytes += 8
-                elif isinstance(kwargs[arg], float) and abs(kwargs[arg]) <= float_info.max:  # float
-                    self.register_new_codec(arg, us.pack_float, us.unpack_float)
-                    totalBytes += 4
-                elif isinstance(kwargs[arg], float):  # double
-                    self.register_new_codec(arg, us.pack_double, us.unpack_double)
-                    totalBytes += 8
-                elif isinstance(kwargs[arg], str):  # string
-                    self.register_new_codec(arg, us.pack_str, us.unpack_str)
-                    totalBytes += 195
-
-            command_args = list(kwargs.keys())
-            self.command_dict[mode_id][command_id] = (command_args, totalBytes)
-
-        except:
-            raise SerializationException()
+            downlink = self._method(parent=parent, **kwargs)
+            return downlink
+        except Exception as e:
+            logging.error("Unhandled command exception")
+            log_error(e, logging.error)
+            raise CommandException

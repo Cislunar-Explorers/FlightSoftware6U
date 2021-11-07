@@ -7,7 +7,7 @@ import unittest
 from main import MainSatelliteThread
 from queue import Queue
 
-from communications.commands import CommandHandler
+from communications.command_handler import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry

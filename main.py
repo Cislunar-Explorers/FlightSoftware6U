@@ -17,7 +17,7 @@ from flight_modes.restart_reboot import (
     BootUpMode,
 )
 from flight_modes.flight_mode_factory import build_flight_mode
-from communications.commands import CommandHandler
+from communications.command_handler import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
@@ -57,7 +57,7 @@ class MainSatelliteThread(Thread):
         # self.init_comms()
         logger.info("Initializing commands and downlinks")
         self.command_handler = CommandHandler()
-        self.downlink_handler = DownlinkHandler()
+        # self.downlink_handler = DownlinkHandler()
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
@@ -92,10 +92,10 @@ class MainSatelliteThread(Thread):
         logger.info("Initializing Telemetry")
         self.telemetry = Telemetry(self)
 
-        #_____________need the ground station pi IP address + server port for the socket ______
+        # _____________need the ground station pi IP address + server port for the socket ______
         logger.info("opening UDP client socket")
         self.client = Client("192.168.0.101", 3333)
-        
+
         logger.info("Done intializing")
 
     def init_comms(self):
@@ -144,7 +144,8 @@ class MainSatelliteThread(Thread):
             logger.info("RTC initialized")
 
         try:
-            self.nemo_manager = NemoManager(port_id=3, data_dir=NEMO_DIR, reset_gpio_ch=16)
+            self.nemo_manager = NemoManager(
+                port_id=3, data_dir=NEMO_DIR, reset_gpio_ch=16)
         except Exception as e:
             # self.nemo_manager = None
             log_error(e)
@@ -181,7 +182,8 @@ class MainSatelliteThread(Thread):
                 for i in [1, 2, 3]:
                     try:
                         self.mux.selectCamera(i)
-                        f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
+                        f, t = self.camera.rawObservation(
+                            f"initialization-{i}-{int(time())}")
                     except Exception as e:
                         log_error(e)
                         logger.error(f"CAM{i} initialization failed")
@@ -201,7 +203,8 @@ class MainSatelliteThread(Thread):
             self.need_to_reboot = True
 
         # make a bitmask of the initialized sensors for downlinking
-        sensors = [self.gom, self.radio, self.gyro, self.adc, self.rtc, self.mux, self.camera]
+        sensors = [self.gom, self.radio, self.gyro,
+                   self.adc, self.rtc, self.mux, self.camera]
         sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
         sensor_functioning_list.extend(cameras_list)
         sensor_bitmask = ''.join(map(str, sensor_functioning_list))
@@ -224,12 +227,14 @@ class MainSatelliteThread(Thread):
             newCommand = self.radio.receiveSignal()
             if newCommand is not None:
                 try:  # TODO: move this verification/error handling to the command handler object
-                    unpackedCommand = self.command_handler.unpack_command(newCommand)
+                    unpackedCommand = self.command_handler.unpack_command(
+                        newCommand)
                     if unpackedCommand[1] == self.command_counter + 1:
                         self.command_queue.put(bytes(newCommand))
                         self.command_counter += 1
                     else:
-                        logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
+                        logger.warning(
+                            'Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
                 except Exception as e:
                     log_error(e, logger.error)
                     logger.error('Invalid Command Received')
@@ -263,7 +268,7 @@ class MainSatelliteThread(Thread):
     # Execute received commands
     def execute_commands(self):
         assert (
-                len(self.commands_to_execute) == 0
+            len(self.commands_to_execute) == 0
         ), "Didn't finish executing previous commands"
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
@@ -303,7 +308,7 @@ class MainSatelliteThread(Thread):
 
                 #________________send data udp  _______________________#
                 self.client.send_data(self.telemetry.detailed_packet_dict())
-                
+
         except Exception as e:
             log_error(e, exc_info=1)
             logger.error("Error in main loop. Transitioning to SAFE mode")

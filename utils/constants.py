@@ -16,18 +16,15 @@ MAC_KEY = b'World'  # FIXME for flight
 # MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
 # Serialization Sizes
-MODE_SIZE = 1
 ID_SIZE = 1
 COUNTER_SIZE = 3
-DATA_LEN_SIZE = 2
-MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + \
-    MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
+DATA_LEN_SIZE = 1
+MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + ID_SIZE + DATA_LEN_SIZE
 
 # Serializations Offsets
 MAC_OFFSET = 0
-COUNTER_OFFSET = 0 + MAC_LENGTH
-MODE_OFFSET = COUNTER_SIZE + COUNTER_OFFSET
-ID_OFFSET = MODE_SIZE + MODE_OFFSET
+COUNTER_OFFSET = MAC_OFFSET + MAC_LENGTH
+ID_OFFSET = COUNTER_SIZE + COUNTER_OFFSET
 DATA_LEN_OFFSET = ID_SIZE + ID_OFFSET
 DATA_OFFSET = DATA_LEN_SIZE + DATA_LEN_OFFSET
 
@@ -284,6 +281,51 @@ class FMEnum(IntEnum):
     CommsMode = 9
     Command = 10
     AttitudeAdjustment = 11
+
+
+@unique
+class CommandEnum(IntEnum):
+    Boot = 0
+    Restart = 1
+    Normal = 2
+    LowBatterySafety = 3
+    Safety = 4
+    OpNav = 5
+    Maneuver = 6
+    SensorMode = 7  # Send command directly to sensor
+    TestMode = 8  # Execute specified test
+    CommsMode = 9
+    Command = 10
+    AttitudeAdjustment = 11
+    SetElectrolysis = 12  # arg = bool whether to start or stop electrolysis
+    SetParam = 13
+    CritTelem = 14
+    BasicTelem = 15
+    DetailedTelem = 16
+    Verification = 17
+    GetParam = 18
+    SetOpnavInterval = 19
+    ScheduleManeuver = 20
+    ACSPulsing = 21
+    NemoWriteRegister = 22
+    NemoReadRegister = 23
+    NemoSetConfig = 24
+    NemoPowerOff = 25
+    NemoPowerOn = 26
+    NemoReboot = 27
+    NemoProcessRateData = 28
+    NemoProcessHistograms = 29
+    GomConf1Set = 30
+    GomConf1Get = 31
+    GomConf2Set = 32
+    GomConf2Get = 33
+
+    ShellCommand = 50
+    SudoCommand = 51
+    Picberry = 52
+    ExecPyFile = 53
+
+    IgnoreLowBatt = 60
 
 
 @unique

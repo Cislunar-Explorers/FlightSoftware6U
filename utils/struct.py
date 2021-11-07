@@ -94,10 +94,11 @@ def unpack_str(buf, off):
 packer_dict: Dict[str, Tuple[Callable, Callable, int]] = {
     'bool': (pack_bool, unpack_bool, 1),
     'uint8': (pack_unsigned_int8, unpack_unsigned_int8, 1),
-    'short': (pack_unsigned_short, unpack_unsigned_short, 2),
+    'ushort': (pack_unsigned_short, unpack_unsigned_short, 2),
     'int': (pack_unsigned_int, unpack_unsigned_int, 4),
     'long': (pack_unsigned_long, unpack_unsigned_long, 8),
     'float': (pack_float, unpack_float, 4),
     'double': (pack_double, unpack_double, 8),
-    'string': (pack_str, unpack_str, 195)
+    'string': (pack_str, unpack_str, 64),
+    'long_string': (pack_str, unpack_str, 191),
 }

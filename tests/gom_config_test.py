@@ -1,8 +1,8 @@
 from random import randint
 import drivers.power.power_structs as ps
-from communications.commands import CommandHandler
-from utils.constants import FMEnum, NormalCommandEnum
-from communications.command_definitions import dict_from_eps_config, eps_config_from_dict, dict_from_eps_config2, \
+from communications.command_handler import CommandHandler
+from utils.constants import CommandEnum
+from utils.gom_util import dict_from_eps_config, eps_config_from_dict, dict_from_eps_config2, \
     eps_config2_from_dict
 
 
@@ -60,12 +60,11 @@ def test_config_command():
 
     ch = CommandHandler()
 
-    command_bytes = ch.pack_command(COUNTER, FMEnum.Normal.value, NormalCommandEnum.GomConf1Set.value, **config_dict)
-    _, counter, mode, command_id, kwargs = ch.unpack_command(command_bytes)
+    command_bytes = ch.pack_link(
+        True, COUNTER, CommandEnum.GomConf1Set.value, config_dict)
+    command, kwargs = ch.unpack_link(command_bytes)
 
-    assert counter == COUNTER
-    assert mode == FMEnum.Normal.value
-    assert command_id == NormalCommandEnum.GomConf1Set.value
+    assert command.id == CommandEnum.GomConf1Set.value
 
     unpacked_config = eps_config_from_dict(**kwargs)
 
@@ -115,12 +114,11 @@ def test_config2_command():
 
     ch = CommandHandler()
 
-    command_bytes = ch.pack_command(COUNTER, FMEnum.Normal.value, NormalCommandEnum.GomConf2Set.value, **config2_dict)
-    _, counter, mode, command_id, kwargs = ch.unpack_command(command_bytes)
+    command_bytes = ch.pack_link(
+        True, COUNTER, CommandEnum.GomConf2Set.value, config2_dict)
+    command, kwargs = ch.unpack_link(command_bytes)
 
-    assert counter == COUNTER
-    assert mode == FMEnum.Normal.value
-    assert command_id == NormalCommandEnum.GomConf2Set.value
+    assert command.id == CommandEnum.GomConf2Set.value
 
     unpacked_config2 = eps_config2_from_dict(kwargs)
 

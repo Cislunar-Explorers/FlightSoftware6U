@@ -28,7 +28,7 @@ class CodecTest(unittest.TestCase):
             self.assertEqual(value, unpacked[test_uint8.name])
 
     def test_short_codec(self):
-        test_short = Codec("TEST_SHORT", 'short')
+        test_short = Codec("TEST_SHORT", 'ushort')
 
         for value in range(0, 2*32_767):
             packed = test_short.pack(value)

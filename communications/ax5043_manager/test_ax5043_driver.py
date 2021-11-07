@@ -1,5 +1,5 @@
 import unittest
-from ax5043_driver import *
+from communications.ax5043_manager.ax5043_driver import *
 
 class TestChunk(unittest.TestCase):
     def test_from_bytes(self):

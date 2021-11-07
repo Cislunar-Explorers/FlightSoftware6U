@@ -1,6 +1,7 @@
-import numpy as np
-import time
-from OpticalNavigation.core.camera import Camera, CameraMux
+# import numpy as np
+# import time
+from core.camera import Camera, CameraMux
+
 
 def select_camera(id):
     """
@@ -9,7 +10,7 @@ def select_camera(id):
     """
     mux = CameraMux()
     mux.selectCamera(id)
-    pass
+    # pass
 
 def record_video(filename, framerate, recTime, exposure):
     """

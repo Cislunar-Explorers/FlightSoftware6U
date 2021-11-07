@@ -1,4 +1,4 @@
-from ax5043_driver import Ax5043
+from communications.ax5043_manager.ax5043_driver import Ax5043
 
 # Ideas:
 # * Writes replace read_defaults

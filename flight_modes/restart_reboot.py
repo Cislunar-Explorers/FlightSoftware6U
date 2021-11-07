@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
+from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE
 from flight_modes.flight_mode import FlightMode
 import os
 from utils.log import get_log
@@ -10,9 +10,15 @@ import psutil
 
 logger = get_log()
 
+
 class BootUpMode(FlightMode):
+    """FMID 0"""
     flight_mode_id = FMEnum.Boot.value
-    command_codecs = {BootCommandEnum.Split.value: ([], 0)}
+    command_codecs = {
+        BootCommandEnum.Switch.value: ([], 0),
+        BootCommandEnum.Split.value: ([], 0)
+    }
+
     command_arg_unpackers = {}
 
     def __init__(self, parent):
@@ -30,9 +36,9 @@ class BootUpMode(FlightMode):
         # deploy antennae
         # FIXME: differentiate between Hydrogen and Oxygen. Each satellite now has different required Bootup behaviors
         logger.info("Antennae deploy...")
-        self.parent.gom.burnwire1(5)
+        self._parent.gom.burnwire1(5)
 
-        if self.parent.need_to_reboot:
+        if self._parent.need_to_reboot:
             # TODO: double check the boot db history to make sure we aren't going into a boot loop
             # TODO: downlink something to let ground station know we're alive
             logger.critical("Rebooting to init cameras")
@@ -51,7 +57,8 @@ class BootUpMode(FlightMode):
 
 
 class RestartMode(FlightMode):
-    command_codecs = {}
+    """FMID 1"""
+    command_codecs = {RestartCommandEnum.Switch.value: ([], 0)}
     command_arg_unpackers = {}
     flight_mode_id = FMEnum.Restart.value
 
@@ -74,7 +81,7 @@ class RestartMode(FlightMode):
 
     # TODO implement error handling for if camera not detected
     def run_mode(self):
-        if self.parent.need_to_reboot:
+        if self._parent.need_to_reboot:
             # TODO double check the boot db history to make sure we aren't going into a boot loop
             # TODO: downlink something to let ground station know we're alive and going to reboot
             logger.critical("Rebooting to init cameras")

@@ -2,9 +2,10 @@
 # import numpy as np
 # from typing import Tuple
 from time import sleep, time
-from utils.constants import FMEnum, DEG2RAD, NO_FM_CHANGE, GOM_TIMING_FUDGE_FACTOR
+from utils.constants import FMEnum, NO_FM_CHANGE, GOM_TIMING_FUDGE_FACTOR
 import utils.parameters as params
 from flight_modes.flight_mode import PauseBackgroundMode
+
 # from math import sin, cos
 import gc
 
@@ -37,8 +38,9 @@ def C3(theta):
                      [0, 0, 1]])
 """
 
+
 class AAMode(PauseBackgroundMode):
-    """Attitude adjustment flight mode"""
+    """FMID 11: Attitude adjustment flight mode"""
 
     flight_mode_id = FMEnum.AttitudeAdjustment.value
     command_codecs = {}
@@ -64,14 +66,25 @@ class AAMode(PauseBackgroundMode):
     # check if exit condition has completed
     def run_mode(self):
         # double check to make sure that we actually have the info we need to reorient:
-        if not self.parent.reorientation_queue.empty() or self.parent.reorientation_list:
+        if (
+            not self._parent.reorientation_queue.empty()
+            or self._parent.reorientation_list
+        ):
             # get relevant info from attitude adjustment queue
-            while not self.parent.reorientation_queue.empty():
-                self.parent.reorientation_list.append(self.parent.reorientation_queue.get())
+            while not self._parent.reorientation_queue.empty():
+                self._parent.reorientation_list.append(
+                    self._parent.reorientation_queue.get()
+                )
 
-            pulse_start, pulse_duration, pulse_num, pulse_dt = self.parent.reorientation_list[0]
-            self.parent.logger.debug(
-                f"ACS start:{pulse_start}, duration:{pulse_duration}, num:{pulse_num}, dt:{pulse_dt}")
+            (
+                pulse_start,
+                pulse_duration,
+                pulse_num,
+                pulse_dt,
+            ) = self._parent.reorientation_list[0]
+            self._parent.logger.debug(
+                f"ACS start:{pulse_start}, duration:{pulse_duration}, num:{pulse_num}, dt:{pulse_dt}"
+            )
             pulse_dt *= 1e-3  # convert from ms to seconds
             pulse_duration *= 1e-3
 
@@ -79,37 +92,40 @@ class AAMode(PauseBackgroundMode):
             # https://www.geeksforgeeks.org/python-adding-k-to-each-element-in-a-list-of-integers/
             absolute_pulse_times = [pulse_start + x for x in relative_pulse_times]
             for i in absolute_pulse_times:
-                self.parent.logger.debug(f"Pulsing ACS at {i}")
+                self._parent.logger.debug(f"Pulsing ACS at {i}")
             # garbage collect one last time before timing critical applications start
             gc.collect()
-            self.parent.logger.debug("Done garbage collecting")
+            self._parent.logger.debug("Done garbage collecting")
 
             if pulse_start - time() < 0.125:
                 # we missed the timing of the maneuver. Make a note and add relevant stuff to comms queue
                 self.missed_timing(pulse_start)
             else:
-                self.parent.logger.debug(f"Sleeping {pulse_start - time()}s")
-                self.parent.gom.pc.calculate_solenoid_wave()
+                self._parent.logger.debug(f"Sleeping {pulse_start - time()}s")
+                self._parent.gom.pc.calculate_solenoid_wave()
                 sleep(max([(pulse_start - time()) - 2, 0]))
-                self.parent.logger.info(
-                    f"Experimental solenoid function. spike={params.ACS_SPIKE_DURATION}, hold={pulse_duration}")
+                self._parent.logger.info(
+                    f"Experimental solenoid function. spike={params.ACS_SPIKE_DURATION}, hold={pulse_duration}"
+                )
                 # pulse ACS according to timings
                 try:
                     for pulse_time in absolute_pulse_times:
                         sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
-                        self.parent.gom.pc.solenoid_single_wave(pulse_duration)
+                        self._parent.gom.pc.solenoid_single_wave(pulse_duration)
                 except ValueError:
                     self.missed_timing(pulse_time)
 
-            self.parent.reorientation_list.pop(0)
+            self._parent.reorientation_list.pop(0)
         else:
-            self.parent.logger.warning("No data for reorientation pulses found")
+            self._parent.logger.warning("No data for reorientation pulses found")
 
         self.completed_task()
 
     def missed_timing(self, missed_pulse_timing):
-        self.parent.logger.error(f"Missed attitude adjustment maneuver at {missed_pulse_timing}")
-        # self.parent.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
+        self._parent.logger.error(
+            f"Missed attitude adjustment maneuver at {missed_pulse_timing}"
+        )
+        # self._parent.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
 
     # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and
     # it does all the math. However, due to our development timeline, we will have to fall back on calculating exact
@@ -117,18 +133,18 @@ class AAMode(PauseBackgroundMode):
     """
     def get_data(self):
         # get latest opnav location and gyro data
-        self.parent.tlm.opn.poll()
-        self.latest_opnav_quat = self.parent.tlm.opn.quat
-        self.latest_opnav_time = self.parent.tlm.opn.acq_time
+        self._parent.tlm.opn.poll()
+        self.latest_opnav_quat = self._parent.tlm.opn.quat
+        self.latest_opnav_time = self._parent.tlm.opn.acq_time
         self.current_spin_vec = quat_to_rotvec(self.latest_opnav_quat)
-        self.parent.tlm.gyr.poll()
-        self.parent.tlm.gyr.write()
+        self._parent.tlm.gyr.poll()
+        self._parent.tlm.gyr.write()
 
-        while not self.parent.reorientation_queue.empty():
-            self.parent.reorientation_list.append(self.parent.reorientation_queue.get())
+        while not self._parent.reorientation_queue.empty():
+            self._parent.reorientation_list.append(self._parent.reorientation_queue.get())
 
-        if self.parent.reorientation_list:
-            self.target_spin_vec = spherical_to_cartesian(*self.parent.reorientation_list[0])
+        if self._parent.reorientation_list:
+            self.target_spin_vec = spherical_to_cartesian(*self._parent.reorientation_list[0])
 
     def dead_reckoning(self) -> Tuple[Tuple[float, quaternion], Tuple[float, float, float]]:
         # Attempts to determine the current attitude of the spacecraft by integrating the gyros (prone to error) from
@@ -159,7 +175,7 @@ class AAMode(PauseBackgroundMode):
         cur_spin_vector = cur_quat.vec
         firing_vector_ECI = np.cross(cur_spin_vector, desired_spin_vector)
 
-        gyroz = self.parent.tlm.gyr.rot(2)
+        gyroz = self._parent.tlm.gyr.rot(2)
 
         firing_vector_ECI *= gyroz / abs(gyroz)  # multiply by sign of z rotation rate to avoid sign error
         # firing_vector_ECI is the vector along which the vector from the CoM of the spacecraft to the ACS nozzle
@@ -172,15 +188,16 @@ class AAMode(PauseBackgroundMode):
         DCM_ACS = C3(theta_ACS)
 
         return np.matmul(DCM_ACS, firing_vector_ECI)
-    
-# If we want to do reorientations autonomously, the following would be an approach. However, we are probably not doing this
+
+# If we want to do reorientations autonomously, the following would be an approach.
+# However, we are probably not doing this
 #
-outdated_opnav = (time() - self.parent.tlm.opn.acq_time) // 60 >= 15  # if opnav was run >15 minutes ago, rerun
-unfinished_opnav = not self.parent.tlm.opn.currently_running()
+outdated_opnav = (time() - self._parent.tlm.opn.acq_time) // 60 >= 15  # if opnav was run >15 minutes ago, rerun
+unfinished_opnav = not self._parent.tlm.opn.currently_running()
 
 if outdated_opnav or unfinished_opnav:
-    self.parent.FMQueue.put(FMEnum.OpNav.value)
-    self.parent.FMQueue.put(FMEnum.AttitudeAdjustment.value)
+    self._parent.FMQueue.put(FMEnum.OpNav.value)
+    self._parent.FMQueue.put(FMEnum.AttitudeAdjustment.value)
 else:
     # check if current orientation is within 10 degrees of desired orientation
     self.get_data()

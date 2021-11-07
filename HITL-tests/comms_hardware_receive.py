@@ -7,5 +7,5 @@ radio = Radio()
 while True:
     message = radio.receiveSignal()
     if message is not None:
-        print('Transmission #' + transmissionCounter + ' Received: ' + str(message))
+        print(f'Transmission #{transmissionCounter} Received: {message}')
         transmissionCounter += 1

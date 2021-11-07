@@ -1,6 +1,6 @@
 import argparse
-import OpticalNavigation.core.camera as camera
-# Run with restart option and then manually restart with sudo reboot
+import core.camera as camera
+# Run restart and then manually restart with sudo reboot
 # To record, specify the name of file you wish to create
 
 

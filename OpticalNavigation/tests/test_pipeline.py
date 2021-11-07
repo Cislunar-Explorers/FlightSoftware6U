@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import CameraMeasurementVector
+from core.const import CameraMeasurementVector
 import pytest
 import pandas as pd
 import numpy as np
@@ -10,14 +10,15 @@ from datetime import datetime, timedelta
 from time import sleep
 from unittest.mock import patch
 
-import OpticalNavigation.core.opnav as opnav
-import OpticalNavigation.core.preprocess as preprocess
-import OpticalNavigation.core.sense as sense
-import OpticalNavigation.core.const as opnav_constants
-from OpticalNavigation.tests.const import CesiumTestCameraParameters
+import core.opnav as opnav
+import core.preprocess as preprocess
+import core.sense as sense
+import core.const as opnav_constants
+from tests.const import CesiumTestCameraParameters
 
 from utils.db import create_sensor_tables_from_path, OpNavTrajectoryStateModel, OpNavAttitudeStateModel
-from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, RebootsModel
+from utils.db import OpNavEphemerisModel, OpNavCameraMeasurementModel, OpNavPropulsionModel, OpNavGyroMeasurementModel, \
+    RebootsModel
 from utils.constants import DB_FILE
 import utils.parameters as params
 
@@ -95,14 +96,15 @@ def test_start(mocker):
     # do not test observe()
     def observe_mock(session, gyro_count):
         return opnav_constants.OPNAV_EXIT_STATUS.SUCCESS
-    #mocker.patch('OpticalNavigation.core.opnav.__observe', side_effect=observe_mock)
+
+    # mocker.patch('core.opnav.__observe', side_effect=observe_mock)
 
     def select_camera_mock(id):
         print("select_mock")
         return
 
-    #Don't use select_camera_mock for software demo
-    #mocker.patch('OpticalNavigation.core.opnav.select_camera', side_effect=select_camera_mock)
+    # Don't use select_camera_mock for software demo
+    #mocker.patch('core.opnav.select_camera', side_effect=select_camera_mock)
 
     idx = [0]
     timestamps = [981750, 981750, 2028950, 2028950, 3010700, 3010700]
@@ -117,13 +119,14 @@ def test_start(mocker):
         #idx[0] += 1
         return (filename, 0, time)
 
-    #Don't use record_video mock for software demo
-    #mocker.patch('OpticalNavigation.core.opnav.record_video', side_effect=record_video_mock)
+    # Don't use record_video mock for software demo
+    #mocker.patch('core.opnav.record_video', side_effect=record_video_mock)
 
     def record_gyro_mock(count):
         print("gyro_mock")
         return np.array([[0, 5, 0]])
-    mocker.patch('OpticalNavigation.core.opnav.record_gyro', side_effect=record_gyro_mock)
+
+    mocker.patch('core.opnav.record_gyro', side_effect=record_gyro_mock)
 
 
     path = '../../../../Desktop/cislunar_case1c/'

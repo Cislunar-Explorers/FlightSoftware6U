@@ -2,32 +2,26 @@ import os
 import sys
 from threading import Thread
 from multiprocessing import Process
-from time import sleep, time
-from datetime import datetime, timedelta
+from time import time
 from queue import Queue
+import os
 import signal
-from utils.log import get_log
-
-from json import load
+from typing import Optional
 from time import sleep
 
-import utils.constants
-from utils.constants import *
-import utils.parameters as params
-from utils.exceptions import CislunarException
+import utils.constants as consts
 from utils.db import create_sensor_tables_from_path
+from utils.log import get_log, log_error
 
 # from drivers.dummy_sensors import PressureSensor
-from flight_modes.restart_reboot import (
-    RestartMode,
-    BootUpMode,
-)
+from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.flight_mode_factory import build_flight_mode
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
+from udp_client.client import Client
 
 from communications.comms_driver import CommunicationsSystem
 from communications.satellite_radio import Radio
@@ -36,9 +30,9 @@ from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
-import OpticalNavigation.core.camera as camera
+import core.camera as camera
+from utils.parameter_utils import init_parameters
 
-FOR_FLIGHT = None
 
 logger = get_log()
 
@@ -47,88 +41,79 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         logger.info("Initializing...")
-        self.init_parameters()
         self.command_queue = Queue()
         self.downlink_queue = Queue()
-        self.FMQueue = Queue()
+        self.FMQueue: Queue[int] = Queue()
         self.commands_to_execute = []
         self.downlinks_to_execute = []
-        self.telemetry = Telemetry(self)
         self.burn_queue = Queue()
         self.reorientation_queue = Queue()
         self.reorientation_list = []
         self.maneuver_queue = Queue()  # maneuver queue
         self.opnav_queue = Queue()  # determine state of opnav success
         # self.init_comms()
+        logger.info("Initializing commands and downlinks")
         self.command_handler = CommandHandler()
         self.downlink_handler = DownlinkHandler()
         self.command_counter = 0
         self.downlink_counter = 0
         self.command_definitions = CommandDefinitions(self)
-        self.last_opnav_run = datetime.now()  # Figure out what to set to for first opnav run
-        self.log_dir = LOG_DIR
+        self.last_opnav_run = time()  # Figure out what to set to for first opnav run
+        self.log_dir = consts.LOG_DIR
         self.logger = get_log()
         self.attach_sigint_handler()  # FIXME
         self.file_block_bank = {}
         self.need_to_reboot = False
-
-        self.gom = None
-        self.gyro = None
-        self.adc = None
-        self.rtc = None
-        self.radio = None
-        self.mux = None
-        self.camera = None
-        self.init_sensors()
-
-        # Telemetry
-        self.tlm = Telemetry(self)
+        self.gom: Optional[Gomspace] = None
+        self.gyro: Optional[GyroSensor] = None
+        self.adc: Optional[ADC] = None
+        self.rtc: Optional[RTC] = None
+        self.radio: Optional[Radio] = None
+        self.mux: Optional[camera.CameraMux] = None
+        self.camera: Optional[camera.Camera] = None
+        self.nemo_manager: Optional[NemoManager] = None
 
         # Opnav subprocess variables
         self.opnav_proc_queue = Queue()
         self.opnav_process = Process()  # define the subprocess
 
         if os.path.isdir(self.log_dir):
+            logger.info("We are in Restart Mode")
             self.flight_mode = RestartMode(self)
         else:
-            os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
-            os.mkdir(LOG_DIR)
+            logger.info("We are in Bootup Mode")
+            os.makedirs(consts.CISLUNAR_BASE_DIR, exist_ok=True)
+            os.mkdir(consts.LOG_DIR)
             self.flight_mode = BootUpMode(self)
-        self.create_session = create_sensor_tables_from_path(DB_FILE)
+        self.create_session = create_sensor_tables_from_path(consts.DB_FILE)
+        logger.info("Initializing Telemetry")
+        self.telemetry = Telemetry(self)
+
+        # _____________need the ground station pi IP address + server port for the socket ______
+        logger.info("opening UDP client socket")
+        self.client = Client("192.168.0.101", 3333)
+
+        logger.info("Done intializing")
 
     def init_comms(self):
-        self.comms = CommunicationsSystem(
-            queue=self.command_queue, use_ax5043=False
-        )
+        self.comms = CommunicationsSystem(queue=self.command_queue, use_ax5043=False)
         self.comms.listen()
 
-    def init_parameters(self):
-        with open(PARAMETERS_JSON_PATH) as f:
-            json_parameter_dict = load(f)
-
-        try:
-            for parameter in utils.parameters.__dir__():
-                if parameter[0] != '_':
-                    utils.parameters.__setattr__(parameter, json_parameter_dict[parameter])
-        except:
-            raise CislunarException(
-                f'Attempted to set parameter ' + str(parameter) +
-                ', which could not be found in parameters.json'
-            )
-
-    def init_sensors(self):
+    def init_sensors(self) -> int:
         try:
             self.gom = Gomspace()
-        except Exception:
-            self.gom = None
+        except Exception as e:
+            # self.gom = None
+            log_error(e)
             logger.error("GOM initialization failed")
         else:
             logger.info("Gom initialized")
 
         try:
             self.gyro = GyroSensor()
-        except Exception:
-            self.gyro = None
+        except Exception as e:
+            # self.gyro = None
+            log_error(e)
             logger.error("GYRO initialization failed")
         else:
             logger.info("Gyro initialized")
@@ -136,8 +121,9 @@ class MainSatelliteThread(Thread):
         try:
             self.adc = ADC(self.gyro)
             self.adc.read_temperature()
-        except Exception:
-            self.adc = None
+        except Exception as e:
+            # self.adc = None
+            log_error(e)
             logger.error("ADC initialization failed")
         else:
             logger.info("ADC initialized")
@@ -145,24 +131,29 @@ class MainSatelliteThread(Thread):
         try:
             self.rtc = RTC()
             self.rtc.get_time()
-        except Exception:
-            self.rtc = None
+        except Exception as e:
+            # self.rtc = None
+            log_error(e)
             logger.error("RTC initialization failed")
         else:
             logger.info("RTC initialized")
 
         try:
-            self.nemo_manager = NemoManager(port_id=3, data_dir=NEMO_DIR, reset_gpio_ch=16)
-        except Exception:
-            self.nemo_manager = None
+            self.nemo_manager = NemoManager(
+                port_id=3, data_dir=consts.NEMO_DIR, reset_gpio_ch=16
+            )
+        except Exception as e:
+            # self.nemo_manager = None
+            log_error(e)
             logger.error("NEMO initialization failed")
         else:
             logger.info("NEMO initialized")
 
         try:
             self.radio = Radio()
-        except Exception:
-            self.radio = None
+        except Exception as e:
+            # self.radio = None
+            log_error(e)
             logger.error("RADIO initialization failed")
         else:
             logger.info("Radio initialized")
@@ -171,8 +162,9 @@ class MainSatelliteThread(Thread):
         try:
             self.mux = camera.CameraMux()
             self.mux.selectCamera(1)
-        except Exception:
-            self.mux = None
+        except Exception as e:
+            # self.mux = None
+            log_error(e)
             logger.error("MUX initialization failed")
         else:
             logger.info("Mux initialized")
@@ -186,31 +178,40 @@ class MainSatelliteThread(Thread):
                 for i in [1, 2, 3]:
                     try:
                         self.mux.selectCamera(i)
-                        f, d, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
+                        f, t = self.camera.rawObservation(
+                            f"initialization-{i}-{int(time())}"
+                        )
                     except Exception as e:
-                        f, t = self.camera.rawObservation(f"initialization-{i}-{int(time())}")
-                    except Exception:
+                        log_error(e)
                         logger.error(f"CAM{i} initialization failed")
                         cameras_list[i - 1] = 0
                     else:
-                        logger.info(f"Cam{i} initialized")
+                        logger.info(f"Cam{i} initialized with {f}:{t}")
                         cameras_list[i - 1] = 1
 
                 if 0 in cameras_list:
                     raise Exception
             except Exception:
-                self.camera = None
-                logger.error(f"Cameras initialization failed")
+                # self.camera = None
+                logger.error("Cameras initialization failed")
             else:
                 logger.info("Cameras initialized")
         else:
             self.need_to_reboot = True
 
         # make a bitmask of the initialized sensors for downlinking
-        sensors = [self.gom, self.radio, self.gyro, self.adc, self.rtc, self.mux, self.camera]
+        sensors = [
+            self.gom,
+            self.radio,
+            self.gyro,
+            self.adc,
+            self.rtc,
+            self.mux,
+            self.camera,
+        ]
         sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
         sensor_functioning_list.extend(cameras_list)
-        sensor_bitmask = ''.join(map(str, sensor_functioning_list))
+        sensor_bitmask = "".join(map(str, sensor_functioning_list))
         logger.debug(f"Sensors: {sensor_bitmask}")
         return int(sensor_bitmask, 2)
 
@@ -224,34 +225,26 @@ class MainSatelliteThread(Thread):
     def poll_inputs(self):
 
         self.flight_mode.poll_inputs()
+        # TODO: move this following if block to the telemetry module
         if self.radio is not None:
-            # Telemetry downlink
-            if (datetime.today() - self.radio.last_telemetry_time).total_seconds() / 60 >= params.TELEM_DOWNLINK_TIME:
-                telemetry = self.command_definitions.gather_basic_telem()
-                telem_downlink = (
-                    self.downlink_handler.pack_downlink(self.downlink_counter, FMEnum.Normal.value,
-                                                        NormalCommandEnum.BasicTelem.value, **telemetry))
-                self.downlink_queue.put(telem_downlink)
-                self.radio.last_telemetry_time = datetime.today()
-
             # Listening for new commands
             newCommand = self.radio.receiveSignal()
             if newCommand is not None:
-                try:
+                try:  # TODO: move this verification/error handling to the command handler object
                     unpackedCommand = self.command_handler.unpack_command(newCommand)
-
-                    if unpackedCommand[0] == MAC:
-                        if unpackedCommand[1] == self.command_counter + 1:
-                            self.command_queue.put(bytes(newCommand))
-                            self.command_counter += 1
-                        else:
-                            logger.warning('Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
+                    if unpackedCommand[1] == self.command_counter + 1:
+                        self.command_queue.put(bytes(newCommand))
+                        self.command_counter += 1
                     else:
-                        logger.warning('Unauthenticated Command Received')
-                except:
-                    logger.error('Invalid Command Received')
+                        logger.warning(
+                            "Command with Invalid Counter Received. Counter: "
+                            + str(unpackedCommand[1])
+                        )
+                except Exception as e:
+                    log_error(e, logger.error)
+                    logger.error("Invalid Command Received")
             else:
-                logger.debug('Not Received')
+                logger.debug("Not Received")
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -266,7 +259,10 @@ class MainSatelliteThread(Thread):
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
         if fm_to_update_to is None:
             pass
-        elif fm_to_update_to != NO_FM_CHANGE and fm_to_update_to != self.flight_mode.flight_mode_id:
+        elif (
+            fm_to_update_to != consts.NO_FM_CHANGE
+            and fm_to_update_to != self.flight_mode.flight_mode_id
+        ):
             self.replace_flight_mode_by_id(fm_to_update_to)
 
     def clear_command_queue(self):
@@ -280,7 +276,7 @@ class MainSatelliteThread(Thread):
     # Execute received commands
     def execute_commands(self):
         assert (
-                len(self.commands_to_execute) == 0
+            len(self.commands_to_execute) == 0
         ), "Didn't finish executing previous commands"
         while not self.command_queue.empty():
             self.commands_to_execute.append(self.command_queue.get())
@@ -305,19 +301,29 @@ class MainSatelliteThread(Thread):
 
     # Wrap in try finally block to ensure it stays live
     def run(self):
-        """This is the main loop of the Cislunar Explorers and runs constantly during flight."""
+        """This is the main loop of the Cislunar Explorers FSW and runs constantly during flight."""
+        init_parameters()
+        self.init_sensors()
         try:
             while True:
-                #sleep(5)  # TODO remove when flight modes execute real tasks
+                sleep(2)  # TODO remove when flight modes execute real tasks
+
                 self.poll_inputs()
                 self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
+
+                # ________________send data udp  _______________________#
+                self.client.send_data(self.telemetry.detailed_packet_dict())
+
+        except Exception as e:
+            log_error(e, exc_info=1)
+            logger.error("Error in main loop. Transitioning to SAFE mode")
         finally:
             # TODO handle failure gracefully
-            if FOR_FLIGHT is True:
-                self.replace_flight_mode_by_id(FMEnum.Safety.value)
+            if consts.FOR_FLIGHT:
+                self.replace_flight_mode_by_id(consts.FMEnum.Safety.value)
                 self.run()
             else:
                 self.shutdown()
@@ -332,6 +338,5 @@ class MainSatelliteThread(Thread):
 
 
 if __name__ == "__main__":
-    FOR_FLIGHT = False
     main = MainSatelliteThread()
     main.run()

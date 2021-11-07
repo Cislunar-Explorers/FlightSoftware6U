@@ -1,7 +1,11 @@
-import board
-import busio
+from adafruit_blinka.agnostic import board_id
+
+if board_id and board_id != 'GENERIC_LINUX_PC':
+    import board
+    import busio
+    from time import gmtime, clock_settime
 import adafruit_ds3231
-from time import gmtime, clock_settime
+
 from calendar import timegm
 
 

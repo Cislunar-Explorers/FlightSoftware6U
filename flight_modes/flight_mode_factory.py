@@ -1,6 +1,5 @@
 from flight_modes.flight_mode import (
     NormalMode,
-    LowBatterySafetyMode,
     SafeMode,
     ManeuverMode,
     SensorMode,
@@ -9,6 +8,8 @@ from flight_modes.flight_mode import (
     OpNavMode,
     CommandMode
 )
+
+from flight_modes.low_battery import LowBatterySafetyMode
 
 from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.attitude_adjustment import AAMode

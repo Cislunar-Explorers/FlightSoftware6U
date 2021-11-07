@@ -66,7 +66,7 @@ class Gomspace:
     def all_off(self):
         """Turns off all controllable outputs on the Gomspace"""
         logger.debug("Turning off all controllable outputs")
-        self.set_PA(False)
+        self.set_pa(False)
         self.pc.set_output(0)
 
     def hard_reset(self, passcode):
@@ -111,9 +111,9 @@ class Gomspace:
         """Tells transmitting side of RF switch to either receive or transmit"""
         self.pc.rf_transmitting_switch(receive)
 
-    def set_PA(self, on: bool):
+    def set_pa(self, on: bool):
         """Turns on/off the power circuit for the PA"""
-        self.pc.set_PA(on)
+        self.pc.set_pa(on)
 
     def is_electrolyzing(self):
         """Returns status of electrolyzer"""
@@ -121,6 +121,7 @@ class Gomspace:
         return bool(output_struct.output[GomOutputs.electrolyzer.value])
 
     def read_battery_percentage(self):
+        """DEPRECATED. Use self.get_health_data(level=Hk.EPS.value).vbatt instead"""
         battery_data = self.get_health_data(level=Hk.VI.value)
         battery_voltage = battery_data.vbatt
         vmin = params.GOM_VOLTAGE_MIN

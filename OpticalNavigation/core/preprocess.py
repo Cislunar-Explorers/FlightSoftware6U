@@ -3,7 +3,7 @@ from math import *
 import cv2
 import os
 import numpy as np
-from OpticalNavigation.core.const import CisLunarCameraParameters
+from core.const import CisLunarCameraParameters, CisLunarCamRecParams
 import time
 
 def rolling_shutter(img):

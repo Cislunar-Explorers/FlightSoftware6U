@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
+from core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
 from dataclasses import dataclass
 import cv2
 import numpy as np

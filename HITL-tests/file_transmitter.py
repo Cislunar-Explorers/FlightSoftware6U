@@ -7,18 +7,28 @@ import time
 
 groundstation = Radio()
 ch = CommandHandler()
+dh = DownlinkHandler()
 command_counter = 1
-transmission_interval = 4
-file_path_for_opening = FLIGHT_SOFTWARE_PATH + 'FlightSoftware/HITL-tests/test_upload_file.py'
-file_path = 'HITL-tests/test_upload_file.py'
+transmission_interval = 0
+satellite_file_path = 'main.py'
+file_path= FLIGHT_SOFTWARE_PATH + 'FlightSoftware/' + satellite_file_path
+
+#Set file to be updated
+update_file_name = ch.pack_command(command_counter, FMEnum.Command.value,
+CommandCommandEnum.SetUpdatePath.value, file_path=satellite_file_path)
+groundstation.transmit(update_file_name)
+print('File name set')
+command_counter += 1
 
 #Get file
 #Max transmission size - space alotted for file name - block number - 
 # min command size - 2*(2 bytes for string length)
-max_string_size = 195 - len(file_path) - 2 - MIN_COMMAND_SIZE - 4
-file = open(file_path_for_opening)
+max_string_size = 195 - MIN_COMMAND_SIZE - 4
+file = open(file_path)
 file_string = file.read()
 file_blocks = []
+checksum = str(hashlib.md5(file_string.encode('utf-8')).hexdigest())
+print('File Checksum: ' + checksum)
 
 #Determine number of blocks
 number_of_blocks = len(file_string)//max_string_size
@@ -34,7 +44,7 @@ i = 0
 for block in file_blocks:
     
     block_command = ch.pack_command(command_counter, FMEnum.Command.value, 
-    CommandCommandEnum.AddFileBlock.value, file_path = file_path,
+    CommandCommandEnum.AddFileBlock.value,
     block_number = block[0],block_text = block[1])
 
     groundstation.transmit(block_command)
@@ -42,15 +52,23 @@ for block in file_blocks:
     time.sleep(transmission_interval)
     command_counter+= 1
 
-#Request info
-print('Checksum: ' + str(hashlib.md5(file_string.encode('utf-8')).hexdigest()))
-info_request = ch.pack_command(command_counter,FMEnum.Command.value,
-CommandCommandEnum.GetFileBlocksInfo,file_path=file_path,total_blocks=number_of_blocks)
-groundstation.transmit(info_request)
-time.sleep(20)
-
-#Activate file
+file_info_request = ch.pack_command(command_counter, FMEnum.Command.value,
+CommandCommandEnum.GetFileBlocksInfo.value,total_blocks=number_of_blocks)
+groundstation.transmit(file_info_request)
 command_counter += 1
-activate_file = ch.pack_command(command_counter, FMEnum.Command.value, CommandCommandEnum.ActivateFile,
-file_path=file_path,total_blocks=number_of_blocks)
-groundstation.transmit(activate_file)
+print('Receiving...')
+file_info = ''
+while True:
+    downlink = groundstation.receiveSignal()
+    if downlink is not None:
+        print('Downlink Received')
+        file_info = dh.unpack_downlink(downlink)
+        break
+
+if file_info[4]['checksum'] == checksum:
+    activate_file_command = ch.pack_command(command_counter, FMEnum.Command.value,
+    CommandCommandEnum.ActivateFile.value,total_blocks=number_of_blocks)
+    groundstation.transmit(activate_file_command)
+    print('File Activated')
+else:
+    print('Missing blocks: ' + file_info[4]['missing_blocks'])

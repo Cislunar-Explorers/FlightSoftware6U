@@ -7,19 +7,25 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.7.5'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .[dev]
-        cd OpticalNavigation && pip install -e . && cd ..
-        pip install matplotlib
-    - name: Test with pytest
-      run: |
-        pytest tests/
-        # pytest OpticalNavigation/tests/
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7.5'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ."[dev]"
+          pip install -e ./OpticalNavigation
+      - name: Make .env
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_CISLUNAR_BASE_DIR: "cislunar_data"
+          envkey_FOR_FLIGHT: "0"
+          envkey_LOG: "1"
+          file_name: .env
+      - name: Test with pytest
+        run: |
+          pytest
+      - name: Run pyright
+        uses: jakebailey/pyright-action@v1.0.2

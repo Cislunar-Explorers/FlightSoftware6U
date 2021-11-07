@@ -33,4 +33,4 @@ if __name__ == '__main__':
     # start new thread to log gyro data
     gyro_threader = threading.Thread(target=gyro_thread)
     gyro_threader.start()
-    gom_controller.burnwire2(2)
+    gom_controller.burnwire1(2)

@@ -1,12 +1,8 @@
-from setuptools import setup, find_packages
+#!/usr/bin/env python
 
-# Directions:
-# Some modules can only be installed on Raspberry Pi while others can be installed on any system
-# In order to get around this, we use the extras_requires argument to setup in order to specify
-# at the command line what version of our requirements we want to install.
-# Documentation for each option is noted in the definition of EXTRAS below.
-# In order to install one of the options, start the virtual environment and run the following command:
-# pip install -e .[option]
+"""The setup script."""
+
+from setuptools import setup, find_packages
 
 AUTHOR = "Dr. Kyle Doyle PhD"
 NAME = "CislunarExplorers"
@@ -16,54 +12,54 @@ REQUIRES_PYTHON = ">=3.6"
 
 VERSION = "0.1"
 
+INCLUDES = ["*"]
+
 INSTALL_REQUIRES = [
-    "requests",
+    "Adafruit-Blinka",
+    "adafruit-circuitpython-busdevice",
+    "adafruit-circuitpython-ds3231",
+    "adafruit-circuitpython-fxas21002c",
+    "adafruit-circuitpython-fxos8700",
+    "ADS1115",
+    "astropy",
+    "bitstring",
+    "numba",
+    "numpy-quaternion",
     "numpy",
+    "opencv-python-headless",
     "opencv-python",
-    "SQLAlchemy",
+    "pigpio",
+    "psutil",
+    "python-dotenv",
     "scipy",
+    "sqlalchemy",
+    "tqdm",
+    "uptime",
 ]
 
 PI_INSTALL_REQUIRES = [
-    "ADS1115",
-    "picamera",
-    "pigpio",
-    "RPi.GPIO",
+    "adafruit-circuitpython-bno055",
     "board",
     "busio",
-    "adafruit-circuitpython-bno055",
+    "picamera",
+    "vcgencmd",
 ]
 
-DEV_REQUIRES = [
-    "black",
-    "flake8",
-]
+DEV_REQUIRES = ["black", "flake8", "pip", "pre-commit"]
 
-TESTS_REQUIRES = [
-    "pytest",
-    "pandas",
-]
+DOCS_REQUIRES = ["sphinx", "sphinx-rtd-theme", "watchdog"]
 
+TEST_REQUIRES = ["matplotlib", "pandas", "pytest", "pytest-mock"]
 
-EXTRAS = {
-    "rpi": INSTALL_REQUIRES
-    + PI_INSTALL_REQUIRES,  # Install everything needed for running on RPi
-    "rpi-dev": INSTALL_REQUIRES
-    + PI_INSTALL_REQUIRES
-    + DEV_REQUIRES
-    + TESTS_REQUIRES,  # Install for active development on RPi
-    "dev": INSTALL_REQUIRES
-    + DEV_REQUIRES
-    + TESTS_REQUIRES,  # Install for development, not on RPi
-}
+EXTRAS = {"rpi": PI_INSTALL_REQUIRES, "dev": DEV_REQUIRES + TEST_REQUIRES}
 
 setup(
     author=AUTHOR,
+    python_requires=REQUIRES_PYTHON,
     desciption=DESCRIPTION,
-    extras_requires=EXTRAS,
+    extras_require=EXTRAS,
     install_requires=INSTALL_REQUIRES,
     name=NAME,
-    packages=find_packages(),
-    python_requires=REQUIRES_PYTHON,
+    packages=find_packages(include=INCLUDES),
     version=VERSION,
 )

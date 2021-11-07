@@ -1,7 +1,8 @@
-from OpticalNavigation.core.const import CameraMeasurementVector, CovarianceMatrix, EphemerisVector, MainThrustInfo, Matrix6x6, TrajUKFConstants, TrajectoryEstimateOutput, TrajectoryStateVector, CameraParameters
+from core.const import CameraMeasurementVector, CovarianceMatrix, EphemerisVector, MainThrustInfo, Matrix6x6, \
+    TrajUKFConstants, TrajectoryEstimateOutput, TrajectoryStateVector, CameraParameters
 import numpy as np
 import math
-from OpticalNavigation.core.const import TrajUKFConstants as Const
+from core.const import TrajUKFConstants as Const
 
 def __length(M):
     """

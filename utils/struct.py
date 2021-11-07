@@ -100,5 +100,5 @@ packer_dict: Dict[str, Tuple[Callable, Callable, int]] = {
     'float': (pack_float, unpack_float, 4),
     'double': (pack_double, unpack_double, 8),
     'string': (pack_str, unpack_str, 64),
-    'long_string': (pack_str, unpack_str, 191),
+    'long_string': (pack_str, unpack_str, 189),
 }

@@ -320,6 +320,11 @@ class CommandEnum(IntEnum):
     GomConf2Set = 32
     GomConf2Get = 33
 
+    SetUpdatePath = 34
+    AddFileBlock = 35
+    GetFileBlocksInfo = 36
+    ActivateFile = 37
+
     ShellCommand = 50
     SudoCommand = 51
     Picberry = 52

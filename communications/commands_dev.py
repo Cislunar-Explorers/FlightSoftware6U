@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from utils.exceptions import CommandUnpackingException
-from utils.struct import packer_dict
 from typing import Union, Dict, List, Any, Optional, Tuple
-from communications.datapoint import DataPoint
+from communications.codec import Codec
 import logging
 
 from utils.constants import DATA_OFFSET, ID_SIZE, MAC_LENGTH, COUNTER_OFFSET, COUNTER_SIZE, MAC_KEY, ID_OFFSET, DATA_LEN_OFFSET, MIN_COMMAND_SIZE
@@ -12,24 +11,24 @@ import hashlib
 
 class Command(ABC):
 
-    uplink_args: List[DataPoint] = []
-    downlink_telem: List[DataPoint] = []
+    uplink_args: List[Codec] = []
+    downlink_telem: List[Codec] = []
 
     def __init__(self) -> None:
         self.uplink_buffer_size = sum(
-            [datapoint.num_bytes for datapoint in self.uplink_args])
+            [codec.num_bytes for codec in self.uplink_args])
         self.downlink_buffer_size = sum(
-            [datapoint.num_bytes for datapoint in self.downlink_telem])
+            [codec.num_bytes for codec in self.downlink_telem])
 
     @abstractmethod
     def _method(self, **kwargs) -> Dict[str, Union[float, int]]:
         pass
 
     @staticmethod
-    def _unpack(data: bytes, datapoint_list: List[DataPoint]) -> Dict[str, Any]:
+    def _unpack(data: bytes, codec_list: List[Codec]) -> Dict[str, Any]:
         offset = 0
         kwargs = {}
-        for point in datapoint_list:
+        for point in codec_list:
             kwarg = point.unpack(data, offset)
             kwargs.update(kwarg)
             offset += point.num_bytes
@@ -37,14 +36,14 @@ class Command(ABC):
         return kwargs
 
     @staticmethod
-    def _pack(kwargs: Dict[str, Any], datapoints: List[DataPoint], buffer_size: int) -> bytes:
+    def _pack(kwargs: Dict[str, Any], codecs: List[Codec], buffer_size: int) -> bytes:
         buffer = bytearray(buffer_size)
         offset = 0
 
         for name, value in kwargs.items():
-            datapoint = [p for p in datapoints if p.name == name][0]
-            buffer[offset:offset+datapoint.num_bytes] = datapoint.pack(value)
-            offset += datapoint.num_bytes
+            codec = [p for p in codecs if p.name == name][0]
+            buffer[offset:offset+codec.num_bytes] = codec.pack(value)
+            offset += codec.num_bytes
 
         return bytes(buffer)
 
@@ -82,12 +81,12 @@ def verify_mac(data: bytes) -> bool:
 
 
 class CommandHandler:
-
+    """Handling the packing, unpacking, and execution of uplinks (commands) and downlinks (telemetry)"""
     command_list: List[Command]
     uplink_counter: int
     downlink_counter: int
 
-    def unpack_command(self, data: bytes) -> Tuple[Command, Dict]:
+    def unpack_link(self, data: bytes, uplink: bool = True) -> Tuple[Command, Dict]:
         if verify_mac(data):
             # TODO deal with counter
             counter = int.from_bytes(
@@ -95,15 +94,19 @@ class CommandHandler:
 
             command_id = data[ID_OFFSET]
             data_length = data[DATA_LEN_OFFSET]
-            command_data = data[DATA_OFFSET:]
+            kwarg_data = data[DATA_OFFSET:]
 
-            if data_length != len(command_data):
+            if data_length != len(kwarg_data):
                 raise CommandUnpackingException(
-                    f"Data Length and command data discrepancy. Data's actual length is {len(command_data)}, but was said to be {data_length}")
+                    f"Data Length and command data discrepancy. Data's actual length is {len(kwarg_data)}, but was said to be {data_length}")
 
             # get command
             command = self.command_list[command_id]
-            kwargs = command.unpack_args(command_data)
+
+            if uplink:
+                kwargs = command.unpack_args(kwarg_data)
+            else:
+                kwargs = command.unpack_telem(kwarg_data)
 
             return command, kwargs
         else:
@@ -111,16 +114,24 @@ class CommandHandler:
             raise CommandUnpackingException(
                 "MAC discrepancy - not running command")
 
-    def pack_command(self, counter: int, command_id: int, **kwargs) -> bytes:
+    def pack_link(self, uplink: bool, counter: int, command_id: int, **kwargs) -> bytes:
         command = self.command_list[command_id]
+
+        if uplink:
+            buffer_size = command.uplink_buffer_size
+            link_data = command.pack_args(**kwargs)
+        else:
+            buffer_size = command.downlink_buffer_size
+            link_data = command.pack_telem(**kwargs)
+
         data_buffer = bytearray(
-            MIN_COMMAND_SIZE - MAC_LENGTH + command.uplink_buffer_size)
+            MIN_COMMAND_SIZE - MAC_LENGTH + buffer_size)
         data_buffer[:COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE, 'big')
         data_buffer[ID_OFFSET - MAC_LENGTH: ID_OFFSET -
                     MAC_LENGTH + ID_SIZE] = command_id
 
-        arg_data = command.pack_args(**kwargs)
-        data_buffer[DATA_OFFSET - MAC_LENGTH:] = arg_data
+        link_data = command.pack_args(**kwargs)
+        data_buffer[DATA_OFFSET - MAC_LENGTH:] = link_data
 
         mac = compute_mac(bytes(data_buffer))
         return mac + bytes(data_buffer)

@@ -20,15 +20,16 @@ MODE_SIZE = 1
 ID_SIZE = 1
 COUNTER_SIZE = 3
 DATA_LEN_SIZE = 2
-MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
+MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + \
+    MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
 
 # Serializations Offsets
 MAC_OFFSET = 0
 COUNTER_OFFSET = 0 + MAC_LENGTH
-MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
-ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
-DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
-DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
+MODE_OFFSET = COUNTER_SIZE + COUNTER_OFFSET
+ID_OFFSET = MODE_SIZE + MODE_OFFSET
+DATA_LEN_OFFSET = ID_SIZE + ID_OFFSET
+DATA_OFFSET = DATA_LEN_SIZE + DATA_LEN_OFFSET
 
 # Important paths
 FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
@@ -142,14 +143,17 @@ LATCHUPS3 = "latchup3"
 LATCHUPS4 = "latchup4"
 LATCHUPS5 = "latchup5"
 LATCHUPS6 = "latchup6"
-WDT_TIME_LEFT_I2C = "wdt_time_i2c"  # seconds (?) left on the I2C watchdog timer
-WDT_TIME_LEFT_GND = "wdt_time_gnd"  # seconds (?) left on the dedicated watchdog timer
+# seconds (?) left on the I2C watchdog timer
+WDT_TIME_LEFT_I2C = "wdt_time_i2c"
+# seconds (?) left on the dedicated watchdog timer
+WDT_TIME_LEFT_GND = "wdt_time_gnd"
 GOM_BOOTS = "gom_boots"  # number of gomspace reboots
 WDT_COUNTS_I2C = "wdt_counts_i2c"  # number of I2C watchdog boots
 WDT_COUNTS_GND = "wdt_counts_gnd"  # number of dedicated watchdog boots
 GOM_BOOTCAUSE = 'bootcause'  # number of gomspace reboots
 GOM_BATTMODE = 'battmode'  # state machine of the gom. See the manual for more info
-GOM_PPT_MODE = 'ppt_mode'  # power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
+# power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
+GOM_PPT_MODE = 'ppt_mode'
 RESERVED2 = 'reserved2'  # unknown
 
 RPI_CPU = "rpi_cpu"  # percent utilization of the RPi CPU
@@ -406,7 +410,8 @@ class CommsCommandEnum(IntEnum):
 class CommandCommandEnum(IntEnum):
     Switch = 0  # command for switching flightmode without executing any other commands
     SetParam = 1  # 2 args: key and value of parameter to be changed
-    SetSystemTime = 2  # 1 arg: UTC(?) time that the system clock should be set to
+    # 1 arg: UTC(?) time that the system clock should be set to
+    SetSystemTime = 2
     RebootPi = 3
     RebootGom = 4
     PowerCycle = 5

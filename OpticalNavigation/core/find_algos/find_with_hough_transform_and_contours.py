@@ -1,5 +1,8 @@
 from OpticalNavigation.core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
-from utils.parameters import EARTH_THRESH, SUN_THRESH, MOON_THRESH, \
+from utils.parameters import EARTH_B_LOW, EARTH_G_LOW, EARTH_R_LOW, \
+    MOON_B_LOW, MOON_G_LOW, MOON_R_LOW, SUN_B_LOW, SUN_G_LOW, SUN_R_LOW, \
+    EARTH_B_HIGH, EARTH_G_HIGH, EARTH_R_HIGH, MOON_B_HIGH, MOON_G_HIGH, MOON_R_HIGH, \
+    SUN_B_HIGH, SUN_G_HIGH, SUN_R_HIGH, \
     EARTH_PERCENTAGE_THRESH, SUN_PERCENTAGE_THRESH, MOON_PERCENTAGE_THRESH
 from dataclasses import dataclass
 import cv2
@@ -318,14 +321,17 @@ def __findBody(img, thresh, body, w, h):
 # Threshold based primarily on blue and green channels
 # Percent of white pixels determines if earth detected
 def measureEarth(img, w, h):
+    EARTH_THRESH = ((EARTH_B_LOW, EARTH_G_LOW, EARTH_R_LOW),(EARTH_B_HIGH, EARTH_G_HIGH, EARTH_R_HIGH))
     return __findBody(img, cv2.inRange(img, EARTH_THRESH[0], EARTH_THRESH[1]), 'e', w, h)
 
 # Measure white pixels
 def measureSun(img, w, h):
+    SUN_THRESH = ((SUN_B_LOW, SUN_G_LOW, SUN_R_LOW),(SUN_B_HIGH, SUN_G_HIGH, SUN_R_HIGH))
     return __findBody(img, cv2.inRange(img, SUN_THRESH[0], SUN_THRESH[1]), 's', w, h)
 
 # TODO add code for % white, but parameterize if we can to use it
 def measureMoon(img, w, h):
+    MOON_THRESH = ((MOON_B_LOW, MOON_G_LOW, MOON_R_LOW),(MOON_B_HIGH, MOON_G_HIGH, MOON_R_HIGH))
     return __findBody(img, cv2.inRange(img, MOON_THRESH[0], MOON_THRESH[1]), 'm', w, h)
 
 def find(src, camera_params:CameraParameters=CisLunarCameraParameters):

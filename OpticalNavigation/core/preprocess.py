@@ -3,7 +3,7 @@ from math import *
 import cv2
 import os
 import numpy as np
-from core.const import CisLunarCameraParameters, CisLunarCamRecParams
+from core.const import CisLunarCameraParameters
 import time
 
 def rolling_shutter(img):
@@ -15,39 +15,6 @@ def rolling_shutter(img):
     """
     time.sleep(3)
     raise NotImplementedError("implement rolling shutter transformation")
-'''
-def extract_frames(vid_dir, endTimestamp):
-    """
-    Extracts frames from video located at path [vid_dir]
-    @returns
-    [frames]: returns list of paths to extracted frames
-    """
-    # return np.zeros((10, int(CisLunarCameraParameters.hPix), int(CisLunarCameraParameters.vPix), 3), dtype=float)
-    # time.sleep(3)
-    #raise NotImplementedError("implement frame extraction")
-    """Convertes and mjpeg video into a list of jpeg images"""
-    src = cv2.VideoCapture(vid_dir)
-    currentFrame = 0
-    base = os.path.splitext(os.path.basename(vid_dir))[0]
-    frames = []
-    while (True):
-    # Write next frame to a new jpeg image
-        ret, frame = src.read()
-        if ret:
-            # TODO: How to incorporate total number of frames, fps
-            timestamp = endTimestamp - ((CisLunarCamRecParams.recTime * CisLunarCamRecParams.fps + 1) - 1 - currentFrame) * (1 / CisLunarCamRecParams.fps * 10 ** 6)
-            timestamp = ceil(timestamp)
-            name = base + f"_f{currentFrame}_t{timestamp}.jpeg"
-            cv2.imwrite(name, frame)
-            frames.append(name)
-            currentFrame += 1
-        else:
-            break
-    # src.release()
-    # cv2.destroyAllWindows()
-    return frames
-'''
-
 
 def extract_frames(vid_dir, timestamps, cameraRecParams):
     base = os.path.splitext(vid_dir)[0]

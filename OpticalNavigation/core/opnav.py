@@ -8,7 +8,7 @@ import core.attitude as attitude
 from core.sense import select_camera, record_video, record_gyro
 from core.preprocess import extract_frames
 from core.find_with_contours import *
-from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, CisLunarCamRecParams
+from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
 import numpy as np
 import traceback
 import pandas as pd

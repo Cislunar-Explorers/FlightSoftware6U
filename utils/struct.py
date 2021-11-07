@@ -1,5 +1,5 @@
 import struct
-from typing import Callable, Dict, Tuple, Any
+from typing import Callable, Dict, Tuple
 
 
 # All packing is done in Big Endian as specified by > argument to struct module

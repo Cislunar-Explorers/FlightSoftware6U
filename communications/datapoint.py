@@ -3,8 +3,8 @@ from typing import Dict, Any
 
 class DataPoint:
     """DataPoint: a class for storing all the data relevant to packing and unpacking one variable."""
-    def __init__(self, name, dtype: str) -> None:
-        self.name: str = name
+    def __init__(self, name: str, dtype: str) -> None:
+        self.name = name
         self.packer = packer_dict[dtype][0]
         self.unpacker = packer_dict[dtype][1]
         self.num_bytes: int = packer_dict[dtype][2]

@@ -1,10 +1,11 @@
-from utils.constants import DATA_OFFSET, ID_SIZE, MAC_LENGTH, COUNTER_OFFSET, COUNTER_SIZE, MAC_KEY, ID_OFFSET, DATA_LEN_OFFSET, MIN_COMMAND_SIZE
+from utils.constants import DATA_OFFSET, ID_SIZE, MAC_LENGTH, COUNTER_OFFSET, COUNTER_SIZE, MAC_KEY, ID_OFFSET, DATA_LEN_OFFSET, MIN_COMMAND_SIZE, ONE_WORD, ZERO_WORD
 
 from typing import List, Tuple, Dict
 import hashlib
 from communications.commands import Command
 from communications.command_definitions import COMMAND_LIST
 from utils.exceptions import CommandUnpackingException
+from communications.downlink import bit_inflation
 import logging
 
 
@@ -86,4 +87,10 @@ class CommandHandler:
         data_buffer[DATA_OFFSET - MAC_LENGTH:] = link_data
 
         mac = compute_mac(bytes(data_buffer))
-        return mac + bytes(data_buffer)
+        packet = mac + bytes(data_buffer)
+
+        if not uplink:
+            # inflate bits
+            packet = bytes(bit_inflation(packet, ZERO_WORD, ONE_WORD))
+
+        return packet

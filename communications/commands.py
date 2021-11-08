@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from utils.constants import MIN_COMMAND_SIZE
 from utils.exceptions import CommandException
 from typing import TYPE_CHECKING, Union, Dict, List, Any, Optional

@@ -53,7 +53,7 @@ class MainSatelliteThread(Thread):
         self.opnav_queue = Queue()  # determine state of opnav success
         # self.init_comms()
         logger.info("Initializing commands and downlinks")
-        self.command_handler = CommandHandler()
+        self.command_handler = CommandHandler(self)
         self.command_counter = 0
         self.downlink_counter = 0
         self.last_opnav_run = time()  # Figure out what to set to for first opnav run

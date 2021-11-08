@@ -1,6 +1,6 @@
+from main import MainSatelliteThread
 from utils.exceptions import DeserializationException
 import unittest
-from communications import command_handler
 from utils import constants, log
 from typing import List
 import logging
@@ -14,7 +14,8 @@ class BitFlips(unittest.TestCase):
     and then having that corrupted packet being received by the spacecraft. """
 
     def setUp(self) -> None:
-        self.command_handler = command_handler.CommandHandler()
+        m = MainSatelliteThread()
+        self.command_handler = m.command_handler
 
     def bit_flip_tester(self, flip_bit: bool):
         rejected_by_mac = 0

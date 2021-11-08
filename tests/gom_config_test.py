@@ -1,6 +1,6 @@
 from random import randint
 import drivers.power.power_structs as ps
-from communications.command_handler import CommandHandler
+from main import MainSatelliteThread
 from utils.constants import CommandEnum
 from utils.gom_util import dict_from_eps_config, eps_config_from_dict, dict_from_eps_config2, \
     eps_config2_from_dict
@@ -58,7 +58,8 @@ def test_config_command():
 
     COUNTER = 0
 
-    ch = CommandHandler()
+    m = MainSatelliteThread()
+    ch = m.command_handler
 
     command_bytes = ch.pack_link(
         True, COUNTER, CommandEnum.GomConf1Set.value, **config_dict)
@@ -112,7 +113,8 @@ def test_config2_command():
 
     COUNTER = 0
 
-    ch = CommandHandler()
+    m = MainSatelliteThread()
+    ch = m.command_handler
 
     command_bytes = ch.pack_link(
         True, COUNTER, CommandEnum.GomConf2Set.value, **config2_dict)

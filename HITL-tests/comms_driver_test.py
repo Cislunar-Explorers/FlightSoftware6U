@@ -3,7 +3,7 @@ from communications.command_handler import CommandHandler
 import time
 
 # Setup
-ch = CommandHandler()
+ch = CommandHandler(None)
 groundstation = Radio()
 
 # Send command to get gyro/mag/acc data

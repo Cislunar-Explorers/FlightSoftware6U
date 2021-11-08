@@ -41,7 +41,7 @@ class CommandHandler:
     inflation: bool  # flag to do bit inflation; must be True for flight, can be False for testing
     _parent: Optional[MainSatelliteThread] = None
 
-    def __init__(self, parent: MainSatelliteThread, inflation=True) -> None:
+    def __init__(self, parent: Optional[MainSatelliteThread], inflation=True) -> None:
         self.inflation = inflation
         self._parent = parent
         self.uplink_counter = params.UPLINK_COUNTER

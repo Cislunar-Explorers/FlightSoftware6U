@@ -1,7 +1,7 @@
 from communications.satellite_radio import Radio
 from communications.command_handler import CommandHandler
 groundstation = Radio()
-dh = CommandHandler()
+dh = CommandHandler(None)
 
 print('Receiving...')
 while True:

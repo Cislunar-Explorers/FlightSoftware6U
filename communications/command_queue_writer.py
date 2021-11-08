@@ -7,7 +7,7 @@ from utils.log import get_log
 
 logger = get_log()
 
-ch = CommandHandler()
+ch = CommandHandler(None)
 
 fm_num = int(0)
 filename = "command_queue.txt"

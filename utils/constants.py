@@ -33,9 +33,9 @@ FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
 PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
 
 # Keyword Argument Definitions for Commands
-POSITION_X = "position_x"
-POSITION_Y = "position_y"
-POSITION_Z = "position_z"
+POS_X = "position_x"
+POS_Y = "position_y"
+POS_Z = "position_z"
 
 ACCELERATE = "accelerate"
 
@@ -58,6 +58,7 @@ NUM_BLOCKS = "num_blocks"
 
 TIME = "time"
 SYS_TIME = 'sys_time'
+MANEUVER_TIME = 'maneuver_time'
 
 HARD_SET = "hard_set"
 
@@ -196,10 +197,11 @@ M = 2 ** 32
 team_identifier = 0xEB902D2D  # Team 2
 
 # TODO: validate these values:
-SPLIT_BURNWIRE_DURATION = 1  # second
+SPLIT_BURNWIRE_DURATION = 1.5  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 GLOWPLUG_DURATION = 1  # SECOND
 BURN_WAIT_TIME = 15  # minutes
+
 
 MAX_GYRO_RATE = 250  # degrees/sec # TODO
 
@@ -297,6 +299,7 @@ class CommandEnum(IntEnum):
     CommsMode = 9
     Command = 10
     AttitudeAdjustment = 11
+
     SetElectrolysis = 12  # arg = bool whether to start or stop electrolysis
     SetParam = 13
     CritTelem = 14
@@ -325,154 +328,24 @@ class CommandEnum(IntEnum):
     GetFileBlocksInfo = 36
     ActivateFile = 37
 
-    ShellCommand = 50
-    SudoCommand = 51
-    Picberry = 52
-    ExecPyFile = 53
+    SetSystemTime = 38
+    RebootPi = 39
 
-    IgnoreLowBatt = 60
+    RebootGom = 40
+    PowerCycle = 41
+    GomPin = 42
+    GomGeneralCmd = 43
+    GeneralCmd = 44
 
-
-@unique
-class BootCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    Split = 1
-
-
-@unique
-class RestartCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-
-
-@unique
-class NormalCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    # SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
-    SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
-    # Really not sure what 3 and 4 are supposed to do:
-    # SetAccelerate = 3  # arg=true/false
-    # SetBreakpoint = 4  # arg=position x, y, z
-    SetParam = 5
-    CritTelem = 6
-    BasicTelem = 7
-    DetailedTelem = 8
-    Verification = 9
-    GetParam = 11
-    SetOpnavInterval = 12
-    #    WhenReorient = 13  # when we want to schedule a reorientation maneuver
-    # 2 args, unix time stamp and spin axis vector (2 floats)
-    #    ScheduleReorientation = 14
-    ScheduleManeuver = 15
-    ACSPulsing = 16
-    NemoWriteRegister = 17
-    NemoReadRegister = 18
-    NemoSetConfig = 19
-    NemoPowerOff = 20
-    NemoPowerOn = 21
-    NemoReboot = 22
-    NemoProcessRateData = 23
-    NemoProcessHistograms = 24
-    GomConf1Set = 30
-    GomConf1Get = 31
-    GomConf2Set = 32
-    GomConf2Get = 33
+    LowBattThresh = 45
 
     ShellCommand = 50
     SudoCommand = 51
     Picberry = 52
     ExecPyFile = 53
+    PiShutdown = 54
+
+    SeparationTest = 55
 
     IgnoreLowBatt = 60
-
-    # CommandStatus = 99
-
-
-@unique
-class LowBatterySafetyCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # ExitLBSafetyMode = 1  # no args, # XXX this is an override command
-    # SetExitLBSafetyMode = 2  # define battery percentage
-    # SetParam = 5
-    CritTelem = 6
-    BasicTelem = 7
-    # DetailedTelem = 8
-
-
-@unique
-class SafetyCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    ExitSafetyMode = 1
-    # SetExitSafetyMode = 2
-    SetParameter = 5
-    CritTelem = 6
-    BasicTelem = 7
-    DetailedTelem = 8
-
-
-@unique
-class OpNavCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # RunOpNav = 1  # no args
-    # SetInterval = 2  # arg=interval in minutes packed as an int
-
-
-@unique
-class ManeuverCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-
-
-@unique
-class SensorsCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # Thermocouple = 1
-    # PressureTransducer = 2
-    # Gomspace = 3
-    # CameraMux = 4
-    # Gyro = 5
-    # RTC = 6
-    # AX5043 = 7
-
-
-@unique
-class TestCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # SetTestMode = 1  # no args
-    ADCTest = 4
-    SeparationTest = 5
-    CommsDriver = 7
-    RTCTest = 8
-    LongString = 9
-    PiShutdown = 11
-
-
-@unique
-class CommsCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # DownlinkFullDataPacket = 4  # no args
-    # SetDataPacket = 5  # arg=data packet id
-
-
-@unique
-class CommandCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    SetParam = 1  # 2 args: key and value of parameter to be changed
-    # 1 arg: UTC(?) time that the system clock should be set to
-    SetSystemTime = 2
-    RebootPi = 3
-    RebootGom = 4
-    PowerCycle = 5
-    GomPin = 6  # 1 arg: which gom pin to toggle
-    GomGeneralCmd = 7
-    GeneralCmd = 8
-    SetUpdatePath = 9
-    AddFileBlock = 10
-    GetFileBlocksInfo = 11
-    ActivateFile = 12
-    ShellCommand = 50
     CeaseComms = 170
-
-
-@unique
-class AttitudeCommandEnum(IntEnum):
-    Switch = 0

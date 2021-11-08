@@ -1,9 +1,12 @@
 from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Dict, Optional, Union, cast, List
+from communications import codec
 from communications.codec import Codec
 from communications.commands import Command
+from communications import codecs
 from utils import parameter_utils
+from utils import constants
 from utils.log import log_error
 from utils import gom_util
 
@@ -17,299 +20,105 @@ from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import drivers.power.power_structs as ps
 import time
 import hashlib
-from threading import Thread
 from utils.constants import *
-from utils.parameter_utils import set_parameter
 from utils.exceptions import CommandArgException
 import subprocess
+
 
 import os
 import utils.parameters as params
 
 
-def verification(**kwargs):
-    """CQC Comms Verification
-    For more info see https://cornell.app.box.com/file/766365097328
-    Assuming a data rate of 50 bits/second, 30 minutes of data transmission gives 78 data blocks"""
-    num_blocks: int = cast('int', kwargs.get(NUM_BLOCKS))
+class separation_test(Command):
+    id = CommandEnum.SeparationTest
+    uplink_args = []
+    downlink_args = []
 
-    data_block_sequence_num = 0
-    team_bytes = team_identifier.to_bytes(4, 'big')
-    data_transmission_sequence = bytes()
-
-    for _ in range(num_blocks):
-        # header calculation:
-        sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
-        # get current time
-        timestamp = time.time()  # each block has its own timestamp
-        # extract seconds and milliseconds from timestamp:
-        seconds_int = int(timestamp)
-        seconds_bytes = seconds_int.to_bytes(4, 'big')
-        ms_bytes = int((timestamp - seconds_int) *
-                       (10 ** 6)).to_bytes(4, 'big')
-
-        # concatenate header
-        header = team_bytes + sequence_bytes + seconds_bytes + ms_bytes
-
-        # team identifier xor with timestamp seconds
-        operating_period_base_seed = team_identifier ^ seconds_int
-        # xor previous with data block sequence num
-        block_seed = operating_period_base_seed ^ data_block_sequence_num
-
-        prn_length = 128 // 4  # integer division
-        # preallocate memory for storing prn data
-        prn = [int()] * (prn_length + 1)
-        prn[0] = block_seed  # x0 is the block seed
-
-        for i in range(1, prn_length + 1):
-            # algorithm defined in sec 4.4.2 of CommsProc rev 4
-            xn = (a * prn[i - 1] + b) % M
-            # if the mod operator above causes issues, anding with 32-bit 2**32 should do the trick
-            prn[i] = xn
-
-        # get rid of the first value in the PRN, x0 is not included in PRN
-        prn.pop(0)
-
-        data_field = bytes()
-        for j in prn:
-            # concatenate prn data into bytes
-            data_field += j.to_bytes(4, 'big')
-
-        data_block = header + data_field
-
-        # concatenate data block into transmission sequence
-        data_transmission_sequence += data_block
-        data_block_sequence_num += 1
-
-    # TODO instead of returning, add to comms queue
-    return data_transmission_sequence.hex()
-
-
-class CommandDefinitions:
-    def __init__(self, parent: MainSatelliteThread):
-        parent = parent
-        self.bootup_commands = {1: self.split}
-        self.restart_commands = {}
-        self.normal_commands = {
-            # TODO: use CommandEnums instead of hardcoded values for all commands below
-            NormalCommandEnum.RunOpNav.value: self.run_opnav,
-            # NormalCommandEnum.SetDesiredAttitude.value: self.change_attitude,
-            NormalCommandEnum.SetElectrolysis.value: self.electrolysis,
-            NormalCommandEnum.SetParam.value: self.set_parameter,
-            NormalCommandEnum.CritTelem.value: self.gather_critical_telem,
-            NormalCommandEnum.BasicTelem.value: self.gather_basic_telem,
-            NormalCommandEnum.DetailedTelem.value: self.gather_detailed_telem,
-            NormalCommandEnum.Verification.value: verification,
-            NormalCommandEnum.GetParam.value: self.print_parameter,
-            NormalCommandEnum.SetOpnavInterval.value: self.set_opnav_interval,
-            NormalCommandEnum.ScheduleManeuver.value: self.schedule_maneuver,
-            NormalCommandEnum.ACSPulsing.value: self.acs_pulse_timing,
-            NormalCommandEnum.NemoWriteRegister.value: self.nemo_write_register,
-            NormalCommandEnum.NemoReadRegister.value: self.nemo_read_register,
-            NormalCommandEnum.NemoSetConfig.value: self.nemo_set_config,
-            NormalCommandEnum.NemoPowerOff.value: self.nemo_power_off,
-            NormalCommandEnum.NemoPowerOn.value: self.nemo_power_on,
-            NormalCommandEnum.NemoReboot.value: self.nemo_reboot,
-            NormalCommandEnum.NemoProcessRateData.value: self.nemo_process_rate_data,
-            NormalCommandEnum.NemoProcessHistograms.value: self.nemo_process_histograms,
-            NormalCommandEnum.GomConf1Set.value: self.set_gom_conf1,
-            NormalCommandEnum.GomConf1Get.value: self.get_gom_conf1,
-            NormalCommandEnum.GomConf2Set.value: self.set_gom_conf2,
-            NormalCommandEnum.GomConf2Get.value: self.get_gom_conf2,
-            NormalCommandEnum.ShellCommand.value: self.shell_command,
-            NormalCommandEnum.SudoCommand.value: self.sudo_command,
-            NormalCommandEnum.Picberry.value: self.picberry,
-            NormalCommandEnum.ExecPyFile.value: self.exec_py_file,
-            NormalCommandEnum.IgnoreLowBatt.value: self.ignore_low_battery,
-        }
-
-        self.low_battery_commands = {
-            LBSCEnum.BasicTelem.value: self.gather_basic_telem,
-            LBSCEnum.CritTelem: self.gather_critical_telem,
-        }
-
-        self.safety_commands = {
-            SafetyCommandEnum.ExitSafetyMode.value: self.return_to_normal,
-            # 2: Not Implemented/need clarification,
-            SafetyCommandEnum.SetParameter.value: self.set_parameter,
-            SafetyCommandEnum.CritTelem.value: self.gather_critical_telem,
-            SafetyCommandEnum.BasicTelem.value: self.gather_basic_telem,
-            SafetyCommandEnum.DetailedTelem.value: self.gather_detailed_telem
-        }
-
-        self.opnav_commands = {}
-        self.maneuver_commands = {}
-        self.sensor_commands = {}
-
-        self.test_commands = {
-            TestCommandEnum.ADCTest.value: self.adc_test,
-            TestCommandEnum.SeparationTest.value: self.separation_test,
-            TestCommandEnum.CommsDriver.value: self.comms_driver_test,
-            TestCommandEnum.LongString.value: self.print_long_string,
-            TestCommandEnum.PiShutdown.value: self.pi_shutdown,
-            TestCommandEnum.RTCTest.value: self.rtc_test
-        }
-
-        self.comms_commands = {}
-
-        self.command_commands = {
-            CommandCommandEnum.SetParam.value: self.set_parameter,
-            CommandCommandEnum.SetSystemTime.value: self.set_system_clock,
-            CommandCommandEnum.RebootPi.value: self.reboot_pi,
-            CommandCommandEnum.RebootGom.value: self.reboot_gom,
-            CommandCommandEnum.PowerCycle.value: self.power_cycle,
-            CommandCommandEnum.GomPin.value: self.gom_outputs,
-            CommandCommandEnum.GomGeneralCmd.value: self.gom_command,
-            CommandCommandEnum.GeneralCmd.value: self.general_command,
-            CommandCommandEnum.CeaseComms.value: self.cease_comms,
-            CommandCommandEnum.SetUpdatePath.value: self.set_file_to_update,
-            CommandCommandEnum.AddFileBlock.value: self.add_file_block,
-            CommandCommandEnum.GetFileBlocksInfo.value: self.get_file_blocks_info,
-            CommandCommandEnum.ActivateFile.value: self.activate_file,
-            CommandCommandEnum.ShellCommand.value: self.shell_command
-        }
-
-        self.attitude_commands = {}
-
-        self.COMMAND_DICT = {
-            FMEnum.Boot.value: self.bootup_commands,
-            FMEnum.Restart.value: self.restart_commands,
-            FMEnum.Normal.value: self.normal_commands,
-            FMEnum.LowBatterySafety.value: self.low_battery_commands,
-            FMEnum.Safety.value: self.safety_commands,
-            FMEnum.OpNav.value: self.opnav_commands,
-            FMEnum.Maneuver.value: self.maneuver_commands,
-            FMEnum.SensorMode.value: self.sensor_commands,
-            FMEnum.TestMode.value: self.test_commands,
-            FMEnum.CommsMode: self.comms_commands,
-            FMEnum.Command.value: self.command_commands,
-            FMEnum.AttitudeAdjustment.value: self.attitude_commands
-        }
-
-        for value in self.COMMAND_DICT.values():
-            # adds 0 to all of the dict entries in COMMAND_DICT
-            value[0] = self.switch
-
-    def switch(self):
-        logging.critical("Manual FM switch commanded")
-
-    def split(self):
-        # for demo, delay of 0
-        parent.gom.burnwire1(params.SPLIT_BURNWIRE_DURATION, delay=0)
-        # Tell gom to power burnwires in five seconds
-        # parent.gom.burnwire1(constants.SPLIT_BURNWIRE_DURATION, delay=5)
-        # start reading gyro info
-        # read gyro rotation rate data after split - need to downlink these to make sure of successful split
-
-    def adc_test(self):
-        # tests integration of ADC into the rest of the FSW
-        logging.info(
-            "Cold junction temperature for gyro sensor in Celsius:")
-        logging.info(parent.adc.get_gyro_temp())
-
-        logging.info(
-            f"Pressure: {parent.adc.read_pressure()} psi")
-        logging.info(
-            f"Temperature: {parent.adc.read_temperature()} deg C")
-
-        logging.info("Conversion sanity check: 25.6 degrees")
-        logging.info(parent.adc.convert_volt_to_temp(
-            parent.adc.convert_temp_to_volt(25.6)))
-        logging.info("Conversion sanity check: 2.023 mV")
-        logging.info(parent.adc.convert_temp_to_volt(
-            parent.adc.convert_volt_to_temp(2.023)))
-
-    def rtc_test(self):
-        logging.info(
-            f"Oscillator Disabled: {parent.rtc.ds3231.disable_oscillator}")
-        logging.info(f"RTC Temp: {parent.rtc.get_temp()}")
-        logging.info(f"RTC Time: {parent.rtc.get_time()}")
-        # time.sleep(1)
-        logging.info("Setting RTC time to 1e9")
-        parent.rtc.set_time(int(1e9))
-        logging.info("New RTC Time: {parent.rtc.get_time()}")
-        # time.sleep(1)
-        logging.info("Incrementing RTC Time by 5555 seconds")
-        parent.rtc.increment_rtc(5555)
-        logging.info(
-            f"New RTC Time: {parent.rtc.get_time()}")
-        logging.info("Disabling Oscillator, waiting 10 seconds")
-        # parent.rtc.disable_oscillator()
-        time.sleep(10)
-        logging.info(
-            f"RTC Time after disabling oscillator: {parent.rtc.get_time()}")
-        logging.info("Enabling Oscillator, waiting 10 seconds")
-        # parent.rtc.enable_oscillator()
-        time.sleep(10)
-        logging.info(
-            f"RTC Time after re-enabling oscillator: {parent.rtc.get_time()}")
-        logging.info("Disabling Oscillator")
-        # parent.rtc.disable_oscillator()
-        parent.handle_sigint(None, None)
-
-    def separation_test(self):
-        gyro_threader = Thread(target=self.gyro_thread)
-        gyro_threader.start()
-        parent.gom.burnwire1(2)
-        gyro_threader.join()
-
-    def gyro_thread(self):
-        freq = 250  # Hz
-        duration = 3  # sec
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+        parent.gom.burnwire1(SPLIT_BURNWIRE_DURATION)
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
-        for _ in range(int(duration * freq)):
+        for _ in range(1000):
             gyro_reading = parent.gyro.get_gyro()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
             gyro_list.append(gyro_time)
             gyro_data.append(gyro_list)
-            time.sleep(1.0 / freq)
 
         # writes gyro data to gyro_data.txt. Caution, this file will be overwritten with every successive test
         logging.info("Writing gyro data to file")
         with open('gyro_data.txt', 'w') as filehandle:
             filehandle.writelines("%s\n" % line for line in gyro_data)
 
-    def run_opnav(self):
+
+class set_opnav_interval(Command):
+    id = CommandEnum.SetOpnavInterval
+    uplink_args = []
+    downlink_args = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
         """Schedules Opnav mode into the FM queue"""
         parent.FMQueue.put(FMEnum.OpNav.value)
 
-    def set_exit_lowbatt_threshold(self, **kwargs):
-        """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
-        requires one kwarg and does some basic sanity checks on the passed value"""
-        value = kwargs['vbatt']
+
+class exit_low_batt_thresh(Command):
+    """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
+    requires one kwarg and does some basic sanity checks on the passed value"""
+
+    id = CommandEnum.LowBattThresh
+    uplink_args = [Codec(VBATT, "ushort")]
+    downlink_args = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+        value = kwargs[VBATT]
         try:
             assert 6000 < value < 8400 and float(value) is float
-            self.set_parameter(
-                name="EXIT_LOW_BATTERY_MODE_THRESHOLD", value=value)
+            parameter_utils.set_parameter(
+                "EXIT_LOW_BATTERY_MODE_THRESHOLD", value, False)
         except AssertionError:
             logging.error(
                 f"Incompatible value {value} for EXIT_LOW_BATTERY_MODE_THRESHOLD")
 
-    def set_opnav_interval(self, **kwargs):
+
+class set_opnav_interval(Command):
+    id = CommandEnum.SetOpnavInterval
+    uplink_args = [Codec(INTERVAL, "ushort")]
+    downlink_args = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
             requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
         value = kwargs[INTERVAL]
         try:
-            assert value > 1
-            self.set_parameter(name="OPNAV_INTERVAL",
-                               value=value, hard_set=False)
+            assert 1000 > value > 10
+            parameter_utils.set_parameter(
+                "OPNAV_INTERVAL", value, hard_set=False)
         except AssertionError:
             logging.error(
                 f"Incompatible value {value} for SET_OPNAV_INTERVAL")
+        return {}
 
-    # def change_attitude(self, **kwargs):
-    #     theta = kwargs.get(AZIMUTH)
-    #     phi = kwargs.get(ELEVATION)  # angle down from z-axis of ECI frame
-    #
-    #     assert 0 <= theta < 6.28318530718
-    #     assert 0 <= phi < 3.14159265359
-    #
-    #     parent.reorientation_queue.put((theta, phi))
+# Future command:
+# def change_attitude(self, **kwargs):
+#     theta = kwargs.get(AZIMUTH)
+#     phi = kwargs.get(ELEVATION)  # angle down from z-axis of ECI frame
+#
+#     assert 0 <= theta < 6.28318530718
+#     assert 0 <= phi < 3.14159265359
+#
+#     parent.reorientation_queue.put((theta, phi))
 
-    def acs_pulse_timing(self, **kwargs):
-        pulse_start_time = kwargs[START]  # float, seconds
+
+class acs_pulse_timing(Command):
+    id = CommandEnum.ACSPulsing
+    uplink_args = [Codec(START, "double"),
+                   Codec(PULSE_DURATION, "ushort"),
+                   Codec(PULSE_NUM, "ushort"),
+                   Codec(PULSE_DT, "ushort")]
+    downlink_args = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+        pulse_start_time = kwargs[START]  # double, seconds
         pulse_duration = kwargs[PULSE_DURATION]  # ushort, milliseconds
         pulse_num = kwargs[PULSE_NUM]  # ushort, number
         pulse_dt = kwargs[PULSE_DT]  # ushort, milliseconds
@@ -317,7 +126,7 @@ class CommandDefinitions:
         try:
             assert pulse_start_time > time.time()
             assert pulse_duration > 0
-            assert pulse_num >= 0
+            assert pulse_num >= 0 and pulse_num < 50
             assert pulse_dt >= 0
         except AssertionError:
             raise CommandArgException
@@ -325,116 +134,262 @@ class CommandDefinitions:
         parent.reorientation_queue.put(
             (pulse_start_time, pulse_duration, pulse_num, pulse_dt))
 
-    def gather_critical_telem(self):
+
+class critical_telem(Command):
+    id = CommandEnum.CritTelem
+    uplink_args = []
+    downlink_args = [codecs.VBATT_codec,
+                     codecs.CURSUN_codec,
+                     codecs.CURSYS_codec,
+                     codecs.GOM_BATTMODE_codec,
+                     codecs.GOM_PPT_MODE_codec]
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
         # downlinking them (think about a low-power scenario where the most important thing is our power in and out)
-        raise NotImplementedError
+        return parent.telemetry.minimal_packet()
 
-    def gather_basic_telem(self):
+
+class basic_telem(Command):
+    id = CommandEnum.BasicTelem
+    uplink_args = []
+    downlink_args = [
+        codecs.RTC_TIME_codec,
+        codecs.POS_X_codec,
+        codecs.POS_Y_codec,
+        codecs.POS_Z_codec,
+        codecs.ATT_1_codec,
+        codecs.ATT_2_codec,
+        codecs.ATT_3_codec,
+        codecs.ATT_4_codec,
+        codecs.HK_TEMP_1_codec,
+        codecs.HK_TEMP_2_codec,
+        codecs.HK_TEMP_3_codec,
+        codecs.HK_TEMP_4_codec,
+        codecs.GYRO_TEMP_codec,
+        codecs.THERMOCOUPLE_TEMP_codec,
+        codecs.CURIN1_codec,
+        codecs.CURIN2_codec,
+        codecs.CURIN3_codec,
+        codecs.VBOOST_1_codec,
+        codecs.VBOOST_2_codec,
+        codecs.VBOOST_3_codec,
+        codecs.CURSYS_codec,
+        codecs.VBATT_codec,
+        codecs.PROP_TANK_PRESSURE_codec,
+    ]
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
         # what's defined in section 3.6.1 of https://cornell.app.box.com/file/629596158344 would be a good packet
         return parent.telemetry.standard_packet_dict()
 
-    def gather_detailed_telem(self):
-        # here we'd gather as much data about the satellite as possible
-        raise NotImplementedError
 
-    def electrolysis(self, **kwargs):
+class detailed_telem(Command):
+    id = CommandEnum.DetailedTelem
+    uplink_args = []
+    downlink_args = [
+        codecs.TIME_codec,
+        codecs.VBOOST_1_codec,
+        codecs.VBOOST_2_codec,
+        codecs.VBOOST_3_codec,
+        codecs.VBATT_codec,
+        codecs.CURIN1_codec,
+        codecs.CURIN2_codec,
+        codecs.CURIN3_codec,
+        codecs.CURSUN_codec,
+        codecs.CURSYS_codec,
+        codecs.RESERVED1_codec,
+        codecs.CUROUT1_codec,
+        codecs.CUROUT2_codec,
+        codecs.CUROUT3_codec,
+        codecs.CUROUT4_codec,
+        codecs.CUROUT5_codec,
+        codecs.CUROUT6_codec,
+        codecs.OUTPUTS_codec,
+        codecs.LATCHUPS1_codec,
+        codecs.LATCHUPS2_codec,
+        codecs.LATCHUPS3_codec,
+        codecs.LATCHUPS4_codec,
+        codecs.LATCHUPS5_codec,
+        codecs.LATCHUPS6_codec,
+        codecs.WDT_TIME_LEFT_I2C_codec,
+        codecs.WDT_TIME_LEFT_GND_codec,
+        codecs.WDT_COUNTS_I2C_codec,
+        codecs.WDT_COUNTS_GND_codec,
+        codecs.GOM_BOOTS_codec,
+        codecs.GOM_BOOTCAUSE_codec,
+        codecs.GOM_BATTMODE_codec,
+        codecs.HK_TEMP_1_codec,
+        codecs.HK_TEMP_2_codec,
+        codecs.HK_TEMP_3_codec,
+        codecs.HK_TEMP_4_codec,
+        codecs.GOM_PPT_MODE_codec,
+        codecs.RESERVED2_codec,
+        codecs.RTC_TIME_codec,
+        codecs.RPI_CPU_codec,
+        codecs.RPI_RAM_codec,
+        codecs.RPI_DSK_codec,
+        codecs.RPI_TEMP_codec,
+        codecs.RPI_BOOT_codec,
+        codecs.RPI_UPTIME_codec,
+        codecs.GYROX_codec,
+        codecs.GYROY_codec,
+        codecs.GYROZ_codec,
+        codecs.ACCX_codec,
+        codecs.ACCY_codec,
+        codecs.ACCZ_codec,
+        codecs.MAGX_codec,
+        codecs.MAGY_codec,
+        codecs.MAGZ_codec,
+        codecs.GYRO_TEMP_codec,
+        codecs.THERMOCOUPLE_TEMP_codec,
+        codecs.PROP_TANK_PRESSURE_codec,
+        codecs.POS_X_codec,
+        codecs.POS_Y_codec,
+        codecs.POS_Z_codec,
+        codecs.ATT_1_codec,
+        codecs.ATT_2_codec,
+        codecs.ATT_3_codec,
+        codecs.ATT_4_codec,
+    ]
+    # Needs validation
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, int | float]:
+        return parent.telemetry.detailed_packet_dict()
+
+
+class electrolysis(Command):
+    id = CommandEnum.SetElectrolysis
+    uplink_args = [Codec(IGNORE, 'bool')]
+    downlink_args = []
+
+    # Needs validation
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
         state = kwargs[STATE]
-        delay = kwargs.get(DELAY, 0)
-        assert type(state) is bool
-        params.WANT_TO_ELECTROLYZE = state
-        # parent.gom.set_electrolysis(state, delay=delay)
+        parameter_utils.set_parameter(
+            "WANT_TO_ELECTROLYZE", bool(state), hard_set=False)
 
-    def ignore_low_battery(self, **kwargs):
-        """This is obviously a very dangerous command. It's mainly meant for testing on the ground"""
+
+class ignore_low_batt(Command):
+    """This is obviously a very dangerous command. It's mainly meant for testing on the ground"""
+    id = CommandEnum.IgnoreLowBatt
+    uplink_args = [Codec(IGNORE, 'bool')]
+    downlink_args = []
+
+    # Needs validation
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
         ignore = kwargs[IGNORE]
-        params.IGNORE_LOW_BATTERY = ignore
+        parameter_utils.set_parameter(
+            "IGNORE_LOW_BATTERY", bool(ignore), hard_set=False)
+        return {}
 
-    def schedule_maneuver(self, **kwargs):
-        time_burn = kwargs['time']
+
+class schedule_maneuver(Command):
+    id = CommandEnum.ScheduleManeuver
+    uplink_args = [Codec(MANEUVER_TIME, "double")]
+    downlink_args = []
+
+    # Needs validation
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
+        time_burn = kwargs[MANEUVER_TIME]
         logging.info(
             "Scheduling a maneuver at: " + str(float(time_burn)))
-        self.set_parameter(name="SCHEDULED_BURN_TIME",
-                           value=float(time_burn), hard_set=True)
+        set_parameter("SCHEDULED_BURN_TIME", float(time_burn), hard_set=True)
+        # TODO: fix maneuver queue addition
         parent.maneuver_queue.put(FMEnum.Maneuver.value)
 
-    def return_to_normal(self):
-        parent.replace_flight_mode_by_id(FMEnum.Normal.value)
+        return {}
 
-    @staticmethod
-    def reboot_pi():
+
+class reboot(Command):
+    id = CommandEnum.RebootPi
+    uplink_args = []
+    downlink_args = []
+
+    # Needs validation
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
         # TODO: make rebooting less janky
         os.system("sudo reboot")
         # add something here that adds to the restarts db that this restart was commanded
 
-    def cease_comms(self, **kwargs):
+
+class cease_comms(Command):
+    """This is an FCC requirement. We need to be able to command our spacecraft to stop transmitting if we become a nuisance to other radio stuff"""
+    id = CommandEnum.CeaseComms
+    uplink_args = [Codec(PASSWORD, 'string')]
+    downlink_args = []
+
+    # Needs validation
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
         pword = kwargs[PASSWORD]
         if pword == 123:  # TODO, change
-            # I'm actually unsure of how to do this. Maybe do something with the GPIO pins so that the pi can't transmit
             logging.critical("Ceasing all communications")
             # definitely should implement some sort of password and double verification to prevent accidental triggering
             raise NotImplementedError
 
-    def set_system_clock(self, **kwargs):  # Needs validation (talk to Viraj)
+
+class set_system_time(Command):
+    id = CommandEnum.SetSystemTime
+    uplink_args = [Codec(SYS_TIME, 'double')]
+    downlink_args = [Codec(SYS_TIME, 'double')]
+
+    # Needs validation
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
         # need to validate this works, and need to integrate updating RTC
-        unix_epoch = kwargs['epoch']
+        unix_epoch = kwargs[SYS_TIME]
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
+        return {SYS_TIME: time.time()}
 
-    def print_parameter(self, **kwargs):
-        index = kwargs["index"]
-        value = getattr(params, str(index))
-        logging.info(f"{index}:{value}")
 
-    def reboot_gom(self):
+class get_param(Command):
+    id = CommandEnum.GetParam
+    uplink_args = [Codec(NAME, 'string')]
+    downlink_args = [Codec(VALUE, 'double')]
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+        name = kwargs[NAME]
+        value = getattr(params, name)
+        logging.info(f"{name}: {value}")
+        return {NAME: value}
+
+
+class reboot_gom(Command):
+    id = CommandEnum.RebootGom
+    uplink_args = []
+    downlink_args = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
         parent.gom.pc.reboot()
+        return {}
 
-    def power_cycle(self, **kwargs):
-        passcode = kwargs.get('passcode', 'bogus')
-        parent.gom.hard_reset(passcode)
 
-    def gom_outputs(self, **kwargs):
-        output_channel = kwargs['output_channel']
+class power_cycle(Command):
+    id = CommandEnum.PowerCycle
+    uplink_args = []
+    downlink_args = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+        parent.gom.hard_reset(True)
+        return {}
+
+
+class gom_outputs(Command):
+    id = CommandEnum.GomPin
+    uplink_args = [Codec(OUTPUT_CHANNEL, 'uint8'),
+                   Codec(STATE, 'bool'),
+                   Codec(DELAY, 'ushort')]
+    downlink_args = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+        output_channel = kwargs[OUTPUT_CHANNEL]
         # if 'state' is not found in kwargs, assume we want it to turn off
-        state = kwargs.get('state', 0)
+        state = kwargs.get(STATE, 0)
         # if 'delay' is not found in kwargs, assume we want it immediately
-        delay = kwargs.get('delay', 0)
-        parent.gom.set_output(output_channel, state, delay=delay)
+        delay = kwargs.get(DELAY, 0)
 
-    def gom_command(self, command_string: str, args: dict):
-        """Generalized Gom command - very powerful and possibly dangerous.
-        Make sure you know exactly what you're doing when calling this."""
-        method_to_call = getattr(parent.gom, command_string)
-        try:
-            result = method_to_call(**args)
-            return result
-        except TypeError:
-            logging.error(
-                f"Incorrect args: {args} for gom method {command_string}")
-
-    def general_command(self, method_name: str, args: dict):
-        """Generalized satellite action command - very powerful and possibly dangerous.
-            Make sure you know exactly what you're doing when calling this."""
-
-        method_to_call = getattr(parent, method_name)
-        try:
-            result = method_to_call(**args)
-            return result
-        except TypeError:
-            logging.error(
-                f"Incorrect arguments: {args} for method {method_name}")
-
-    def comms_driver_test(self):
-
-        gyro = parent.gyro.get_gyro()
-
-        fx_data = parent.downlink_handler.pack_downlink(parent.downlink_counter,
-                                                        FMEnum.TestMode.value,
-                                                        TestCommandEnum.CommsDriver.value,
-                                                        gyro1=gyro[0], gyro2=gyro[1], gyro3=gyro[2])
-
-        time.sleep(5)
-        parent.radio.transmit(fx_data)
+        parent.gom.set_output(output_channel, int(state), delay=delay)
+        return {}
 
 
 class pi_shutdown(Command):
@@ -445,51 +400,7 @@ class pi_shutdown(Command):
     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
         # TODO: do this more gracefully
         os.system('sudo poweroff')
-
-
-"""
-OLD CODE, UNUSED, MAYBE WORTH BRINGING BACK?
-    def edit_file_at_line(self, **kwargs):
-
-        file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
-        line_number = kwargs['line_number']
-        new_line = kwargs['new_line']
-
-        # Open and copy file
-        original_file = open(file_path, 'r+')
-        original_file_lines = original_file.readlines()
-        new_file_lines = original_file_lines[:]
-
-        # Modify copy at designated line
-        new_file_lines[line_number] = new_line + ' \n'
-
-        # Write copy onto original file and original file into a backup
-        backup_file = open('backup_' + file_path, 'w')
-        backup_file.writelines(original_file_lines)
-        original_file.writelines(new_file_lines)
-
-class insert_line_in_file(Command):
-    id = CommandEnum.Insert
-    uplink_args = [Codec(TOTAL_BLOCKS, "ushort")]
-    downlink_args = [Codec(CHECKSUM, "string"),
-                     Codec(MISSING_BLOCKS, "string")]
-
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
-        line_number = kwargs['line_number']
-        new_line = kwargs['new_line']
-        file_path = params.FILE_UPDATE_PATH
-
-        # Get original file contents
-        original_file = open(file_path, 'r+')
-        my_file_lines = original_file.readlines()
-        pre_contents = my_file_lines[:line_number]
-        post_contents = my_file_lines[line_number:]
-
-        # Write new line into file
-        original_file.seek(0)
-        original_file.writelines(
-            pre_contents + [new_line + ' \n'] + post_contents)
-"""
+        return {}
 
 
 class set_file_to_update(Command):
@@ -517,11 +428,6 @@ class add_file_block(Command):
         parent.file_block_bank[block_number] = block_text
 
         # TODO: Downlink acknowledgment with block number, or downlink block numbers on request
-        # acknowledgement = parent.downlink_handler.pack_downlink(
-        #    parent.downlink_counter, FMEnum.Command.value,
-        #    CommandCommandEnum.AddFileBlock.value, successful=True,
-        #    block_number=block_number)
-        # parent.downlink_queue.put(acknowledgement)
 
 
 class get_file_blocks_info(Command):
@@ -836,7 +742,7 @@ class set_param(Command):
         name = kwargs[NAME]
         value = kwargs[VALUE]
         hard_set = kwargs[HARD_SET]
-        initial_value = set_parameter(name, value, hard_set)
+        initial_value = parameter_utils.set_parameter(name, value, hard_set)
 
         logging.info(
             f"Changed constant {name} from {initial_value} to {value}")
@@ -951,4 +857,111 @@ class get_gom_conf2(Command):
 
 
 COMMAND_LIST = [get_gom_conf2(), get_gom_conf1(),
-                set_gom_conf1(), set_gom_conf2(), set_param()]
+                set_gom_conf1(), set_gom_conf2(),
+                set_param(), separation_test(),
+                set_opnav_interval(), exit_low_batt_thresh(),
+                set_opnav_interval(), acs_pulse_timing(),
+                critical_telem(), basic_telem(),
+                detailed_telem(), electrolysis(),
+                ignore_low_batt(), schedule_maneuver(),
+                reboot(), cease_comms(), set_system_time(),
+                get_param(), power_cycle(), reboot_gom(),
+                gom_outputs(), pi_shutdown(), set_file_to_update(),
+                add_file_block(), get_file_blocks_info(), activate_file(),
+                print_some_string(), nemo_write_register(), nemo_read_register(),
+                nemo_set_config(), nemo_power_off(), nemo_power_on(), nemo_reboot(),
+                nemo_process_rate_data(), nemo_process_histograms(), shellCommand(),
+                sudoCommand(), picberry(), exec_py_file()]
+
+
+# DEPRECATED Commands: OLD CODE, UNUSED, MAYBE WORTH BRINGING BACK?
+
+#     def edit_file_at_line(self, **kwargs):
+
+#         file_path = FLIGHT_SOFTWARE_PATH + kwargs['file_path']
+#         line_number = kwargs['line_number']
+#         new_line = kwargs['new_line']
+
+#         # Open and copy file
+#         original_file = open(file_path, 'r+')
+#         original_file_lines = original_file.readlines()
+#         new_file_lines = original_file_lines[:]
+
+#         # Modify copy at designated line
+#         new_file_lines[line_number] = new_line + ' \n'
+
+#         # Write copy onto original file and original file into a backup
+#         backup_file = open('backup_' + file_path, 'w')
+#         backup_file.writelines(original_file_lines)
+#         original_file.writelines(new_file_lines)
+
+# class insert_line_in_file(Command):
+#     id = CommandEnum.Insert
+#     uplink_args = [Codec(TOTAL_BLOCKS, "ushort")]
+#     downlink_args = [Codec(CHECKSUM, "string"),
+#                      Codec(MISSING_BLOCKS, "string")]
+
+#     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+#         line_number = kwargs['line_number']
+#         new_line = kwargs['new_line']
+#         file_path = params.FILE_UPDATE_PATH
+
+#         # Get original file contents
+#         original_file = open(file_path, 'r+')
+#         my_file_lines = original_file.readlines()
+#         pre_contents = my_file_lines[:line_number]
+#         post_contents = my_file_lines[line_number:]
+
+#         # Write new line into file
+#         original_file.seek(0)
+#         original_file.writelines(
+#             pre_contents + [new_line + ' \n'] + post_contents)
+
+# def switch(self):
+#         logging.critical("Manual FM switch commanded")
+
+#     def adc_test(self):
+#         # tests integration of ADC into the rest of the FSW
+#         logging.info(
+#             "Cold junction temperature for gyro sensor in Celsius:")
+#         logging.info(parent.adc.get_gyro_temp())
+
+#         logging.info(
+#             f"Pressure: {parent.adc.read_pressure()} psi")
+#         logging.info(
+#             f"Temperature: {parent.adc.read_temperature()} deg C")
+
+#         logging.info("Conversion sanity check: 25.6 degrees")
+#         logging.info(parent.adc.convert_volt_to_temp(
+#             parent.adc.convert_temp_to_volt(25.6)))
+#         logging.info("Conversion sanity check: 2.023 mV")
+#         logging.info(parent.adc.convert_temp_to_volt(
+#             parent.adc.convert_volt_to_temp(2.023)))
+
+#     def rtc_test(self):
+#         logging.info(
+#             f"Oscillator Disabled: {parent.rtc.ds3231.disable_oscillator}")
+#         logging.info(f"RTC Temp: {parent.rtc.get_temp()}")
+#         logging.info(f"RTC Time: {parent.rtc.get_time()}")
+#         # time.sleep(1)
+#         logging.info("Setting RTC time to 1e9")
+#         parent.rtc.set_time(int(1e9))
+#         logging.info("New RTC Time: {parent.rtc.get_time()}")
+#         # time.sleep(1)
+#         logging.info("Incrementing RTC Time by 5555 seconds")
+#         parent.rtc.increment_rtc(5555)
+#         logging.info(
+#             f"New RTC Time: {parent.rtc.get_time()}")
+#         logging.info("Disabling Oscillator, waiting 10 seconds")
+#         # parent.rtc.disable_oscillator()
+#         time.sleep(10)
+#         logging.info(
+#             f"RTC Time after disabling oscillator: {parent.rtc.get_time()}")
+#         logging.info("Enabling Oscillator, waiting 10 seconds")
+#         # parent.rtc.enable_oscillator()
+#         time.sleep(10)
+#         logging.info(
+#             f"RTC Time after re-enabling oscillator: {parent.rtc.get_time()}")
+#         logging.info("Disabling Oscillator")
+#         # parent.rtc.disable_oscillator()
+#         parent.handle_sigint(None, None)

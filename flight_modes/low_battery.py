@@ -18,40 +18,6 @@ class LowBatterySafetyMode(FlightMode):
 
     flight_mode_id = FMEnum.LowBatterySafety.value
 
-    command_codecs = {LowBatterySafetyCommandEnum.Switch.value: ([], 0),
-                      LowBatterySafetyCommandEnum.BasicTelem.value: ([], 0),
-                      LowBatterySafetyCommandEnum.CritTelem.value: ([], 0)}
-    command_arg_types = {}
-    downlink_codecs = {
-        LowBatterySafetyCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
-                                                        HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP,
-                                                        THERMOCOUPLE_TEMP,
-                                                        CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
-                                                        VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
-                                                        PROP_TANK_PRESSURE], 84),
-
-        LowBatterySafetyCommandEnum.CritTelem.value: (
-            [BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE], 8)
-    }
-
-    downlink_arg_types = {RTC_TIME: 'double',
-                          POSITION_X: 'double', POSITION_Y: 'double', POSITION_Z: 'double',
-                          ATT_1: 'float', ATT_2: 'float', ATT_3: 'float', ATT_4: 'float',
-                          HK_TEMP_1: 'short', HK_TEMP_2: 'short', HK_TEMP_3: 'short', HK_TEMP_4: 'short',
-                          GYRO_TEMP: 'float',
-                          THERMOCOUPLE_TEMP: 'float',
-                          CURRENT_IN_1: 'short', CURRENT_IN_2: 'short', CURRENT_IN_3: 'short',
-                          VBOOST_1: 'short', VBOOST_2: 'short', VBOOST_3: 'short',
-                          PROP_TANK_PRESSURE: 'float',
-                          SUCCESSFUL: 'bool',
-
-                          BATTERY_VOLTAGE: 'short',
-                          SUN_CURRENT: 'short',
-                          SYSTEM_CURRENT: 'short',
-                          BATT_MODE: 'uint8',
-                          PPT_MODE: 'uint8',
-                          }
-
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -76,7 +42,8 @@ class LowBatterySafetyMode(FlightMode):
         super().poll_inputs()
 
     def update_state(self) -> int:
-        super_fm = super().update_state()  # if there are maneuvers, reorientations, opnav, to be done, then switch
+        # if there are maneuvers, reorientations, opnav, to be done, then switch
+        super_fm = super().update_state()
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
@@ -84,8 +51,10 @@ class LowBatterySafetyMode(FlightMode):
         if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
-        time_for_opnav = (time() - self._parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
-        time_for_telem = (time() - self._parent.radio.last_transmit_time) // 60 < params.LB_TLM_INTERVAL
+        time_for_opnav = (
+            time() - self._parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
+        time_for_telem = (
+            time() - self._parent.radio.last_transmit_time) // 60 < params.LB_TLM_INTERVAL
 
         if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._parent.FMQueue:
             self._parent.FMQueue.put(FMEnum.OpNav.value)
@@ -93,10 +62,8 @@ class LowBatterySafetyMode(FlightMode):
         if time_for_telem:
             # Add a minimal data packet to our periodic downlink beacon
             telem = self._parent.telemetry.minimal_packet()
-            downlink = self._parent.downlink_handler.pack_downlink(self._parent.downlink_counter,
-                                                                   FMEnum.LowBatterySafety.value,
-                                                                   NormalCommandEnum.CritTelem.value,
-                                                                   **telem)
+            downlink = self._parent.command_handler.pack_telemetry(
+                CommandEnum.CritTelem, telem)
             self._parent.downlink_queue.put(downlink)
             logging.info("Added a minimal data packet to our downlink")
 

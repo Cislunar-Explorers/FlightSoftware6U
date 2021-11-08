@@ -1,12 +1,15 @@
-from utils.constants import DATA_OFFSET, ID_SIZE, MAC_LENGTH, COUNTER_OFFSET, COUNTER_SIZE, MAC_KEY, ID_OFFSET, DATA_LEN_OFFSET, MIN_COMMAND_SIZE, ONE_WORD, ZERO_WORD
+from utils.constants import DATA_OFFSET, MAC_LENGTH, COUNTER_OFFSET, COUNTER_SIZE, MAC_KEY, ID_OFFSET, DATA_LEN_OFFSET, MIN_COMMAND_SIZE, ONE_WORD, ZERO_WORD
 
-from typing import List, Tuple, Dict
+from typing import List, Optional, Tuple, Dict
 import hashlib
 from communications.commands import Command
 from communications.command_definitions import COMMAND_LIST
 from utils.exceptions import CommandUnpackingException
 from communications.downlink import bit_inflation
+from communications.groundstation import bit_deflation
 import logging
+
+from utils.log import log_error
 
 
 def compute_mac(data: bytes) -> bytes:
@@ -28,8 +31,14 @@ def verify_mac(data: bytes) -> bool:
 class CommandHandler:
     """Handling the packing, unpacking, and execution of uplinks (commands) and downlinks (telemetry)"""
     command_list: List[Command] = COMMAND_LIST
-    uplink_counter: int
-    downlink_counter: int
+    uplink_counter: int  # how many times we've received a valid data packet
+    downlink_counter: int  # how many times we've downlinked something
+    inflation: bool  # flag to do bit inflation; must be True for flight, can be False for testing
+
+    def __init__(self, inflation=True) -> None:
+        self.inflation = inflation
+        logging.info(
+            f"Uplink/Downlink counters: {self.uplink_counter}/{self.downlink_counter}")
 
     def get_command_from_id(self, command_id: int):
         try:
@@ -38,6 +47,9 @@ class CommandHandler:
             raise CommandUnpackingException(f"Command {command_id} not found")
 
     def unpack_link(self, data: bytes, uplink: bool = True) -> Tuple[Command, Dict]:
+        if not uplink and self.inflation:
+            # deflate bits
+            data = bit_deflation(bytearray(data), ZERO_WORD, ONE_WORD)
         if verify_mac(data):
             # TODO deal with counter
             counter = int.from_bytes(
@@ -47,6 +59,14 @@ class CommandHandler:
             command_id = data[ID_OFFSET]
             data_length = data[DATA_LEN_OFFSET]
             kwarg_data = data[DATA_OFFSET:]
+
+            if (counter < self.uplink_counter and uplink):
+                raise CommandUnpackingException(
+                    "Command counter is less than uplink counter. Ingoring command")
+
+            if (counter < self.downlink_counter and not uplink):
+                raise CommandUnpackingException(
+                    "Command counter is less than downlink counter. Ingoring command")
 
             if data_length != len(kwarg_data):
                 raise CommandUnpackingException(
@@ -89,8 +109,32 @@ class CommandHandler:
         mac = compute_mac(bytes(data_buffer))
         packet = mac + bytes(data_buffer)
 
-        if not uplink:
+        if not uplink and self.inflation:
             # inflate bits
             packet = bytes(bit_inflation(packet, ZERO_WORD, ONE_WORD))
 
         return packet
+
+    def execute_command(self, data: bytes) -> Optional[bytes]:
+        # unpack
+        try:
+            command, kwargs = self.unpack_link(data)
+        except CommandUnpackingException as cue:
+            log_error(cue, logging.error)
+            logging.warning(f"Ignoring command: {data.hex()}")
+            return None
+        else:
+            # increment counter
+            self.uplink_counter += 1
+
+        # run command
+        downlink_data = command.run(**kwargs)
+        # pack downlinks
+        downlink = self.pack_telemetry(command.id, downlink_data)
+        return downlink
+
+    def pack_telemetry(self, id, kwargs: Dict) -> bytes:
+        telemetry_bytes = self.pack_link(
+            False, self.downlink_counter, id, kwargs)
+        self.downlink_counter += 1
+        return telemetry_bytes

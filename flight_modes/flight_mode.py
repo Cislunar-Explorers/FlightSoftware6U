@@ -106,7 +106,6 @@ class FlightMode:
             "Only implemented in specific flight mode subclasses")
 
     def execute_commands(self):
-        bogus = bool()
         if len(self._parent.commands_to_execute) == 0:
             pass  # If I have no commands to execute do nothing
         else:
@@ -114,38 +113,10 @@ class FlightMode:
             finished_commands = []
 
             for command in self._parent.commands_to_execute:
-
-                bogus = False
-                mac, counter, command_fm, command_id, command_kwargs = self._parent.command_handler.unpack_command(
+                downlink = self._parent.command_handler.execute_command(
                     command)
-                logger.info(
-                    f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
-
-                try:
-                    assert command_fm in self._parent.command_definitions.COMMAND_DICT
-                    assert command_id in self._parent.command_definitions.COMMAND_DICT[command_fm]
-                except AssertionError:
-                    logger.warning(
-                        f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
-                    bogus = True
-
-                if not bogus:
-                    # changes the flight mode if command's FM is different.
-                    if command_fm != self.flight_mode_id:
-                        self._parent.replace_flight_mode_by_id(command_fm)
-
-                    # locate which method to run:
-                    method_to_run = self._parent.command_definitions.COMMAND_DICT[
-                        command_fm][command_id]
-                    # run that method, return downlink data
-                    downlink_args = method_to_run(**command_kwargs)
-
-                    # Pack downlink given what the command returned
-                    if downlink_args is not None:
-                        downlink = self._parent.downlink_handler.pack_downlink(
-                            self._parent.downlink_counter, command_fm, command_id,
-                            **downlink_args)
-                        self._parent.downlink_queue.put(downlink)
+                if downlink is not None:
+                    self._parent.downlink_queue.put(downlink)
 
                 finished_commands.append(command)
 
@@ -204,10 +175,11 @@ class FlightMode:
             logger.error(f"Failed with traceback:\n {format_tb(tb)}")
 
 
-# Model for FlightModes that require precise timing
-# Pause garbage collection and anything else that could
-# interrupt critical thread
 class PauseBackgroundMode(FlightMode):
+    """Model for FlightModes that require precise timing
+        Pause garbage collection and anything else that could
+        interrupt critical thread"""
+
     def run_mode(self):
         super().run_mode()
 
@@ -459,10 +431,8 @@ class NormalMode(FlightMode):
         if time_for_telem:
             # Add a standard packet to the downlink queue for our period telemetry beacon
             telem = self._parent.telemetry.standard_packet_dict()
-            downlink = self._parent.downlink_handler.pack_downlink(
-                self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.BasicTelem.value,
-                **telem)
-
+            downlink = self._parent.command_handler(
+                CommandEnum.BasicTelem, telem)
             self._parent.downlink_queue.put(downlink)
             logger.info(
                 "Added a standard telemetry packet to the downlink queue")

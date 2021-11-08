@@ -4,7 +4,7 @@ from multiprocessing import Process
 from time import time
 from queue import Queue
 import signal
-from typing import Optional
+from typing import List, Optional
 from utils.log import get_log, log_error
 from time import sleep
 
@@ -18,8 +18,6 @@ from flight_modes.restart_reboot import (
 )
 from flight_modes.flight_mode_factory import build_flight_mode
 from communications.command_handler import CommandHandler
-from communications.downlink import DownlinkHandler
-from communications.command_definitions import CommandDefinitions
 from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
 from udp_client.client import Client
@@ -44,11 +42,10 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         logger.info("Initializing...")
-        self.command_queue = Queue()
-        self.downlink_queue = Queue()
+        self.command_queue: Queue[bytes] = Queue()
+        self.downlink_queue: Queue[bytes] = Queue()
         self.FMQueue: Queue[int] = Queue()
-        self.commands_to_execute = []
-        self.downlinks_to_execute = []
+        self.commands_to_execute: List[bytes] = []
         self.burn_queue = Queue()
         self.reorientation_queue = Queue()
         self.reorientation_list = []
@@ -57,10 +54,8 @@ class MainSatelliteThread(Thread):
         # self.init_comms()
         logger.info("Initializing commands and downlinks")
         self.command_handler = CommandHandler()
-        # self.downlink_handler = DownlinkHandler()
         self.command_counter = 0
         self.downlink_counter = 0
-        self.command_definitions = CommandDefinitions(self)
         self.last_opnav_run = time()  # Figure out what to set to for first opnav run
         self.log_dir = LOG_DIR
         self.logger = get_log()
@@ -99,6 +94,7 @@ class MainSatelliteThread(Thread):
         logger.info("Done intializing")
 
     def init_comms(self):
+        """Deprecated. Not Used."""
         self.comms = CommunicationsSystem(
             queue=self.command_queue, use_ax5043=False
         )

@@ -15,6 +15,9 @@ MAC_LENGTH = 4
 MAC_KEY = b'World'  # FIXME for flight
 # MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
+# Whether or not we actually do bit inflation:
+INFLATION: bool = False
+
 # Serialization Sizes
 ID_SIZE = 1
 COUNTER_SIZE = 3

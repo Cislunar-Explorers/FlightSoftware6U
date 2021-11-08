@@ -57,13 +57,13 @@ class Command(ABC):
     def unpack_args(self, arg_data: bytes) -> Dict[str, Any]:
         return self._unpack(arg_data, self.uplink_args)
 
-    def pack_args(self, kwargs: Dict[str, Any]) -> bytes:
+    def pack_args(self, **kwargs) -> bytes:
         return self._pack(kwargs, self.uplink_args, self.uplink_buffer_size)
 
     def unpack_telem(self, arg_data: bytes) -> Dict[str, Any]:
         return self._unpack(arg_data, self.downlink_telem)
 
-    def pack_telem(self, kwargs: Dict[str, Any]) -> bytes:
+    def pack_telem(self, **kwargs) -> bytes:
         return self._pack(kwargs, self.downlink_telem, self.downlink_buffer_size)
 
     def run(self,  parent: Optional[MainSatelliteThread] = None, **kwargs):

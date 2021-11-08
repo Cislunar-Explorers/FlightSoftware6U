@@ -1,3 +1,8 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from main import MainSatelliteThread
+
 from utils.constants import DATA_OFFSET, MAC_LENGTH, COUNTER_OFFSET, COUNTER_SIZE, MAC_KEY, ID_OFFSET, DATA_LEN_OFFSET, MIN_COMMAND_SIZE, ONE_WORD, ZERO_WORD
 
 from typing import List, Optional, Tuple, Dict
@@ -8,7 +13,7 @@ from utils.exceptions import CommandUnpackingException
 from communications.downlink import bit_inflation
 from communications.groundstation import bit_deflation
 import logging
-
+import utils.parameters as params
 from utils.log import log_error
 
 
@@ -34,9 +39,14 @@ class CommandHandler:
     uplink_counter: int  # how many times we've received a valid data packet
     downlink_counter: int  # how many times we've downlinked something
     inflation: bool  # flag to do bit inflation; must be True for flight, can be False for testing
+    _parent: Optional[MainSatelliteThread] = None
 
-    def __init__(self, inflation=True) -> None:
+    def __init__(self, parent: MainSatelliteThread, inflation=True) -> None:
         self.inflation = inflation
+        self._parent = parent
+        self.uplink_counter = params.UPLINK_COUNTER
+        self.downlink_counter = params.DOWNLINK_COUNTER
+
         logging.info(
             f"Uplink/Downlink counters: {self.uplink_counter}/{self.downlink_counter}")
 
@@ -129,7 +139,7 @@ class CommandHandler:
             self.uplink_counter += 1
 
         # run command
-        downlink_data = command.run(**kwargs)
+        downlink_data = command.run(parent=self._parent, **kwargs)
         # pack downlinks
         if downlink_data is not None:
             downlink = self.pack_telemetry(command.id, **downlink_data)

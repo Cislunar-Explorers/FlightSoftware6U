@@ -1,12 +1,10 @@
 from __future__ import annotations
 import logging
-from typing import TYPE_CHECKING, Dict, Optional, Union, cast, List
-from communications import codec
+from typing import TYPE_CHECKING, Dict, Optional, Union, cast
 from communications.codec import Codec
 from communications.commands import Command
 from communications import codecs
 from utils import parameter_utils
-from utils import constants
 from utils.log import log_error
 from utils import gom_util
 
@@ -16,7 +14,6 @@ if TYPE_CHECKING:
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 # It lets your IDE know what type(parent) is, without causing any circular imports at runtime.
 
-from utils.constants import LowBatterySafetyCommandEnum as LBSCEnum
 import drivers.power.power_structs as ps
 import time
 import hashlib
@@ -29,12 +26,71 @@ import os
 import utils.parameters as params
 
 
+class FM_Swtich(Command):
+    """Base class for doing manual FM switches on command"""
+    uplink_args = []
+    downlink_telem = []
+    id: int
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        logging.critical(f"Manual FM change commanded: {self.id}")
+        parent.replace_flight_mode_by_id(self.id)
+
+
+class BootSwitch(FM_Swtich):
+    id = CommandEnum.Boot
+
+
+class RestartSwitch(FM_Swtich):
+    id = CommandEnum.Restart
+
+
+class NormalSwitch(FM_Swtich):
+    id = CommandEnum.Normal
+
+
+class SafetySwitch(FM_Swtich):
+    id = CommandEnum.Safety
+
+
+class LowBatterySwitch(FM_Swtich):
+    id = CommandEnum.LowBatterySafety
+
+
+class OpnavSwitch(FM_Swtich):
+    id = CommandEnum.OpNav
+
+
+class ManeuverSwitch(FM_Swtich):
+    id = CommandEnum.Maneuver
+
+
+class SensorSwitch(FM_Swtich):
+    id = CommandEnum.SensorMode
+
+
+class TestSwitch(FM_Swtich):
+    id = CommandEnum.TestMode
+
+
+class CommsSwitch(FM_Swtich):
+    id = CommandEnum.CommsMode
+
+
+class CommandSwitch(FM_Swtich):
+    id = CommandEnum.CommandMode
+
+
+class AttitudeAdjustmentSwitch(FM_Swtich):
+    id = CommandEnum.AttitudeAdjustment
+
+
 class separation_test(Command):
     id = CommandEnum.SeparationTest
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         parent.gom.burnwire1(SPLIT_BURNWIRE_DURATION)
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
@@ -51,12 +107,12 @@ class separation_test(Command):
             filehandle.writelines("%s\n" % line for line in gyro_data)
 
 
-class set_opnav_interval(Command):
-    id = CommandEnum.SetOpnavInterval
+class run_opnav(Command):
+    id = CommandEnum.ScheduleOpnav
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         """Schedules Opnav mode into the FM queue"""
         parent.FMQueue.put(FMEnum.OpNav.value)
 
@@ -67,9 +123,9 @@ class exit_low_batt_thresh(Command):
 
     id = CommandEnum.LowBattThresh
     uplink_args = [Codec(VBATT, "ushort")]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         value = kwargs[VBATT]
         try:
             assert 6000 < value < 8400 and float(value) is float
@@ -83,9 +139,9 @@ class exit_low_batt_thresh(Command):
 class set_opnav_interval(Command):
     id = CommandEnum.SetOpnavInterval
     uplink_args = [Codec(INTERVAL, "ushort")]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
             requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
         value = kwargs[INTERVAL]
@@ -96,7 +152,7 @@ class set_opnav_interval(Command):
         except AssertionError:
             logging.error(
                 f"Incompatible value {value} for SET_OPNAV_INTERVAL")
-        return {}
+
 
 # Future command:
 # def change_attitude(self, **kwargs):
@@ -115,9 +171,9 @@ class acs_pulse_timing(Command):
                    Codec(PULSE_DURATION, "ushort"),
                    Codec(PULSE_NUM, "ushort"),
                    Codec(PULSE_DT, "ushort")]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         pulse_start_time = kwargs[START]  # double, seconds
         pulse_duration = kwargs[PULSE_DURATION]  # ushort, milliseconds
         pulse_num = kwargs[PULSE_NUM]  # ushort, number
@@ -138,11 +194,11 @@ class acs_pulse_timing(Command):
 class critical_telem(Command):
     id = CommandEnum.CritTelem
     uplink_args = []
-    downlink_args = [codecs.VBATT_codec,
-                     codecs.CURSUN_codec,
-                     codecs.CURSYS_codec,
-                     codecs.GOM_BATTMODE_codec,
-                     codecs.GOM_PPT_MODE_codec]
+    downlink_telem = [codecs.VBATT_codec,
+                      codecs.CURSUN_codec,
+                      codecs.CURSYS_codec,
+                      codecs.GOM_BATTMODE_codec,
+                      codecs.GOM_PPT_MODE_codec]
 
     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
@@ -153,7 +209,7 @@ class critical_telem(Command):
 class basic_telem(Command):
     id = CommandEnum.BasicTelem
     uplink_args = []
-    downlink_args = [
+    downlink_telem = [
         codecs.RTC_TIME_codec,
         codecs.POS_X_codec,
         codecs.POS_Y_codec,
@@ -187,7 +243,7 @@ class basic_telem(Command):
 class detailed_telem(Command):
     id = CommandEnum.DetailedTelem
     uplink_args = []
-    downlink_args = [
+    downlink_telem = [
         codecs.TIME_codec,
         codecs.VBOOST_1_codec,
         codecs.VBOOST_2_codec,
@@ -261,10 +317,10 @@ class detailed_telem(Command):
 class electrolysis(Command):
     id = CommandEnum.SetElectrolysis
     uplink_args = [Codec(IGNORE, 'bool')]
-    downlink_args = []
+    downlink_telem = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         state = kwargs[STATE]
         parameter_utils.set_parameter(
             "WANT_TO_ELECTROLYZE", bool(state), hard_set=False)
@@ -274,40 +330,38 @@ class ignore_low_batt(Command):
     """This is obviously a very dangerous command. It's mainly meant for testing on the ground"""
     id = CommandEnum.IgnoreLowBatt
     uplink_args = [Codec(IGNORE, 'bool')]
-    downlink_args = []
+    downlink_telem = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         ignore = kwargs[IGNORE]
         parameter_utils.set_parameter(
             "IGNORE_LOW_BATTERY", bool(ignore), hard_set=False)
-        return {}
 
 
 class schedule_maneuver(Command):
     id = CommandEnum.ScheduleManeuver
     uplink_args = [Codec(MANEUVER_TIME, "double")]
-    downlink_args = []
+    downlink_telem = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         time_burn = kwargs[MANEUVER_TIME]
         logging.info(
             "Scheduling a maneuver at: " + str(float(time_burn)))
-        set_parameter("SCHEDULED_BURN_TIME", float(time_burn), hard_set=True)
+        parameter_utils.set_parameter(
+            "SCHEDULED_BURN_TIME", float(time_burn), hard_set=True)
         # TODO: fix maneuver queue addition
         parent.maneuver_queue.put(FMEnum.Maneuver.value)
-
-        return {}
 
 
 class reboot(Command):
     id = CommandEnum.RebootPi
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         # TODO: make rebooting less janky
         os.system("sudo reboot")
         # add something here that adds to the restarts db that this restart was commanded
@@ -317,10 +371,10 @@ class cease_comms(Command):
     """This is an FCC requirement. We need to be able to command our spacecraft to stop transmitting if we become a nuisance to other radio stuff"""
     id = CommandEnum.CeaseComms
     uplink_args = [Codec(PASSWORD, 'string')]
-    downlink_args = []
+    downlink_telem = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         pword = kwargs[PASSWORD]
         if pword == 123:  # TODO, change
             logging.critical("Ceasing all communications")
@@ -331,10 +385,10 @@ class cease_comms(Command):
 class set_system_time(Command):
     id = CommandEnum.SetSystemTime
     uplink_args = [Codec(SYS_TIME, 'double')]
-    downlink_args = [Codec(SYS_TIME, 'double')]
+    downlink_telem = [Codec(SYS_TIME, 'double')]
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str: float]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, float]:
         # need to validate this works, and need to integrate updating RTC
         unix_epoch = kwargs[SYS_TIME]
         clk_id = time.CLOCK_REALTIME
@@ -345,7 +399,7 @@ class set_system_time(Command):
 class get_param(Command):
     id = CommandEnum.GetParam
     uplink_args = [Codec(NAME, 'string')]
-    downlink_args = [Codec(VALUE, 'double')]
+    downlink_telem = [Codec(VALUE, 'double')]
 
     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
         name = kwargs[NAME]
@@ -357,21 +411,19 @@ class get_param(Command):
 class reboot_gom(Command):
     id = CommandEnum.RebootGom
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         parent.gom.pc.reboot()
-        return {}
 
 
 class power_cycle(Command):
     id = CommandEnum.PowerCycle
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         parent.gom.hard_reset(True)
-        return {}
 
 
 class gom_outputs(Command):
@@ -379,9 +431,9 @@ class gom_outputs(Command):
     uplink_args = [Codec(OUTPUT_CHANNEL, 'uint8'),
                    Codec(STATE, 'bool'),
                    Codec(DELAY, 'ushort')]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         output_channel = kwargs[OUTPUT_CHANNEL]
         # if 'state' is not found in kwargs, assume we want it to turn off
         state = kwargs.get(STATE, 0)
@@ -389,39 +441,36 @@ class gom_outputs(Command):
         delay = kwargs.get(DELAY, 0)
 
         parent.gom.set_output(output_channel, int(state), delay=delay)
-        return {}
 
 
 class pi_shutdown(Command):
     id = CommandEnum.PiShutdown
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         # TODO: do this more gracefully
         os.system('sudo poweroff')
-        return {}
 
 
 class set_file_to_update(Command):
     """Downlink checksum of file blocks and any missing block numbers"""
-    id = CommandEnum.GetFileBlocksInfo
+    id = CommandEnum.SetUpdatePath
     uplink_args = [Codec(FILE_PATH, "long_string")]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         file_path = kwargs['file_path']
-        parameter_utils.set_parameter("FILE_UPDATE_PATH", file_path)
-        return {}
+        parameter_utils.set_parameter("FILE_UPDATE_PATH", file_path, False)
 
 
 class add_file_block(Command):
     id = CommandEnum.AddFileBlock
     uplink_args = [Codec(BLOCK_NUMBER, "ushort"),
                    Codec(BLOCK_TEXT, "long_string")]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         block_number = kwargs[BLOCK_NUMBER]
         block_text = kwargs[BLOCK_TEXT]
 
@@ -434,8 +483,8 @@ class get_file_blocks_info(Command):
     """Downlink checksum of file blocks and any missing block numbers"""
     id = CommandEnum.GetFileBlocksInfo
     uplink_args = [Codec(TOTAL_BLOCKS, "ushort")]
-    downlink_args = [Codec(CHECKSUM, "string"),
-                     Codec(MISSING_BLOCKS, "string")]
+    downlink_telem = [Codec(CHECKSUM, "string"),
+                      Codec(MISSING_BLOCKS, "string")]
 
     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, str]:
         time.sleep(15)  # For testing only
@@ -464,9 +513,9 @@ class get_file_blocks_info(Command):
 class activate_file(Command):
     id = CommandEnum.ActivateFile
     uplink_args = [Codec(TOTAL_BLOCKS, "ushort")]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         file_path = params.FILE_UPDATE_PATH
         total_blocks = kwargs[TOTAL_BLOCKS]
 
@@ -495,8 +544,6 @@ class activate_file(Command):
 
         parent.file_block_bank = {}
 
-        return {}
-
 
 class print_some_string(Command):
     id = CommandEnum.LongString
@@ -504,9 +551,9 @@ class print_some_string(Command):
         Codec("some_number", "float"),
         Codec("long_string", "string"),
     ]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         number = kwargs['some_number']
         string = kwargs['long_string']
 
@@ -520,15 +567,15 @@ class nemo_write_register(Command):
         Codec(REG_ADDRESS, "uint8"),
         Codec(REG_VALUE, "uint8"),
     ]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         if parent.nemo_manager is not None:
             reg_address = kwargs[REG_ADDRESS]
             values = [kwargs[REG_VALUE]]
 
             parent.nemo_manager.write_register(reg_address, values)
-            return {}
+
         else:
             logging.error(
                 "CMD: nemo_write_register() failed, nemo_manager not initialized")
@@ -540,14 +587,14 @@ class nemo_read_register(Command):
         Codec(REG_ADDRESS, "uint8"),
         Codec(REG_SIZE, "uint8"),
     ]
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         if parent.nemo_manager is not None:
             reg_address = kwargs[REG_ADDRESS]
             size = kwargs[REG_SIZE]
             parent.nemo_manager.read_register(reg_address, size)
-            return {}
+
         else:
             logging.error(
                 "CMD: nemo_read_register() failed, nemo_manager not initialized")
@@ -575,12 +622,12 @@ class nemo_set_config(Command):
         Codec(HISTOGRAM_ROTATE_PERIOD, "int"),
     ]
 
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.set_config(**kwargs)
-            return {}
+
         else:
             logging.error(
                 "CMD: nemo_set_config() failed, nemo_manager not initialized")
@@ -589,9 +636,9 @@ class nemo_set_config(Command):
 class nemo_power_off(Command):
     id = CommandEnum.NemoPowerOff
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.power_off()
         else:
@@ -602,12 +649,12 @@ class nemo_power_off(Command):
 class nemo_power_on(Command):
     id = CommandEnum.NemoPowerOn
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.power_on()
-            return {}
+
         else:
             logging.error(
                 "CMD: nemo_power_on() failed, nemo_manager not initialized")
@@ -616,12 +663,12 @@ class nemo_power_on(Command):
 class nemo_reboot(Command):
     id = CommandEnum.NemoReboot
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.reboot()
-            return {}
+
         else:
             logging.error(
                 "CMD: nemo_reboot() failed, nemo_manager not initialized")
@@ -630,9 +677,9 @@ class nemo_reboot(Command):
 class nemo_process_rate_data(Command):
     id = CommandEnum.NemoProcessRateData
     uplink_args = []
-    downlink_args = []
+    downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
 
         if parent.nemo_manager is not None:
             t_start = kwargs[T_START]
@@ -641,7 +688,7 @@ class nemo_process_rate_data(Command):
 
             parent.nemo_manager.process_rate_data(
                 t_start, t_stop, decimation_factor)
-            return {}
+
         else:
             logging.error(
                 "CMD: nemo_process_rate_data() failed, nemo_manager not initialized")
@@ -654,7 +701,7 @@ class nemo_process_histograms(Command):
                    Codec(DECIMATION_FACTOR, 'uint8')]
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         if parent.nemo_manager is not None:
             t_start = kwargs[T_START]
             t_stop = kwargs[T_STOP]
@@ -662,7 +709,7 @@ class nemo_process_histograms(Command):
 
             parent.nemo_manager.process_histograms(
                 t_start, t_stop, decimation_factor)
-            return {}
+
         else:
             logging.error(
                 "CMD: nemo_process_histograms() failed, nemo_manager not initialized")
@@ -680,7 +727,7 @@ RETURN_CODEC = [Codec(RETURN_CODE, 'uint8')]
 
 class shellCommand(Command):
     id = CommandEnum.ShellCommand
-    command_args = SHELL_CODEC
+    uplink_args = SHELL_CODEC
     downlink_telem = RETURN_CODEC
 
     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
@@ -720,12 +767,11 @@ class exec_py_file(Command):
     uplink_args = [Codec(FNAME, 'string')]
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         filename: str = cast('str', kwargs[FNAME])
         filename += '.py'
         logging.debug(f"CWD: {os.getcwd()}")
         exec(open(filename).read())
-        return dict()
 
 
 class set_param(Command):
@@ -784,7 +830,7 @@ class set_gom_conf1(Command):
     uplink_args = GomConf1Codecs
     downlink_telem = GomConf1Codecs
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> Dict[str, int]:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
         new_config = gom_util.eps_config_from_dict(**kwargs)
         logging.info("New config to be set:")
         ps.displayConfig(new_config)
@@ -808,7 +854,7 @@ class get_gom_conf1(Command):
     uplink_args = []
     downlink_telem = GomConf1Codecs
 
-    def _method(self, parent: MainSatelliteThread, **kwargs):
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
         if parent.gom is not None:
             current_config: ps.eps_config_t = cast(
                 'ps.eps_config_t', parent.gom.get_health_data(level="config"))
@@ -830,11 +876,13 @@ class set_gom_conf2(Command):
     uplink_args = GomConf2Codecs
     downlink_telem = GomConf2Codecs
 
-    def _method(self, parent: MainSatelliteThread, **kwargs):
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
         if parent.gom is not None:
             new_conf2 = gom_util.eps_config2_from_dict(kwargs)
             parent.gom.pc.config2_set(new_conf2)
             parent.gom.pc.config2_cmd(2)
+
+            return gom_util.dict_from_eps_config2(parent.gom.pc.config2_get())
         else:
             logging.warning("Can't talk to Gom P31u")
 
@@ -844,7 +892,7 @@ class get_gom_conf2(Command):
     uplink_args = []
     downlink_telem = GomConf2Codecs
 
-    def _method(self, parent: MainSatelliteThread, **kwargs):
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
         if parent.gom is not None:
             current_conf2 = cast('ps.eps_config2_t',
                                  parent.gom.get_health_data(level='config2'))
@@ -860,7 +908,7 @@ COMMAND_LIST = [get_gom_conf2(), get_gom_conf1(),
                 set_gom_conf1(), set_gom_conf2(),
                 set_param(), separation_test(),
                 set_opnav_interval(), exit_low_batt_thresh(),
-                set_opnav_interval(), acs_pulse_timing(),
+                acs_pulse_timing(),
                 critical_telem(), basic_telem(),
                 detailed_telem(), electrolysis(),
                 ignore_low_batt(), schedule_maneuver(),
@@ -871,7 +919,10 @@ COMMAND_LIST = [get_gom_conf2(), get_gom_conf1(),
                 print_some_string(), nemo_write_register(), nemo_read_register(),
                 nemo_set_config(), nemo_power_off(), nemo_power_on(), nemo_reboot(),
                 nemo_process_rate_data(), nemo_process_histograms(), shellCommand(),
-                sudoCommand(), picberry(), exec_py_file()]
+                sudoCommand(), picberry(), exec_py_file(),
+                BootSwitch(), RestartSwitch, NormalSwitch(), LowBatterySwitch(),
+                SafetySwitch(), OpnavSwitch(), ManeuverSwitch(), SensorSwitch(),
+                TestSwitch(), CommsSwitch(), CommandSwitch(), AttitudeAdjustmentSwitch(), run_opnav()]
 
 
 # DEPRECATED Commands: OLD CODE, UNUSED, MAYBE WORTH BRINGING BACK?
@@ -898,7 +949,7 @@ COMMAND_LIST = [get_gom_conf2(), get_gom_conf1(),
 # class insert_line_in_file(Command):
 #     id = CommandEnum.Insert
 #     uplink_args = [Codec(TOTAL_BLOCKS, "ushort")]
-#     downlink_args = [Codec(CHECKSUM, "string"),
+#     downlink_telem = [Codec(CHECKSUM, "string"),
 #                      Codec(MISSING_BLOCKS, "string")]
 
 #     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:

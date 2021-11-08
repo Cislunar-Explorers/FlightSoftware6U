@@ -222,18 +222,7 @@ class MainSatelliteThread(Thread):
             # Listening for new commands
             newCommand = self.radio.receiveSignal()
             if newCommand is not None:
-                try:  # TODO: move this verification/error handling to the command handler object
-                    unpackedCommand = self.command_handler.unpack_command(
-                        newCommand)
-                    if unpackedCommand[1] == self.command_counter + 1:
-                        self.command_queue.put(bytes(newCommand))
-                        self.command_counter += 1
-                    else:
-                        logger.warning(
-                            'Command with Invalid Counter Received. Counter: ' + str(unpackedCommand[1]))
-                except Exception as e:
-                    log_error(e, logger.error)
-                    logger.error('Invalid Command Received')
+                self.command_queue.put(bytes(newCommand))
             else:
                 logger.debug('Not Received')
 

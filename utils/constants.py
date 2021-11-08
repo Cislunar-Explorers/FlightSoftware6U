@@ -300,7 +300,7 @@ class CommandEnum(IntEnum):
     SensorMode = 7  # Send command directly to sensor
     TestMode = 8  # Execute specified test
     CommsMode = 9
-    Command = 10
+    CommandMode = 10
     AttitudeAdjustment = 11
 
     SetElectrolysis = 12  # arg = bool whether to start or stop electrolysis
@@ -308,7 +308,7 @@ class CommandEnum(IntEnum):
     CritTelem = 14
     BasicTelem = 15
     DetailedTelem = 16
-    Verification = 17
+    # CqcVerification = 17
     GetParam = 18
     SetOpnavInterval = 19
     ScheduleManeuver = 20
@@ -337,10 +337,11 @@ class CommandEnum(IntEnum):
     RebootGom = 40
     PowerCycle = 41
     GomPin = 42
-    GomGeneralCmd = 43
-    GeneralCmd = 44
+    # GomGeneralCmd = 43
+    # GeneralCmd = 44
 
     LowBattThresh = 45
+    ScheduleOpnav = 46
 
     ShellCommand = 50
     SudoCommand = 51
@@ -349,6 +350,7 @@ class CommandEnum(IntEnum):
     PiShutdown = 54
 
     SeparationTest = 55
+    LongString = 56
 
     IgnoreLowBatt = 60
     CeaseComms = 170

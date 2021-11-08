@@ -54,7 +54,8 @@ class GomSensor(SynchronousSensor):
         if self._parent.gom is not None:
             self.hk = self._parent.gom.get_health_data(level="eps")
             self.hkparam = self._parent.gom.get_health_data()
-            self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
+            self.is_electrolyzing = bool(
+                self.hk.output[GomOutputs.electrolyzer.value])
 
 
 class GyroSensor(SynchronousSensor):
@@ -88,7 +89,7 @@ class GyroSensor(SynchronousSensor):
 
         smoothed = np.empty(3)
 
-        # smooth data using convolution 
+        # smooth data using convolution
         smoothed[0] = moving_average(data[0], samples)
         smoothed[1] = moving_average(data[1], samples)
         smoothed[2] = moving_average(data[2], samples)
@@ -159,7 +160,8 @@ class PiSensor(SynchronousSensor):
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
         if board_id and board_id != 'GENERIC_LINUX_PC':
-            self.tmp = float(popen("vcgencmd measure_temp").readline().strip()[5:-2])
+            self.tmp = float(
+                popen("vcgencmd measure_temp").readline().strip()[5:-2])
         self.all = (self.cpu,
                     self.ram,
                     self.disk,
@@ -205,9 +207,11 @@ class Telemetry(SynchronousSensor):
         self.rtc = RtcSensor(parent)
         self.opn = OpNavSensor(parent)
 
-        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc]
+        self.sensors = [self.gom, self.gyr,
+                        self.prs, self.thm, self.rpi, self.rtc]
 
-        create_session = create_sensor_tables_from_path(DB_FILE)  # instantiate DB session
+        create_session = create_sensor_tables_from_path(
+            DB_FILE)  # instantiate DB session
         self.session = create_session()  # instantiate DB session
 
     def poll(self):
@@ -229,16 +233,19 @@ class Telemetry(SynchronousSensor):
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
         if self.prs.pressure < 0 or self.prs.pressure > 2000:
-            self._parent.logger.error("Pressure sensor not functioning properly")
+            self._parent.logger.error(
+                "Pressure sensor not functioning properly")
             raise PressureError(f"Unreasonable pressure: {self.prs.pressure}")
 
         if self.thm.tmp < -200 or self.thm.tmp > 200:
             self._parent.logger.error("Thermocouple not functioning properly")
-            raise ThermocoupleError(f"Unreasonable fuel tank temperature: {self.thm.tmp}")
+            raise ThermocoupleError(
+                f"Unreasonable fuel tank temperature: {self.thm.tmp}")
 
         if self.gom.hk.vbatt < 5500 or self.gom.hk.vbatt > 8500:
             self._parent.logger.error("Gom HK not functioning properly")
-            raise GomSensorError(f"Unreasonable battery voltage: {self.gom.hk.vbatt}")
+            raise GomSensorError(
+                f"Unreasonable battery voltage: {self.gom.hk.vbatt}")
 
         if any(i < 0 for i in self.rpi.all):
             self._parent.logger.error("RPi sensors not functioning properly")
@@ -369,9 +376,9 @@ class Telemetry(SynchronousSensor):
             constants.GYRO_TEMP: self.gyr.tmp,
             constants.THERMOCOUPLE_TEMP: self.thm.tmp,
             constants.PROP_TANK_PRESSURE: self.prs.pressure,
-            constants.POSITION_X: 0,
-            constants.POSITION_Y: 1,
-            constants.POSITION_Z: 2,
+            constants.POS_X: 0,
+            constants.POS_Y: 1,
+            constants.POS_Z: 2,
             constants.ATT_1: 3,
             constants.ATT_2: 4,
             constants.ATT_3: 5,
@@ -403,7 +410,8 @@ class Telemetry(SynchronousSensor):
                 GOM_curout4=self.gom.hk.curout[3],
                 GOM_curout5=self.gom.hk.curout[4],
                 GOM_curout6=self.gom.hk.curout[5],
-                GOM_outputs=int(str(self.gom.hk.output[:]).replace(',', '').replace(' ', '')[1:-1], 2),
+                GOM_outputs=int(str(self.gom.hk.output[:]).replace(
+                    ',', '').replace(' ', '')[1:-1], 2),
                 GOM_latchup1=self.gom.hk.latchup[0],
                 GOM_latchup2=self.gom.hk.latchup[1],
                 GOM_latchup3=self.gom.hk.latchup[2],

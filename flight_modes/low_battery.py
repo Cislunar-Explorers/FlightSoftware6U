@@ -63,7 +63,7 @@ class LowBatterySafetyMode(FlightMode):
             # Add a minimal data packet to our periodic downlink beacon
             telem = self._parent.telemetry.minimal_packet()
             downlink = self._parent.command_handler.pack_telemetry(
-                CommandEnum.CritTelem, telem)
+                CommandEnum.CritTelem, **telem)
             self._parent.downlink_queue.put(downlink)
             logging.info("Added a minimal data packet to our downlink")
 

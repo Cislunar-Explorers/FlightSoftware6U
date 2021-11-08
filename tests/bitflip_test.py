@@ -18,12 +18,11 @@ class BitFlips(unittest.TestCase):
 
     def bit_flip_tester(self, flip_bit: bool):
         rejected_by_mac = 0
-        COUNTER = 0
         cmd_id = constants.CommandEnum.SetParam.value
         command_kwargs = {"name": "OPNAV_INTERVAL",
                           "value": 30.0, "hard_set": True}
-        bytes_to_transmit = self.command_handler.pack_link(
-            True, COUNTER, cmd_id, command_kwargs)
+        bytes_to_transmit = self.command_handler.pack_command(
+            cmd_id, **command_kwargs)
         bits_to_transmit = int.from_bytes(
             bytes_to_transmit, 'big')  # bits that get transmitted
 

@@ -28,7 +28,7 @@ class Command(ABC):
             [codec.num_bytes for codec in self.downlink_telem])
 
     @abstractmethod
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict[str, Union[float, int]]:
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Optional[Dict[str, Union[float, int]]]:
         pass
 
     @staticmethod
@@ -54,13 +54,13 @@ class Command(ABC):
 
         return bytes(buffer)
 
-    def unpack_args(self, arg_data: Optional[bytes]) -> Dict[str, Any]:
+    def unpack_args(self, arg_data: bytes) -> Dict[str, Any]:
         return self._unpack(arg_data, self.uplink_args)
 
     def pack_args(self, kwargs: Dict[str, Any]) -> bytes:
         return self._pack(kwargs, self.uplink_args, self.uplink_buffer_size)
 
-    def unpack_telem(self, arg_data: Optional[bytes]) -> Dict[str, Any]:
+    def unpack_telem(self, arg_data: bytes) -> Dict[str, Any]:
         return self._unpack(arg_data, self.downlink_telem)
 
     def pack_telem(self, kwargs: Dict[str, Any]) -> bytes:

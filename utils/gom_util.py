@@ -1,6 +1,6 @@
 import drivers.power.power_structs as ps
 import utils.constants as consts
-from typing import List, cast
+from typing import Dict, List, cast
 
 
 def dict_from_eps_config(config: ps.eps_config_t) -> dict:
@@ -145,7 +145,7 @@ def eps_config2_from_dict(config_dict: dict) -> ps.eps_config2_t:
     return gom_conf2
 
 
-def dict_from_eps_config2(conf2: ps.eps_config2_t) -> dict:
+def dict_from_eps_config2(conf2) -> Dict[str, int]:
     return {consts.MAX_VOLTAGE: conf2.batt_maxvoltage,
             consts.NORM_VOLTAGE: conf2.batt_normalvoltage,
             consts.SAFE_VOLTAGE: conf2.batt_safevoltage,

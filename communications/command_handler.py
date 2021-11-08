@@ -89,15 +89,15 @@ class CommandHandler:
             raise CommandUnpackingException(
                 "MAC discrepancy - not running command")
 
-    def pack_link(self, uplink: bool, counter: int, command_id: int, kwargs) -> bytes:
+    def pack_link(self, uplink: bool, counter: int, command_id: int, **kwargs) -> bytes:
         command = self.get_command_from_id(command_id)
 
         if uplink:
             buffer_size = command.uplink_buffer_size
-            link_data = command.pack_args(kwargs)
+            link_data = command.pack_args(**kwargs)
         else:
             buffer_size = command.downlink_buffer_size
-            link_data = command.pack_telem(kwargs)
+            link_data = command.pack_telem(**kwargs)
 
         data_buffer = bytearray(
             MIN_COMMAND_SIZE - MAC_LENGTH + buffer_size)
@@ -111,7 +111,8 @@ class CommandHandler:
 
         if not uplink and self.inflation:
             # inflate bits
-            packet = bytes(bit_inflation(packet, ZERO_WORD, ONE_WORD))
+            packet = bytes(bit_inflation(
+                bytearray(packet), ZERO_WORD, ONE_WORD))
 
         return packet
 
@@ -130,11 +131,24 @@ class CommandHandler:
         # run command
         downlink_data = command.run(**kwargs)
         # pack downlinks
-        downlink = self.pack_telemetry(command.id, downlink_data)
+        if downlink_data is not None:
+            downlink = self.pack_telemetry(command.id, **downlink_data)
+        else:
+            return None
         return downlink
 
-    def pack_telemetry(self, id, kwargs: Dict) -> bytes:
+    def pack_telemetry(self, id, **kwargs) -> bytes:
         telemetry_bytes = self.pack_link(
-            False, self.downlink_counter, id, kwargs)
+            False, self.downlink_counter, id, **kwargs)
         self.downlink_counter += 1
         return telemetry_bytes
+
+    def unpack_telemetry(self, data: bytes):
+        unpacked_data = self.unpack_link(data, uplink=False)
+        self.downlink_counter += 1
+        return unpacked_data
+
+    def pack_command(self, id, **kwargs) -> bytes:
+        command_bytes = self.pack_link(True, self.uplink_counter, id, **kwargs)
+        self.uplink_counter += 1
+        return command_bytes

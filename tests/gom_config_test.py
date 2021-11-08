@@ -61,7 +61,7 @@ def test_config_command():
     ch = CommandHandler()
 
     command_bytes = ch.pack_link(
-        True, COUNTER, CommandEnum.GomConf1Set.value, config_dict)
+        True, COUNTER, CommandEnum.GomConf1Set.value, **config_dict)
     command, kwargs = ch.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf1Set.value
@@ -115,7 +115,7 @@ def test_config2_command():
     ch = CommandHandler()
 
     command_bytes = ch.pack_link(
-        True, COUNTER, CommandEnum.GomConf2Set.value, config2_dict)
+        True, COUNTER, CommandEnum.GomConf2Set.value, **config2_dict)
     command, kwargs = ch.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf2Set.value

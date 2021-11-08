@@ -102,7 +102,8 @@ class Power:
             flags,
         )
         self._pi = pigpio.pi()  # initialize pigpio object
-        self._dev = self._pi.i2c_open(bus, addr, flags)  # initialize i2c device
+        self._dev = self._pi.i2c_open(
+            bus, addr, flags)  # initialize i2c device
 
         # initialize GPIO outputs
         self._pi.set_mode(RF_RX_EN, pigpio.OUTPUT)
@@ -128,7 +129,8 @@ class Power:
     # raises: ValueError if cmd or values are not bytes
     # TODO: Implement PowerWriteError once we switch to new I2C library
     def write(self, cmd, values):
-        ps.gom_logger.debug("Writing to register %s with byte list %s", cmd, values)
+        ps.gom_logger.debug(
+            "Writing to register %s with byte list %s", cmd, values)
         self._pi.i2c_write_device(self._dev, bytearray([cmd] + values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
@@ -138,9 +140,11 @@ class Power:
         (x, r) = self._pi.i2c_read_device(self._dev, num_bytes + 2)
         ps.gom_logger.debug("Read %s, and %s from device", x, r)
         if r[1] != 0:
-            ps.gom_logger.error("Command %i failed with error code %i", r[0], r[1])
+            ps.gom_logger.error(
+                "Command %i failed with error code %i", r[0], r[1])
             raise PowerReadError(
-                "Read Error: Command %i failed with error code %i" % (r[0], r[1])
+                "Read Error: Command %i failed with error code %i" % (
+                    r[0], r[1])
             )
         else:
             return r[2:]
@@ -236,9 +240,11 @@ class Power:
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
     def set_pv_volt(self, volt1, volt2, volt3):
-        ps.gom_logger.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
+        ps.gom_logger.debug(
+            "Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
         if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
-            ps.gom_logger.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")
+            ps.gom_logger.error(
+                "PV volt is attempting to be set above MAX_PV_VOLTAGE")
             raise PowerInputError(
                 "Invalid Input: voltages must be below %i mV" % MAX_PV_VOLTAGE
             )
@@ -257,7 +263,8 @@ class Power:
     # raises: PowerInputError if mode is not 0, 1, or 2
     # Not tested
     def set_pv_auto(self, mode):
-        ps.gom_logger.debug("Setting solar cell power tracking to mode %i", mode)
+        ps.gom_logger.debug(
+            "Setting solar cell power tracking to mode %i", mode)
         if mode not in [0, 1, 2]:
             raise PowerInputError("Invalid Input: mode must be 0, 1 or 2")
         else:
@@ -331,11 +338,14 @@ class Power:
     # Not tested- issue running through HITL server
     def hard_reset(self, are_you_sure=False):
         if are_you_sure is True:
-            ps.gom_logger.info("Hard reset Passcode correct: Performing hard reset")
-            ps.gom_logger.critical("Cycling permanent 5V and 3.3V and battery outputs")
+            ps.gom_logger.info(
+                "Hard reset Passcode correct: Performing hard reset")
+            ps.gom_logger.critical(
+                "Cycling permanent 5V and 3.3V and battery outputs")
             self.write(CMD_HARD_RESET, [])
         else:
-            ps.gom_logger.info("Hard reset Passcode incorrect: Aborting hard reset")
+            ps.gom_logger.info(
+                "Hard reset Passcode incorrect: Aborting hard reset")
 
     # Use this command to control the config 2 system.
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
@@ -370,7 +380,8 @@ class Power:
     # milliseconds [duration]; called after a delay of
     # [delay] seconds.
     def pulse(self, output, duration, delay=0):
-        ps.gom_logger.debug("Pulsing Gom output %i on for %i ms after a %i sec delay")
+        ps.gom_logger.debug(
+            "Pulsing Gom output %i on for %i ms after a %i sec delay")
         sleep(delay)
         self.set_single_output(output, 1, 0)
         sleep(duration * 0.001)
@@ -379,7 +390,8 @@ class Power:
     # output must be off before the function is called
     # pulses high for duration amount of milliseconds
     def pulse_pi(self, output, duration, delay=0):
-        ps.gom_logger.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
+        ps.gom_logger.debug(
+            "Pulsing GPIO channel %i High for %i ms after a %i sec delay")
         sleep(delay)
         ps.gom_logger.debug("Setting GPIO channel %i HIGH", output)
         self._pi.write(output, 1)
@@ -419,18 +431,23 @@ class Power:
     # Experimental implementation of above functionality
     def solenoid_single_wave(self, hold):
         # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
-        pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
-        self._pi.wave_send_once(self.solenoid_wave_id)  # enables vboost - async
+        pigpio._pigpio_command_ext(
+            self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
+        # enables vboost - async
+        self._pi.wave_send_once(self.solenoid_wave_id)
         sleep(hold)
         # self._pi.i2c_write_device(self._dev, SOLENOID_OFF_COMMAND)
-        pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_OFF_LIST)
+        pigpio._pigpio_command_ext(
+            self._pi.sl, 57, self._dev, 0, 5, SOLENOID_OFF_LIST)
 
     def calculate_solenoid_wave(self):
         # see http://abyz.me.uk/rpi/pigpio/python.html#wave_add_generic
         # and https://github.com/joan2937/pigpio/blob/master/EXAMPLES/Python/MORSE_CODE/morse_code.py
         self.solenoid_wave = []
-        self.solenoid_wave.append(pigpio.pulse(1 << OUT_PI_SOLENOID_ENABLE, 0, params.ACS_SPIKE_DURATION * 1000))
-        self.solenoid_wave.append(pigpio.pulse(0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
+        self.solenoid_wave.append(pigpio.pulse(
+            1 << OUT_PI_SOLENOID_ENABLE, 0, params.ACS_SPIKE_DURATION * 1000))
+        self.solenoid_wave.append(pigpio.pulse(
+            0, 1 << OUT_PI_SOLENOID_ENABLE, 0))
 
         self._pi.wave_clear()
         self._pi.wave_add_generic(self.solenoid_wave)

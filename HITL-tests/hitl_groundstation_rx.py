@@ -1,12 +1,11 @@
 from communications.satellite_radio import Radio
-from communications.downlink import DownlinkHandler
-
+from communications.command_handler import CommandHandler
 groundstation = Radio()
-dh = DownlinkHandler()
+dh = CommandHandler()
 
 print('Receiving...')
 while True:
     downlink = groundstation.receiveSignal()
     if downlink is not None:
         print('Downlink Received')
-        print(dh.unpack_downlink(downlink))
+        print(dh.unpack_telemetry(downlink))

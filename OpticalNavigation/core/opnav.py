@@ -228,8 +228,10 @@ def get_detections(frames):
         moonDetectionArray[f, ...] = imageDetectionCircles.get_moon_detection()
         sunDetectionArray[f, ...] = imageDetectionCircles.get_sun_detection()
         logger.info(
-            f"[OPNAV]: Result: Earth: {imageDetectionCircles.get_earth_detection()}\
-                , Moon: {imageDetectionCircles.get_moon_detection()}, Sun: {imageDetectionCircles.get_sun_detection()}"
+            (
+                f"[OPNAV]: Result: Earth: {imageDetectionCircles.get_earth_detection()}, "
+                f"Moon: {imageDetectionCircles.get_moon_detection()}, Sun: {imageDetectionCircles.get_sun_detection()}"
+            )
         )
         progress += 1
     return earthDetectionArray, moonDetectionArray, sunDetectionArray

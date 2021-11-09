@@ -425,43 +425,6 @@ class SensorMode(FlightMode):
         )
 
 
-class LowBatterySafetyMode(FlightMode):
-    """FMID 3: Low Battery Safety Mode
-    This flight mode tries to save as much power as possible while still keeping the craft operational.
-    For inspiration, see https://cornell.app.box.com/folder/69212991152"""
-
-    flight_mode_id = FMEnum.LowBatterySafety.value
-    command_codecs = {
-        LowBatterySafetyCommandEnum.Switch.value: NO_ARGS,
-        LowBatterySafetyCommandEnum.BasicTelem.value: NO_ARGS,
-        LowBatterySafetyCommandEnum.CritTelem.value: NO_ARGS,
-        LowBatterySafetyCommandEnum.DetailedTelem.value: NO_ARGS,
-        LowBatterySafetyCommandEnum.ExitLBSafetyMode: NO_ARGS,
-        LowBatterySafetyCommandEnum.SetExitLBSafetyMode: ([VBATT], 2),
-        LowBatterySafetyCommandEnum.SetParam: ([NAME, VALUE, HARD_SET], 33),
-    }
-
-    command_arg_types = {VBATT: "short"}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        raise NotImplementedError
-
-    def run_mode(self):
-        sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
-        raise NotImplementedError
-
-    def update_state(self):
-        # check power supply to see if I can transition back to NormalMode
-        if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
-            return FMEnum.Normal.value
-
-    def __enter__(self):
-        super().__enter__()
-        self._parent.gom.all_off()  # turns everything off immediately upon entering mode to preserve power
-        self._parent.gom.pc.set_GPIO_low()
-
-
 # TODO
 class SafeMode(FlightMode):
     """FMID 4: Safe Mode

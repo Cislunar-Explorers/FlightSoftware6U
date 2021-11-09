@@ -200,12 +200,7 @@ team_identifier = 0xEB902D2D  # Team 2
 # TODO: validate these values:
 SPLIT_BURNWIRE_DURATION = 1  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
-BURN_WAIT_TIME = 15  # minutes
-
-GLOWPLUG_DURATION = 1  # SECOND
-GLOW_WAIT_TIME = 2
-PRESSURE_THRESHOLD = 1000
-PRESSURE_DELTA = -1
+# BURN_WAIT_TIME = 15  # minutes changed to glow wait time in params
 
 
 MAX_GYRO_RATE = 250  # degrees/sec # TODO

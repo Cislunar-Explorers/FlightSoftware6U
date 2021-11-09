@@ -26,7 +26,15 @@ LAST_TELEM_DOWNLINK = 0.0
 
 SPLIT_BURNWIRE_DURATION = 1  # seconds
 ANTENNAE_BURNWIRE_DURATION = 1  # seconds
+
+# TODO: validate these values:
 GLOWPLUG_DURATION = 1  # seconds
+GLOW_WAIT_TIME = 2  # seconds
+PRESSURE_THRESHOLD = 1000  # TODO ???
+PRESSURE_DELTA = -1  # ???
+GLOWPLUG1_VALID = True
+GLOWPLUG2_VALID = True
+
 
 SCHEDULED_BURN_TIME = -1  # seconds, (unix epoch time)
 

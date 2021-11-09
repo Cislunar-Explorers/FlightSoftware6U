@@ -7,10 +7,11 @@ from flight_modes.maneuver_flightmode import ManeuverMode
 import utils.constants as consts
 import utils.parameters as params
 
-consts.GLOW_WAIT_TIME = 0.01
+# to speed testing
+params.GLOW_WAIT_TIME = 0.01
 
 
-class FakeGOM():
+class FakeGOM:
     def glowplug(self, x):
         return 0
 
@@ -27,7 +28,10 @@ def m():
 
 
 def test_maneuver_selection(m, mocker):
-    mocker.patch("flight_modes.maneuver_flightmode.ManeuverMode.get_pressure", side_effect=[100, 90, 80, 70])
+    mocker.patch(
+        "flight_modes.maneuver_flightmode.ManeuverMode.get_pressure",
+        side_effect=[100, 90, 80, 70],
+    )
     assert isinstance(m.maneuver_queue, PriorityQueue)
     assert isinstance(m.flight_mode, ManeuverMode)
     cur_time = time()

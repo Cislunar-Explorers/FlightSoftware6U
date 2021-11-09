@@ -81,9 +81,12 @@ class FlightMode:
         # go to maneuver mode if there is something in the maneuver queue
         if not self._parent.maneuver_queue.empty() or params.SCHEDULED_BURN_TIME:
             if params.SCHEDULED_BURN_TIME > time():
-                if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
+                if params.SCHEDULED_BURN_TIME - time() < (60.0 * params.GLOW_WAIT_TIME):
                     return FMEnum.Maneuver.value
-            # else: log??
+            else:
+                logger.info(
+                    f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped"
+                )
 
         # go to reorientation mode if there is something in the reorientation queue
         if (

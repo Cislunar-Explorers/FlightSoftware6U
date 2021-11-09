@@ -17,8 +17,6 @@ class ManeuverMode(PauseBackgroundMode):
     flight_mode_id = consts.FMEnum.Maneuver.value
     command_codecs = {consts.ManeuverCommandEnum.Switch.value: NO_ARGS}
     command_arg_unpackers = {}
-    glowplug1_valid = True
-    glowplug2_valid = True
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -29,8 +27,8 @@ class ManeuverMode(PauseBackgroundMode):
     def valid_glowplug(self, current_pressure, prior_pressure):
         """Check pressure in place of acceleration for glowplug validation."""
         return (
-            current_pressure <= consts.PRESSURE_THRESHOLD
-            and current_pressure - prior_pressure <= consts.PRESSURE_DELTA
+            current_pressure <= params.PRESSURE_THRESHOLD
+            and current_pressure - prior_pressure <= params.PRESSURE_DELTA
         )
 
     def update_state(self) -> int:
@@ -53,23 +51,23 @@ class ManeuverMode(PauseBackgroundMode):
 
             prior_pressure = self.get_pressure()
             print(prior_pressure)
-            if self.glowplug1_valid:
-                self._parent.gom.glowplug(consts.GLOWPLUG_DURATION)
-                sleep(consts.GLOW_WAIT_TIME)
+            if params.GLOWPLUG1_VALID:
+                self._parent.gom.glowplug(params.GLOWPLUG_DURATION)
+                sleep(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(
                     current_pressure, prior_pressure
                 )
-                self.glowplug1_valid = self.task_completed
-            if not self.glowplug1_valid and self.glowplug2_valid:
-                self._parent.gom.glowplug2(consts.GLOWPLUG_DURATION)
-                sleep(consts.GLOW_WAIT_TIME)
+                set_parameter("GLOWPLUG1_VALID", self.task_completed, consts.FOR_FLIGHT)
+            if not params.GLOWPLUG1_VALID and params.GLOWPLUG2_VALID:
+                self._parent.gom.glowplug2(params.GLOWPLUG_DURATION)
+                sleep(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(
                     current_pressure, prior_pressure
                 )
-                self.glowplug2_valid = self.task_completed
-            if not self.glowplug1_valid and not self.glowplug2_valid:
+                set_parameter("GLOWPLUG2_VALID", self.task_completed, consts.FOR_FLIGHT)
+            if not params.GLOWPLUG1_VALID and not params.GLOWPLUG2_VALID:
                 # TODO ground msg?... do a final check?
                 logger.info("All glowplugs failed.")
                 self.task_completed = True
@@ -79,10 +77,10 @@ class ManeuverMode(PauseBackgroundMode):
         while not self._parent.maneuver_queue.empty():
             smallest_time_burn = self._parent.maneuver_queue.get()
             if smallest_time_burn < time():
-                # TODO send info to ground??
+                # TODO send info to ground / store skipped in database
                 smallest_time_burn = -1
                 logger.info("Maneuver time passed. Skipped.")
             else:
                 break
 
-        set_parameter("SCHEDULED_BURN_TIME", smallest_time_burn, False)  # for testing
+        set_parameter("SCHEDULED_BURN_TIME", smallest_time_burn, consts.FOR_FLIGHT)

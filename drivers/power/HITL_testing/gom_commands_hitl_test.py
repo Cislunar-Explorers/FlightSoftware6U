@@ -1,7 +1,7 @@
 # Testing all untested and new Gom-related commands
 
 from drivers.gom import Gomspace, logger
-from drivers.power.power_structs import displayHK, displayHk2, displayStruct
+from drivers.power.power_structs import displayStruct
 from time import sleep
 
 test = Gomspace()

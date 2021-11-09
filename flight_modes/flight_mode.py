@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
+
     # for an explanation of the above 4 lines of code, see
     # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
     # It lets your IDE know what type(self._parent) is, without causing any circular imports at runtime.
@@ -15,20 +16,19 @@ import subprocess
 from queue import Empty
 from traceback import format_tb
 
-from utils.constants import *
-
+import utils.constants as consts
 import utils.parameters as params
 from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
 
 no_transition_modes = [
-    FMEnum.SensorMode.value,
-    FMEnum.TestMode.value,
-    FMEnum.Command.value
+    consts.FMEnum.SensorMode.value,
+    consts.FMEnum.TestMode.value,
+    consts.FMEnum.Command.value,
 ]
 # this line of code brought to you by https://stackoverflow.com/questions/29503339/
-all_modes = list(map(int, FMEnum))
+all_modes = list(map(int, consts.FMEnum))
 
 logger = get_log()
 
@@ -44,8 +44,8 @@ class FlightMode:
 
     def update_state(self) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
-        update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
-         serves as a basis for which most other flight modes can build off of."""
+        update_state to update our flight mode. All flight modes have their own implementation of update_state, but
+        this serves as a basis for which most other flight modes can build off of."""
 
         # I am not sure this will properly work, but shuld have little impact for software demo
         if self._parent.opnav_process.is_alive():
@@ -69,41 +69,47 @@ class FlightMode:
         # go to maneuver mode if there is something in the maneuver queue
         if not self._parent.maneuver_queue.empty() or params.SCHEDULED_BURN_TIME:
             if params.SCHEDULED_BURN_TIME > time():
-                if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
-                    return FMEnum.Maneuver.value
+                if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
+                    return consts.FMEnum.Maneuver.value
 
         # go to reorientation mode if there is something in the reorientation queue
-        if (not self._parent.reorientation_queue.empty()) or self._parent.reorientation_list:
-            return FMEnum.AttitudeAdjustment.value
+        if (
+            not self._parent.reorientation_queue.empty()
+        ) or self._parent.reorientation_list:
+            return consts.FMEnum.AttitudeAdjustment.value
 
         # go to comms mode if there is something in the comms queue to downlink
 
         if not self._parent.downlink_queue.empty():
-            return FMEnum.CommsMode.value
+            return consts.FMEnum.CommsMode.value
 
         # if battery is low, go to low battery mode
         batt_voltage = self._parent.telemetry.gom.hk.vbatt
-        if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
-                and not params.IGNORE_LOW_BATTERY:
-            return FMEnum.LowBatterySafety.value
+        if (
+            batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD
+        ) and not params.IGNORE_LOW_BATTERY:
+            return consts.FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
-        if sum(self._parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT \
-                and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD \
-                and not params.IGNORE_LOW_BATTERY:
-            return FMEnum.LowBatterySafety.value
+        if (
+            sum(self._parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT
+            and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD
+            and not params.IGNORE_LOW_BATTERY
+        ):
+            return consts.FMEnum.LowBatterySafety.value
 
         if self.task_completed:
             if self._parent.FMQueue.empty():
-                return FMEnum.Normal.value
+                return consts.FMEnum.Normal.value
             else:
                 return self._parent.FMQueue.get()
 
-        return NO_FM_CHANGE  # returns -1 if the logic here does not make any FM changes
+        return (
+            consts.NO_FM_CHANGE
+        )  # returns -1 if the logic here does not make any FM changes
 
     def run_mode(self):
-        raise NotImplementedError(
-            "Only implemented in specific flight mode subclasses")
+        raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def execute_commands(self):
         if len(self._parent.commands_to_execute) == 0:
@@ -113,8 +119,7 @@ class FlightMode:
             finished_commands = []
 
             for command in self._parent.commands_to_execute:
-                downlink = self._parent.command_handler.execute_command(
-                    command)
+                downlink = self._parent.command_handler.execute_command(command)
                 if downlink is not None:
                     self._parent.downlink_queue.put(downlink)
 
@@ -171,7 +176,8 @@ class FlightMode:
         logger.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
             logger.error(
-                f"Flight Mode failed with error type {exc_type} and value {exc_value}")
+                f"Flight Mode failed with error type {exc_type} and value {exc_value}"
+            )
             logger.error(f"Failed with traceback:\n {format_tb(tb)}")
 
 
@@ -204,14 +210,14 @@ class TestMode(PauseBackgroundMode):
     """FMID 8: Testing Flight Mode
     Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
 
-    flight_mode_id = FMEnum.TestMode.value
+    flight_mode_id = consts.FMEnum.TestMode.value
 
     def __init__(self, parent):
         super().__init__(parent)
 
     def update_state(self) -> int:
         # this is intentional - we don't want the FM to update if we are testing something
-        return NO_FM_CHANGE
+        return consts.NO_FM_CHANGE
 
     def run_mode(self):
         pass
@@ -223,7 +229,7 @@ class CommsMode(FlightMode):
     to the ground station. This involves getting the correct RF switch direction, turning on the RF power amplifier,
     and transmitting a signal from the RF Board."""
 
-    flight_mode_id = FMEnum.CommsMode.value
+    flight_mode_id = consts.FMEnum.CommsMode.value
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -265,7 +271,8 @@ class CommsMode(FlightMode):
         # Resume electrolysis if we paused it to transmit
         if self.electrolyzing:
             self._parent.gom.set_electrolysis(
-                True, delay=params.DEFAULT_ELECTROLYSIS_DELAY)
+                True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
+            )
 
     def execute_downlinks(self):
         while not self._parent.downlink_queue.empty():
@@ -276,9 +283,9 @@ class CommsMode(FlightMode):
 
     def update_state(self) -> int:
         super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
+        if super_fm != consts.NO_FM_CHANGE:
             return super_fm
-        return NO_FM_CHANGE
+        return consts.NO_FM_CHANGE
 
     def run_mode(self):
         if not self._parent.downlink_queue.empty():
@@ -292,8 +299,9 @@ class CommsMode(FlightMode):
 class OpNavMode(FlightMode):
     """FMID 5: Optical Navigation Flight Mode
     This flight mode is dedicated to starting the Opnav process"""
+
     # TODO: Flight Software/Opnav interface
-    flight_mode_id = FMEnum.OpNav.value
+    flight_mode_id = consts.FMEnum.OpNav.value
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -305,47 +313,56 @@ class OpNavMode(FlightMode):
             self._parent.last_opnav_run = time()
             logger.info("[OPNAV]: Starting opnav subprocess")
             self._parent.opnav_process = Process(
-                target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,))
+                target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,)
+            )
             self._parent.opnav_process.start()
         self.completed_task()
 
     def update_state(self) -> int:
         super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
+        if super_fm != consts.NO_FM_CHANGE:
             return super_fm
 
         # check if opnav db has been updated, then set self.task_completed true
 
-        return NO_FM_CHANGE
+        return consts.NO_FM_CHANGE
 
     def opnav_subprocess(self, q):
         # TODO change from pytest to actual opnav
         # os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
         # subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
         subprocess.run(
-            'echo [OPNAV]: Subprocess Start; sleep 1m; echo [OPNAV]: Subprocess end', shell=True)
+            "echo [OPNAV]: Subprocess Start; sleep 1m; echo [OPNAV]: Subprocess end",
+            shell=True,
+        )
         q.put("Opnav Finished")
 
 
 class SensorMode(FlightMode):
     """FMID 7: Sensor Mode
-    This flight mode is not really well defined and has kinda been forgotten about. One potential idea for it is that we
-    go into this mode whenever we want a high poll rate of all of our sensors to collect sensor info at as high of a
-    rate as we can."""
-    flight_mode_id = FMEnum.SensorMode.value
+    This flight mode is not really well defined and has kinda been forgotten about. One potential idea for it is that
+    we go into this mode whenever we want a high poll rate of all of our sensors to collect sensor info at as high of
+    a rate as we can."""
+
+    flight_mode_id = consts.FMEnum.SensorMode.value
 
     def __init__(self, parent):
         super().__init__(parent)
-        raise NotImplementedError
 
     def update_state(self) -> int:
-        return NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
+        return (
+            consts.NO_FM_CHANGE
+        )  # intentional: we don't want to update FM when testing sensors
+
+    def run_mode(self):
+        raise NotImplementedError
 
 
 class ManeuverMode(PauseBackgroundMode):
     """FMID 6: Maneuver Mode
     This flight mode is dedicated to accurately firing our electrolysis thruster to make orbital changes"""
-    flight_mode_id = FMEnum.Maneuver.value
+
+    flight_mode_id = consts.FMEnum.Maneuver.value
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -353,8 +370,8 @@ class ManeuverMode(PauseBackgroundMode):
     def update_state(self) -> int:
         if self.task_completed is True:
             logger.info("Maneuver complete. Exiting maneuver mode...")
-            return FMEnum.Normal.value
-        return NO_FM_CHANGE
+            return consts.FMEnum.Normal.value
+        return consts.NO_FM_CHANGE
 
     def run_mode(self):
         # sleeping for 5 fewer seconds than the delay for safety
@@ -362,7 +379,7 @@ class ManeuverMode(PauseBackgroundMode):
         sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
         logger.info("Heating up glowplug to execute a maneuver...")
         # TODO: poll and check accelerometer values. If not acceleration seen, try other glowplug
-        self._parent.gom.glowplug(GLOWPLUG_DURATION)
+        self._parent.gom.glowplug(consts.GLOWPLUG_DURATION)
         self._parent.maneuver_queue.get()
         self.task_completed = True
 
@@ -371,7 +388,8 @@ class ManeuverMode(PauseBackgroundMode):
 class SafeMode(FlightMode):
     """FMID 4: Safe Mode
     This flight mode is where we go to if there is any software fault during flight, or there is something awry."""
-    flight_mode_id = FMEnum.Safety.value
+
+    flight_mode_id = consts.FMEnum.Safety.value
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -382,7 +400,7 @@ class SafeMode(FlightMode):
 
 
 class NormalMode(FlightMode):
-    flight_mode_id = FMEnum.Normal.value
+    flight_mode_id = consts.FMEnum.Normal.value
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -392,13 +410,15 @@ class NormalMode(FlightMode):
 
     def update_state(self) -> int:
         super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
+        if super_fm != consts.NO_FM_CHANGE:
             return super_fm
 
         time_for_opnav: bool = (
-            time() - self._parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
+            time() - self._parent.last_opnav_run
+        ) // 60 < params.OPNAV_INTERVAL
         time_for_telem: bool = (
-            time() - self._parent.radio.last_transmit_time) // 60 < params.TELEM_INTERVAL
+            time() - self._parent.radio.last_transmit_time
+        ) // 60 < params.TELEM_INTERVAL
         need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
         currently_electrolyzing = self._parent.telemetry.gom.is_electrolyzing
 
@@ -426,28 +446,28 @@ class NormalMode(FlightMode):
 
         if time_for_opnav:
             logger.info("Time to run Opnav")
-            self._parent.FMQueue.put(FMEnum.OpNav.value)
+            self._parent.FMQueue.put(consts.FMEnum.OpNav.value)
 
         if time_for_telem:
             # Add a standard packet to the downlink queue for our period telemetry beacon
             telem = self._parent.telemetry.standard_packet_dict()
             downlink = self._parent.command_handler.pack_telemetry(
-                CommandEnum.BasicTelem, **telem)
+                consts.CommandEnum.BasicTelem, **telem
+            )
             self._parent.downlink_queue.put(downlink)
-            logger.info(
-                "Added a standard telemetry packet to the downlink queue")
+            logger.info("Added a standard telemetry packet to the downlink queue")
 
-        return NO_FM_CHANGE
+        return consts.NO_FM_CHANGE
 
     def run_mode(self):
-        logger.info(f"In NORMAL flight mode")
+        logger.info("In NORMAL flight mode")
         self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):
     """FMID 10; Command Mode: a Flight Mode that listens for and runs commands and nothing else."""
 
-    flight_mode_id = FMEnum.Command.value
+    flight_mode_id = consts.FMEnum.Command.value
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -455,9 +475,9 @@ class CommandMode(PauseBackgroundMode):
     def update_state(self) -> int:
         # DO NOT TICK THE WDT
         super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
+        if super_fm != consts.NO_FM_CHANGE:
             return super_fm  #
-        return NO_FM_CHANGE
+        return consts.NO_FM_CHANGE
 
     def run_mode(self):
         pass  # intentional

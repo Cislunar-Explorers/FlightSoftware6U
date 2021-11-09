@@ -16,19 +16,23 @@ if TYPE_CHECKING:
 class Command(ABC):
     uplink_args: List[Codec]
     downlink_telem: List[Codec]
-    id: int  # ID must be between 0 and 255 - every command ID must be different. I can't think of a way to autogenerate these, so this will have to be enforced in practice
+    id: int  # ID must be between 0 and 255 - every command ID must be different.
+    # I can't think of a way to autogenerate these, so this will have to be enforced in practice (and unit test)
 
     def __init__(self) -> None:
-        self.uplink_buffer_size = sum(
-            [codec.num_bytes for codec in self.uplink_args])
+        self.uplink_buffer_size = sum([codec.num_bytes for codec in self.uplink_args])
         if self.uplink_buffer_size > 200 - MIN_COMMAND_SIZE:
             logging.error(
-                f"Buffer size too big: {self.uplink_buffer_size} > {200 - MIN_COMMAND_SIZE}")
+                f"Buffer size too big: {self.uplink_buffer_size} > {200 - MIN_COMMAND_SIZE}"
+            )
         self.downlink_buffer_size = sum(
-            [codec.num_bytes for codec in self.downlink_telem])
+            [codec.num_bytes for codec in self.downlink_telem]
+        )
 
     @abstractmethod
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Optional[Dict[str, Union[float, int]]]:
+    def _method(
+        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+    ) -> Optional[Dict[str, Union[float, int]]]:
         pass
 
     @staticmethod
@@ -36,7 +40,7 @@ class Command(ABC):
         offset = 0
         kwargs = {}
         for point in codec_list:
-            kwarg = point.unpack(data[offset:offset+point.num_bytes])
+            kwarg = point.unpack(data[offset : offset + point.num_bytes])
             kwargs.update(kwarg)
             offset += point.num_bytes
 
@@ -49,7 +53,7 @@ class Command(ABC):
 
         for name, value in kwargs.items():
             codec = [p for p in codecs if p.name == name][0]
-            buffer[offset:offset+codec.num_bytes] = codec.pack(value)
+            buffer[offset : offset + codec.num_bytes] = codec.pack(value)
             offset += codec.num_bytes
 
         return bytes(buffer)
@@ -66,11 +70,11 @@ class Command(ABC):
     def pack_telem(self, **kwargs) -> bytes:
         return self._pack(kwargs, self.downlink_telem, self.downlink_buffer_size)
 
-    def run(self,  parent: Optional[MainSatelliteThread] = None, **kwargs):
+    def run(self, parent: Optional[MainSatelliteThread] = None, **kwargs):
         try:
             downlink = self._method(parent=parent, **kwargs)
             return downlink
         except Exception as e:
             logging.error("Unhandled command exception")
-            log_error(e, logging.error)
+            log_error(e, function=logging.error)
             raise CommandException

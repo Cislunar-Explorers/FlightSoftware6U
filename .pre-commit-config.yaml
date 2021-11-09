@@ -11,6 +11,7 @@ repos:
     hooks:
     -   id: flake8
         exclude: ^docs
+        args: ['--extend-ignore=E203']
 -   repo: https://github.com/psf/black
     rev: 19.3b0
     hooks:

@@ -1,6 +1,6 @@
 ### Summary
 <!-- What changes were made? What features were added? What bugs were fixed? -->
-This PR addresses Jira ticket CISLUNAR-     <!-- Add Jira ticket number here -->
+This PR addresses Jira ticket [CISLUNAR-XX](https://cislunarsoftware.atlassian.net/browse/CISLUNAR-XX)     <!-- Replace XX with JIRA ticket number -->
 
 
 

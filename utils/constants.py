@@ -4,15 +4,18 @@ from dotenv import dotenv_values
 from typing import cast
 
 # dotenv vars
-config = dotenv_values(".env")
+config = dotenv_values()
 
 CISLUNAR_BASE_DIR = cast("str", config["CISLUNAR_BASE_DIR"])
+FLIGHT_SOFTWARE_PATH = cast("str", config["FLIGHT_SOFTWARE_PATH"])
 FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
 LOG = config["LOG"] == "1"
 
 # SQL Stuff
 DB_ENTRY_LIMIT = 1000  # TODO update # maximum number of entries in any of the databases
-DB_FILE = "sqlite:///" + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
+DB_FILE = "sqlite:///" + os.path.join(
+    FLIGHT_SOFTWARE_PATH, CISLUNAR_BASE_DIR, "satellite-db.sqlite"
+)
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
 
@@ -42,12 +45,9 @@ DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
 DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
 # Important paths
-FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
-PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + 'utils/parameters.json'
-# TODO move path to env
-#OPNAV_MEDIA_PATH = FLIGHT_SOFTWARE_PATH + 'OpticalNavigation/opnav_media/'
-#OPNAV_MEDIA_PATH = "/Users/adam/Desktop/College/Fall2021/CislunarFA2021/opnav_media"
-OPNAV_MEDIA_PATH = "/home/stephen/code/FlightSoftware/OpticalNavigation/opnav_media/"
+# FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
+PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + "utils/parameters.json"
+OPNAV_MEDIA_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/opnav_media/")
 
 # Keyword Argument Definitions for Commands
 POSITION_X = "position_x"

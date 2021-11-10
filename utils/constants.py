@@ -13,9 +13,7 @@ LOG = config["LOG"] == "1"
 
 # SQL Stuff
 DB_ENTRY_LIMIT = 1000  # TODO update # maximum number of entries in any of the databases
-DB_FILE = "sqlite:///" + os.path.join(
-    FLIGHT_SOFTWARE_PATH, CISLUNAR_BASE_DIR, "satellite-db.sqlite"
-)
+DB_FILE = "sqlite:///" + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
 

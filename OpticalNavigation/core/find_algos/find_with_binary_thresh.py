@@ -43,6 +43,8 @@ def get_earth_moon_coords(src):
 
     # Determine second largest contour
     overlaps = True
+    og_two = None
+    contour_two = None
     while overlaps and len(contours) > 0:
 
         # Get contour with next largest area

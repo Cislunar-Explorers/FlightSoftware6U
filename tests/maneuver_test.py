@@ -1,26 +1,32 @@
+import logging
+import time
 from queue import PriorityQueue
-import pytest
-from time import time
 
-from main import MainSatelliteThread
-from flight_modes.maneuver_flightmode import ManeuverMode
+import pytest
 import utils.constants as consts
 import utils.parameters as params
+from flight_modes.maneuver_flightmode import ManeuverMode
+from main import MainSatelliteThread
 
 # to speed testing
 params.GLOW_WAIT_TIME = 0.01
 
 
 class FakeGOM:
-    def glowplug(self, x):
-        return 0
+    def __init__(self):
+        self.pc = None
 
-    def glowplug2(self, x):
-        return 0
+    def glowplug(self, duration, delay=0):
+        logging.info("Firing glowplug 1")
+        return None
+
+    def glowplug2(self, duration, delay=0):
+        logging.info("Firing glowplug 2")
+        return None
 
 
 @pytest.fixture
-def m():
+def m(mocker):
     m = MainSatelliteThread()
     m.replace_flight_mode_by_id(consts.FMEnum.Maneuver)
     m.gom = FakeGOM()
@@ -34,7 +40,7 @@ def test_maneuver_selection(m, mocker):
     )
     assert isinstance(m.maneuver_queue, PriorityQueue)
     assert isinstance(m.flight_mode, ManeuverMode)
-    cur_time = time()
+    cur_time = time.time()
     m.command_definitions.schedule_maneuver(time=cur_time + 1000)
     m.command_definitions.schedule_maneuver(time=cur_time + 100)
     assert len(m.maneuver_queue.queue) == 1

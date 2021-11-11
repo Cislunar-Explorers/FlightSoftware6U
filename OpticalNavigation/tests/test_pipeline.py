@@ -191,7 +191,7 @@ def test_start(mocker):
         idx[0] += 1
         return frames
 
-    # mocker.patch('OpticalNavigation.core.opnav.extract_frames', side_effect=extract_frames_mock)
+    # mocker.patch('core.opnav.extract_frames', side_effect=extract_frames_mock)
 
     def __get_elapsed_time_mock(bestTuple, timeDeltaAvgs, observeStart):
         print("get_elapsed_time_mock")
@@ -204,10 +204,7 @@ def test_start(mocker):
         timeElapsed = (dateTime - observeStart).total_seconds()
         return timeElapsed
 
-    mocker.patch(
-        "OpticalNavigation.core.opnav.__get_elapsed_time",
-        side_effect=__get_elapsed_time_mock,
-    )
+    mocker.patch("core.opnav.__get_elapsed_time", side_effect=__get_elapsed_time_mock)
 
     # start opnav system
     opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)

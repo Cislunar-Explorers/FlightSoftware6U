@@ -527,7 +527,7 @@ def test_RandomData():
     att_P = np.diag([1.0e-1, 1.0e-1, 1.0e-1, 9.7e-10, 9.7e-10, 9.7e-10]) * 10.0
 
     Q = (
-        np.array(
+        np.diag(
             [
                 gyro_noise_sigma ** 2.0
                 - (1.0 / 6.0) * gyro_sigma ** 2.0 * gyro_sample_rate ** 2.0,

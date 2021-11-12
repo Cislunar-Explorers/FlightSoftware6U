@@ -1,35 +1,11 @@
 import cv2
 import numpy as np
-
-# import scipy as sp
-# import pandas as pd
-# from skimage.filters import threshold_yen
 import itertools
 import math
-
-# import matplotlib.pyplot as plt
-# import os
-# import re
 
 
 def get_earth_moon_coords(src):
     img = cv2.imread(src)
-
-    # ell_min = 5
-    # ell_max = int(img.shape[0] / 50)
-    # if ell_max % 2 == 0:
-    #     ell_max += 1
-
-    # ell = max(ell_min, ell_max)
-
-    # yen_threshold = threshold_yen(img)
-
-    # gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    # blurred = cv2.GaussianBlur(gray, (ell, ell), 1)
-    # thresh = cv2.threshold(blurred, yen_threshold, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-
-    # plt.imshow(thresh)
-    # plt.show()
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -49,7 +25,6 @@ def get_earth_moon_coords(src):
     c = contours[max_index]
     del contours[max_index]
 
-    # x, y, w, h = cv2.boundingRect(c)
     detect_circles(img, c)
 
     # Determine second largest contour
@@ -63,16 +38,6 @@ def get_earth_moon_coords(src):
         c2 = contours[max_index]
         del contours[max_index]
 
-        # x2, y2, w2, h2 = cv2.boundingRect(c2)
-
-        # Check whether contour overlaps
-        # overlaps = False
-        # if ((x2 > x and x2 < x + w and y2 > y and y2 < y + h) or
-        # (x2 + w2 > x and x2 + w2 < x + w and y2 > y and y2 < y + h) or
-        # (x2 + w2 > x and x2 + w2 < x + w and y2 + h2 > y and y2 + h2 < y + h) or
-        # (x2 > x and x2 < x + w and y2 + h2 > y and y2 + h2 < y + h)):
-        #    overlaps = True
-
     try:
         detect_circles(img, c2)
         print("Two contours")
@@ -82,19 +47,20 @@ def get_earth_moon_coords(src):
 
 def detect_circles(img, c):
 
-    # ell = int(img.shape[0]/10)
-
+    # Get four extreme points
     l = tuple(c[c[:, :, 0].argmin()][0])
     r = tuple(c[c[:, :, 0].argmax()][0])
     t = tuple(c[c[:, :, 1].argmin()][0])
     b = tuple(c[c[:, :, 1].argmax()][0])
 
+    # Set of four extreme points
     S = {l, r, t, b}
 
+    # All combinations of three points among set of four extreme points
     S_3 = set(itertools.combinations(S, 3))
 
+    # Get the set of three points that form the largest circle
     sum = 0
-
     pts = None
     for s in S_3:
         x1, y1 = s[0][0], s[0][1]
@@ -111,23 +77,25 @@ def detect_circles(img, c):
 
     x, y, rad = center_circle(pts)
 
-    # sqr = int(rad / (math.sqrt(2)))
-
-    # cv2.line(img, (x - sqr, y - sqr), (x + sqr, y + sqr), (255, 255, 255), max(2,int(ell/10)))
-    # cv2.line(img, (x + sqr, y - sqr), (x - sqr, y + sqr), (255, 255, 255), max(2,int(ell/10)))
-    # cv2.circle(img, (x,y), rad, (255, 255, 255), max(2,int(ell/10)))
-
     print("(%s, %s), radius = %s" % (x, y, rad))
-
-    # plt.imshow(img)
-    # plt.show()
 
 
 def center_circle(s):
+    """center_circle(s) -> (x, y, radius)
+
+    Args:
+        s (tuple[tuple, tuple, tuple]): set of three (x,y) tuples
+
+    Returns:
+        [type]: [description]
+    """
+
+    # Get the three points
     x1, y1 = s[0][0], s[0][1]
     x2, y2 = s[1][0], s[1][1]
     x3, y3 = s[2][0], s[2][1]
 
+    # Calculate distances between points
     x12 = x1 - x2
     x13 = x1 - x3
 
@@ -146,7 +114,10 @@ def center_circle(s):
     # y1^2 - y3^2
     sy13 = pow(y1, 2) - pow(y3, 2)
 
+    # x2^2 - x1^2
     sx21 = pow(x2, 2) - pow(x1, 2)
+
+    # y2^2 - y1^2
     sy21 = pow(y2, 2) - pow(y1, 2)
 
     f = ((sx13) * (x12) + (sy13) * (x12) + (sx21) * (x13) + (sy21) * (x13)) // (
@@ -159,11 +130,13 @@ def center_circle(s):
 
     c = -pow(x1, 2) - pow(y1, 2) - 2 * g * x1 - 2 * f * y1
 
-    h = -g
-    k = -f
+    # Get x and y position of center
+    x = -g
+    y = -f
 
-    r2 = h * h + k * k - c
+    r2 = x * x + y * y - c
 
+    # Get radius
     r = int(math.sqrt(r2))
 
-    return h, k, r
+    return x, y, r

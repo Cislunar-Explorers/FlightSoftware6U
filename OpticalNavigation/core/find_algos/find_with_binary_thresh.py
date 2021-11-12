@@ -1,24 +1,13 @@
 import cv2
 import numpy as np
 
-# import scipy as sp
-# import pandas as pd
-# import matplotlib.pyplot as plt
-# import os
-
 
 def get_earth_moon_coords(src):
     img = cv2.imread(src)
 
-    # plt.imshow(img)
-    # plt.show()
-
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     thresh = cv2.threshold(blurred, 10, 255, cv2.THRESH_BINARY)[1]
-
-    # plt.imshow(thresh)
-    # plt.show()
 
     # Find contours
     contours = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -81,13 +70,9 @@ def detect_circles(og, img):
     dim = (256, int((256 / img.shape[1]) * img.shape[0]))
 
     if img.shape[1] > 256:
-        # og_sml = cv2.resize(og, dim)
         sml = cv2.resize(img, dim)
     else:
-        # og_sml = og.copy()
         sml = img.copy()
-
-    # output = og_sml.copy()
 
     # detect circles in the image
     circles = cv2.HoughCircles(
@@ -106,7 +91,3 @@ def detect_circles(og, img):
         circles = np.round(circles[0, :]).astype("int")
         for (x, y, r) in circles:
             print("(%s, %s), radius = %s" % (x, y, r))
-            # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
-            # cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
-        # plt.imshow(output)
-        # plt.show()

@@ -73,7 +73,7 @@ class CameraMux:
             return False
 
 
-class Camera:
+class PiCam:
     def __init__(self):
         pass
 

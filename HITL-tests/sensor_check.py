@@ -3,7 +3,7 @@ from drivers.rtc import RTC
 from drivers.gyro import GyroSensor
 from drivers.ADCDriver import ADC
 from communications.satellite_radio import Radio
-from core.camera import Camera
+from core.camera import PiCam
 from core.camera import CameraMux
 from drivers.nemo.nemo import Nemo
 from utils.log import get_log, log_error
@@ -18,7 +18,9 @@ def check_gom():
         hk = gom.get_health_data(level="eps")
     except Exception as e:
         log_error(e)
-        logger.error(f"GOM init failed. Is it charged above 7.0V? Check SDA/SCL (with an oscilloscope if need be)")
+        logger.error(
+            "GOM init failed. Is it charged above 7.0V? Check SDA/SCL (with an oscilloscope if need be)"
+        )
     else:
         logger.info(f"GOM initialization successful. Battery voltage: {hk.vbatt}")
 
@@ -30,7 +32,9 @@ def check_sensor_board():
     except Exception as e:
         log_error(e)
         gyro = None
-        logger.error("GYRO init failed. Check power, gnd, and SDA/SCL connections to sensor board")
+        logger.error(
+            "GYRO init failed. Check power, gnd, and SDA/SCL connections to sensor board"
+        )
     else:
         logger.info(f"Gyro initialization successful. Gyro rates: {gyro_data}")
 
@@ -41,9 +45,13 @@ def check_sensor_board():
             pressure = adc.read_pressure()
         except Exception as e:
             log_error(e)
-            logger.error("ADC init failed. Check power, gnd, and SDA/SCL connections to sensor board")
+            logger.error(
+                "ADC init failed. Check power, gnd, and SDA/SCL connections to sensor board"
+            )
         else:
-            logger.info(f"ADC initialization successful. Pressure:{pressure}, Thermocouple:{temp}")
+            logger.info(
+                f"ADC initialization successful. Pressure:{pressure}, Thermocouple:{temp}"
+            )
     else:
         logger.warning("Not initializing ADC because Gyro failed")
 
@@ -52,7 +60,9 @@ def check_sensor_board():
         rtc_time = rtc.get_time()
     except Exception as e:
         log_error(e)
-        logger.error("RTC init failed. Check power, gnd, and SDA/SCL connections to sensor board")
+        logger.error(
+            "RTC init failed. Check power, gnd, and SDA/SCL connections to sensor board"
+        )
     else:
         logger.info(f"RTC initialization successful. RTC time: {rtc_time}")
 
@@ -62,7 +72,9 @@ def check_radio():
         Radio()
     except Exception as e:
         log_error(e)
-        logger.error("RADIO init Failed. Make sure radio/comms board connectors are correct")
+        logger.error(
+            "RADIO init Failed. Make sure radio/comms board connectors are correct"
+        )
     else:
         logger.info("RADIO initialization successful")
 
@@ -85,7 +97,8 @@ def check_mux():
     except Exception as e:
         log_error(e)
         logger.error(
-            "MUX init failed. Make sure it's pressed down fully onto GPIO connections, and that SDA/SCL is not grounded")
+            "MUX init failed. Make sure it's pressed down fully onto GPIO connections, and that SDA/SCL isn't grounded"
+        )
     else:
         logger.info("MUX initialized successfully")
 
@@ -99,7 +112,7 @@ def check_cams():
         logger.error("MUX init failed. Not attempting to init cameras")
     else:
         logger.info("MUX initialized successfully")
-        camera = Camera()
+        camera = PiCam()
         for i in [1, 2, 3]:
             try:
                 mux.selectCamera(i)
@@ -112,12 +125,14 @@ def check_cams():
 
 
 def sensor_check(input_str):
-    sensor_checks = {1: check_gom,
-                     2: check_radio,
-                     3: check_sensor_board,
-                     4: check_mux,
-                     5: check_cams,
-                     6: check_nemo}
+    sensor_checks = {
+        1: check_gom,
+        2: check_radio,
+        3: check_sensor_board,
+        4: check_mux,
+        5: check_cams,
+        6: check_nemo,
+    }
 
     for char in input_str:
         char_int = int(char)
@@ -127,10 +142,12 @@ def sensor_check(input_str):
 if __name__ == "__main__":
     input_str = ""
     logger.info("Sensor checks:")
-    while input_str != '-1':
-        logger.info("\nEnter the number(s) corresponding to the device(s) you want to check.\n"
-                    " Gomspace: 1\n Radio: 2\n Sensor Board: 3\n Camera Mux: 4\n Cameras: 5\n Nemo: 6\n"
-                    "To test the Gom, type '1' and enter. To test the gom, radio, and mux, type '124' and enter")
+    while input_str != "-1":
+        logger.info(
+            "\nEnter the number(s) corresponding to the device(s) you want to check.\n"
+            " Gomspace: 1\n Radio: 2\n Sensor Board: 3\n Camera Mux: 4\n Cameras: 5\n Nemo: 6\n"
+            "To test the Gom, type '1' and enter. To test the gom, radio, and mux, type '124' and enter"
+        )
         input_str = input()
         try:
             sensor_check(input_str)

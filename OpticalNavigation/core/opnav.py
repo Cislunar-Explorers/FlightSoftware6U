@@ -300,6 +300,7 @@ def cam_to_body_transform(bestEarthTuple, bestMoonTuple, bestSunTuple, camera_pa
 
 
 def _tZeroRotMatrix(rotation):
+    """Creates a y-axis rotation matrix"""
     return np.array(
         [
             math.cos(rotation),

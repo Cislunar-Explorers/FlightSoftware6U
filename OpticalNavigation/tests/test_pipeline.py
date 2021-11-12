@@ -524,53 +524,20 @@ def test_RandomData():
     gyro_noise_sigma = 1.0e-7
     meas_sigma = 8.7e-4
     #
-    att_P = (
-        np.array(
-            [
-                [1.0e-1, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0e-1, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0e-1, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 9.7e-10, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 9.7e-10, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 9.7e-10],
-            ]
-        )
-        * 10.0
-    )
+    att_P = np.diag([1.0e-1, 1.0e-1, 1.0e-1, 9.7e-10, 9.7e-10, 9.7e-10]) * 10.0
 
     Q = (
         np.array(
             [
-                [
-                    gyro_noise_sigma ** 2.0
-                    - (1.0 / 6.0) * gyro_sigma ** 2.0 * gyro_sample_rate ** 2.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    0.0,
-                    gyro_noise_sigma ** 2.0
-                    - (1.0 / 6.0) * gyro_sigma ** 2.0 * gyro_sample_rate ** 2.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.0,
-                    gyro_noise_sigma ** 2.0
-                    - (1.0 / 6.0) * gyro_sigma ** 2.0 * gyro_sample_rate ** 2.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [0.0, 0.0, 0.0, gyro_sigma ** 2.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, gyro_sigma ** 2.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, gyro_sigma ** 2.0],
+                gyro_noise_sigma ** 2.0
+                - (1.0 / 6.0) * gyro_sigma ** 2.0 * gyro_sample_rate ** 2.0,
+                gyro_noise_sigma ** 2.0
+                - (1.0 / 6.0) * gyro_sigma ** 2.0 * gyro_sample_rate ** 2.0,
+                gyro_noise_sigma ** 2.0
+                - (1.0 / 6.0) * gyro_sigma ** 2.0 * gyro_sample_rate ** 2.0,
+                gyro_sigma ** 2.0,
+                gyro_sigma ** 2.0,
+                gyro_sigma ** 2.0,
             ]
         )
         * 0.5

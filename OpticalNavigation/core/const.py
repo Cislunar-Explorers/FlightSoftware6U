@@ -570,19 +570,8 @@ class AttitudeUKFConstants:
     BETA = 2.0  # optimal for Gaussian distribution
     KAPPA = -3.0  # chosen such that KAPPA+NX=3
     LAM = 0  # ALPHA**2. * (KAPPA + NX) - NX     # depends on other variables
-    P0 = (
-        np.array(
-            [
-                [1.0e-1, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0e-1, 0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0e-1, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 9.7e-10, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 9.7e-10, 0.0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, 9.7e-10],
-            ]
-        )
-        * 10.0
-    )
+    P0 = np.diag([1.0e-1, 1.0e-1, 1.0e-1, 9.7e-10, 9.7e-10, 9.7e-10]) * 10.0
+
     default_gyro_sigma = 1.0e-10
     default_gyro_sample_rate = 0.01
     default_gyro_noise_sigma = 1.0e-7
@@ -620,14 +609,6 @@ class GyroVars:
             * 0.5
             * self.gyro_sample_rate
         )
-        # return np.array([
-        # [self.gyro_noise_sigma**2. - (1./6.)*self.gyro_sigma**2.*self.gyro_sample_rate**2., 0., 0., 0., 0., 0.],
-        # [0., self.gyro_noise_sigma**2. - (1./6.)*self.gyro_sigma**2.*self.gyro_sample_rate**2., 0., 0., 0., 0.],
-        # [0., 0., self.gyro_noise_sigma**2. - (1./6.)*self.gyro_sigma**2.*self.gyro_sample_rate**2., 0., 0., 0.],
-        # [0., 0., 0., self.gyro_sigma**2., 0., 0.],
-        # [0., 0., 0., 0., self.gyro_sigma**2., 0.],
-        # [0., 0., 0., 0., 0., self.gyro_sigma**2.]
-        # ]) * .5*self.gyro_sample_rate
 
     def get_R_matrix(self):
         return np.eye(9) * self.meas_sigma ** 2.0

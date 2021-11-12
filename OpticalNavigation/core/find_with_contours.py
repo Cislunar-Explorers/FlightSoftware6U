@@ -2,12 +2,13 @@ from core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraPa
 from dataclasses import dataclass
 import cv2
 import numpy as np
-from math import pi, radians, tan, floor, ceil
+from math import radians, tan, floor, ceil
 import argparse
 import re
 from utils.log import get_log
 
 logger = get_log()
+
 
 class Camera:
     """Encapsulate field-of-view and resolution of a camera."""
@@ -149,7 +150,7 @@ def rotate(rot, s, row):
     r[:, :, 2, 0] = u[0] * u[2] * (1 - cth) - u[1] * sth
     r[:, :, 2, 1] = u[1] * u[2] * (1 - cth) + u[0] * sth
     r[:, :, 2, 2] = cth + u[2] ** 2 * (1 - cth)
-    return np.einsum('...ij,...j', r, s)
+    return np.einsum("...ij,...j", r, s)
 
 
 def tile_transform_bb(src, cam, rot, dst):
@@ -162,13 +163,11 @@ def tile_transform_bb(src, cam, rot, dst):
 
     # Convert gnomonic to spherical through projection
     s = gn_to_sph(np.array([x0, x1]), np.array([y0, y1]))
-    
+
     # Rotates the spherical vectors by the specified rotation from gyro
     # Outputs 3D vectors of the 4 bounding box corners
-    rs = rotate(rot, s,
-                np.array([[src.y0, src.y0],
-                          [src.y1(), src.y1()]]))
-    
+    rs = rotate(rot, s, np.array([[src.y0, src.y0], [src.y1(), src.y1()]]))
+
     # Stereographic projection of 4 corners
     xst, yst = sph_to_st(rs)
 
@@ -178,21 +177,30 @@ def tile_transform_bb(src, cam, rot, dst):
     ymin = floor(np.min(ystp))
 
     # ?
-    bb = BoundingBox(xmin - dst.x0, ymin - dst.y0, ceil(np.max(xstp)) - xmin + 1, ceil(np.max(ystp)) - ymin + 1)
+    bb = BoundingBox(
+        xmin - dst.x0,
+        ymin - dst.y0,
+        ceil(np.max(xstp)) - xmin + 1,
+        ceil(np.max(ystp)) - ymin + 1,
+    )
 
     # Coordinates relative to bounding box corner
     # ?
-    a = np.array([[0,           0,           1],
-                  [0,           src.h - 1,   1],
-                  [src.w - 1,   0,           1],
-                  [src.w - 1,   src.h - 1,   1]], 
-                  dtype=np.float32)
-    b = np.array([[xstp[0, 0] - xmin, ystp[0, 0] - ymin],
-                  [xstp[1, 0] - xmin, ystp[1, 0] - ymin],
-                  [xstp[0, 1] - xmin, ystp[0, 1] - ymin],
-                  [xstp[1, 1] - xmin, ystp[1, 1] - ymin]], dtype=np.float32)
+    a = np.array(
+        [[0, 0, 1], [0, src.h - 1, 1], [src.w - 1, 0, 1], [src.w - 1, src.h - 1, 1]],
+        dtype=np.float32,
+    )
+    b = np.array(
+        [
+            [xstp[0, 0] - xmin, ystp[0, 0] - ymin],
+            [xstp[1, 0] - xmin, ystp[1, 0] - ymin],
+            [xstp[0, 1] - xmin, ystp[0, 1] - ymin],
+            [xstp[1, 1] - xmin, ystp[1, 1] - ymin],
+        ],
+        dtype=np.float32,
+    )
     c = np.linalg.lstsq(a, b, rcond=None)[0].T
-    #print(c)
+    # print(c)
     return c, bb
 
 
@@ -219,10 +227,14 @@ def remap_roi(img, src, cam, rot):
             # advantage of the "transparent" border mode to avoid extrapolating
             # the map).
             # Rolling shutter correction
-            cv2.warpAffine(img[j:jb, i:ib], c, (bbc.w, bbc.h),
-                           dst=out[bbc.y0:(bbc.y1() + 1), bbc.x0:(bbc.x1() + 1)],
-                           flags=cv2.INTER_CUBIC,
-                           borderMode=cv2.BORDER_TRANSPARENT)
+            cv2.warpAffine(
+                img[j:jb, i:ib],
+                c,
+                (bbc.w, bbc.h),
+                dst=out[bbc.y0 : (bbc.y1() + 1), bbc.x0 : (bbc.x1() + 1)],
+                flags=cv2.INTER_CUBIC,
+                borderMode=cv2.BORDER_TRANSPARENT,
+            )
 
             # tile_transform_bb changes the bounds of a bounding box according to a specified rotation
             # warpAffine "fills in" the image based on this new boundary (this does the rolling shutter correction)
@@ -232,8 +244,8 @@ def remap_roi(img, src, cam, rot):
 def bufferedRoi(x, y, w, h, wTot, hTot, b):
     xl = max(x - b, 0)
     xr = min(x + w + b, wTot)
-    yl = max(y - b, 0) # Should be yup (or ymin)
-    yr = min(y + h + b, hTot) # Should be ydown (ymax)
+    yl = max(y - b, 0)  # Should be yup (or ymin)
+    yr = min(y + h + b, hTot)  # Should be ydown (ymax)
     return (xl, yl, xr - xl, yr - yl)
 
 
@@ -241,14 +253,20 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
 # Percent of white pixels determines if earth detected
 # TODO make thresholds parameters
 def measureEarth(img):
-    lowThresh = cv2.inRange(img, (0, 0, 0), (255, 30, 30)) #lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
-    percentWhite = cv2.countNonZero(lowThresh) / (lowThresh.shape[0] * lowThresh.shape[1])
+    lowThresh = cv2.inRange(
+        img, (0, 0, 0), (255, 30, 30)
+    )  # lowThresh = cv2.inRange(img, (60, 0, 0), (255, 30, 30))
+    percentWhite = cv2.countNonZero(lowThresh) / (
+        lowThresh.shape[0] * lowThresh.shape[1]
+    )
     if percentWhite >= 0.2:
         highThreshRed = cv2.inRange(img, (0, 0, 5), (255, 255, 255))
         highThreshGreen = cv2.inRange(img, (0, 5, 0), (255, 255, 255))
         highThreshBlue = cv2.inRange(img, (5, 0, 0), (255, 255, 255))
         highThresh = highThreshRed + highThreshGreen + highThreshBlue
-        contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cv2.findContours(
+            highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         contours = contours[0] if len(contours) == 2 else contours[1]
 
         areas = [cv2.contourArea(c) for c in contours]
@@ -265,9 +283,13 @@ def measureEarth(img):
 # TODO make thresholds parameters
 def measureSun(img):
     highThresh = cv2.inRange(img, (225, 225, 225), (255, 255, 255))
-    percentWhite = cv2.countNonZero(highThresh) / (highThresh.shape[0] * highThresh.shape[1])
-    if percentWhite >= 0.18: #Changed from 23%
-        contours = cv2.findContours(highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    percentWhite = cv2.countNonZero(highThresh) / (
+        highThresh.shape[0] * highThresh.shape[1]
+    )
+    if percentWhite >= 0.18:  # Changed from 23%
+        contours = cv2.findContours(
+            highThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         contours = contours[0] if len(contours) == 2 else contours[1]
 
         areas = [cv2.contourArea(c) for c in contours]
@@ -279,13 +301,14 @@ def measureSun(img):
     else:
         return None
 
+
 # TODO make thresholds parameters
 # TODO add code for % white, but parameterize if we can to use it
 def measureMoon(img):
     thresh = cv2.inRange(img, (5, 5, 5), (225, 225, 225))
     contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = contours[0] if len(contours) == 2 else contours[1]
-    if len(contours) is not 0:
+    if len(contours) != 0:
         areas = [cv2.contourArea(c) for c in contours]
         max_index = np.argmax(areas)
         c = contours[max_index]
@@ -295,19 +318,28 @@ def measureMoon(img):
     return None
 
 
-def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
-    cam = Camera(radians(camera_params.hFov), radians(camera_params.vFov), camera_params.hPix, camera_params.vPix)
+def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
+    cam = Camera(
+        radians(camera_params.hFov),
+        radians(camera_params.vFov),
+        camera_params.hPix,
+        camera_params.vPix,
+    )
 
     # u is in body frame here
     # Assumes only spinning about y-axis
     u = np.array([0, 1, 0], dtype=np.float32)
-    camNum = int(re.search(r'[cam](\d+)', src).group(1))
+    camNum = int(re.search(r"[cam](\d+)", src).group(1))
+    assert camNum in [1, 2, 3], "Error in getting the camera number from filename"
     if camNum == 1:
-        u = np.linalg.inv(camera_params.cam1Rotation).dot(u)
+        cam_DCM: np.ndarray = camera_params.cam1Rotation.T
+        u = cam_DCM.dot(u)
     elif camNum == 2:
-        u = np.linalg.inv(camera_params.cam2Rotation).dot(u)
+        cam_DCM: np.ndarray = camera_params.cam2Rotation.T
+        u = cam_DCM.dot(u)
     elif camNum == 3:
-        u = np.linalg.inv(camera_params.cam3Rotation).dot(u)
+        cam_DCM: np.ndarray = camera_params.cam3Rotation.T
+        u = cam_DCM.dot(u)
     # u is now in the camera frame
     # TODO switch to gyro database
     omega = -5
@@ -333,14 +365,14 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
-    if len(contours) is 0:
-        #logger.info("[OPNAV]: No countours found")
+    if len(contours) == 0:
+        # logger.info("[OPNAV]: No countours found")
         return result
 
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
     c = contours[max_index]
-    #del contours[max_index]
+    # del contours[max_index]
 
     x, y, w, h = cv2.boundingRect(c)
 
@@ -350,7 +382,7 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 
     # TODO make sure we can handle eclipse edge case
     # Gets the next largest body that doesn't overlap with first body
-    c2 = None
+    # c2 = None
     x2, y2, w2, h2 = 0, 0, 0, 0
     out2 = None
     for con in contours:
@@ -358,13 +390,13 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
         if area >= 100:  # TODO: Placeholder
             x2, y2, w2, h2 = cv2.boundingRect(con)
             # Checks for rectangle overlap
-            if (x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y):
-                c2 = con	
-                x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)	
-                box2 = BoundingBox(x2, y2, w2, h2)	
-                out2, bbst2 = remap_roi(img, box2, cam, rot)	
-                break	
-            else:	
+            if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y:
+                # c2 = con
+                x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
+                box2 = BoundingBox(x2, y2, w2, h2)
+                out2, bbst2 = remap_roi(img, box2, cam, rot)
+                break
+            else:
                 x2, y2, w2, h2 = 0, 0, 0, 0
 
     # Measure body in region-of-interest
@@ -387,12 +419,16 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
         earth = None
         index = 0
         for f in [out, out2]:
-            if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f) is not None:
+            if (
+                f is None
+                or cv2.sumElems(f) == (0, 0, 0, 0)
+                or measureSun(f) is not None
+            ):
                 continue
 
             if earth is not None:
                 earth = None
-            elif np.max(areas) > 400 and index == 0: #TODO: Placeholder
+            elif np.max(areas) > 400 and index == 0:  # TODO: Placeholder
                 earth = measureEarth(f)
 
             if earth is not None:
@@ -402,11 +438,15 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
-            elif earth is None and (index != 0 or np.max(areas) < 400) and (index != 1 or area < 400):#TODO: Placeholder
+            elif (
+                earth is None
+                and (index != 0 or np.max(areas) < 400)
+                and (index != 1 or area < 400)
+            ):  # TODO: Placeholder
                 moon = measureMoon(f)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    mXst, mYst = None,None
+                    mXst, mYst = None, None
                     # Checks whether moon contour is first or second contour
                     if index == 0:
                         mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
@@ -419,7 +459,6 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
             index += 1
 
     return result
-
 
 
 # Shift stereographic coordinates of center to camera frame (at start of exposure)
@@ -442,7 +481,8 @@ def find(src, camera_params:CameraParameters=CisLunarCameraParameters):
 #   * Note: Can measure center quite well, just not size; is it required?  Could we fudge it with a correction factor?
 # * For Moon, blurry edges and non-uniform surface make picking threshold value difficult
 #   * Consider analyzing ROI of original, unblurred image
-# * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image, then scaling ROI
+# * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image,
+#   then scaling ROI
 if __name__ == "__main__":
     """
     Run "python3 find_with_contours.py -i=<IMAGE>" to test this module
@@ -450,13 +490,19 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
-    
+
     earthDetectionArray = np.zeros((1, 4), dtype=float)
     moonDetectionArray = np.zeros((1, 4), dtype=float)
     sunDetectionArray = np.zeros((1, 4), dtype=float)
     imageDetectionCircles = find(args["image"])
-    print("Earth ", imageDetectionCircles.get_earth_detection(), " Moon ", imageDetectionCircles.get_moon_detection(),\
-         " Sun ", imageDetectionCircles.get_sun_detection())
+    print(
+        "Earth ",
+        imageDetectionCircles.get_earth_detection(),
+        " Moon ",
+        imageDetectionCircles.get_moon_detection(),
+        " Sun ",
+        imageDetectionCircles.get_sun_detection(),
+    )
 
 # Notes
 # * Need sanity check on contour size (not too large, not too small)
@@ -468,4 +514,5 @@ if __name__ == "__main__":
 #   * Note: Can measure center quite well, just not size; is it required?  Could we fudge it with a correction factor?
 # * For Moon, blurry edges and non-uniform surface make picking threshold value difficult
 #   * Consider analyzing ROI of original, unblurred image
-# * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image, then scaling ROI
+# * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image,
+#   then scaling ROI

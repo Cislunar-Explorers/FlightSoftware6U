@@ -408,13 +408,13 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
     camNum = int(re.search(r"[cam](\d+)", src).group(1))
     assert camNum in [1, 2, 3], "Error in getting the camera number from filename"
     if camNum == 1:
-        cam_DCM: np.ndarray = np.linalg.inv(camera_params.cam1Rotation)
+        cam_DCM: np.ndarray = camera_params.cam1Rotation.T
         u = cam_DCM.dot(u)
     elif camNum == 2:
-        cam_DCM: np.ndarray = np.linalg.inv(camera_params.cam2Rotation)
+        cam_DCM: np.ndarray = camera_params.cam2Rotation.T
         u = cam_DCM.dot(u)
     elif camNum == 3:
-        cam_DCM: np.ndarray = np.linalg.inv(camera_params.cam3Rotation)
+        cam_DCM: np.ndarray = camera_params.cam3Rotation.T
         u = cam_DCM.dot(u)
     # u is now in the camera frame
     # TODO switch to gyro database

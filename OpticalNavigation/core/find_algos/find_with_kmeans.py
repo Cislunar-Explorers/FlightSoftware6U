@@ -2,8 +2,8 @@
 # Standard imports
 import cv2
 import numpy as np
-import os
 import argparse
+
 
 def getkmeans(imOrig):
     image = cv2.cvtColor(imOrig, cv2.COLOR_BGR2RGB)
@@ -15,11 +15,13 @@ def getkmeans(imOrig):
 
     # define stopping criteria
     max_iters = 100
-    epsilon = 10 # amount by which the clusters move
+    epsilon = 10  # amount by which the clusters move
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, max_iters, epsilon)
 
     k = 2
-    _, labels, (centers) = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    _, labels, (centers) = cv2.kmeans(
+        pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS
+    )
 
     # convert back to 8 bit values
     centers = np.uint8(centers)
@@ -38,11 +40,12 @@ def getkmeans(imOrig):
     segmented_image = segmented_image.reshape(image.shape)
     return segmented_image
 
+
 if __name__ == "__main__":
     # Read image
-    #imOrig = cv2.imread(os.path.join("D:", "OpNav", "data", "EclipseAndCrescentImages", "images", "EarthMoon.jpg"))
+    # imOrig = cv2.imread(os.path.join("D:", "OpNav", "data", "EclipseAndCrescentImages", "images", "EarthMoon.jpg"))
     ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--image", help = "path to the image")
+    ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
 
     imOrig = cv2.imread(args["image"])
@@ -51,7 +54,6 @@ if __name__ == "__main__":
     segmented_image = getkmeans(imOrig)
     cv2.imshow("Segmented Image", segmented_image)
     cv2.waitKey(0)
-
 
 
 # print(labels.shape)

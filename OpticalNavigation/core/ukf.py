@@ -122,14 +122,32 @@ def __measModel(traj, moonEph, sunEph, const):
     p_cm = math.sqrt((dmx-x)**2 + (dmy-y)**2 + (dmz-z)**2)
     p_cs = math.sqrt((dsx-x)**2 + (dsy-y)**2 + (dsz-z)**2)
 
-    num1 = -x*dmx - y*dmy - z*dmz + p_c2
-    num2 = -x*dsx - y*dsy - z*dsz + p_c2
-    num3 = dmx*(dsx-x) + dmy*(dsy-y) + dsz*(dmz-z) - z*dmz - x*dsx - y*dsy + p_c2
 
+    num1 = -x*(dmx-x) - y*(dmy-y) - z*(dmz - z)
+    num2 = -x*(dsx-x) - y*(dsy-y) - z*(dsz - z)
+    num3 = (dmx-x)*(dsx-x) + (dmy-y)*(dsy-y) + (dsz-z)*(dmz-z)
     # Pixel Separation Between Bodies 
-    z1 = math.acos(num1/(p_c*p_cm))       # E to M
-    z2 = math.acos(num2/(p_c*p_cs))       # E to S
-    z3 = math.acos(num3/(p_cm*p_cs))      # M to S
+    z1 = 0 # E to M
+    if num1/(p_c*p_cm) > 1:
+        z1 = 0
+    elif(num1/(p_c*p_cm) < -1):
+        z1 = np.pi
+    else:
+        z1 = math.acos(num1/(p_c*p_cm)) 
+    z2 = 0 # E to S
+    if num2/(p_c*p_cs) > 1:
+        z2 = 0
+    elif(num2/(p_c*p_cs) < -1):
+        z2 = np.pi
+    else:
+        z2 = math.acos(num2/(p_c*p_cs)) 
+    z3 = 0 # M to S
+    if num3/(p_cm*p_cs) > 1:
+        z3 = 0
+    elif(num3/(p_cm*p_cs) < -1):
+        z3 = np.pi
+    else:
+        z3 = math.acos(num3/(p_cm*p_cs))
 
     # Pixel Diameter of Bodies
     z4 = 2 * math.atan(Const.re/p_c)               # E
@@ -198,8 +216,9 @@ def __newEstimate(xMean:np.ndarray, zMean:np.ndarray, Pxx:np.ndarray,
     if not dynamicsOnly:
         K = Pxz.dot(np.linalg.pinv(Pzz))
     else:
-        K = np.zeros((6,6)); # To test dynamics Model
+        K = np.zeros((6,6)) # To test dynamics Model
 
+    measurements[-1] = zMean[-1]
     xNew = xMean + K.dot(measurements - zMean) 
     pNew = Pxx - K.dot(R.dot(K.T))
     return TrajectoryEstimateOutput(new_state=TrajectoryStateVector.from_numpy_array(state=xNew), new_P=CovarianceMatrix(matrix=pNew), K=Matrix6x6(matrix=K))
@@ -258,7 +277,7 @@ def runTrajUKF(moonEph: EphemerisVector, sunEph: EphemerisVector, measurements:C
     centerWeight = lmbda/(nx+nv+lmbda)
     otherWeight = 1/(2*(nx+nv+lmbda))
 
-    const = cameraParams.hPix/(cameraParams.hFov*np.pi/180) # camera constant: PixelWidth/FOV  [pixels/radians]
+    const = 3000
 
     # TODO: Remove test pixel to angle conversion
     # measurements /= const
@@ -289,4 +308,4 @@ def runTrajUKF(moonEph: EphemerisVector, sunEph: EphemerisVector, measurements:C
     Pxx, Pxz, Pzz = __findCovariances(xMean, zMean, propSigmas, sigmaMeasurements, centerWeight, otherWeight, Const.alpha, Const.beta, Const.R)
 
     # a posteriori estimates
-    return __newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements.data.reshape(6,1) + np.random.multivariate_normal(np.zeros((6)),Const.R).reshape(6,1), Const.R, dynamicsOnly=dynamicsOnly)
+    return __newEstimate(xMean, zMean, Pxx, Pxz, Pzz, measurements.data.reshape(6,1)*const + np.random.multivariate_normal(np.zeros((6)),Const.R).reshape(6,1), Const.R, dynamicsOnly=dynamicsOnly)

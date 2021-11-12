@@ -7,12 +7,13 @@ import utils.constants as consts
 import utils.parameters as params
 from flight_modes.maneuver_flightmode import ManeuverMode
 from main import MainSatelliteThread
+from drivers.gom import Gomspace
 
 # to speed testing
 params.GLOW_WAIT_TIME = 0.01
 
 
-class FakeGOM:
+class FakeGOM(Gomspace):
     def __init__(self):
         self.pc = None
 

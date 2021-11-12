@@ -328,6 +328,7 @@ class OpNavMode(FlightMode):
         return consts.NO_FM_CHANGE
 
     def opnav_subprocess(self, q):
+        # TODO put in try...except
         # TODO change from pytest to actual opnav
         # os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
         # subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)

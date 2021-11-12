@@ -4,9 +4,10 @@ from dotenv import dotenv_values
 from typing import cast
 
 # dotenv vars
-config = dotenv_values(".env")
+config = dotenv_values()
 
 CISLUNAR_BASE_DIR = cast("str", config["CISLUNAR_BASE_DIR"])
+FLIGHT_SOFTWARE_PATH = cast("str", config["FLIGHT_SOFTWARE_PATH"])
 FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
 LOG = config["LOG"] == "1"
 
@@ -43,8 +44,9 @@ DATA_LEN_OFFSET = ID_SIZE + ID_OFFSET
 DATA_OFFSET = DATA_LEN_SIZE + DATA_LEN_OFFSET
 
 # Important paths
-FLIGHT_SOFTWARE_PATH = "/home/pi/FlightSoftware/"
+# FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
 PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + "utils/parameters.json"
+OPNAV_MEDIA_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/opnav_media/")
 
 # Keyword Argument Definitions for Commands
 POS_X = "position_x"

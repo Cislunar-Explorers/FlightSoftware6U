@@ -3,15 +3,13 @@ import numpy as np
 import cv2
 import argparse
 import copy
-import math
 import os
 import re
 import pandas as pd
 from tqdm import tqdm
 import threading
-import time
 
-from core.find import round_up_to_odd
+from core.find_algos.find import round_up_to_odd
 from core.preprocess import rectilinearToStereographicProjection
 
 """

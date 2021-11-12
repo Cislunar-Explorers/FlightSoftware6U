@@ -3,7 +3,7 @@ from math import *
 import cv2
 import os
 import numpy as np
-from core.const import CisLunarCameraParameters, CisLunarCamRecParams
+from core.const import CisLunarCameraParameters
 import time
 
 def rolling_shutter(img):
@@ -16,37 +16,33 @@ def rolling_shutter(img):
     time.sleep(3)
     raise NotImplementedError("implement rolling shutter transformation")
 
-def extract_frames(vid_dir, endTimestamp):
-    """
-    Extracts frames from video located at path [vid_dir]
-    @returns
-    [frames]: returns list of paths to extracted frames
-    """
-    # return np.zeros((10, int(CisLunarCameraParameters.hPix), int(CisLunarCameraParameters.vPix), 3), dtype=float)
-    # time.sleep(3)
-    #raise NotImplementedError("implement frame extraction")
-    """Convertes and mjpeg video into a list of jpeg images"""
-    src = cv2.VideoCapture(vid_dir)
-    currentFrame = 0
-    base = os.path.splitext(os.path.basename(vid_dir))[0]
-    frames = []
-    while (True):
-    # Write next frame to a new jpeg image
-        ret, frame = src.read()
-        if ret:
-            # TODO: How to incorporate total number of frames, fps
-            timestamp = endTimestamp - ((CisLunarCamRecParams.recTime * CisLunarCamRecParams.fps + 1) - 1 - currentFrame) * (1 / CisLunarCamRecParams.fps * 10 ** 6)
-            timestamp = ceil(timestamp)
-            name = base + f"_f{currentFrame}_t{timestamp}.jpeg"
-            cv2.imwrite(name, frame)
-            frames.append(name)
-            currentFrame += 1
-        else:
-            break
-    # src.release()
-    # cv2.destroyAllWindows()
-    return frames
- 
+def extract_frames(vid_dir, timestamps, cameraRecParams):
+    base = os.path.splitext(vid_dir)[0]
+    print(base)
+    file = open(vid_dir, "rb")
+    fileBuffer = file.read()
+    # Separate the entire byte array based on the ending magic number of JPEG
+    splitFrames = fileBuffer.split(b'\xff\xd9')
+
+    # Iterate over byte array to count number of actual frames (there may be empty element at end of array)
+    numFrames = 0
+    while numFrames < len(splitFrames) and splitFrames[numFrames].startswith(b'\xff\xd8'):
+        numFrames += 1
+
+    frame = 0
+    video_frames = []
+    # Make sure that we only use the number of frames we expect
+    # Extra frames that go over this number are taen while camera is ending recording
+    while frame < cameraRecParams.fps * cameraRecParams.recTime:
+        timestamp = timestamps[frame]
+        frame_name = base + f'_f{frame}_t{timestamp}.jpg'
+        with open(frame_name, 'wb') as x:
+            x.write(splitFrames[frame] + b'\xff\xd9')
+        frame += 1
+        video_frames.append(frame_name)
+    return video_frames
+
+
 def rect_to_stereo_proj(img, fov=62.2, fov2=48.8):
     """
     Source:     http://lexafrancis.com/rectilinear-to-stereographic-image-converter-python/

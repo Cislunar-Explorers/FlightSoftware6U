@@ -64,7 +64,7 @@ class MainSatelliteThread(Thread):
         self.rtc: Optional[RTC] = None
         self.radio: Optional[Radio] = None
         self.mux: Optional[camera.CameraMux] = None
-        self.camera: Optional[camera.Camera] = None
+        self.camera: Optional[camera.PiCam] = None
         self.nemo_manager: Optional[NemoManager] = None
 
         # Opnav subprocess variables
@@ -169,7 +169,7 @@ class MainSatelliteThread(Thread):
         # initialize cameras only if not a hard boot (or first boot)
         if not hard_boot() and os.path.isdir(self.log_dir):
             try:
-                self.camera = camera.Camera()
+                self.camera = camera.PiCam()
                 for i in [1, 2, 3]:
                     try:
                         self.mux.selectCamera(i)

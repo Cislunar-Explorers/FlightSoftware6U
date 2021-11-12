@@ -23,6 +23,7 @@ def crs(vector):
     first = vector[0][0]
     second = vector[1][0]
     third = vector[2][0]
+    # TODO look into if this can be cleaned up into a matrix multiplication with q plus an addition (from @mly32)
     return np.array(
         [[0.0, -third, second], [third, 0.0, -first], [-second, first, 0.0]]
     )

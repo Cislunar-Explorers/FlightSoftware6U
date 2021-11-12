@@ -299,6 +299,22 @@ def cam_to_body_transform(bestEarthTuple, bestMoonTuple, bestSunTuple, camera_pa
         data[2][2] = coordArray[2]
 
 
+def _tZeroRotMatrix(rotation):
+    return np.array(
+        [
+            math.cos(rotation),
+            0,
+            math.sin(rotation),
+            0,
+            1,
+            0,
+            -1 * math.sin(rotation),
+            0,
+            math.cos(rotation),
+        ]
+    ).reshape(3, 3)
+
+
 def body_to_T0_transform(
     bestEarthTuple, bestMoonTuple, bestSunTuple, avgGyroY, timeDeltaAvgs, observeStart
 ):
@@ -308,19 +324,7 @@ def body_to_T0_transform(
         )
         logger.info(f"[OPNAV]: earthTimeElapsed= {earthTimeElapsed}")
         earthRotation = avgGyroY * earthTimeElapsed
-        tZeroEarthRotation = np.array(
-            [
-                math.cos(earthRotation),
-                0,
-                math.sin(earthRotation),
-                0,
-                1,
-                0,
-                -1 * math.sin(earthRotation),
-                0,
-                math.cos(earthRotation),
-            ]
-        ).reshape(3, 3)
+        tZeroEarthRotation = _tZeroRotMatrix(earthRotation)
         coordArray = np.array(
             [bestEarthTuple[2][0], bestEarthTuple[2][1], bestEarthTuple[2][2]]
         ).reshape(3, 1)
@@ -333,19 +337,7 @@ def body_to_T0_transform(
         moonTimeElapsed = __get_elapsed_time(bestMoonTuple, timeDeltaAvgs, observeStart)
         logger.info(f"[OPNAV]: moonTimeElapsed= {moonTimeElapsed}")
         moonRotation = avgGyroY * moonTimeElapsed
-        tZeroMoonRotation = np.array(
-            [
-                math.cos(moonRotation),
-                0,
-                math.sin(moonRotation),
-                0,
-                1,
-                0,
-                -1 * math.sin(moonRotation),
-                0,
-                math.cos(moonRotation),
-            ]
-        ).reshape(3, 3)
+        tZeroMoonRotation = _tZeroRotMatrix(moonRotation)
         coordArray = np.array(
             [bestMoonTuple[2][0], bestMoonTuple[2][1], bestMoonTuple[2][2]]
         ).reshape(3, 1)
@@ -358,19 +350,7 @@ def body_to_T0_transform(
         sunTimeElapsed = __get_elapsed_time(bestSunTuple, timeDeltaAvgs, observeStart)
         logger.info(f"[OPNAV]: sunTimeElapsed= {sunTimeElapsed}")
         sunRotation = avgGyroY * sunTimeElapsed
-        tZeroSunRotation = np.array(
-            [
-                math.cos(sunRotation),
-                0,
-                math.sin(sunRotation),
-                0,
-                1,
-                0,
-                -1 * math.sin(sunRotation),
-                0,
-                math.cos(sunRotation),
-            ]
-        ).reshape(3, 3)
+        tZeroSunRotation = _tZeroRotMatrix(sunRotation)
         coordArray = np.array(
             [bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2]]
         ).reshape(3, 1)

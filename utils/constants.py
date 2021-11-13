@@ -16,6 +16,8 @@ if not os.path.isabs(CISLUNAR_BASE_DIR):
     CISLUNAR_BASE_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, CISLUNAR_BASE_DIR)
 os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
 
+SURRENDER_LOCAL_DIR = cast("str", config.get("SURRENDER_LOCAL_DIR"))
+
 FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
 LOG = config["LOG"] == "1"
 

@@ -29,12 +29,11 @@ from utils.parameters import (
 from dataclasses import dataclass
 import cv2
 import numpy as np
-from math import radians, tan, floor, ceil, dist
+from math import radians, tan, floor, ceil
 import re
 from utils.log import get_log
-import json
-import csv
-import os
+
+import argparse
 
 logger = get_log()
 
@@ -650,87 +649,6 @@ def findStereographic(src, camera_params: CameraParameters = CisLunarCameraParam
     return result, body_values
 
 
-def get_difference(body, truths, body_vals):
-    perf_values = {}
-    truth_vals = truths[body]
-    perf = []
-    distance = dist((body_vals[0], body_vals[1]), (truth_vals[0], truth_vals[1]))
-    perf += [distance, abs(body_vals[2] - truth_vals[2])]
-    perf_values[body] = perf
-    return perf_values
-
-
-def test_center_finding(dir, results_file, st_gn="st"):
-    frames = []
-    frames_dir = os.path.join(dir, "images/")
-    for filename in os.listdir(frames_dir):
-        if filename.endswith(st_gn + ".png"):
-            frame = os.path.join(frames_dir, filename)
-            frames.append(frame)
-        else:
-            continue
-    o = open(os.path.join(dir, "observations.json"))
-    c = open(os.path.join(dir, "cameras.json"))
-    observations = json.load(o)
-    cameras = json.load(c)
-    st_scale = cameras["cameras"][0]["stereographic_scale"]
-    all_truth_vals = {}
-    for frame in observations["observations"][0]["frames"]:
-        detections = frame["detections"]
-        frame_truth_vals = {}
-        for detection in detections:
-            truthX = detection["center_st"][0] * st_scale
-            truthY = detection["center_st"][1] * st_scale
-            truthR = detection["radius_st"] * st_scale
-            frame_truth_vals[detection["body"]] = [truthX, truthY, truthR]
-        all_truth_vals[frame["image_stereographic"]] = frame_truth_vals
-    results = []
-    for i in range(len(frames)):
-        frame = frames[i]
-        truths = all_truth_vals[frame.split("/")[-1]]
-        _, body_vals = findStereographic(frame)
-        sun_vals = body_vals.get("Sun")
-        if sun_vals:
-            perf_values = get_difference("Sun", truths, sun_vals)
-            results.append(perf_values)
-        earth_vals = body_vals.get("Earth")
-        if earth_vals:
-            perf_values = get_difference("Earth", truths, earth_vals)
-            results.append(perf_values)
-        moon_vals = body_vals.get("Moon")
-        if moon_vals:
-            perf_values = get_difference("Moon", truths, moon_vals)
-            results.append(perf_values)
-    with open(results_file, "w", newline="") as csvfile:
-        writer = csv.writer(
-            csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
-        )
-        writer.writerow(["Body", "Center", "Radius"])
-        for result in results:
-            sun = result.get("Sun")
-            earth = result.get("Earth")
-            moon = result.get("Moon")
-            if sun is not None:
-                writer.writerow(["Sun"] + sun)
-            if earth is not None:
-                writer.writerow(["Earth"] + earth)
-            if moon is not None:
-                writer.writerow(["Moon"] + moon)
-    return results
-
-
-traj_case1c_sim_easy = (
-    "/Users/andrew/PycharmProjects/cislunarSimulation/traj-case1c_sim_easy/"
-)
-traj_case1c_sim_easy_results_file = "center_finding_results_traj-case1c_sim_easy.csv"
-test_center_finding(traj_case1c_sim_easy, traj_case1c_sim_easy_results_file)
-
-traj_case1c_sim = "/Users/andrew/PycharmProjects/cislunarSimulation/traj-case1c_sim/"
-traj_case1c_sim_results_file = "center_finding_results_traj-case1c_sim.csv"
-test_center_finding(traj_case1c_sim, traj_case1c_sim_results_file)
-# findStereographic("/Users/andrew/PycharmProjects/cislunarSimulation/traj-case1c_sim_easy/images/cam3_expHigh_f0_dt10.47200_st.png")
-# find("/Users/andrew/PycharmProjects/cislunarSimulation/traj-case1c_sim_easy/images/cam3_expHigh_f19_dt11.71555_st.png")
-
 # Shift stereographic coordinates of center to camera frame (at start of exposure)
 
 # Adjust diameter for stereographic distortion
@@ -753,14 +671,14 @@ test_center_finding(traj_case1c_sim, traj_case1c_sim_results_file)
 #   * Consider analyzing ROI of original, unblurred image
 # * Bottleneck on RPi appears to be finding contours on full-res image.  Consider finding contours on low-res image,
 #   then scaling ROI
-# if __name__ == "__main__":
-#     """
-#     Run "python3 find_with_contours.py -i=<IMAGE>" to test this module
-#     """
-#     ap = argparse.ArgumentParser()
-#     ap.add_argument("-i", "--image", help="path to the image")
-#     args = vars(ap.parse_args())
-#     find(args["image"])
+if __name__ == "__main__":
+    """
+    Run "python3 find_with_contours.py -i=<IMAGE>" to test this module
+    """
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--image", help="path to the image")
+    args = vars(ap.parse_args())
+    find(args["image"])
 
 # Notes
 # * Need sanity check on contour size (not too large, not too small)

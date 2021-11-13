@@ -9,7 +9,7 @@ from dotenv import dotenv_values
 config = dotenv_values()
 
 # absolute project root path
-FLIGHT_SOFTWARE_PATH = (Path(__file__).parent / "../..").resolve()
+FLIGHT_SOFTWARE_PATH = (Path(__file__).parent / "..").resolve()
 
 CISLUNAR_BASE_DIR = cast("str", config.get("CISLUNAR_BASE_DIR", "cislunar_data"))
 if not os.path.isabs(CISLUNAR_BASE_DIR):

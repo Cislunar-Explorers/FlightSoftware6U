@@ -1,13 +1,20 @@
 import os
 from enum import IntEnum, unique
+from pathlib import Path
+
 from dotenv import dotenv_values
-from typing import cast
 
 # dotenv vars
 config = dotenv_values()
 
-CISLUNAR_BASE_DIR = cast("str", config["CISLUNAR_BASE_DIR"])
-FLIGHT_SOFTWARE_PATH = cast("str", config["FLIGHT_SOFTWARE_PATH"])
+# absolute project root path
+FLIGHT_SOFTWARE_PATH = (Path(__file__).parent / "../..").resolve()
+
+CISLUNAR_BASE_DIR = config.get("CISLUNAR_BASE_DIR", "cislunar_data")
+if not os.path.isabs(CISLUNAR_BASE_DIR):
+    CISLUNAR_BASE_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, CISLUNAR_BASE_DIR)
+os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
+
 FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
 LOG = config["LOG"] == "1"
 
@@ -44,7 +51,7 @@ DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
 
 # Important paths
 # FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
-PARAMETERS_JSON_PATH = FLIGHT_SOFTWARE_PATH + "utils/parameters.json"
+PARAMETERS_JSON_PATH = os.path.join(FLIGHT_SOFTWARE_PATH, "utils/parameters.json")
 OPNAV_MEDIA_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/opnav_media/")
 
 # Keyword Argument Definitions for Commands

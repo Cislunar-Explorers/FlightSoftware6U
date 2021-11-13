@@ -6,9 +6,10 @@ from tests.gen_opnav_data import generateSyntheticData
 import argparse
 import os
 
-monthsToNum = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04',
-                'May':'05','Jun':'06','Jul':'07','Aug':'08',
-                'Sep':'09','Oct':'10','Nov':'11','Dec':'12'}
+monthsToNum = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+               'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+               'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
+
 
 def getDateTimeFromISO(dateParts):
     """
@@ -18,10 +19,12 @@ def getDateTimeFromISO(dateParts):
     assert len(dateParts) == 7
     return datetime.fromisoformat(dateParts[2]+"-"+monthsToNum[dateParts[1]]+"-"+dateParts[0]+" "+dateParts[3]+":"+dateParts[4]+":"+dateParts[5]+"."+dateParts[6])
 
+
 def getMissionTimeline(startEndDatesDf):
-    missionStartDate = getDateTimeFromISO(startEndDatesDf.iloc[0,0].split(' ')).timestamp()
-    missionEndDate = getDateTimeFromISO(startEndDatesDf.iloc[1,0].split(' ')).timestamp()
+    missionStartDate = getDateTimeFromISO(startEndDatesDf.iloc[0, 0].split(' ')).timestamp()
+    missionEndDate = getDateTimeFromISO(startEndDatesDf.iloc[1, 0].split(' ')).timestamp()
     return missionStartDate, missionEndDate
+
 
 def extractCheckpoints(checkPointsDf, missionEndDate):
     """
@@ -30,25 +33,26 @@ def extractCheckpoints(checkPointsDf, missionEndDate):
     [missionStartDate] is a UTC timestamp (seconds)
     returns a dictionary that contains the maneuvers in time interval form
     """
-   
-    maneuvers = {'startTime':[], 'endTime':[]}
+
+    maneuvers = {'startTime': [], 'endTime': []}
     for index, row in checkPointsDf.iterrows():
         startStr = row['start'].split(' ')
         endStr = row['end'].split(' ')
         startDate = getDateTimeFromISO(startStr).timestamp()
         endDate = getDateTimeFromISO(endStr).timestamp()
-        if startDate > missionEndDate: # Ignore some part of the mission (to fit the checkpoints in the dataset time range)
+        if startDate > missionEndDate:  # Ignore some part of the mission (to fit the checkpoints in the dataset time range)
             break
         maneuvers['startTime'].append(startDate)
         maneuvers['endTime'].append(endDate)
-    
+
     return maneuvers
+
 
 def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline, gyro_t):
     """
     Creates attitude synthetic data for each maneuver using the VNC (Earth) attitude quaternions
     and sythentic attitude data propogated using nutation damping physics.
-    
+
     The key drawback of this method of attitude synthesis is that the quaternions snap from
     point to point before start of each maneuver. This is due to the difficulty of simulating 
     true attitude control behavior. Therefore, a continuous version of the attitude UKF 
@@ -60,17 +64,17 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
     currentManeuver = 0
     isManeuver = False
 
-    missionParams = {'q1':[0]*len(missionTimeline), 'q2':[0]*len(missionTimeline), 'q3':[0]*len(missionTimeline), 'q4':[0]*len(missionTimeline), 
-                    'wx':[0]*len(missionTimeline), 'wy':[0]*len(missionTimeline), 'wz':[0]*len(missionTimeline),
-                    'bx':[0]*len(missionTimeline), 'by':[0]*len(missionTimeline), 'bz':[0]*len(missionTimeline)}
+    missionParams = {'q1': [0]*len(missionTimeline), 'q2': [0]*len(missionTimeline), 'q3': [0]*len(missionTimeline), 'q4': [0]*len(missionTimeline),
+                     'wx': [0]*len(missionTimeline), 'wy': [0]*len(missionTimeline), 'wz': [0]*len(missionTimeline),
+                     'bx': [0]*len(missionTimeline), 'by': [0]*len(missionTimeline), 'bz': [0]*len(missionTimeline)}
 
     ############
     quat = np.array([[0., 0., 0., 1]]).T
-    cameradt = 60 # seconds
-    coldGasThrustKickTime = 0 # seconds, beginning of each propagation sequence
+    cameradt = 60  # seconds
+    coldGasThrustKickTime = 0  # seconds, beginning of each propagation sequence
     coldGasKickDuration = float(10)
     omegaInit = [3, 0.1, 0.1, 0., 0., 0.]
-    biasInit=[0., 0., 0.]
+    biasInit = [0., 0., 0.]
     gyroSampleCount = 1.0/gyro_t
 
     gyroNoiseSigma = 1.e-7
@@ -86,8 +90,8 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
         propEndTime = missionEndDate
     propinitQuat = quat
     ############
-    
-    for index, timestamp in enumerate(tqdm(missionTimeline,desc="Generating Mission Attitude")):
+
+    for index, timestamp in enumerate(tqdm(missionTimeline, desc="Generating Mission Attitude")):
         if currentManeuver >= 0 and currentManeuver < len(maneuversDict['startTime']):
             isManeuver = timestamp >= maneuversDict['startTime'][currentManeuver] and timestamp <= maneuversDict['endTime'][currentManeuver]
             if timestamp > maneuversDict['endTime'][currentManeuver]:
@@ -117,7 +121,8 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
             if not newData:
                 totalIntegrationTime = (propEndTime - propStartTime) + 1
                 print(f'Total Integration Time: {totalIntegrationTime}')
-                q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz = generateSyntheticData(propinitQuat, cameradt, coldGasThrustKickTime, coldGasKickDuration, omegaInit, biasInit, 1.0/gyroSampleCount, totalIntegrationTime, gyroSigma, gyroNoiseSigma, integrationTimeStep=0.1)
+                q1, q2, q3, q4, omegax, omegay, omegaz, biasx, biasy, biasz = generateSyntheticData(
+                    propinitQuat, cameradt, coldGasThrustKickTime, coldGasKickDuration, omegaInit, biasInit, 1.0/gyroSampleCount, totalIntegrationTime, gyroSigma, gyroNoiseSigma, integrationTimeStep=0.1)
                 newData = True
             # missionQuats['q1'][index] = q1(timestamp-propStartTime)
             # missionQuats['q2'][index] = q2(timestamp-propStartTime)
@@ -148,13 +153,15 @@ def createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, miss
 
     return missionParams
 
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("-d", "--opnavdataset", help = "path to OpNav Dataset root folder")
-    ap.add_argument("-s", "--startendcsv", help = "name of CSV file that contains start and end date to generate data (like root/startEndDates.csv)")
-    ap.add_argument("-r", "--samplingRate", help = "sampling rate of ephemeris/traj to seconds. Eg: if data is in 1-min interval, -r=60")
-    ap.add_argument("-g", "--gyro_t", help = "time delta (seconds) between each gyro measurement")
-    ap.add_argument("-o", "--outfile", help = "name of output csv file (include .csv); will be created in root/attitude/")
+    ap.add_argument("-d", "--opnavdataset", help="path to OpNav Dataset root folder")
+    ap.add_argument("-s", "--startendcsv",
+                    help="name of CSV file that contains start and end date to generate data (like root/startEndDates.csv)")
+    ap.add_argument("-r", "--samplingRate", help="sampling rate of ephemeris/traj to seconds. Eg: if data is in 1-min interval, -r=60")
+    ap.add_argument("-g", "--gyro_t", help="time delta (seconds) between each gyro measurement")
+    ap.add_argument("-o", "--outfile", help="name of output csv file (include .csv); will be created in root/attitude/")
     args = vars(ap.parse_args())
 
     INITIAL_TRAJ_PATH = os.path.join(args['opnavdataset'], 'trajectory', '1min_stk_active_sampled_traj.csv')
@@ -162,11 +169,11 @@ if __name__ == "__main__":
     INITIAL_ATT_PATH = os.path.join(args['opnavdataset'], 'attitude', args['outfile'])
     SAMPLED_MOON_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
     SAMPLED_SUN_PATH = os.path.join(args['opnavdataset'], 'ephemeris', '1min_stk_active_sampled_moon_eph.csv')
-    MANEUVER_CHECKPOINT_PATH = os.path.join(args['opnavdataset'], 'maneuvers','checkpoints.csv')
-    START_END_DATES_PATH = args['startendcsv']#os.path.join(args['opnavdataset'], 'startEndDates.csv')
+    MANEUVER_CHECKPOINT_PATH = os.path.join(args['opnavdataset'], 'maneuvers', 'checkpoints.csv')
+    START_END_DATES_PATH = args['startendcsv']  # os.path.join(args['opnavdataset'], 'startEndDates.csv')
 
     simSamplingRate = float(args['samplingRate'])
-    
+
     moonDf = pd.read_csv(SAMPLED_MOON_PATH)
     # sunDf = pd.read_csv(SAMPLED_SUN_PATH)
     trajDf = pd.read_csv(INITIAL_TRAJ_PATH)
@@ -175,13 +182,14 @@ if __name__ == "__main__":
     startEndDatesDf = pd.read_csv(START_END_DATES_PATH)
 
     # Obtain mission timeline (in seconds)
-    missionStartDate, missionEndDate = getMissionTimeline(startEndDatesDf)    
+    missionStartDate, missionEndDate = getMissionTimeline(startEndDatesDf)
     maneuversDict = extractCheckpoints(manCheckDf, missionEndDate)
     # print(missionStartDate, missionEndDate, simSamplingRate)
     missionTimeline = np.arange(missionStartDate, missionEndDate+simSamplingRate, simSamplingRate)
 
     # Obtain mission attitude data
     # Uncomment the following 3 lines to generate attitude data for simulation (eg. if you have a new dataset, if you want a different spin rate)...
-    missionParams = createDiscreteAttitudeManeuvers(maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline, float(args['gyro_t']))
+    missionParams = createDiscreteAttitudeManeuvers(
+        maneuversDict, vncDf, missionStartDate, missionEndDate, missionTimeline, float(args['gyro_t']))
     attDf = pd.DataFrame.from_dict(missionParams)
     attDf.to_csv(os.path.join(INITIAL_ATT_PATH), index=False)

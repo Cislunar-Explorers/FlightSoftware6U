@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
+
     # for an explanation of the above 4 lines of code, see
     # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
     # It lets your IDE know what type(self._parent) is, without causing any circular imports at runtime.
@@ -25,7 +26,7 @@ from utils.exceptions import UnknownFlightModeException
 no_transition_modes = [
     FMEnum.SensorMode.value,
     FMEnum.TestMode.value,
-    FMEnum.Command.value
+    FMEnum.Command.value,
 ]
 # this line of code brought to you by https://stackoverflow.com/questions/29503339/
 all_modes = list(map(int, FMEnum))
@@ -55,8 +56,8 @@ class FlightMode:
 
     def update_state(self) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
-        update_state to update our flight mode. All flight modes have their own implementation of update_state, but this
-         serves as a basis for which most other flight modes can build off of."""
+        update_state to update our flight mode. All flight modes have their own implementation of update_state, but
+        this serves as a basis for which most other flight modes can build off of."""
 
         # I am not sure this will properly work, but shuld have little impact for software demo
         if self._parent.opnav_process.is_alive():
@@ -80,11 +81,17 @@ class FlightMode:
         # go to maneuver mode if there is something in the maneuver queue
         if not self._parent.maneuver_queue.empty() or params.SCHEDULED_BURN_TIME:
             if params.SCHEDULED_BURN_TIME > time():
-                if params.SCHEDULED_BURN_TIME - time() < (60.0 * BURN_WAIT_TIME):
+                if params.SCHEDULED_BURN_TIME - time() < (60.0 * params.GLOW_WAIT_TIME):
                     return FMEnum.Maneuver.value
+            else:
+                logger.info(
+                    f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped"
+                )
 
         # go to reorientation mode if there is something in the reorientation queue
-        if (not self._parent.reorientation_queue.empty()) or self._parent.reorientation_list:
+        if (
+            not self._parent.reorientation_queue.empty()
+        ) or self._parent.reorientation_list:
             return FMEnum.AttitudeAdjustment.value
 
         # go to comms mode if there is something in the comms queue to downlink
@@ -94,14 +101,17 @@ class FlightMode:
 
         # if battery is low, go to low battery mode
         batt_voltage = self._parent.telemetry.gom.hk.vbatt
-        if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) \
-                and not params.IGNORE_LOW_BATTERY:
+        if (
+            batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD
+        ) and not params.IGNORE_LOW_BATTERY:
             return FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
-        if sum(self._parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT \
-                and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD \
-                and not params.IGNORE_LOW_BATTERY:
+        if (
+            sum(self._parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT
+            and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD
+            and not params.IGNORE_LOW_BATTERY
+        ):
             return FMEnum.LowBatterySafety.value
 
         if self.task_completed:
@@ -126,15 +136,27 @@ class FlightMode:
             for command in self._parent.commands_to_execute:
 
                 bogus = False
-                mac, counter, command_fm, command_id, command_kwargs = self._parent.command_handler.unpack_command(
-                    command)
-                logger.info(f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}")
+                (
+                    mac,
+                    counter,
+                    command_fm,
+                    command_id,
+                    command_kwargs,
+                ) = self._parent.command_handler.unpack_command(command)
+                logger.info(
+                    f"Received command {command_fm}:{command_id} with args {str(command_kwargs)}"
+                )
 
                 try:
                     assert command_fm in self._parent.command_definitions.COMMAND_DICT
-                    assert command_id in self._parent.command_definitions.COMMAND_DICT[command_fm]
+                    assert (
+                        command_id
+                        in self._parent.command_definitions.COMMAND_DICT[command_fm]
+                    )
                 except AssertionError:
-                    logger.warning(f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}")
+                    logger.warning(
+                        f"Rejecting bogus command {command_fm}:{command_id}:{command_kwargs}"
+                    )
                     bogus = True
 
                 if not bogus:
@@ -143,14 +165,21 @@ class FlightMode:
                         self._parent.replace_flight_mode_by_id(command_fm)
 
                     # locate which method to run:
-                    method_to_run = self._parent.command_definitions.COMMAND_DICT[command_fm][command_id]
-                    downlink_args = method_to_run(**command_kwargs)  # run that method, return downlink data
+                    method_to_run = self._parent.command_definitions.COMMAND_DICT[
+                        command_fm
+                    ][command_id]
+                    downlink_args = method_to_run(
+                        **command_kwargs
+                    )  # run that method, return downlink data
 
                     # Pack downlink given what the command returned
                     if downlink_args is not None:
                         downlink = self._parent.downlink_handler.pack_downlink(
-                            self._parent.downlink_counter, command_fm, command_id,
-                            **downlink_args)
+                            self._parent.downlink_counter,
+                            command_fm,
+                            command_id,
+                            **downlink_args,
+                        )
                         self._parent.downlink_queue.put(downlink)
 
                 finished_commands.append(command)
@@ -205,7 +234,9 @@ class FlightMode:
     def __exit__(self, exc_type, exc_value, tb):
         logger.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
-            logger.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
+            logger.error(
+                f"Flight Mode failed with error type {exc_type} and value {exc_value}"
+            )
             logger.error(f"Failed with traceback:\n {format_tb(tb)}")
 
 
@@ -238,33 +269,31 @@ class TestMode(PauseBackgroundMode):
     Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
 
     flight_mode_id = FMEnum.TestMode.value
-    command_codecs = {TestCommandEnum.Switch.value: NO_ARGS,
-                      TestCommandEnum.SeparationTest.value: NO_ARGS,
-                      TestCommandEnum.ADCTest.value: NO_ARGS,
-                      TestCommandEnum.CommsDriver.value: NO_ARGS,
-                      TestCommandEnum.PiShutdown.value: NO_ARGS,
-                      TestCommandEnum.RTCTest.value: NO_ARGS,
-                      TestCommandEnum.LongString.value: (['some_number', 'long_string'], 180)
-                      }
-
-    command_arg_types = {
-        'some_number': 'float',
-        'long_string': 'string'
+    command_codecs = {
+        TestCommandEnum.Switch.value: NO_ARGS,
+        TestCommandEnum.SeparationTest.value: NO_ARGS,
+        TestCommandEnum.ADCTest.value: NO_ARGS,
+        TestCommandEnum.CommsDriver.value: NO_ARGS,
+        TestCommandEnum.PiShutdown.value: NO_ARGS,
+        TestCommandEnum.RTCTest.value: NO_ARGS,
+        TestCommandEnum.LongString.value: (["some_number", "long_string"], 180),
     }
 
-    downlink_codecs = {TestCommandEnum.CommsDriver.value: (['gyro1', 'gyro2', 'gyro3'], 12)}
+    command_arg_types = {"some_number": "float", "long_string": "string"}
 
-    downlink_arg_unpackers = {
-        'gyro1': 'float',
-        'gyro2': 'float',
-        'gyro3': 'float',
+    downlink_codecs = {
+        TestCommandEnum.CommsDriver.value: (["gyro1", "gyro2", "gyro3"], 12)
     }
+
+    downlink_arg_unpackers = {"gyro1": "float", "gyro2": "float", "gyro3": "float"}
 
     def __init__(self, parent):
         super().__init__(parent)
 
     def update_state(self) -> int:
-        return NO_FM_CHANGE  # this is intentional - we don't want the FM to update if we are testing something
+        return (
+            NO_FM_CHANGE
+        )  # this is intentional - we don't want the FM to update if we are testing something
 
     def run_mode(self):
         pass
@@ -318,19 +347,20 @@ class CommsMode(FlightMode):
 
         # Resume electrolysis if we paused it to transmit
         if self.electrolyzing:
-            self._parent.gom.set_electrolysis(True, delay=params.DEFAULT_ELECTROLYSIS_DELAY)
+            self._parent.gom.set_electrolysis(
+                True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
+            )
 
     def execute_downlinks(self):
         while not self._parent.downlink_queue.empty():
             self._parent.radio.transmit(self._parent.downlink_queue.get())
             self._parent.downlink_counter += 1
-            sleep(params.DOWNLINK_BUFFER_TIME)  # TODO: revisit and see if we actually need this
+            sleep(
+                params.DOWNLINK_BUFFER_TIME
+            )  # TODO: revisit and see if we actually need this
 
     def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm
-        return NO_FM_CHANGE
+        return super().update_state()
 
     def run_mode(self):
         if not self._parent.downlink_queue.empty():
@@ -344,6 +374,7 @@ class CommsMode(FlightMode):
 class OpNavMode(FlightMode):
     """FMID 5: Optical Navigation Flight Mode
     This flight mode is dedicated to starting the Opnav process"""
+
     # TODO: Flight Software/Opnav interface
     flight_mode_id = FMEnum.OpNav.value
     command_codecs = {OpNavCommandEnum.Switch.value: NO_ARGS}
@@ -357,33 +388,34 @@ class OpNavMode(FlightMode):
             logger.info("[OPNAV]: Able to run next opnav")
             self._parent.last_opnav_run = time()
             logger.info("[OPNAV]: Starting opnav subprocess")
-            self._parent.opnav_process = Process(target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,))
+            self._parent.opnav_process = Process(
+                target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,)
+            )
             self._parent.opnav_process.start()
         self.completed_task()
 
     def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != NO_FM_CHANGE:
-            return super_fm
-
+        return super().update_state()
         # check if opnav db has been updated, then set self.task_completed true
-
-        return NO_FM_CHANGE
 
     def opnav_subprocess(self, q):
         # TODO put in try...except
         # TODO change from pytest to actual opnav
         # os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
         # subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
-        subprocess.run('echo [OPNAV]: Subprocess Start; sleep 1m; echo [OPNAV]: Subprocess end', shell=True)
+        subprocess.run(
+            "echo [OPNAV]: Subprocess Start; sleep 1m; echo [OPNAV]: Subprocess end",
+            shell=True,
+        )
         q.put("Opnav Finished")
 
 
 class SensorMode(FlightMode):
     """FMID 7: Sensor Mode
-    This flight mode is not really well defined and has kinda been forgotten about. One potential idea for it is that we
-    go into this mode whenever we want a high poll rate of all of our sensors to collect sensor info at as high of a
+    This flight mode is not really well defined and has kinda been forgotten about. One potential idea for it is that
+    we go into this mode whenever we want a high poll rate of all of our sensors to collect sensor info at as high of a
     rate as we can."""
+
     flight_mode_id = FMEnum.SensorMode.value
     command_codecs = {SensorsCommandEnum.Switch.value: NO_ARGS}
 
@@ -392,47 +424,25 @@ class SensorMode(FlightMode):
         raise NotImplementedError
 
     def update_state(self) -> int:
-        return NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
-
-
-class ManeuverMode(PauseBackgroundMode):
-    """FMID 6: Maneuver Mode
-    This flight mode is dedicated to accurately firing our electrolysis thruster to make orbital changes"""
-    flight_mode_id = FMEnum.Maneuver.value
-    command_codecs = {ManeuverCommandEnum.Switch.value: NO_ARGS}
-    command_arg_unpackers = {}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def update_state(self) -> int:
-        if self.task_completed is True:
-            logger.info("Maneuver complete. Exiting maneuver mode...")
-            return FMEnum.Normal.value
-        return NO_FM_CHANGE
-
-    def run_mode(self):
-        # sleeping for 5 fewer seconds than the delay for safety
-        # TODO: clear value of params.SCHEDULE_BURN_TIME after completion of burn
-        sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
-        logger.info("Heating up glowplug to execute a maneuver...")
-        # TODO: poll and check accelerometer values. If not acceleration seen, try other glowplug
-        self._parent.gom.glowplug(GLOWPLUG_DURATION)
-        self._parent.maneuver_queue.get()
-        self.task_completed = True
+        return (
+            NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
+        )
 
 
 # TODO
 class SafeMode(FlightMode):
     """FMID 4: Safe Mode
     This flight mode is where we go to if there is any software fault during flight, or there is something awry."""
+
     flight_mode_id = FMEnum.Safety.value
-    command_codecs = {SafetyCommandEnum.Switch.value: NO_ARGS,
-                      SafetyCommandEnum.DetailedTelem.value: NO_ARGS,
-                      SafetyCommandEnum.CritTelem.value: NO_ARGS,
-                      SafetyCommandEnum.BasicTelem.value: NO_ARGS,
-                      SafetyCommandEnum.ExitSafetyMode.value: NO_ARGS,
-                      SafetyCommandEnum.SetParameter.value: ([NAME, VALUE, HARD_SET], 33), }
+    command_codecs = {
+        SafetyCommandEnum.Switch.value: NO_ARGS,
+        SafetyCommandEnum.DetailedTelem.value: NO_ARGS,
+        SafetyCommandEnum.CritTelem.value: NO_ARGS,
+        SafetyCommandEnum.BasicTelem.value: NO_ARGS,
+        SafetyCommandEnum.ExitSafetyMode.value: NO_ARGS,
+        SafetyCommandEnum.SetParameter.value: ([NAME, VALUE, HARD_SET], 33),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -460,90 +470,128 @@ class NormalMode(FlightMode):
         NormalCommandEnum.Verification.value: ([NUM_BLOCKS], 2),
         NormalCommandEnum.GetParam.value: ([INDEX], 2),
         NormalCommandEnum.ScheduleManeuver.value: ([TIME], 4),
-        NormalCommandEnum.ACSPulsing.value: ([START, PULSE_DURATION, PULSE_NUM, PULSE_DT], 14),
+        NormalCommandEnum.ACSPulsing.value: (
+            [START, PULSE_DURATION, PULSE_NUM, PULSE_DT],
+            14,
+        ),
         NormalCommandEnum.NemoWriteRegister.value: ([REG_ADDRESS, REG_VALUE], 2),
         NormalCommandEnum.NemoReadRegister.value: ([REG_ADDRESS, REG_SIZE], 2),
-        NormalCommandEnum.NemoSetConfig.value: ([
-                                                    DET_ENABLE_UINT8,
-                                                    DET0_BIAS_UINT8,
-                                                    DET1_BIAS_UINT8,
-                                                    DET0_THRESHOLD_UINT8,
-                                                    DET1_THRESHOLD_UINT8,
-                                                    RATE_WIDTH_MIN,
-                                                    RATE_WIDTH_MAX,
-                                                    BIN_WIDTH,
-                                                    BIN_0_MIN_WIDTH,
-                                                    RATE_INTERVAL,
-                                                    VETO_THRESHOLD_MIN,
-                                                    VETO_THRESHOLD_MAX,
-                                                    CONFIG_WRITE_PERIOD,
-                                                    CONFIG_ROTATE_PERIOD,
-                                                    DATE_WRITE_PERIOD,
-                                                    RATE_DATA_ROTATE_PERIOD,
-                                                    HISTOGRAM_ROTATE_PERIOD,
-                                                ], 32),
+        NormalCommandEnum.NemoSetConfig.value: (
+            [
+                DET_ENABLE_UINT8,
+                DET0_BIAS_UINT8,
+                DET1_BIAS_UINT8,
+                DET0_THRESHOLD_UINT8,
+                DET1_THRESHOLD_UINT8,
+                RATE_WIDTH_MIN,
+                RATE_WIDTH_MAX,
+                BIN_WIDTH,
+                BIN_0_MIN_WIDTH,
+                RATE_INTERVAL,
+                VETO_THRESHOLD_MIN,
+                VETO_THRESHOLD_MAX,
+                CONFIG_WRITE_PERIOD,
+                CONFIG_ROTATE_PERIOD,
+                DATE_WRITE_PERIOD,
+                RATE_DATA_ROTATE_PERIOD,
+                HISTOGRAM_ROTATE_PERIOD,
+            ],
+            32,
+        ),
         NormalCommandEnum.NemoPowerOff.value: NO_ARGS,
         NormalCommandEnum.NemoPowerOn.value: NO_ARGS,
         NormalCommandEnum.NemoReboot.value: NO_ARGS,
-        NormalCommandEnum.NemoProcessRateData.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
-        NormalCommandEnum.NemoProcessHistograms.value: ([T_START, T_STOP, DECIMATION_FACTOR], 9),
-        NormalCommandEnum.GomConf1Set.value: ([PPT_MODE, BATTHEATERMODE, BATTHEATERLOW, BATTHEATERHIGH, OUTPUT_NORMAL1,
-                                               OUTPUT_NORMAL2, OUTPUT_NORMAL3, OUTPUT_NORMAL4, OUTPUT_NORMAL5,
-                                               OUTPUT_NORMAL6, OUTPUT_NORMAL7, OUTPUT_NORMAL8,
-                                               OUTPUT_SAFE1,
-                                               OUTPUT_SAFE2, OUTPUT_SAFE3, OUTPUT_SAFE4, OUTPUT_SAFE5, OUTPUT_SAFE6,
-                                               OUTPUT_SAFE7, OUTPUT_SAFE8, OUTPUT_ON_DELAY, OUTPUT_OFF_DELAY, VBOOST1,
-                                               VBOOST2, VBOOST3], 30),
+        NormalCommandEnum.NemoProcessRateData.value: (
+            [T_START, T_STOP, DECIMATION_FACTOR],
+            9,
+        ),
+        NormalCommandEnum.NemoProcessHistograms.value: (
+            [T_START, T_STOP, DECIMATION_FACTOR],
+            9,
+        ),
+        NormalCommandEnum.GomConf1Set.value: (
+            [
+                PPT_MODE,
+                BATTHEATERMODE,
+                BATTHEATERLOW,
+                BATTHEATERHIGH,
+                OUTPUT_NORMAL1,
+                OUTPUT_NORMAL2,
+                OUTPUT_NORMAL3,
+                OUTPUT_NORMAL4,
+                OUTPUT_NORMAL5,
+                OUTPUT_NORMAL6,
+                OUTPUT_NORMAL7,
+                OUTPUT_NORMAL8,
+                OUTPUT_SAFE1,
+                OUTPUT_SAFE2,
+                OUTPUT_SAFE3,
+                OUTPUT_SAFE4,
+                OUTPUT_SAFE5,
+                OUTPUT_SAFE6,
+                OUTPUT_SAFE7,
+                OUTPUT_SAFE8,
+                OUTPUT_ON_DELAY,
+                OUTPUT_OFF_DELAY,
+                VBOOST1,
+                VBOOST2,
+                VBOOST3,
+            ],
+            30,
+        ),
         # TODO: clarify how many bytes go into string here
         NormalCommandEnum.ShellCommand.value: ([CMD], 24),
         NormalCommandEnum.SudoCommand.value: ([CMD], 24),
         NormalCommandEnum.Picberry.value: ([CMD], 24),
         NormalCommandEnum.GomConf1Get.value: NO_ARGS,
-        NormalCommandEnum.GomConf2Set.value: ([MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE], 8),
+        NormalCommandEnum.GomConf2Set.value: (
+            [MAX_VOLTAGE, NORM_VOLTAGE, SAFE_VOLTAGE, CRIT_VOLTAGE],
+            8,
+        ),
         NormalCommandEnum.GomConf2Get.value: NO_ARGS,
         NormalCommandEnum.ExecPyFile.value: ([FNAME], 36),
-        NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1)
+        NormalCommandEnum.IgnoreLowBatt.value: ([IGNORE], 1),
     }
 
     command_arg_types = {
-        AZIMUTH: 'float',
-        ELEVATION: 'float',
-        ACCELERATE: 'bool',
-        NAME: 'string',
-        VALUE: 'double',
-        STATE: 'bool',
-        INTERVAL: 'int',
-        DELAY: 'short',
-        NUM_BLOCKS: 'short',
-        HARD_SET: 'bool',
-        START: 'double',
-        PULSE_DURATION: 'short',
-        PULSE_NUM: 'short',
-        PULSE_DT: 'short',
-        TIME: 'float',
-        REG_ADDRESS: 'uint8',
-        REG_VALUE: 'uint8',
-        REG_SIZE: 'uint8',
-        DET_ENABLE_UINT8: 'uint8',
-        DET0_BIAS_UINT8: 'uint8',
-        DET1_BIAS_UINT8: 'uint8',
-        DET0_THRESHOLD_UINT8: 'uint8',
-        DET1_THRESHOLD_UINT8: 'uint8',
-        RATE_WIDTH_MIN: 'uint8',
-        RATE_WIDTH_MAX: 'uint8',
-        BIN_WIDTH: 'uint8',
-        BIN_0_MIN_WIDTH: 'uint8',
-        RATE_INTERVAL: 'uint8',
-        VETO_THRESHOLD_MIN: 'uint8',
-        VETO_THRESHOLD_MAX: 'uint8',
-        CONFIG_WRITE_PERIOD: 'int',
-        CONFIG_ROTATE_PERIOD: 'int',
-        DATE_WRITE_PERIOD: 'int',
-        RATE_DATA_ROTATE_PERIOD: 'int',
-        HISTOGRAM_ROTATE_PERIOD: 'int',
-        T_START: 'int',
-        T_STOP: 'int',
-        DECIMATION_FACTOR: 'uint8',
+        AZIMUTH: "float",
+        ELEVATION: "float",
+        ACCELERATE: "bool",
+        NAME: "string",
+        VALUE: "double",
+        STATE: "bool",
+        INTERVAL: "int",
+        DELAY: "short",
+        NUM_BLOCKS: "short",
+        HARD_SET: "bool",
+        START: "double",
+        PULSE_DURATION: "short",
+        PULSE_NUM: "short",
+        PULSE_DT: "short",
+        TIME: "float",
+        REG_ADDRESS: "uint8",
+        REG_VALUE: "uint8",
+        REG_SIZE: "uint8",
+        DET_ENABLE_UINT8: "uint8",
+        DET0_BIAS_UINT8: "uint8",
+        DET1_BIAS_UINT8: "uint8",
+        DET0_THRESHOLD_UINT8: "uint8",
+        DET1_THRESHOLD_UINT8: "uint8",
+        RATE_WIDTH_MIN: "uint8",
+        RATE_WIDTH_MAX: "uint8",
+        BIN_WIDTH: "uint8",
+        BIN_0_MIN_WIDTH: "uint8",
+        RATE_INTERVAL: "uint8",
+        VETO_THRESHOLD_MIN: "uint8",
+        VETO_THRESHOLD_MAX: "uint8",
+        CONFIG_WRITE_PERIOD: "int",
+        CONFIG_ROTATE_PERIOD: "int",
+        DATE_WRITE_PERIOD: "int",
+        RATE_DATA_ROTATE_PERIOD: "int",
+        HISTOGRAM_ROTATE_PERIOD: "int",
+        T_START: "int",
+        T_STOP: "int",
+        DECIMATION_FACTOR: "uint8",
         PPT_MODE: "uint8",
         BATTHEATERMODE: "bool",
         BATTHEATERLOW: "uint8",
@@ -564,53 +612,78 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE6: "bool",
         OUTPUT_SAFE7: "bool",
         OUTPUT_SAFE8: "bool",
-        OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
-        VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
-        MAX_VOLTAGE: 'short',
-        NORM_VOLTAGE: 'short',
-        SAFE_VOLTAGE: 'short',
-        CRIT_VOLTAGE: 'short',
-        FNAME: 'string',
-        CMD: 'string', IGNORE: 'bool',
+        OUTPUT_ON_DELAY: "short",
+        OUTPUT_OFF_DELAY: "short",
+        VBOOST1: "short",
+        VBOOST2: "short",
+        VBOOST3: "short",
+        MAX_VOLTAGE: "short",
+        NORM_VOLTAGE: "short",
+        SAFE_VOLTAGE: "short",
+        CRIT_VOLTAGE: "short",
+        FNAME: "string",
+        CMD: "string",
+        IGNORE: "bool",
     }
 
     downlink_codecs = {
-        NormalCommandEnum.BasicTelem.value: ([RTC_TIME, ATT_1, ATT_2, ATT_3, ATT_4,
-                                              HK_TEMP_1, HK_TEMP_2, HK_TEMP_3, HK_TEMP_4, GYRO_TEMP, THERMOCOUPLE_TEMP,
-                                              CURRENT_IN_1, CURRENT_IN_2, CURRENT_IN_3,
-                                              VBOOST_1, VBOOST_2, VBOOST_3, SYSTEM_CURRENT, BATTERY_VOLTAGE,
-                                              PROP_TANK_PRESSURE], 84),
-
+        NormalCommandEnum.BasicTelem.value: (
+            [
+                RTC_TIME,
+                ATT_1,
+                ATT_2,
+                ATT_3,
+                ATT_4,
+                HK_TEMP_1,
+                HK_TEMP_2,
+                HK_TEMP_3,
+                HK_TEMP_4,
+                GYRO_TEMP,
+                THERMOCOUPLE_TEMP,
+                CURRENT_IN_1,
+                CURRENT_IN_2,
+                CURRENT_IN_3,
+                VBOOST_1,
+                VBOOST_2,
+                VBOOST_3,
+                SYSTEM_CURRENT,
+                BATTERY_VOLTAGE,
+                PROP_TANK_PRESSURE,
+            ],
+            84,
+        ),
         NormalCommandEnum.SetParam.value: ([SUCCESSFUL], 1),
-        NormalCommandEnum.GomConf1Set.value: command_codecs.get(NormalCommandEnum.GomConf1Set.value),
-        NormalCommandEnum.ShellCommand.value: ([RETURN_CODE], 1)
+        NormalCommandEnum.GomConf1Set.value: command_codecs.get(
+            NormalCommandEnum.GomConf1Set.value
+        ),
+        NormalCommandEnum.ShellCommand.value: ([RETURN_CODE], 1),
     }
 
     downlink_arg_types = {
-        RTC_TIME: 'double',
-        POSITION_X: 'double',
-        POSITION_Y: 'double',
-        POSITION_Z: 'double',
-        ATT_1: 'float',
-        ATT_2: 'float',
-        ATT_3: 'float',
-        ATT_4: 'float',
-        HK_TEMP_1: 'short',
-        HK_TEMP_2: 'short',
-        HK_TEMP_3: 'short',
-        HK_TEMP_4: 'short',
-        GYRO_TEMP: 'float',
-        THERMOCOUPLE_TEMP: 'float',
-        CURRENT_IN_1: 'short',
-        CURRENT_IN_2: 'short',
-        CURRENT_IN_3: 'short',
-        VBOOST_1: 'short',
-        VBOOST_2: 'short',
-        VBOOST_3: 'short',
-        SYSTEM_CURRENT: 'short',
-        BATTERY_VOLTAGE: 'short',
-        PROP_TANK_PRESSURE: 'float',
-        SUCCESSFUL: 'bool',
+        RTC_TIME: "double",
+        POSITION_X: "double",
+        POSITION_Y: "double",
+        POSITION_Z: "double",
+        ATT_1: "float",
+        ATT_2: "float",
+        ATT_3: "float",
+        ATT_4: "float",
+        HK_TEMP_1: "short",
+        HK_TEMP_2: "short",
+        HK_TEMP_3: "short",
+        HK_TEMP_4: "short",
+        GYRO_TEMP: "float",
+        THERMOCOUPLE_TEMP: "float",
+        CURRENT_IN_1: "short",
+        CURRENT_IN_2: "short",
+        CURRENT_IN_3: "short",
+        VBOOST_1: "short",
+        VBOOST_2: "short",
+        VBOOST_3: "short",
+        SYSTEM_CURRENT: "short",
+        BATTERY_VOLTAGE: "short",
+        PROP_TANK_PRESSURE: "float",
+        SUCCESSFUL: "bool",
         PPT_MODE: "uint8",
         BATTHEATERMODE: "bool",
         BATTHEATERLOW: "uint8",
@@ -631,13 +704,16 @@ class NormalMode(FlightMode):
         OUTPUT_SAFE6: "bool",
         OUTPUT_SAFE7: "bool",
         OUTPUT_SAFE8: "bool",
-        OUTPUT_ON_DELAY: "short", OUTPUT_OFF_DELAY: "short",
-        VBOOST1: "short", VBOOST2: "short", VBOOST3: "short",
-        MAX_VOLTAGE: 'short',
-        NORM_VOLTAGE: 'short',
-        SAFE_VOLTAGE: 'short',
-        CRIT_VOLTAGE: 'short',
-        RETURN_CODE: "uint8"
+        OUTPUT_ON_DELAY: "short",
+        OUTPUT_OFF_DELAY: "short",
+        VBOOST1: "short",
+        VBOOST2: "short",
+        VBOOST3: "short",
+        MAX_VOLTAGE: "short",
+        NORM_VOLTAGE: "short",
+        SAFE_VOLTAGE: "short",
+        CRIT_VOLTAGE: "short",
+        RETURN_CODE: "uint8",
     }
 
     def __init__(self, parent):
@@ -651,9 +727,15 @@ class NormalMode(FlightMode):
         if super_fm != NO_FM_CHANGE:
             return super_fm
 
-        time_for_opnav: bool = (time() - self._parent.last_opnav_run) // 60 < params.OPNAV_INTERVAL
-        time_for_telem: bool = (time() - self._parent.radio.last_transmit_time) // 60 < params.TELEM_INTERVAL
-        need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        time_for_opnav: bool = (
+            time() - self._parent.last_opnav_run
+        ) // 60 < params.OPNAV_INTERVAL
+        time_for_telem: bool = (
+            time() - self._parent.radio.last_transmit_time
+        ) // 60 < params.TELEM_INTERVAL
+        need_to_electrolyze: bool = (
+            self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        )
         currently_electrolyzing = self._parent.telemetry.gom.is_electrolyzing
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
@@ -686,8 +768,11 @@ class NormalMode(FlightMode):
             # Add a standard packet to the downlink queue for our period telemetry beacon
             telem = self._parent.telemetry.standard_packet_dict()
             downlink = self._parent.downlink_handler.pack_downlink(
-                self._parent.downlink_counter, FMEnum.Normal.value, NormalCommandEnum.BasicTelem.value,
-                **telem)
+                self._parent.downlink_counter,
+                FMEnum.Normal.value,
+                NormalCommandEnum.BasicTelem.value,
+                **telem,
+            )
 
             self._parent.downlink_queue.put(downlink)
             logger.info("Added a standard telemetry packet to the downlink queue")
@@ -695,7 +780,7 @@ class NormalMode(FlightMode):
         return NO_FM_CHANGE
 
     def run_mode(self):
-        logger.info(f"In NORMAL flight mode")
+        logger.info("In NORMAL flight mode")
         self.completed_task()
 
 
@@ -716,35 +801,41 @@ class CommandMode(PauseBackgroundMode):
         CommandCommandEnum.GomGeneralCmd.value: ([CMD], 24),  # TODO
         CommandCommandEnum.CeaseComms.value: ([PASSWORD], 8),
         CommandCommandEnum.SetUpdatePath.value: ([FILE_PATH], 195 - MIN_COMMAND_SIZE),
-        CommandCommandEnum.AddFileBlock.value: ([BLOCK_NUMBER, BLOCK_TEXT], 195 - MIN_COMMAND_SIZE),
+        CommandCommandEnum.AddFileBlock.value: (
+            [BLOCK_NUMBER, BLOCK_TEXT],
+            195 - MIN_COMMAND_SIZE,
+        ),
         CommandCommandEnum.GetFileBlocksInfo.value: ([TOTAL_BLOCKS], 2),
         CommandCommandEnum.ActivateFile.value: ([TOTAL_BLOCKS], 2),
-        CommandCommandEnum.ShellCommand.value: ([CMD], 24)
+        CommandCommandEnum.ShellCommand.value: ([CMD], 24),
     }
 
     command_arg_types = {
-        FILE_PATH: 'string',
-        BLOCK_NUMBER: 'short',
-        BLOCK_TEXT: 'string',
-        TOTAL_BLOCKS: 'short',
-        SYS_TIME: 'double',
-        GOM_PIN_STATE: 'bool',
-        GOM_PIN_DELAY: 'short',
-        OUTPUT_CHANNEL: 'uint8',
-        PASSWORD: 'long'
+        FILE_PATH: "string",
+        BLOCK_NUMBER: "short",
+        BLOCK_TEXT: "string",
+        TOTAL_BLOCKS: "short",
+        SYS_TIME: "double",
+        GOM_PIN_STATE: "bool",
+        GOM_PIN_DELAY: "short",
+        OUTPUT_CHANNEL: "uint8",
+        PASSWORD: "long",
     }
 
     downlink_codecs = {
         CommandCommandEnum.AddFileBlock.value: ([SUCCESSFUL, BLOCK_NUMBER], 3),
-        CommandCommandEnum.GetFileBlocksInfo.value: ([CHECKSUM, MISSING_BLOCKS], 195 - MIN_COMMAND_SIZE),
-        CommandCommandEnum.ShellCommand.value: ([RETURN_CODE], 1)
+        CommandCommandEnum.GetFileBlocksInfo.value: (
+            [CHECKSUM, MISSING_BLOCKS],
+            195 - MIN_COMMAND_SIZE,
+        ),
+        CommandCommandEnum.ShellCommand.value: ([RETURN_CODE], 1),
     }
 
     downlink_arg_types = {
-        SUCCESSFUL: 'bool',
-        BLOCK_NUMBER: 'short',
-        CHECKSUM: 'string',
-        MISSING_BLOCKS: 'string'
+        SUCCESSFUL: "bool",
+        BLOCK_NUMBER: "short",
+        CHECKSUM: "string",
+        MISSING_BLOCKS: "string",
     }
 
     def __init__(self, parent):

@@ -1,8 +1,10 @@
+from enum import Enum
+
+import utils.parameters as params
+from utils.constants import GomOutputs
+
 import drivers.power.power_controller as power_controller
 import drivers.power.power_structs as ps
-from enum import Enum
-from utils.constants import GomOutputs
-import utils.parameters as params
 
 logger = ps.gom_logger
 
@@ -28,12 +30,12 @@ class Gomspace:
 
     def get_health_data(self, level=Hk.DEFAULT.value):
         """Returns a struct containing housekeeping data.
-            The level parameter specifies which command gets sent to the P31u and what data you get back.
-            level must be either one of the following: \n
-            ["default", "eps", "vi", "out", "wdt", "basic", "config", "config2"]\n
-            If no argument is provided, returns the same as "default" \n
-            Every option returns a different struct, the documentation for which can be found in power_structs.py or in
-            the GomSpace NanoPower P31u manual"""
+        The level parameter specifies which command gets sent to the P31u and what data you get back.
+        level must be either one of the following: \n
+        ["default", "eps", "vi", "out", "wdt", "basic", "config", "config2"]\n
+        If no argument is provided, returns the same as "default" \n
+        Every option returns a different struct, the documentation for which can be found in power_structs.py or in
+        the GomSpace NanoPower P31u manual"""
 
         hk_dict = {
             Hk.DEFAULT.value: self.pc.get_hk_1,
@@ -57,9 +59,9 @@ class Gomspace:
 
     def set_output(self, channel, value, delay=0):
         """Sets a single controllable output either on or off.
-            channel must be a string that corresponds to one of
-            the outputs (see power_controller.py)
-            value must be either 1 (on) or 0 (off)"""
+        channel must be a string that corresponds to one of
+        the outputs (see power_controller.py)
+        value must be either 1 (on) or 0 (off)"""
 
         self.pc.set_single_output(channel, value, delay)
 
@@ -92,7 +94,7 @@ class Gomspace:
         self.pc.burnwire1(duration, delay)
 
     def glowplug2(self, duration, delay=0):
-        """Turns on glowplug 2 for [duration] milliseconds after [delay] seconds. Does a display_all half way through"""
+        """Turns on glowplug 2 for [duration] milliseconds after [delay] seconds"""
         self.pc.glowplug2(duration, delay)
 
     def set_electrolysis(self, status: bool, delay=0):

@@ -1,6 +1,6 @@
 # import numpy as np
 # import time
-from core.camera import Camera, CameraMux
+from core.camera import PiCam, CameraMux
 
 
 def select_camera(id):
@@ -12,15 +12,18 @@ def select_camera(id):
     mux.selectCamera(id)
     # pass
 
+
 def record_video(filename, framerate, recTime, exposure):
     """
     Records video from selected camera
     [exposure]: exposure level for camera
     """
-    cam = Camera()
-    filename_timestamp = cam.rawObservation(filename, frame_rate=framerate, video_time=recTime, shutterSpeed=exposure)
-    return filename_timestamp
-    #pass
+    cam = PiCam()
+    file_diff_time = cam.rawObservation(
+        filename, frame_rate=framerate, video_time=recTime, shutterSpeed=exposure
+    )
+    return file_diff_time
+
 
 def record_gyro(count):
     """
@@ -32,6 +35,6 @@ def record_gyro(count):
         TODO: Obtain correct units for ang vel
     """
     # TODO: coordinate with Toby on integrating gyro from telemetry file into this
-    #time.sleep(3)
-    #raise NotImplementedError("implement record_gyro")
+    # time.sleep(3)
+    # raise NotImplementedError("implement record_gyro")
     pass

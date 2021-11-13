@@ -137,6 +137,7 @@ dmypy.json
 
 # Extra
 .DS_STORE
+.idea
 
 # Other
 cislunar_data

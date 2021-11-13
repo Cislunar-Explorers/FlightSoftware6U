@@ -3,8 +3,8 @@ import glob
 import cv2
 import copy
 import os
-from core.find import findEarth, findMoon, findSun
-from core.const import CameraAcquisionDirectoryNotFound, NoImagesInCameraAcquisitionDirectory, InvalidBodyNameForLoadProperties
+from core.find_algos.find import findEarth, findMoon, findSun
+from core.const import NoImagesInCameraAcquisitionDirectory, InvalidBodyNameForLoadProperties
 
 def loadProperties(img, name, cam, i, properties):
     """

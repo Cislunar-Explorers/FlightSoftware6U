@@ -2,7 +2,7 @@
 # pip3 install adafruit-circuitpython-busdevice vcgencmd Adafruit-Blinka
 from adafruit_blinka.agnostic import board_id
 
-if board_id and board_id != 'GENERIC_LINUX_PC':
+if board_id and board_id != "GENERIC_LINUX_PC":
     import board
     import busio
     from vcgencmd import Vcgencmd
@@ -14,8 +14,11 @@ from adafruit_bus_device.i2c_device import I2CDevice
 
 # Video capture imports
 import time
-from math import ceil, floor
 from fractions import Fraction
+
+from utils.log import *
+
+logger = get_log()
 
 
 class CameraMux:
@@ -59,51 +62,58 @@ class CameraMux:
         else:
             assert False
 
-    #Not Used
+    # Not Used
     def detect(self):
         vcgm = Vcgencmd()
         status = vcgm.get_camera()
-        detected = status['detected']
+        detected = status["detected"]
         if detected == 1:
             return True
         else:
             return False
 
 
-class Camera:
+class PiCam:
     def __init__(self):
         pass
 
     def initialize(self):
-        return PiCamera(resolution=(3280, 2464),
-                      framerate=15,
-                      sensor_mode=2,
-                      clock_mode='raw')
-
+        return PiCamera(
+            resolution=(3280, 2464), framerate=15, sensor_mode=2, clock_mode="raw"
+        )
 
     # Code from video-timing.py
-    def rawObservation(self, filename, frame_rate=15, video_time=1, shutterSpeed = 30000):
+    def rawObservation(self, filename, frame_rate=15, video_time=1, shutterSpeed=30000):
 
         # Analog and digital gain parameters (not exposed in picamera-1.13)
         MMAL_PARAMETER_ANALOG_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x59
         MMAL_PARAMETER_DIGITAL_GAIN = mmal.MMAL_PARAMETER_GROUP_CAMERA + 0x5A
 
         # Full resolution
-        with PiCamera(resolution=(3280, 2464),
-                      framerate=frame_rate,
-                      sensor_mode=2,
-                      clock_mode='raw') as camera:
+        with PiCamera(
+            resolution=(3280, 2464),
+            framerate=frame_rate,
+            sensor_mode=2,
+            clock_mode="raw",
+        ) as camera:
             # Set fixed white balance
             # (gain choices from absolute radiometric calibration by Pagnutti et al.)
-            camera.awb_mode = 'off'
+            camera.awb_mode = "off"
             camera.awb_gains = (Fraction(525, 325), Fraction(425, 325))
 
             # Set fixed analog and digital gains
             # Max analog gain: Fraction(2521,256)
             # Note: will want minimum gain (1?) for Sun, maximum analog gain for Earth/Moon
-            mmal.mmal_port_parameter_set_rational(camera._camera.control._port, MMAL_PARAMETER_ANALOG_GAIN,
-                                                  to_rational(Fraction(2521, 256)))
-            mmal.mmal_port_parameter_set_rational(camera._camera.control._port, MMAL_PARAMETER_DIGITAL_GAIN, to_rational(1))
+            mmal.mmal_port_parameter_set_rational(
+                camera._camera.control._port,
+                MMAL_PARAMETER_ANALOG_GAIN,
+                to_rational(Fraction(2521, 256)),
+            )
+            mmal.mmal_port_parameter_set_rational(
+                camera._camera.control._port,
+                MMAL_PARAMETER_DIGITAL_GAIN,
+                to_rational(1),
+            )
 
             # Set shutter speed [us]
             # Note: will want minimum shutter speed (19us) for Sun, slower for Earth/Moon
@@ -112,21 +122,31 @@ class Camera:
             # Wait for parameter changes to take effect, then lock gains
             # (locking gains may not be required)
             time.sleep(1)
-            camera.exposure_mode = 'off'
+            camera.exposure_mode = "off"
 
+            timestamps = []
+            indices = []
             # t0 = time.monotonic()  # Host time when recording is commanded
-            camera.start_recording(filename, format='mjpeg')
-            lastTimestamp = camera.timestamp
+            camera.start_recording(filename, format="mjpeg")
+            # lastTimestamp = camera.timestamp
             lastIndex = -1
             # Loop over expected frames
-            for n in range(video_time * frame_rate): # {video_time} seconds
+            for n in range(video_time * frame_rate):  # {video_time} seconds
                 f = camera.frame
                 # If no new frame yet, sleep for half a frame
-                while f is None or f.index == lastIndex or f.frame_type == PiVideoFrameType.sps_header:
+                while (
+                    f is None
+                    or f.index == lastIndex
+                    or f.frame_type == PiVideoFrameType.sps_header
+                ):
                     f = camera.frame
                     time.sleep((1 / frame_rate) / 2)
                 lastIndex = f.index
-                lastTimestamp = f.timestamp
+                timestamps.append(f.timestamp)
+                indices.append(f.index)
+
             camera.stop_recording()
+            logger.info(f"Filename: {filename}")
+            logger.info(f"Indices: {indices}")
             # Timestamp is in microseconds, relative to last system reboot (default clock_mode='raw')
-            return (filename, lastTimestamp)
+            return (filename, timestamps)

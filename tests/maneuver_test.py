@@ -34,7 +34,7 @@ def m(mocker):
     return m
 
 
-def test_maneuver_selection(m, mocker):
+def test_maneuver_selection(m: MainSatelliteThread, mocker):
     mocker.patch(
         "flight_modes.maneuver_flightmode.ManeuverMode.get_pressure",
         side_effect=[100, 90, 80, 70],
@@ -42,8 +42,18 @@ def test_maneuver_selection(m, mocker):
     assert isinstance(m.maneuver_queue, PriorityQueue)
     assert isinstance(m.flight_mode, ManeuverMode)
     cur_time = time.time()
-    m.command_definitions.schedule_maneuver(time=cur_time + 1000)
-    m.command_definitions.schedule_maneuver(time=cur_time + 100)
+    maneuver_command = m.command_handler.get_command_from_id(
+        consts.CommandEnum.ScheduleManeuver
+    )
+    m.command_handler.run_command(
+        maneuver_command, **{consts.MANEUVER_TIME: cur_time + 1000}
+    )
+    m.command_handler.run_command(
+        maneuver_command, **{consts.MANEUVER_TIME: cur_time + 100}
+    )
+
+    # m.command_definitions.schedule_maneuver(time=cur_time + 1000)
+    # m.command_definitions.schedule_maneuver(time=cur_time + 100)
     assert len(m.maneuver_queue.queue) == 1
     assert params.SCHEDULED_BURN_TIME == cur_time + 100
     m.flight_mode.run_mode()

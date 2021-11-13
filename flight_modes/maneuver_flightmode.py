@@ -15,8 +15,6 @@ class ManeuverMode(PauseBackgroundMode):
     This flight mode is dedicated to accurately firing our electrolysis thruster to make orbital changes"""
 
     flight_mode_id = consts.FMEnum.Maneuver.value
-    command_codecs = {consts.ManeuverCommandEnum.Switch.value: NO_ARGS}
-    command_arg_unpackers = {}
 
     def __init__(self, parent):
         super().__init__(parent)

@@ -363,11 +363,16 @@ class schedule_maneuver(Command):
     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         time_burn = kwargs[consts.MANEUVER_TIME]
         logging.info("Scheduling a maneuver at: " + str(float(time_burn)))
+        if params.SCHEDULED_BURN_TIME > 0:
+            parent.maneuver_queue.put(params.SCHEDULED_BURN_TIME)
+        parent.maneuver_queue.put(float(time_burn))
+
+        smallest_time_burn = parent.maneuver_queue.get()
         parameter_utils.set_parameter(
-            "SCHEDULED_BURN_TIME", float(time_burn), hard_set=True
+            name="SCHEDULED_BURN_TIME",
+            value=smallest_time_burn,
+            hard_set=consts.FOR_FLIGHT,
         )
-        # TODO: fix maneuver queue addition
-        parent.maneuver_queue.put(consts.FMEnum.Maneuver.value)
 
 
 class reboot(Command):

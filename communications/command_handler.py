@@ -1,9 +1,21 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from main import MainSatelliteThread
 
-from utils.constants import DATA_OFFSET, MAC_LENGTH, COUNTER_OFFSET, COUNTER_SIZE, MAC_KEY, ID_OFFSET, DATA_LEN_OFFSET, MIN_COMMAND_SIZE, ONE_WORD, ZERO_WORD
+from utils.constants import (
+    DATA_OFFSET,
+    MAC_LENGTH,
+    COUNTER_OFFSET,
+    COUNTER_SIZE,
+    MAC_KEY,
+    ID_OFFSET,
+    DATA_LEN_OFFSET,
+    MIN_COMMAND_SIZE,
+    ONE_WORD,
+    ZERO_WORD,
+)
 
 from typing import List, Optional, Tuple, Dict
 import hashlib
@@ -35,6 +47,7 @@ def verify_mac(data: bytes) -> bool:
 
 class CommandHandler:
     """Handling the packing, unpacking, and execution of uplinks (commands) and downlinks (telemetry)"""
+
     command_list: List[Command] = COMMAND_LIST
     uplink_counter: int  # how many times we've received a valid data packet
     downlink_counter: int  # how many times we've downlinked something
@@ -48,11 +61,14 @@ class CommandHandler:
         self.downlink_counter = params.DOWNLINK_COUNTER
 
         logging.info(
-            f"Uplink/Downlink counters: {self.uplink_counter}/{self.downlink_counter}")
+            f"Uplink/Downlink counters: {self.uplink_counter}/{self.downlink_counter}"
+        )
 
     def get_command_from_id(self, command_id: int):
         try:
-            return [command for command in self.command_list if command.id == command_id][0]
+            return [
+                command for command in self.command_list if command.id == command_id
+            ][0]
         except IndexError:
             raise CommandUnpackingException(f"Command {command_id} not found")
 
@@ -63,24 +79,29 @@ class CommandHandler:
         if verify_mac(data):
             # TODO deal with counter
             counter = int.from_bytes(
-                data[COUNTER_OFFSET:COUNTER_OFFSET + COUNTER_SIZE], 'big')
+                data[COUNTER_OFFSET : COUNTER_OFFSET + COUNTER_SIZE], "big"
+            )
 
             mac = data[:MAC_LENGTH]
             command_id = data[ID_OFFSET]
             data_length = data[DATA_LEN_OFFSET]
             kwarg_data = data[DATA_OFFSET:]
 
-            if (counter < self.uplink_counter and uplink):
+            if counter < self.uplink_counter and uplink:
                 raise CommandUnpackingException(
-                    "Command counter is less than uplink counter. Ingoring command")
+                    "Command counter is less than uplink counter. Ingoring command"
+                )
 
-            if (counter < self.downlink_counter and not uplink):
+            if counter < self.downlink_counter and not uplink:
                 raise CommandUnpackingException(
-                    "Command counter is less than downlink counter. Ingoring command")
+                    "Command counter is less than downlink counter. Ingoring command"
+                )
 
             if data_length != len(kwarg_data):
                 raise CommandUnpackingException(
-                    f"Data Length and command data discrepancy. Data's actual length is {len(kwarg_data)}, but was said to be {data_length}")
+                    f"Data Length and command data discrepancy. Data's actual length is {len(kwarg_data)},"
+                    f"but was said to be {data_length}"
+                )
 
             # get command
             command = self.get_command_from_id(command_id)
@@ -91,13 +112,13 @@ class CommandHandler:
                 kwargs = command.unpack_telem(kwarg_data)
 
             logging.info(
-                f"Received command: MAC: {mac.hex()}, ID: {command_id}, Counter: {counter}, Args: {kwargs} ")
+                f"Received command: MAC: {mac.hex()}, ID: {command_id}, Counter: {counter}, Args: {kwargs} "
+            )
 
             return command, kwargs
         else:
             logging.warning(f"Incorrect MAC, ignoring command {data.hex()}")
-            raise CommandUnpackingException(
-                "MAC discrepancy - not running command")
+            raise CommandUnpackingException("MAC discrepancy - not running command")
 
     def pack_link(self, uplink: bool, counter: int, command_id: int, **kwargs) -> bytes:
         command = self.get_command_from_id(command_id)
@@ -109,20 +130,18 @@ class CommandHandler:
             buffer_size = command.downlink_buffer_size
             link_data = command.pack_telem(**kwargs)
 
-        data_buffer = bytearray(
-            MIN_COMMAND_SIZE - MAC_LENGTH + buffer_size)
-        data_buffer[:COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE, 'big')
+        data_buffer = bytearray(MIN_COMMAND_SIZE - MAC_LENGTH + buffer_size)
+        data_buffer[:COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE, "big")
         data_buffer[ID_OFFSET - MAC_LENGTH] = command_id
         data_buffer[DATA_LEN_OFFSET - MAC_LENGTH] = len(link_data)
-        data_buffer[DATA_OFFSET - MAC_LENGTH:] = link_data
+        data_buffer[DATA_OFFSET - MAC_LENGTH :] = link_data
 
         mac = compute_mac(bytes(data_buffer))
         packet = mac + bytes(data_buffer)
 
         if not uplink and self.inflation:
             # inflate bits
-            packet = bytes(bit_inflation(
-                bytearray(packet), ZERO_WORD, ONE_WORD))
+            packet = bytes(bit_inflation(bytearray(packet), ZERO_WORD, ONE_WORD))
 
         return packet
 
@@ -139,7 +158,7 @@ class CommandHandler:
             self.uplink_counter += 1
 
         # run command
-        downlink_data = command.run(parent=self._parent, **kwargs)
+        downlink_data = self.run_command(command, **kwargs)
         # pack downlinks
         if downlink_data is not None:
             downlink = self.pack_telemetry(command.id, **downlink_data)
@@ -147,9 +166,11 @@ class CommandHandler:
             return None
         return downlink
 
+    def run_command(self, command: Command, **kwargs):
+        return command.run(parent=self._parent, **kwargs)
+
     def pack_telemetry(self, id, **kwargs) -> bytes:
-        telemetry_bytes = self.pack_link(
-            False, self.downlink_counter, id, **kwargs)
+        telemetry_bytes = self.pack_link(False, self.downlink_counter, id, **kwargs)
         self.downlink_counter += 1
         return telemetry_bytes
 

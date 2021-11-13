@@ -37,20 +37,21 @@ MAC_LENGTH = 4
 MAC_KEY = b"World"  # FIXME for flight
 # MAC = hashlib.blake2s(MAC_DATA, digest_size=MAC_LENGTH, key=MAC_KEY).digest()
 
+# Whether or not we actually do bit inflation:
+INFLATION: bool = False
+
 # Serialization Sizes
-MODE_SIZE = 1
 ID_SIZE = 1
 COUNTER_SIZE = 3
-DATA_LEN_SIZE = 2
-MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + MODE_SIZE + ID_SIZE + DATA_LEN_SIZE
+DATA_LEN_SIZE = 1
+MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + ID_SIZE + DATA_LEN_SIZE
 
 # Serializations Offsets
 MAC_OFFSET = 0
-COUNTER_OFFSET = 0 + MAC_LENGTH
-MODE_OFFSET = COUNTER_SIZE + MAC_LENGTH
-ID_OFFSET = 1 + COUNTER_SIZE + MAC_LENGTH
-DATA_LEN_OFFSET = 2 + COUNTER_SIZE + MAC_LENGTH
-DATA_OFFSET = 4 + COUNTER_SIZE + MAC_LENGTH
+COUNTER_OFFSET = MAC_OFFSET + MAC_LENGTH
+ID_OFFSET = COUNTER_SIZE + COUNTER_OFFSET
+DATA_LEN_OFFSET = ID_SIZE + ID_OFFSET
+DATA_OFFSET = DATA_LEN_SIZE + DATA_LEN_OFFSET
 
 # Important paths
 # FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
@@ -58,9 +59,9 @@ PARAMETERS_JSON_PATH = os.path.join(FLIGHT_SOFTWARE_PATH, "utils/parameters.json
 OPNAV_MEDIA_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/opnav_media/")
 
 # Keyword Argument Definitions for Commands
-POSITION_X = "position_x"
-POSITION_Y = "position_y"
-POSITION_Z = "position_z"
+POS_X = "position_x"
+POS_Y = "position_y"
+POS_Z = "position_z"
 
 ACCELERATE = "accelerate"
 
@@ -83,6 +84,7 @@ NUM_BLOCKS = "num_blocks"
 
 TIME = "time"
 SYS_TIME = "sys_time"
+MANEUVER_TIME = "maneuver_time"
 
 HARD_SET = "hard_set"
 
@@ -165,16 +167,17 @@ LATCHUPS3 = "latchup3"
 LATCHUPS4 = "latchup4"
 LATCHUPS5 = "latchup5"
 LATCHUPS6 = "latchup6"
-WDT_TIME_LEFT_I2C = "wdt_time_i2c"  # seconds (?) left on the I2C watchdog timer
-WDT_TIME_LEFT_GND = "wdt_time_gnd"  # seconds (?) left on the dedicated watchdog timer
+# seconds (?) left on the I2C watchdog timer
+WDT_TIME_LEFT_I2C = "wdt_time_i2c"
+# seconds (?) left on the dedicated watchdog timer
+WDT_TIME_LEFT_GND = "wdt_time_gnd"
 GOM_BOOTS = "gom_boots"  # number of gomspace reboots
 WDT_COUNTS_I2C = "wdt_counts_i2c"  # number of I2C watchdog boots
 WDT_COUNTS_GND = "wdt_counts_gnd"  # number of dedicated watchdog boots
 GOM_BOOTCAUSE = "bootcause"  # number of gomspace reboots
 GOM_BATTMODE = "battmode"  # state machine of the gom. See the manual for more info
-GOM_PPT_MODE = (
-    "ppt_mode"
-)  # power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
+# power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
+GOM_PPT_MODE = "ppt_mode"
 RESERVED2 = "reserved2"  # unknown
 
 RPI_CPU = "rpi_cpu"  # percent utilization of the RPi CPU
@@ -210,9 +213,9 @@ M = 2 ** 32
 team_identifier = 0xEB902D2D  # Team 2
 
 # TODO: validate these values:
-SPLIT_BURNWIRE_DURATION = 1  # second
+SPLIT_BURNWIRE_DURATION = 1.5  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
-# BURN_WAIT_TIME = 15  # minutes changed to glow wait time in params
+BURN_WAIT_TIME = 1  # minutes changed to glow wait time in params
 
 
 MAX_GYRO_RATE = 250  # degrees/sec # TODO
@@ -298,144 +301,68 @@ class FMEnum(IntEnum):
 
 
 @unique
-class BootCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    Split = 1
+class CommandEnum(IntEnum):
+    Boot = 0
+    Restart = 1
+    Normal = 2
+    LowBatterySafety = 3
+    Safety = 4
+    OpNav = 5
+    Maneuver = 6
+    SensorMode = 7  # Send command directly to sensor
+    TestMode = 8  # Execute specified test
+    CommsMode = 9
+    CommandMode = 10
+    AttitudeAdjustment = 11
 
-
-@unique
-class RestartCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-
-
-@unique
-class NormalCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    RunOpNav = 1  # no args
-    # SetDesiredAttitude = 2  # arg=attitude # i think this should only be allowed in maneuver mode
-    SetElectrolysis = 3  # arg = bool whether to start or stop electrolysis
-    # Really not sure what 3 and 4 are supposed to do:
-    # SetAccelerate = 3  # arg=true/false
-    # SetBreakpoint = 4  # arg=position x, y, z
-    SetParam = 5
-    CritTelem = 6
-    BasicTelem = 7
-    DetailedTelem = 8
-    Verification = 9
-    GetParam = 11
-    SetOpnavInterval = 12
-    #    WhenReorient = 13  # when we want to schedule a reorientation maneuver
-    # 2 args, unix time stamp and spin axis vector (2 floats)
-    #    ScheduleReorientation = 14
-    ScheduleManeuver = 15
-    ACSPulsing = 16
-    NemoWriteRegister = 17
-    NemoReadRegister = 18
-    NemoSetConfig = 19
-    NemoPowerOff = 20
-    NemoPowerOn = 21
-    NemoReboot = 22
-    NemoProcessRateData = 23
-    NemoProcessHistograms = 24
+    SetElectrolysis = 12  # arg = bool whether to start or stop electrolysis
+    SetParam = 13
+    CritTelem = 14
+    BasicTelem = 15
+    DetailedTelem = 16
+    # CqcVerification = 17
+    GetParam = 18
+    SetOpnavInterval = 19
+    ScheduleManeuver = 20
+    ACSPulsing = 21
+    NemoWriteRegister = 22
+    NemoReadRegister = 23
+    NemoSetConfig = 24
+    NemoPowerOff = 25
+    NemoPowerOn = 26
+    NemoReboot = 27
+    NemoProcessRateData = 28
+    NemoProcessHistograms = 29
     GomConf1Set = 30
     GomConf1Get = 31
     GomConf2Set = 32
     GomConf2Get = 33
 
+    SetUpdatePath = 34
+    AddFileBlock = 35
+    GetFileBlocksInfo = 36
+    ActivateFile = 37
+
+    SetSystemTime = 38
+    RebootPi = 39
+
+    RebootGom = 40
+    PowerCycle = 41
+    GomPin = 42
+    # GomGeneralCmd = 43
+    # GeneralCmd = 44
+
+    LowBattThresh = 45
+    ScheduleOpnav = 46
+
     ShellCommand = 50
     SudoCommand = 51
     Picberry = 52
     ExecPyFile = 53
+    PiShutdown = 54
+
+    SeparationTest = 55
+    LongString = 56
 
     IgnoreLowBatt = 60
-
-    # CommandStatus = 99
-
-
-@unique
-class LowBatterySafetyCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # ExitLBSafetyMode = 1  # no args, # XXX this is an override command
-    # SetExitLBSafetyMode = 2  # define battery percentage
-    # SetParam = 5
-    CritTelem = 6
-    BasicTelem = 7
-    # DetailedTelem = 8
-
-
-@unique
-class SafetyCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    ExitSafetyMode = 1
-    # SetExitSafetyMode = 2
-    SetParameter = 5
-    CritTelem = 6
-    BasicTelem = 7
-    DetailedTelem = 8
-
-
-@unique
-class OpNavCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # RunOpNav = 1  # no args
-    # SetInterval = 2  # arg=interval in minutes packed as an int
-
-
-@unique
-class ManeuverCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-
-
-@unique
-class SensorsCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # Thermocouple = 1
-    # PressureTransducer = 2
-    # Gomspace = 3
-    # CameraMux = 4
-    # Gyro = 5
-    # RTC = 6
-    # AX5043 = 7
-
-
-@unique
-class TestCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # SetTestMode = 1  # no args
-    ADCTest = 4
-    SeparationTest = 5
-    CommsDriver = 7
-    RTCTest = 8
-    LongString = 9
-    PiShutdown = 11
-
-
-@unique
-class CommsCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    # DownlinkFullDataPacket = 4  # no args
-    # SetDataPacket = 5  # arg=data packet id
-
-
-@unique
-class CommandCommandEnum(IntEnum):
-    Switch = 0  # command for switching flightmode without executing any other commands
-    SetParam = 1  # 2 args: key and value of parameter to be changed
-    SetSystemTime = 2  # 1 arg: UTC(?) time that the system clock should be set to
-    RebootPi = 3
-    RebootGom = 4
-    PowerCycle = 5
-    GomPin = 6  # 1 arg: which gom pin to toggle
-    GomGeneralCmd = 7
-    GeneralCmd = 8
-    SetUpdatePath = 9
-    AddFileBlock = 10
-    GetFileBlocksInfo = 11
-    ActivateFile = 12
-    ShellCommand = 50
     CeaseComms = 170
-
-
-@unique
-class AttitudeCommandEnum(IntEnum):
-    Switch = 0

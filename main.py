@@ -3,21 +3,18 @@ from queue import Queue, PriorityQueue
 from threading import Thread
 from time import sleep
 from time import time
-from typing import Optional
+from typing import Optional, List
 import os
 import signal
-import sys
-
-import utils.constants as consts
-from utils.db import create_sensor_tables_from_path
 from utils.log import get_log, log_error
+from time import sleep
+import sys
+import utils.constants as consts
 
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.flight_mode_factory import build_flight_mode
-from communications.commands import CommandHandler
-from communications.downlink import DownlinkHandler
-from communications.command_definitions import CommandDefinitions
+from communications.command_handler import CommandHandler
 from telemetry.telemetry import Telemetry
 from utils.boot_cause import hard_boot
 from udp_client.client import Client
@@ -31,6 +28,7 @@ from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
 import core.camera as camera
 from utils.parameter_utils import init_parameters
+from utils.db import create_sensor_tables_from_path
 
 
 logger = get_log()
@@ -40,11 +38,10 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         logger.info("Initializing...")
-        self.command_queue = Queue()
-        self.downlink_queue = Queue()
+        self.command_queue: Queue[bytes] = Queue()
+        self.downlink_queue: Queue[bytes] = Queue()
         self.FMQueue: Queue[int] = Queue()
-        self.commands_to_execute = []
-        self.downlinks_to_execute = []
+        self.commands_to_execute: List[bytes] = []
         self.burn_queue = Queue()
         self.reorientation_queue = Queue()
         self.reorientation_list = []
@@ -52,11 +49,9 @@ class MainSatelliteThread(Thread):
         self.opnav_queue = Queue()  # determine state of opnav success
         # self.init_comms()
         logger.info("Initializing commands and downlinks")
-        self.command_handler = CommandHandler()
-        self.downlink_handler = DownlinkHandler()
+        self.command_handler = CommandHandler(self)
         self.command_counter = 0
         self.downlink_counter = 0
-        self.command_definitions = CommandDefinitions(self)
         self.last_opnav_run = time()  # Figure out what to set to for first opnav run
         self.log_dir = consts.LOG_DIR
         self.logger = get_log()
@@ -95,6 +90,7 @@ class MainSatelliteThread(Thread):
         logger.info("Done intializing")
 
     def init_comms(self):
+        """Deprecated. Not Used."""
         self.comms = CommunicationsSystem(queue=self.command_queue, use_ax5043=False)
         self.comms.listen()
 
@@ -229,19 +225,7 @@ class MainSatelliteThread(Thread):
             # Listening for new commands
             newCommand = self.radio.receiveSignal()
             if newCommand is not None:
-                try:  # TODO: move this verification/error handling to the command handler object
-                    unpackedCommand = self.command_handler.unpack_command(newCommand)
-                    if unpackedCommand[1] == self.command_counter + 1:
-                        self.command_queue.put(bytes(newCommand))
-                        self.command_counter += 1
-                    else:
-                        logger.warning(
-                            "Command with Invalid Counter Received. Counter: "
-                            + str(unpackedCommand[1])
-                        )
-                except Exception as e:
-                    log_error(e, logger.error)
-                    logger.error("Invalid Command Received")
+                self.command_queue.put(bytes(newCommand))
             else:
                 logger.debug("Not Received")
 

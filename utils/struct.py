@@ -1,4 +1,5 @@
 import struct
+from typing import Callable, Dict, Tuple
 
 
 # All packing is done in Big Endian as specified by > argument to struct module
@@ -90,13 +91,14 @@ def unpack_str(buf, off):
     return 2 + slen, str(sbytes, "utf-8")
 
 
-packer_dict = {
-    'bool': (pack_bool, unpack_bool),
-    'uint8': (pack_unsigned_int8, unpack_unsigned_int8),
-    'short': (pack_unsigned_short, unpack_unsigned_short),
-    'int': (pack_unsigned_int, unpack_unsigned_int),
-    'long': (pack_unsigned_long, unpack_unsigned_long),
-    'float': (pack_float, unpack_float),
-    'double': (pack_double, unpack_double),
-    'string': (pack_str, unpack_str)
+packer_dict: Dict[str, Tuple[Callable, Callable, int]] = {
+    'bool': (pack_bool, unpack_bool, 1),
+    'uint8': (pack_unsigned_int8, unpack_unsigned_int8, 1),
+    'ushort': (pack_unsigned_short, unpack_unsigned_short, 2),
+    'int': (pack_unsigned_int, unpack_unsigned_int, 4),
+    'long': (pack_unsigned_long, unpack_unsigned_long, 8),
+    'float': (pack_float, unpack_float, 4),
+    'double': (pack_double, unpack_double, 8),
+    'string': (pack_str, unpack_str, 64),
+    'long_string': (pack_str, unpack_str, 189),
 }

@@ -5,7 +5,7 @@ from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE
 from flight_modes.flight_mode import FlightMode
 import os
 from utils.log import get_log
-from utils.constants import FMEnum, BootCommandEnum, RestartCommandEnum
+from utils.constants import FMEnum
 import psutil
 
 logger = get_log()
@@ -14,12 +14,6 @@ logger = get_log()
 class BootUpMode(FlightMode):
     """FMID 0"""
     flight_mode_id = FMEnum.Boot.value
-    command_codecs = {
-        BootCommandEnum.Switch.value: ([], 0),
-        BootCommandEnum.Split.value: ([], 0)
-    }
-
-    command_arg_unpackers = {}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -58,8 +52,6 @@ class BootUpMode(FlightMode):
 
 class RestartMode(FlightMode):
     """FMID 1"""
-    command_codecs = {RestartCommandEnum.Switch.value: ([], 0)}
-    command_arg_unpackers = {}
     flight_mode_id = FMEnum.Restart.value
 
     def __init__(self, parent):

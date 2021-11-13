@@ -60,6 +60,10 @@ GYRO_BIAS_DXDT = 0.0  # rad/s per deg C
 GYRO_BIAS_DYDT = 0.0  # rad/s per deg C
 GYRO_BIAS_DZDT = 0.0  # rad/s per deg C
 
+# Counter storage for uplink and downlink
+UPLINK_COUNTER: int = 0
+DOWNLINK_COUNTER: int = 0
+
 EARTH_B_LOW = 0
 EARTH_G_LOW = 0
 EARTH_R_LOW = 0

@@ -33,7 +33,7 @@ from utils.db import (
     OpNavPropulsionModel,
     OpNavGyroMeasurementModel,
 )
-from utils.constants import DB_FILE, OPNAV_MEDIA_DIR
+from utils.constants import SURRENDER_LOCAL_DIR, DB_FILE, OPNAV_MEDIA_DIR
 from utils.log import *
 import utils.parameters as params
 from datetime import datetime, timezone
@@ -500,7 +500,8 @@ def __observe(
     # Overwrite frames to separate path
     # frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
     # frames = glob.glob("/Users/adam/Desktop/College/Fall2021/CislunarFA2021/cislunar_case1c/*.jpg")
-    frames = glob.glob("/home/stephen/Desktop/surrender_images/cislunar_case1c/*.jpg")
+    # print(SURRENDER_LOCAL_DIR)
+    frames = glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "*.jpg"))
 
     logger.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 

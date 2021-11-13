@@ -365,32 +365,6 @@ class SensorMode(FlightMode):
         raise NotImplementedError
 
 
-class ManeuverMode(PauseBackgroundMode):
-    """FMID 6: Maneuver Mode
-    This flight mode is dedicated to accurately firing our electrolysis thruster to make orbital changes"""
-
-    flight_mode_id = consts.FMEnum.Maneuver.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def update_state(self) -> int:
-        if self.task_completed is True:
-            logger.info("Maneuver complete. Exiting maneuver mode...")
-            return consts.FMEnum.Normal.value
-        return consts.NO_FM_CHANGE
-
-    def run_mode(self):
-        # sleeping for 5 fewer seconds than the delay for safety
-        # TODO: clear value of params.SCHEDULE_BURN_TIME after completion of burn
-        sleep((params.SCHEDULED_BURN_TIME - time()) - 5)
-        logger.info("Heating up glowplug to execute a maneuver...")
-        # TODO: poll and check accelerometer values. If not acceleration seen, try other glowplug
-        self._parent.gom.glowplug(consts.GLOWPLUG_DURATION)
-        self._parent.maneuver_queue.get()
-        self.task_completed = True
-
-
 # TODO
 class SafeMode(FlightMode):
     """FMID 4: Safe Mode

@@ -1,16 +1,15 @@
-import sys
-from threading import Thread
 from multiprocessing import Process
+from queue import Queue, PriorityQueue
+from threading import Thread
+from time import sleep
 from time import time
-from queue import Queue
+from typing import Optional, List
 import os
 import signal
-from typing import List, Optional
 from utils.log import get_log, log_error
 from time import sleep
-
+import sys
 import utils.constants as consts
-from utils.db import create_sensor_tables_from_path
 
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import RestartMode, BootUpMode
@@ -29,6 +28,7 @@ from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
 import core.camera as camera
 from utils.parameter_utils import init_parameters
+from utils.db import create_sensor_tables_from_path
 
 
 logger = get_log()
@@ -45,7 +45,7 @@ class MainSatelliteThread(Thread):
         self.burn_queue = Queue()
         self.reorientation_queue = Queue()
         self.reorientation_list = []
-        self.maneuver_queue = Queue()  # maneuver queue
+        self.maneuver_queue = PriorityQueue()
         self.opnav_queue = Queue()  # determine state of opnav success
         # self.init_comms()
         logger.info("Initializing commands and downlinks")

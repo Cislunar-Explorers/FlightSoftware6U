@@ -71,6 +71,10 @@ class FlightMode:
             if params.SCHEDULED_BURN_TIME > time():
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
                     return consts.FMEnum.Maneuver.value
+            else:
+                logger.info(
+                    f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped"
+                )
 
         # go to reorientation mode if there is something in the reorientation queue
         if (
@@ -211,6 +215,8 @@ class TestMode(PauseBackgroundMode):
     Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
 
     flight_mode_id = consts.FMEnum.TestMode.value
+
+    downlink_arg_unpackers = {"gyro1": "float", "gyro2": "float", "gyro3": "float"}
 
     def __init__(self, parent):
         super().__init__(parent)

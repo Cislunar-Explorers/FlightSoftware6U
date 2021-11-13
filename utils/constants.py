@@ -1,6 +1,7 @@
 import os
 from enum import IntEnum, unique
 from pathlib import Path
+from typing import cast
 
 from dotenv import dotenv_values
 
@@ -10,7 +11,7 @@ config = dotenv_values()
 # absolute project root path
 FLIGHT_SOFTWARE_PATH = (Path(__file__).parent / "../..").resolve()
 
-CISLUNAR_BASE_DIR = config.get("CISLUNAR_BASE_DIR", "cislunar_data")
+CISLUNAR_BASE_DIR = cast("str", config.get("CISLUNAR_BASE_DIR", "cislunar_data"))
 if not os.path.isabs(CISLUNAR_BASE_DIR):
     CISLUNAR_BASE_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, CISLUNAR_BASE_DIR)
 os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)

@@ -4,11 +4,19 @@ import os
 from math import dist
 from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
     findStereographic,
+    find,
 )
 from matplotlib import pyplot as plt
+from matplotlib.ticker import MaxNLocator
+import numpy as np
+import argparse
 
 
-def get_difference(body, truths, body_vals):
+def __get_difference(body, truths, body_vals):
+    """
+    Gets the absolute differences between the truth values and the returned body values. Returns perf (performance)
+    values as a dictionary, one for each body detected and compared.
+    """
     perf_values = {}
     truth_vals = truths[body]
     perf = []
@@ -18,7 +26,15 @@ def get_difference(body, truths, body_vals):
     return perf_values
 
 
-def test_center_finding(dir, results_file, st_gn="st"):
+def test_center_finding(dir, results_file, st_gn):
+    """
+    The main function for feature testing center finding. The function takes in a directory where all the files
+    are located (images, observations.json, and cameras.json files). It then uses the find algorithm to determine
+    the centers on all the camera frames in the images directory and compares these values with the truth values
+    in observations.json. cameras.json is required in order to get the correct values for the stereographic scaling.
+    It then writes these values in a csv format to a given csv file.
+    """
+    # Getting frames and json files
     frames = []
     frames_dir = os.path.join(dir, "images/")
     for filename in os.listdir(frames_dir):
@@ -32,6 +48,8 @@ def test_center_finding(dir, results_file, st_gn="st"):
     observations = json.load(o)
     cameras = json.load(c)
     st_scale = cameras["cameras"][0]["stereographic_scale"]
+
+    # Reading in truth values from observations.json
     all_truth_vals = {}
     for i in range(len(observations["observations"])):
         for frame in observations["observations"][i]["frames"]:
@@ -42,24 +60,29 @@ def test_center_finding(dir, results_file, st_gn="st"):
                 truthY = detection["center_st"][1] * st_scale
                 truthR = detection["radius_st"] * st_scale
                 frame_truth_vals[detection["body"]] = [truthX, truthY, truthR]
-            all_truth_vals[frame["image_stereographic"]] = frame_truth_vals
+            image_type = "image_stereographic" if st_gn == "st" else "image_gnomonic"
+            all_truth_vals[frame[image_type]] = frame_truth_vals
     results = []
+
+    # Comparing found values with truth values
     for i in range(len(frames)):
         frame = frames[i]
         truths = all_truth_vals[frame.split("/")[-1]]
-        _, body_vals = findStereographic(frame)
+        _, body_vals = findStereographic(frame) if st_gn == "st" else find(frame)
         sun_vals = body_vals.get("Sun")
         if sun_vals:
-            perf_values = get_difference("Sun", truths, sun_vals)
+            perf_values = __get_difference("Sun", truths, sun_vals)
             results.append(perf_values)
         earth_vals = body_vals.get("Earth")
         if earth_vals:
-            perf_values = get_difference("Earth", truths, earth_vals)
+            perf_values = __get_difference("Earth", truths, earth_vals)
             results.append(perf_values)
         moon_vals = body_vals.get("Moon")
         if moon_vals:
-            perf_values = get_difference("Moon", truths, moon_vals)
+            perf_values = __get_difference("Moon", truths, moon_vals)
             results.append(perf_values)
+
+    # Writing performance values to csv file
     with open(results_file, "w", newline="") as csvfile:
         writer = csv.writer(
             csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
@@ -78,8 +101,13 @@ def test_center_finding(dir, results_file, st_gn="st"):
     return results
 
 
-def __diff_histogram(results, center, filename, show):
+def __diff_histogram(results, center, filename, show, name, st_gn):
+    """
+    Generates the histogram of the difference between the truth value and the found value.
+    """
     idx = 1 if center else 0
+    center_radius = "Center" if center else "Radius"
+    title = "{} Absolute Difference {} {}".format(center_radius, name, st_gn)
     data = []
     for result in results:
         sun = result.get("Sun")
@@ -92,37 +120,83 @@ def __diff_histogram(results, center, filename, show):
         if moon is not None:
             data.append(moon[idx])
     fig = plt.figure()
-    plt.hist(data, bins=20, range=(0, 5), edgecolor="black", linewidth=1.2)
+    ax = fig.add_subplot()
+    ax.hist(data, bins=20, range=(0, 5), edgecolor="black", linewidth=1.2)
+    ax.set_xlim(left=0)
+    ax.xaxis.set_major_locator(MaxNLocator(integer=False))
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    x_min, x_max = ax.get_xlim()
+    plt.xticks(np.arange(x_min, x_max + 1, 0.5))
+    ax.title.set_text(title)
+    plt.xlabel("Pixel Distance (px)")
+    plt.ylabel("Number of Results")
     fig.savefig(filename)
     if show:
         plt.show()
     return data
 
 
-def center_histogram(results, filename, show=False):
-    return __diff_histogram(results, True, filename, show)
+def center_histogram(results, filename, name, show=False, st_gn="st"):
+    """
+    Generates the histogram for center results.
+    """
+    return __diff_histogram(results, True, filename, show, name, st_gn)
 
 
-def radius_histogram(results, filename, show=False):
-    return __diff_histogram(results, False, filename, show)
+def radius_histogram(results, filename, name, show=False, st_gn="st"):
+    """
+    Generates the histogram for radius results.
+    """
+    return __diff_histogram(results, False, filename, show, name, st_gn)
 
 
-# traj_case1c_sim_easy = "/Users/andrew/PycharmProjects/opnav_sim/traj-case1c_sim_easy/"
-# traj_case1c_sim_easy_results_file = "center_finding_results_traj-case1c_sim_easy.csv"
-# test_center_finding(traj_case1c_sim_easy, traj_case1c_sim_easy_results_file)
+def center_finding_results(
+    dir, results_file, center_histogram_file, radius_histogram_file, st_gn="st"
+):
+    name = dir.split("/")[-1]
+    results = test_center_finding(dir, results_file, st_gn)
+    center_histogram(results, center_histogram_file, name, st_gn=st_gn)
+    radius_histogram(results, radius_histogram_file, name, st_gn=st_gn)
 
-traj_case1c_sim = "/Users/andrew/PycharmProjects/opnav_sim/traj-case1c_sim/"
-traj_case1c_sim_results_file = "center_finding_results_traj-case1c_sim.csv"
-results_traj_case1c = test_center_finding(traj_case1c_sim, traj_case1c_sim_results_file)
-center_histogram(results_traj_case1c, "center_histogram_traj_case1c.png")
-radius_histogram(results_traj_case1c, "radius_histogram_traj_case1c.png")
 
-# trajectory_sim_easy = "/Users/andrew/PycharmProjects/opnav_sim/trajectory_sim_easy/"
-# trajectory_sim_easy_results_file = "center_finding_results_trajectory_sim_easy.csv"
-# test_center_finding(trajectory_sim_easy, trajectory_sim_easy_results_file)
-
-trajectory_sim = "/Users/andrew/PycharmProjects/opnav_sim/trajectory_sim/"
-trajectory_sim_results_file = "center_finding_results_trajectory_sim.csv"
-results_trajectory = test_center_finding(trajectory_sim, trajectory_sim_results_file)
-center_histogram(results_trajectory, "center_histogram_trajectory.png")
-radius_histogram(results_trajectory, "radius_histogram_trajectory.png")
+if __name__ == "__main__":
+    """
+    Run "python3 test_center_finding.py -d=<DIRECTORY> -r=<RESULTS_FILE>
+    -ch=<CENTER_HISTOGRAM_FILE> -rh=<RADIUS_HISTOGRAM_FILE> [-st_gn=<STEREOGRAPHIC_OR_GNOMONIC>]" to test this module
+    """
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-d", "--directory", help="path to trajectory directory")
+    ap.add_argument("-r", "--results_file", help="results file to output results")
+    ap.add_argument(
+        "-ch",
+        "--center_histogram_file",
+        help="histogram file to output center results histogram",
+    )
+    ap.add_argument(
+        "-rh",
+        "--radius_histogram_file",
+        help="histogram file to output radius results histogram",
+    )
+    ap.add_argument(
+        "-st_gn",
+        "--stereographic_or_gnomonic",
+        nargs="?",
+        help="whether this is stereographic or gnomonic",
+    )
+    args = vars(ap.parse_args())
+    st_gn = args.get("st_gn")
+    if st_gn:
+        center_finding_results(
+            args["directory"],
+            args["results_file"],
+            args["center_histogram_file"],
+            args["radius_histogram_file"],
+            st_gn,
+        )
+    else:
+        center_finding_results(
+            args["directory"],
+            args["results_file"],
+            args["center_histogram_file"],
+            args["radius_histogram_file"],
+        )

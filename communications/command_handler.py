@@ -26,7 +26,6 @@ from communications.downlink import bit_inflation
 from communications.groundstation import bit_deflation
 import logging
 import utils.parameters as params
-from utils.log import log_error
 
 
 def compute_mac(data: bytes) -> bytes:
@@ -150,7 +149,7 @@ class CommandHandler:
         try:
             command, kwargs = self.unpack_link(data)
         except CommandUnpackingException as cue:
-            log_error(cue, logging.error)
+            logging.error(cue, exc_info=True)
             logging.warning(f"Ignoring command: {data.hex()}")
             return None
         else:

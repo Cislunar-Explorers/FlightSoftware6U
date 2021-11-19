@@ -3,9 +3,8 @@ from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler
 from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
 import time
-from utils.log import get_log
+import logging
 
-logger = get_log()
 
 ch = CommandHandler()
 dh = DownlinkHandler()
@@ -16,9 +15,10 @@ rx_wait_time = 20  # seconds
 
 while True:
     commandInput = input(
-        'Enter command in the form "Mode ID,Command ID, Keyword Arguments" (e.g 2,3,delay=3,state=True):')
+        'Enter command in the form "Mode ID,Command ID, Keyword Arguments" (e.g 2,3,delay=3,state=True):'
+    )
 
-    commandArguments = commandInput.split(',')
+    commandArguments = commandInput.split(",")
     mode_id = int(commandArguments[0])
     command_id = int(commandArguments[1])
     kwargs = {}
@@ -27,17 +27,17 @@ while True:
         argsList = commandArguments[2:]
         for i in range(len(argsList)):
 
-            signIndex = argsList[i].index('=')
+            signIndex = argsList[i].index("=")
             argName = argsList[i][:signIndex]
-            argValue = argsList[i][signIndex + 1:]
+            argValue = argsList[i][signIndex + 1 :]
 
             arg_type = FLIGHT_MODE_DICT[mode_id].command_arg_types[argName]
-            if arg_type == 'int' or arg_type == 'short':
+            if arg_type == "int" or arg_type == "short":
                 argValue = int(argValue)
-            elif arg_type == 'float' or arg_type == 'double':
+            elif arg_type == "float" or arg_type == "double":
                 argValue = float(argValue)
-            elif arg_type == 'bool':
-                if argValue == 'True':
+            elif arg_type == "bool":
+                if argValue == "True":
                     argValue = True
                 else:
                     argValue = False
@@ -45,19 +45,21 @@ while True:
             kwargs[argName] = argValue
 
     commandToTransmit = ch.pack_command(commandCounter, mode_id, command_id, **kwargs)
-    logger.info(len(commandToTransmit))
-    logger.info(commandToTransmit.hex())
+    logging.info(len(commandToTransmit))
+    logging.info(commandToTransmit.hex())
     groundstation.transmit(commandToTransmit)
     commandCounter += 1
-    logger.info('Successfully transmitted ' + str(ch.unpack_command(commandToTransmit)))
+    logging.info(
+        "Successfully transmitted " + str(ch.unpack_command(commandToTransmit))
+    )
     time.sleep(transmitInterval)
 
-    logger.info('Receiving...')
+    logging.info("Receiving...")
 
     rx_start_time = time.time()
     while (time.time() - rx_start_time) < rx_wait_time:
         downlink = groundstation.receiveSignal()
         if downlink is not None:
-            logger.info('Downlink Received')
-            logger.info(dh.unpack_downlink(downlink))
+            logging.info("Downlink Received")
+            logging.info(dh.unpack_downlink(downlink))
             break

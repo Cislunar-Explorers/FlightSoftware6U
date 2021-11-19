@@ -12,9 +12,7 @@
 #
 
 from ctypes import *
-from utils.log import get_log
-
-gom_logger = get_log()
+import logging
 
 
 # ----------------------------------------------FORMATTING
@@ -267,7 +265,7 @@ def structMaker(s):
     try:
         return struct_options[s]
     except KeyError:
-        gom_logger.warning(f"In structMaker: input '{s}' not valid. Return TestStruct")
+        logging.warning(f"In structMaker: input '{s}' not valid. Return TestStruct")
         return TestingStruct()
 
 
@@ -333,7 +331,7 @@ def toBytes(i, num):
 
     acc = []
     for n in range(num):
-        acc += [int(bytes[8 * n: 8 * (n + 1)], 2)]
+        acc += [int(bytes[8 * n : 8 * (n + 1)], 2)]
 
     return bytearray(acc)
 
@@ -446,17 +444,17 @@ def displayHK(hk):
     def substr(x, y):
         return y[x:]
 
-    gom_logger.info(G("***************-HOUSEKEEPING-***************"))
-    gom_logger.info(
+    logging.info(G("***************-HOUSEKEEPING-***************"))
+    logging.info(
         GR("Photo-voltaic inputs:        ")
         + "1-%s 2-%s 3-%s" % (R(mv(hk.pv[0])), R(mv(hk.pv[1])), R(mv(hk.pv[2])))
     )
 
-    gom_logger.info(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
-    gom_logger.info(GR("Battery voltage:             ") + "%s" % (R(mv(hk.bv))))
-    gom_logger.info(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
+    logging.info(GR("Total photo current:         ") + "%s" % (R(ma(hk.pc))))
+    logging.info(GR("Battery voltage:             ") + "%s" % (R(mv(hk.bv))))
+    logging.info(GR("Total system current:        ") + "%s" % (R(ma(hk.sc))))
 
-    gom_logger.info(
+    logging.info(
         GR("Temp of boost converters:    ")
         + "1-%s 2-%s 3-%s batt-%s"
         % (
@@ -467,12 +465,12 @@ def displayHK(hk):
         )
     )
 
-    gom_logger.info(
+    logging.info(
         GR("External batt temp:          ")
         + "1-%s 2-%s" % (R(degc(hk.batt_temp[0])), R(degc(hk.batt_temp[1])))
     )
 
-    gom_logger.info(
+    logging.info(
         GR("Latchups:                    ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s]"
         % (
@@ -485,11 +483,11 @@ def displayHK(hk):
         )
     )
 
-    gom_logger.info(GR("Cause of last reset:         ") + "%s" % (R(RES(hk.reset))))
-    gom_logger.info(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
-    gom_logger.info(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
-    gom_logger.info(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
-    # gom_logger.info(
+    logging.info(GR("Cause of last reset:         ") + "%s" % (R(RES(hk.reset))))
+    logging.info(GR("Number of reboots:           ") + "%s" % (R(hk.bootcount)))
+    logging.info(GR("Number of software errors:   ") + "%s" % (R(hk.sw_errors)))
+    logging.info(GR("PPT mode:                    ") + "%s" % (R(hk.ppt_mode)))
+    # logging.info(
     #    GR("Channel output:              ")
     #    + "%s"
     #    % R(
@@ -510,7 +508,7 @@ def displayHK(hk):
     #        )
     #        + (hk.channel_status >> _ >> bin >> _ >> str >> _ >> substr(2))
     #    )
-    #)
+    # )
 
 
 # prints config info given eps_config_t struct
@@ -518,32 +516,32 @@ def displayConfig(conf):
     assert type(conf) == eps_config_t
 
     def pptmode(x: int):
-        gom_logger.debug("PPT Mode code: %s", x)
+        logging.debug("PPT Mode code: %s", x)
         return {1: "AUTO[1]", 2: "FIXED[2]"}.get(x, "ERROR")
 
     def battheatermode(x: int):
-        gom_logger.debug("BattHeater Mode code: %s", x)
+        logging.debug("BattHeater Mode code: %s", x)
         return {0: "MANUAL[0]", 1: "AUTO[1]"}.get(x, "ERROR")
 
     def sec(x: str):
         return str(x) + "s"
 
-    gom_logger.info(G("***************-CONFIG-***************"))
-    gom_logger.info(
+    logging.info(G("***************-CONFIG-***************"))
+    logging.info(
         GR("PPT mode:                    ") + "%s" % (R(pptmode(conf.ppt_mode)))
     )
-    gom_logger.info(
+    logging.info(
         GR("Battheater mode:             ")
         + "%s" % (R(battheatermode(conf.battheater_mode)))
     )
-    gom_logger.info(
+    logging.info(
         GR("Battheater low:              ") + "%s" % (R(degc(conf.battheater_low)))
     )
-    gom_logger.info(
+    logging.info(
         GR("Battheater high:             ") + "%s" % (R(degc(conf.battheater_high)))
     )
 
-    gom_logger.info(
+    logging.info(
         GR("Nominal mode output value:   ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -558,7 +556,7 @@ def displayConfig(conf):
         )
     )
 
-    gom_logger.info(
+    logging.info(
         GR("Safe mode output value:      ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -573,7 +571,7 @@ def displayConfig(conf):
         )
     )
 
-    gom_logger.info(
+    logging.info(
         GR("Output initial on:           ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -588,7 +586,7 @@ def displayConfig(conf):
         )
     )
 
-    gom_logger.info(
+    logging.info(
         GR("Output initial off:          ")
         + "1-[%s] 2-[%s] 3-[%s] 4-[%s] 5-[%s] 6-[%s] 7-[%s] 8-[%s]"
         % (
@@ -603,7 +601,7 @@ def displayConfig(conf):
         )
     )
 
-    gom_logger.info(
+    logging.info(
         GR("PPT point for boost conv:    ")
         + "1-%s 2-%s 3-%s"
         % (R(mv(conf.vboost[0])), R(mv(conf.vboost[1])), R(mv(conf.vboost[2])))
@@ -613,17 +611,17 @@ def displayConfig(conf):
 # prints config2 info given eps_config2_t struct
 def displayConfig2(conf):
     assert type(conf) == eps_config2_t
-    gom_logger.info(G("***************-CONFIG2-***************"))
-    gom_logger.info(
+    logging.info(G("***************-CONFIG2-***************"))
+    logging.info(
         GR("Batt Max Voltage:            ") + "%s" % (R(mv(conf.batt_maxvoltage)))
     )
-    gom_logger.info(
+    logging.info(
         GR("Batt Safe Voltage:           ") + "%s" % (R(mv(conf.batt_safevoltage)))
     )
-    gom_logger.info(
+    logging.info(
         GR("Batt Critical Voltage:       ") + "%s" % (R(mv(conf.batt_criticalvoltage)))
     )
-    gom_logger.info(
+    logging.info(
         GR("Batt Normal Voltage:         ") + "%s" % (R(mv(conf.batt_normalvoltage)))
     )
 
@@ -648,9 +646,15 @@ def displayHk2(hk2):
         return B(modes.get(hk2.battmode, "ERROR").ljust(13 + 9))
 
     def channel_state(i):
-        return f"--> EN:{hk2.output[i]} [{RJ4(hk2.curout[i])}, {RJ4(hk2.latchup[i])},{RJ5(hk2.output_on_delta[i])},{RJ5(hk2.output_off_delta[i])}]"
+        return (
+            f"--> EN:{hk2.output[i]} ["
+            + f"{RJ4(hk2.curout[i])},"
+            + f"{RJ4(hk2.latchup[i])},"
+            + f"{RJ5(hk2.output_on_delta[i])},"
+            + f"{RJ5(hk2.output_off_delta[i])}]"
+        )
 
-    gom_logger.info(
+    logging.info(
         "\nInputs	               |=======|         Outputs            I(mA), LUPs, ttON, ttOFF\n"
         " 1:              +-------------------+   0 (H1-47) %s\n" % channel_state(0)
         + "   %s mV ->    |  Voltage          |\n" % RJ4(hk2.vboost[0])
@@ -676,7 +680,7 @@ def displayHk2(hk2):
         + "                 +-------------------+   7         --> EN:%d\n"
         % hk2.output[7]
     )
-    gom_logger.info(
+    logging.info(
         f"\n"
         f"                 1    2    3    4    5    6\n"
         f"Temp (degC): {''.join([RJ5(t) for t in hk2.temp])}\n"
@@ -686,8 +690,10 @@ def displayHk2(hk2):
         f"Last Cause: {hk2.bootcause} ({RES(hk2.bootcause)})\n"
         f"\n"
         f"WDTs      i2c   gnd  csp1  csp2\n"
-        f"Count:  {RJ5(hk2.counter_wdt_i2c)} {RJ5(hk2.counter_wdt_gnd)} {RJ5(hk2.counter_wdt_csp[0])} {RJ5(hk2.counter_wdt_csp[1])}\n"
-        f" Left:  {RJ5(hk2.wdt_i2c_time_left)} {RJ5(hk2.wdt_gnd_time_left)} {RJ5(hk2.wdt_csp_pings_left[0])} {RJ5(hk2.wdt_csp_pings_left[1])}\n"
+        f"Count:  {RJ5(hk2.counter_wdt_i2c)} {RJ5(hk2.counter_wdt_gnd)}"
+        + f"{RJ5(hk2.counter_wdt_csp[0])} {RJ5(hk2.counter_wdt_csp[1])}\n"
+        + f" Left:  {RJ5(hk2.wdt_i2c_time_left)} {RJ5(hk2.wdt_gnd_time_left)}"
+        + f"{RJ5(hk2.wdt_csp_pings_left[0])} {RJ5(hk2.wdt_csp_pings_left[1])}\n"
     )
 
 
@@ -696,9 +702,9 @@ def displayStruct(s):
     for i in s._fields_:
         b = getattr(s, i[0])
         try:
-            gom_logger.info(f"{i[0]}: {b[:]}")
+            logging.info(f"{i[0]}: {b[:]}")
         except TypeError:
-            gom_logger.info(f"{i[0]}: {b}")
+            logging.info(f"{i[0]}: {b}")
 
 
 # ----------------------------------------------CONSTANTS

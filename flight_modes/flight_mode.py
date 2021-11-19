@@ -15,10 +15,10 @@ from multiprocessing import Process
 import subprocess
 from queue import Empty
 from traceback import format_tb
+import logging
 
 import utils.constants as consts
 import utils.parameters as params
-from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
 
@@ -29,8 +29,6 @@ no_transition_modes = [
 ]
 # this line of code brought to you by https://stackoverflow.com/questions/29503339/
 all_modes = list(map(int, consts.FMEnum))
-
-logger = get_log()
 
 NO_ARGS = ([], 0)
 
@@ -52,11 +50,11 @@ class FlightMode:
             try:
                 self._parent.opnav_process.join(timeout=1)
                 result = self._parent.opnav_proc_queue.get(timeout=1)
-                logger.info("[OPNAV]: ", result)
+                logging.info("[OPNAV]: ", result)
             except Empty:
                 if not self._parent.opnav_process.is_alive():
                     self._parent.opnav_process.terminate()
-                    logger.info("[OPNAV]: Process Terminated")
+                    logging.info("[OPNAV]: Process Terminated")
 
         flight_mode_id = self.flight_mode_id
 
@@ -72,7 +70,7 @@ class FlightMode:
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
                     return consts.FMEnum.Maneuver.value
             else:
-                logger.info(
+                logging.info(
                     f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped"
                 )
 
@@ -173,16 +171,16 @@ class FlightMode:
     #            params.TELEM_DOWNLINK_TIME = 60
 
     def __enter__(self):
-        logger.debug(f"Starting flight mode {self.flight_mode_id}")
+        logging.debug(f"Starting flight mode {self.flight_mode_id}")
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        logger.debug(f"Finishing flight mode {self.flight_mode_id}")
+        logging.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
-            logger.error(
+            logging.error(
                 f"Flight Mode failed with error type {exc_type} and value {exc_value}"
             )
-            logger.error(f"Failed with traceback:\n {''.join(format_tb(tb))}")
+            logging.error(f"Failed with traceback:\n {''.join(format_tb(tb))}")
 
 
 class PauseBackgroundMode(FlightMode):
@@ -315,9 +313,9 @@ class OpNavMode(FlightMode):
     def run_mode(self):
         # TODO: overhaul so opnav calculation only occur while in opnav mode
         if not self._parent.opnav_process.is_alive():
-            logger.info("[OPNAV]: Able to run next opnav")
+            logging.info("[OPNAV]: Able to run next opnav")
             self._parent.last_opnav_run = time()
-            logger.info("[OPNAV]: Starting opnav subprocess")
+            logging.info("[OPNAV]: Starting opnav subprocess")
             self._parent.opnav_process = Process(
                 target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,)
             )
@@ -377,7 +375,7 @@ class SafeMode(FlightMode):
 
     def run_mode(self):
         # TODO
-        logger.info("Execute safe mode")
+        logging.info("Execute safe mode")
 
 
 class NormalMode(FlightMode):
@@ -426,7 +424,7 @@ class NormalMode(FlightMode):
         # note: at this point, the variable "need_to_electrolyze" is equivalent to the new state of the electrolyzer
 
         if time_for_opnav:
-            logger.info("Time to run Opnav")
+            logging.info("Time to run Opnav")
             self._parent.FMQueue.put(consts.FMEnum.OpNav.value)
 
         if time_for_telem:
@@ -436,12 +434,12 @@ class NormalMode(FlightMode):
                 consts.CommandEnum.BasicTelem, **telem
             )
             self._parent.downlink_queue.put(downlink)
-            logger.info("Added a standard telemetry packet to the downlink queue")
+            logging.info("Added a standard telemetry packet to the downlink queue")
 
         return consts.NO_FM_CHANGE
 
     def run_mode(self):
-        logger.info("In NORMAL flight mode")
+        logging.info("In NORMAL flight mode")
         self.completed_task()
 
 

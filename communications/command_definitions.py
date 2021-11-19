@@ -5,7 +5,7 @@ from communications.codec import Codec
 from communications.commands import Command
 from communications import codecs
 from utils import parameter_utils
-from utils.log import log_error
+
 from utils import gom_util
 
 if TYPE_CHECKING:
@@ -875,7 +875,7 @@ class set_gom_conf1(Command):
                 return new_config_dict
 
             except Exception as e:
-                log_error(e, logging.error)
+                logging.error(e, exc_info=True)
                 logging.error("Could not set new gom config")
         else:
             logging.warning("Can't talk to Gom P31u")

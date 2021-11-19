@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Union, Dict, List, Any, Optional
 from communications.codec import Codec
 import logging
 
-from utils.log import log_error
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
@@ -76,5 +75,5 @@ class Command(ABC):
             return downlink
         except Exception as e:
             logging.error("Unhandled command exception")
-            log_error(e, function=logging.error)
+            logging.error(e, exc_info=True)
             raise CommandException

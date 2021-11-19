@@ -15,7 +15,7 @@ from utils.db import SQLAlchemyTableBase
 
 # from utils.db import create_sensor_tables_from_path
 from utils.constants import DB_ENTRY_LIMIT
-from utils.log import log as logger
+import logging
 
 # TODO change MEMORY_DB_PATH back to DB_FILE
 MEMORY_DB_PATH = "sqlite://"
@@ -43,9 +43,9 @@ def display_model(model, session):
     try:
         entries = session.query(databases_dict.get(model)).all()
         for entry in range(len(entries)):
-            logger.info(entries[entry])
+            logging.info(entries[entry])
     except Exception:
-        logger.error("error during display_model")
+        logging.error("error during display_model")
 
 
 def display_model_amount(model, amount, session):
@@ -57,9 +57,9 @@ def display_model_amount(model, amount, session):
         entries = session.query(databases_dict.get(model)).all()
         length = len(entries)
         for entry in range(length - amount, length):
-            logger.info(entries[entry])
+            logging.info(entries[entry])
     except Exception:
-        logger.error("error during display_model_amount")
+        logging.error("error during display_model_amount")
 
 
 def telemetry_query(datatype, amount, session):
@@ -74,7 +74,7 @@ def telemetry_query(datatype, amount, session):
             entries = session.query(TelemetryModel).all()
             length = len(entries)
             for entry in range(length - amount, length):
-                logger.info(entries[entry])
+                logging.info(entries[entry])
         elif datatype == "GOM":
             GOM_query = session.query(
                 TelemetryModel.time_polled,
@@ -117,14 +117,14 @@ def telemetry_query(datatype, amount, session):
             ).all()
             length = len(GOM_query)
             for entry in range(length - amount, length):
-                logger.info(GOM_query[entry])
+                logging.info(GOM_query[entry])
         elif datatype == "RTC":
             RTC_query = session.query(
                 TelemetryModel.time_polled, TelemetryModel.RTC_measurement_taken
             ).all()
             length = len(RTC_query)
             for entry in range(length - amount, length):
-                logger.info(RTC_query[entry])
+                logging.info(RTC_query[entry])
         elif datatype == "RPI":
             RPI_query = session.query(
                 TelemetryModel.time_polled,
@@ -137,7 +137,7 @@ def telemetry_query(datatype, amount, session):
             ).all()
             length = len(RPI_query)
             for entry in range(length - amount, length):
-                logger.info(RPI_query[entry])
+                logging.info(RPI_query[entry])
         elif datatype == "GYRO":
             GYRO_query = session.query(
                 TelemetryModel.time_polled,
@@ -154,23 +154,23 @@ def telemetry_query(datatype, amount, session):
             ).all()
             length = len(GYRO_query)
             for entry in range(length - amount, length):
-                logger.info(GYRO_query[entry])
+                logging.info(GYRO_query[entry])
         elif datatype == "THERMO":
             THERMO_query = session.query(
                 TelemetryModel.time_polled, TelemetryModel.THERMOCOUPLE_temperature
             ).all()
             length = len(THERMO_query)
             for entry in range(length - amount, length):
-                logger.info(THERMO_query[entry])
+                logging.info(THERMO_query[entry])
         elif datatype == "PRESSURE":
             PRESSURE_query = session.query(
                 TelemetryModel.time_polled, TelemetryModel.PRESSURE_pressure
             ).all()
             length = len(PRESSURE_query)
             for entry in range(length - amount, length):
-                logger.info(PRESSURE_query[entry])
+                logging.info(PRESSURE_query[entry])
     except Exception:
-        logger.error("error during telemetry_query")
+        logging.error("error during telemetry_query")
 
 
 def clean(model, session, entry_limit=DB_ENTRY_LIMIT):
@@ -186,7 +186,7 @@ def clean(model, session, entry_limit=DB_ENTRY_LIMIT):
         for x in range(number_to_delete):
             session.delete(entries[x])
     except Exception:
-        logger.error("error during clean")
+        logging.error("error during clean")
 
 
 def wipe(model, session):
@@ -200,4 +200,4 @@ def wipe(model, session):
         for entry in entries:
             session.delete(entry)
     except Exception:
-        logger.error("error during wipe")
+        logging.error("error during wipe")

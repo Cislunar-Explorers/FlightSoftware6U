@@ -2,27 +2,42 @@ from json import load, dump
 from utils.constants import PARAMETERS_JSON_PATH
 from utils import parameters
 from utils.exceptions import CislunarException
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
+import os
 
 
 def get_parameter_list(hard: bool = False, filename=PARAMETERS_JSON_PATH) -> List[str]:
     if hard:
         return list(load(open(filename)).keys())
     else:
-        return [param_name for param_name in dir(parameters) if param_name[0] != '_']
+        return [param_name for param_name in dir(parameters) if param_name[0] != "_"]
+
+
+def get_parameter_from_name(param_name: str) -> Union[str, int, float]:
+    return getattr(parameters, param_name)
 
 
 def init_parameters(filename=PARAMETERS_JSON_PATH):
+    if not os.path.exists(filename):
+        # if the parameters.json file doesn't exist, write it
+        # get all parameter names
+        param_name_list = get_parameter_list(hard=False)
+        param_list = [get_parameter_from_name(name) for name in param_name_list]
+        param_dict = dict(zip(param_name_list, param_list))
+
+        with open(filename, "w") as f:
+            dump(param_dict, f)
+
     with open(filename) as f:
         json_parameter_dict = load(f)
 
     for parameter in dir(parameters):
         try:
-            if parameter[0] != '_':
+            if parameter[0] != "_":
                 setattr(parameters, parameter, json_parameter_dict[parameter])
         except KeyError:
             raise CislunarException(
-                f'Attempted to set parameter {parameter}, which could not be found in {PARAMETERS_JSON_PATH}'
+                f"Attempted to set parameter {parameter}, which could not be found in {PARAMETERS_JSON_PATH}"
             )
 
 
@@ -35,7 +50,7 @@ def set_parameter(name: str, value, hard_set: bool, filename=PARAMETERS_JSON_PAT
         with open(filename) as f:
             json_parameter_dict = load(f)
         json_parameter_dict[name] = value
-        dump(json_parameter_dict, open(filename, 'w'), indent=0)
+        dump(json_parameter_dict, open(filename, "w"), indent=0)
 
     return initial_value
 

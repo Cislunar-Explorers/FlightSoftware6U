@@ -13,10 +13,25 @@ from drivers.power.power_structs import eps_hk_t, hkparam_t
 from telemetry.sensor import SynchronousSensor
 from utils import constants
 from utils.constants import DB_FILE
-from utils.constants import MAX_GYRO_RATE, GomOutputs, BATTERY_VOLTAGE, SUN_CURRENT, SYSTEM_CURRENT, BATT_MODE, PPT_MODE
+from utils.constants import (
+    MAX_GYRO_RATE,
+    GomOutputs,
+    BATTERY_VOLTAGE,
+    SUN_CURRENT,
+    SYSTEM_CURRENT,
+    BATT_MODE,
+    PPT_MODE,
+)
+
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
-from utils.exceptions import PiSensorError, PressureError, GomSensorError, GyroError, ThermocoupleError
+from utils.exceptions import (
+    PiSensorError,
+    PressureError,
+    GomSensorError,
+    GyroError,
+    ThermocoupleError,
+)
 
 
 class ImuResult(NamedTuple):
@@ -39,7 +54,7 @@ class ImuResult(NamedTuple):
 
 def moving_average(x, w):
     """x: 1-D data, w: number of samples to average over."""
-    return np.convolve(x, np.ones(w), 'valid') / w
+    return np.convolve(x, np.ones(w), "valid") / w
 
 
 class GomSensor(SynchronousSensor):
@@ -54,16 +69,15 @@ class GomSensor(SynchronousSensor):
         if self._parent.gom is not None:
             self.hk = self._parent.gom.get_health_data(level="eps")
             self.hkparam = self._parent.gom.get_health_data()
-            self.is_electrolyzing = bool(
-                self.hk.output[GomOutputs.electrolyzer.value])
+            self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
 
 
 class GyroSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.rot: Tuple[float, float, float] = tuple()  # rad/s
-        self.mag: Tuple[float, float, float] = tuple()  # microTesla
-        self.acc: Tuple[float, float, float] = tuple()  # m/s^2
+        self.rot: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # rad/s
+        self.mag: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # microTesla
+        self.acc: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # m/s^2
         self.tmp: int = int()  # deg C
 
     def poll(self):
@@ -159,16 +173,17 @@ class PiSensor(SynchronousSensor):
         self.disk = int(psutil.disk_usage("/").percent)
         self.boot_time = psutil.boot_time()
         self.up_time = int(uptime())
-        if board_id and board_id != 'GENERIC_LINUX_PC':
-            self.tmp = float(
-                popen("vcgencmd measure_temp").readline().strip()[5:-2])
-        self.all = (self.cpu,
-                    self.ram,
-                    self.disk,
-                    self.boot_time,
-                    self.up_time,
-                    self.tmp,
-                    self.poll_time)
+        if board_id and board_id != "GENERIC_LINUX_PC":
+            self.tmp = float(popen("vcgencmd measure_temp").readline().strip()[5:-2])
+        self.all = (
+            self.cpu,
+            self.ram,
+            self.disk,
+            self.boot_time,
+            self.up_time,
+            self.tmp,
+            self.poll_time,
+        )
 
 
 class RtcSensor(SynchronousSensor):
@@ -207,11 +222,11 @@ class Telemetry(SynchronousSensor):
         self.rtc = RtcSensor(parent)
         self.opn = OpNavSensor(parent)
 
-        self.sensors = [self.gom, self.gyr,
-                        self.prs, self.thm, self.rpi, self.rtc]
+        self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc]
 
         create_session = create_sensor_tables_from_path(
-            DB_FILE)  # instantiate DB session
+            DB_FILE
+        )  # instantiate DB session
         self.session = create_session()  # instantiate DB session
 
     def poll(self):
@@ -233,83 +248,90 @@ class Telemetry(SynchronousSensor):
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
         if self.prs.pressure < 0 or self.prs.pressure > 2000:
-            self._parent.logger.error(
-                "Pressure sensor not functioning properly")
+            self._parent.logger.error("Pressure sensor not functioning properly")
             raise PressureError(f"Unreasonable pressure: {self.prs.pressure}")
 
         if self.thm.tmp < -200 or self.thm.tmp > 200:
             self._parent.logger.error("Thermocouple not functioning properly")
             raise ThermocoupleError(
-                f"Unreasonable fuel tank temperature: {self.thm.tmp}")
+                f"Unreasonable fuel tank temperature: {self.thm.tmp}"
+            )
 
         if self.gom.hk.vbatt < 5500 or self.gom.hk.vbatt > 8500:
             self._parent.logger.error("Gom HK not functioning properly")
-            raise GomSensorError(
-                f"Unreasonable battery voltage: {self.gom.hk.vbatt}")
+            raise GomSensorError(f"Unreasonable battery voltage: {self.gom.hk.vbatt}")
 
         if any(i < 0 for i in self.rpi.all):
             self._parent.logger.error("RPi sensors not functioning properly")
             raise PiSensorError
 
     def standard_packet(self):
-        if (time() - self.poll_time) > 60 * 60:  # if the latest data is over an hour old, poll new data
+        if (
+            time() - self.poll_time
+        ) > 60 * 60:  # if the latest data is over an hour old, poll new data
             self.poll()
 
-        return (self.rtc.rtc_time,
-                self.opn.pos[0],
-                self.opn.pos[1],
-                self.opn.pos[2],
-                self.opn.quat[0],
-                self.opn.quat[1],
-                self.opn.quat[2],
-                self.opn.quat[3],
-                self.gom.hk.temp[0],
-                self.gom.hk.temp[1],
-                self.gom.hk.temp[2],
-                self.gom.hk.temp[3],
-                self.gyr.tmp,
-                self.thm.tmp,
-                self.gom.hk.curin[0],
-                self.gom.hk.curin[1],
-                self.gom.hk.curin[2],
-                self.gom.hk.vboost[0],
-                self.gom.hk.vboost[1],
-                self.gom.hk.vboost[2],
-                self.gom.hk.cursys,
-                self.gom.hk.vbatt,
-                self.prs.pressure)
+        return (
+            self.rtc.rtc_time,
+            self.opn.pos[0],
+            self.opn.pos[1],
+            self.opn.pos[2],
+            self.opn.quat[0],
+            self.opn.quat[1],
+            self.opn.quat[2],
+            self.opn.quat[3],
+            self.gom.hk.temp[0],
+            self.gom.hk.temp[1],
+            self.gom.hk.temp[2],
+            self.gom.hk.temp[3],
+            self.gyr.tmp,
+            self.thm.tmp,
+            self.gom.hk.curin[0],
+            self.gom.hk.curin[1],
+            self.gom.hk.curin[2],
+            self.gom.hk.vboost[0],
+            self.gom.hk.vboost[1],
+            self.gom.hk.vboost[2],
+            self.gom.hk.cursys,
+            self.gom.hk.vbatt,
+            self.prs.pressure,
+        )
 
     def standard_packet_dict(self):
-        return {'rtc_time': self.rtc.rtc_time,
-                'position_x': 1,  # FIXME Opnav results interface
-                'position_y': 2,
-                'position_z': 3,
-                'attitude_1': 4,
-                'attitude_2': 5,
-                'attitude_3': 6,
-                'attitude_4': 7,
-                'hk_temp_1': self.gom.hk.temp[0],  # ushort
-                'hk_temp_2': self.gom.hk.temp[1],  # ushort
-                'hk_temp_3': self.gom.hk.temp[2],  # ushort
-                'hk_temp_4': self.gom.hk.temp[3],  # ushort
-                'gyro_temp': self.gyr.tmp,
-                'thermo_temp': self.thm.tmp,
-                'curin_1': self.gom.hk.curin[0],  # ushort
-                'curin_2': self.gom.hk.curin[1],  # ushort
-                'curin_3': self.gom.hk.curin[2],  # ushort
-                'vboost_1': self.gom.hk.vboost[0],  # ushort
-                'vboost_2': self.gom.hk.vboost[1],  # ushort
-                'vboost_3': self.gom.hk.vboost[2],  # ushort
-                'cursys': self.gom.hk.cursys,  # ushort
-                'vbatt': self.gom.hk.vbatt,  # ushort
-                'prs_pressure': self.prs.pressure}
+        return {
+            "rtc_time": self.rtc.rtc_time,
+            "position_x": 1,  # FIXME Opnav results interface
+            "position_y": 2,
+            "position_z": 3,
+            "attitude_1": 4,
+            "attitude_2": 5,
+            "attitude_3": 6,
+            "attitude_4": 7,
+            "hk_temp_1": self.gom.hk.temp[0],  # ushort
+            "hk_temp_2": self.gom.hk.temp[1],  # ushort
+            "hk_temp_3": self.gom.hk.temp[2],  # ushort
+            "hk_temp_4": self.gom.hk.temp[3],  # ushort
+            "gyro_temp": self.gyr.tmp,
+            "thermo_temp": self.thm.tmp,
+            "curin_1": self.gom.hk.curin[0],  # ushort
+            "curin_2": self.gom.hk.curin[1],  # ushort
+            "curin_3": self.gom.hk.curin[2],  # ushort
+            "vboost_1": self.gom.hk.vboost[0],  # ushort
+            "vboost_2": self.gom.hk.vboost[1],  # ushort
+            "vboost_3": self.gom.hk.vboost[2],  # ushort
+            "cursys": self.gom.hk.cursys,  # ushort
+            "vbatt": self.gom.hk.vbatt,  # ushort
+            "prs_pressure": self.prs.pressure,
+        }
 
     def minimal_packet(self):
-        return {BATTERY_VOLTAGE: self.gom.hk.vbatt,
-                SUN_CURRENT: self.gom.hk.cursun,
-                SYSTEM_CURRENT: self.gom.hk.cursys,
-                BATT_MODE: self.gom.hk.battmode,
-                PPT_MODE: self.gom.hk.pptmode}
+        return {
+            BATTERY_VOLTAGE: self.gom.hk.vbatt,
+            SUN_CURRENT: self.gom.hk.cursun,
+            SYSTEM_CURRENT: self.gom.hk.cursys,
+            BATT_MODE: self.gom.hk.battmode,
+            PPT_MODE: self.gom.hk.pptmode,
+        }
 
     def detailed_packet_dict(self) -> Dict[str, Union[int, float]]:
         """Returns a dictionary of every possible data point we'd want to downlink. The implementation of this is
@@ -337,7 +359,9 @@ class Telemetry(SynchronousSensor):
             constants.CUROUT4: self.gom.hk.curout[3],
             constants.CUROUT5: self.gom.hk.curout[4],
             constants.CUROUT6: self.gom.hk.curout[5],
-            constants.OUTPUTS: int(str(self.gom.hk.output[:]).replace(',', '').replace(' ', '')[1:-1], 2),
+            constants.OUTPUTS: int(
+                str(self.gom.hk.output[:]).replace(",", "").replace(" ", "")[1:-1], 2
+            ),
             constants.LATCHUPS1: self.gom.hk.latchup[0],
             constants.LATCHUPS2: self.gom.hk.latchup[1],
             constants.LATCHUPS3: self.gom.hk.latchup[2],
@@ -410,8 +434,10 @@ class Telemetry(SynchronousSensor):
                 GOM_curout4=self.gom.hk.curout[3],
                 GOM_curout5=self.gom.hk.curout[4],
                 GOM_curout6=self.gom.hk.curout[5],
-                GOM_outputs=int(str(self.gom.hk.output[:]).replace(
-                    ',', '').replace(' ', '')[1:-1], 2),
+                GOM_outputs=int(
+                    str(self.gom.hk.output[:]).replace(",", "").replace(" ", "")[1:-1],
+                    2,
+                ),
                 GOM_latchup1=self.gom.hk.latchup[0],
                 GOM_latchup2=self.gom.hk.latchup[1],
                 GOM_latchup3=self.gom.hk.latchup[2],
@@ -449,7 +475,7 @@ class Telemetry(SynchronousSensor):
                 GYRO_mag_z=bz,
                 GYRO_temperature=self.gyr.tmp,
                 THERMOCOUPLE_temperature=self.thm.tmp,
-                PRESSURE_pressure=self.prs.pressure
+                PRESSURE_pressure=self.prs.pressure,
             )
             self.session.add(telemetry_data)
             self.session.commit()

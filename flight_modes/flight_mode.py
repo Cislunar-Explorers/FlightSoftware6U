@@ -182,7 +182,7 @@ class FlightMode:
             logger.error(
                 f"Flight Mode failed with error type {exc_type} and value {exc_value}"
             )
-            logger.error(f"Failed with traceback:\n {format_tb(tb)}")
+            logger.error(f"Failed with traceback:\n {''.join(format_tb(tb))}")
 
 
 class PauseBackgroundMode(FlightMode):

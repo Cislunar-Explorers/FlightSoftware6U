@@ -13,8 +13,6 @@ class ParametersTestCase(unittest.TestCase):
             self.filepath = "utils/parameters.json"
         else:
             self.filepath = "../utils/parameters.json"
-
-    def test_parameters_init(self):
         parameter_utils.init_parameters(filename=self.filepath)
 
     def test_parameter_consistency(self):

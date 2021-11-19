@@ -1,8 +1,7 @@
 from os import popen
 from time import time, sleep
-from typing import Dict, Union
-from typing import NamedTuple
-from typing import Tuple
+from typing import Dict, Union, NamedTuple, Tuple
+import logging
 
 import numpy as np
 import psutil
@@ -244,25 +243,25 @@ class Telemetry(SynchronousSensor):
             self.poll()
 
         if any([abs(i) > MAX_GYRO_RATE for i in self.gyr.rot]):
-            self._parent.logger.error("Gyro not functioning properly")
+            logging.error("Gyro not functioning properly")
             raise GyroError(f"Unreasonable gyro values: {self.gyr.rot}")
 
         if self.prs.pressure < 0 or self.prs.pressure > 2000:
-            self._parent.logger.error("Pressure sensor not functioning properly")
+            logging.error("Pressure sensor not functioning properly")
             raise PressureError(f"Unreasonable pressure: {self.prs.pressure}")
 
         if self.thm.tmp < -200 or self.thm.tmp > 200:
-            self._parent.logger.error("Thermocouple not functioning properly")
+            logging.error("Thermocouple not functioning properly")
             raise ThermocoupleError(
                 f"Unreasonable fuel tank temperature: {self.thm.tmp}"
             )
 
         if self.gom.hk.vbatt < 5500 or self.gom.hk.vbatt > 8500:
-            self._parent.logger.error("Gom HK not functioning properly")
+            logging.error("Gom HK not functioning properly")
             raise GomSensorError(f"Unreasonable battery voltage: {self.gom.hk.vbatt}")
 
         if any(i < 0 for i in self.rpi.all):
-            self._parent.logger.error("RPi sensors not functioning properly")
+            logging.error("RPi sensors not functioning properly")
             raise PiSensorError
 
     def standard_packet(self):

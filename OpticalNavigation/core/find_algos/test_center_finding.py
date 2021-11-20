@@ -3,7 +3,6 @@ import csv
 import os
 from math import dist
 from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
-    findStereographic,
     find,
 )
 from matplotlib import pyplot as plt
@@ -68,7 +67,7 @@ def test_center_finding(dir, results_file, st_gn):
     for i in range(len(frames)):
         frame = frames[i]
         truths = all_truth_vals[frame.split("/")[-1]]
-        _, body_vals = findStereographic(frame) if st_gn == "st" else find(frame)
+        _, body_vals = find(frame, st=True) if st_gn == "st" else find(frame)
         sun_vals = body_vals.get("Sun")
         if sun_vals:
             perf_values = __get_difference("Sun", truths, sun_vals)

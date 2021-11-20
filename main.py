@@ -229,10 +229,10 @@ class MainSatelliteThread(Thread):
         #clock operations: 
         if(self.rtc.ds3231.lost_power):
             #Not accounting for 0.4 seconds the rtc lost after power loss
-            logging.info("Current system time after a power failure" + clock_gettime)
+            logging.info("Current system time after a power failure" + str(clock_gettime))
             systime = parameters.RTC_TIME + 30
             self.rtc.set_system_time(systime)
-            logging.info("Current system time after adjusted due to power failure" + clock_gettime)
+            logging.info("Current system time after adjusted due to power failure" + str(clock_gettime))
         parameters.RTC_TIME = self.rtc.get_time()
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):

@@ -1,7 +1,6 @@
 import json
 import csv
 import os
-from math import dist
 from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
     find,
 )
@@ -19,7 +18,9 @@ def __get_difference(body, truths, body_vals):
     perf_values = {}
     truth_vals = truths[body]
     perf = []
-    distance = dist((body_vals[0], body_vals[1]), (truth_vals[0], truth_vals[1]))
+    distance = (
+        (body_vals[0] - truth_vals[0]) ** 2 + (body_vals[1] - truth_vals[1]) ** 2
+    ) ** 0.5
     perf += [distance, abs(body_vals[2] - truth_vals[2])]
     perf_values[body] = perf
     return perf_values

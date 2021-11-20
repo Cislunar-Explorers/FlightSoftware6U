@@ -121,7 +121,7 @@ class CameraRotation:
     omega_dt: Angle of rotation during one row's readout time
     """
 
-    u: np.array
+    u: np.ndarray
     omega_dt: float
 
 

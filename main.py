@@ -29,6 +29,8 @@ from drivers.nemo.nemo_manager import NemoManager
 import core.camera as camera
 from utils.parameter_utils import init_parameters
 from utils.db import create_sensor_tables_from_path
+from utils import parameters
+from time import clock_gettime
 
 
 class MainSatelliteThread(Thread):
@@ -223,6 +225,15 @@ class MainSatelliteThread(Thread):
                 self.command_queue.put(bytes(newCommand))
             else:
                 logging.debug("Not Received")
+        
+        #clock operations: 
+        if(self.rtc.ds3231.lost_power):
+            #Not accounting for 0.4 seconds the rtc lost after power loss
+            logging.info("Current system time after a power failure" + clock_gettime)
+            systime = parameters.RTC_TIME + 30
+            self.rtc.set_system_time(systime)
+            logging.info("Current system time after adjusted due to power failure" + clock_gettime)
+        parameters.RTC_TIME = self.rtc.get_time()
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))

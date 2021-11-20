@@ -1,4 +1,6 @@
 # Define all our parameters
+
+
 DOWNLINK_BUFFER_TIME = 3
 TELEM_INTERVAL = 60  # minutes
 BOOTUP_SEPARATION_DELAY = 30.0  # seconds
@@ -87,3 +89,5 @@ SUN_B_HIGH = 255
 SUN_G_HIGH = 255
 SUN_R_HIGH = 255
 SUN_PERCENTAGE_THRESH = 0.18
+
+RTC_TIME = 0

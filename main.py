@@ -27,7 +27,7 @@ from drivers.ADCDriver import ADC
 from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager
 import core.camera as camera
-from utils.parameter_utils import init_parameters
+from utils.parameter_utils import init_parameters, set_parameter
 from utils.db import create_sensor_tables_from_path
 from utils import parameters
 from time import clock_gettime
@@ -123,6 +123,7 @@ class MainSatelliteThread(Thread):
         try:
             self.rtc = RTC()
             self.rtc.get_time()
+            set_parameter("RTC_TIME",self.rtc.get_time(), True)
         except Exception as e:
 
             logging.error(e)
@@ -233,7 +234,7 @@ class MainSatelliteThread(Thread):
             systime = parameters.RTC_TIME + 30
             self.rtc.set_system_time(systime)
             logging.info("Current system time after adjusted due to power failure" + str(clock_gettime))
-        parameters.RTC_TIME = self.rtc.get_time()
+        set_parameter("RIC_TIME", self.rtc.get_time(), False)
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))

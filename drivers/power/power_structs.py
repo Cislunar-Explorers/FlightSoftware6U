@@ -11,7 +11,18 @@
 # Status: Completed
 #
 
-from ctypes import *
+from ctypes import (
+    BigEndianStructure,
+    c_uint8,
+    c_uint16,
+    c_uint32,
+    c_int8,
+    c_int16,
+    c_byte,
+    sizeof,
+    pointer,
+    memmove,
+)
 import logging
 
 

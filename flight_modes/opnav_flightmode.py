@@ -2,15 +2,13 @@ from datetime import datetime
 from time import sleep
 import sqlite3
 from sqlalchemy.exc import SQLAlchemyError
-from multiprocessing import Process, Queue
-import subprocess
+from multiprocessing import Process
 
 from utils.constants import FMEnum
 from utils.db import OpNavCoordinatesModel
-from utils.log import get_log
+import logging
 from .flight_mode import PauseBackgroundMode
 
-logger = get_log()
 
 class OpNavMode(PauseBackgroundMode):
 
@@ -18,11 +16,7 @@ class OpNavMode(PauseBackgroundMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.dummy_opnav_result = (
-            (0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0),
-        )
+        self.dummy_opnav_result = ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
 
     def set_return_val(self, returnval):
         self.dummy_opnav_result = returnval
@@ -55,8 +49,8 @@ class OpNavMode(PauseBackgroundMode):
                 session = self._parent.create_session()
                 last_measurement = (
                     session.query(OpNavCoordinatesModel)
-                        .order_by(OpNavCoordinatesModel.measurement_taken)
-                        .first()
+                    .order_by(OpNavCoordinatesModel.measurement_taken)
+                    .first()
                 )
                 if last_measurement is None:
                     raise Exception("No record of previous OpNav runs")
@@ -67,9 +61,9 @@ class OpNavMode(PauseBackgroundMode):
 
     def run_mode(self):
         if not self.opnav_process.is_alive():
-            logger.info("[OPNAV]: Able to run next opnav")
+            logging.info("[OPNAV]: Able to run next opnav")
             self._parent.last_opnav_run = datetime.now()
-            logger.info("[OPNAV]: Starting opnav subprocess")
+            logging.info("[OPNAV]: Starting opnav subprocess")
             self.opnav_process = Process(target=self.opnav_subprocess, args=())
             self.opnav_process.start()
         self.run_opnav()
@@ -84,6 +78,3 @@ class OpNavMode(PauseBackgroundMode):
         # return to normal mode if task completed
         if self.task_completed:
             return FMEnum.Normal.value
-
-
-

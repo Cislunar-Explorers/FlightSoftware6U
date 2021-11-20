@@ -1,31 +1,34 @@
 from drivers.gom import Gomspace
 import drivers.power.power_structs as ps
 from time import sleep
-from utils.log import get_log
+import logging
 
-logger = get_log()
 
 gom = Gomspace()
 
 try:
     while True:
-        choice = int(input("Choose an option:\n"
-                           "0: Display Housekeeping Data\n"
-                           "1: OUT-1 Receiving Amplifier (LNA) - max 30s \n"
-                           "2: OUT-3 Glowplug 1 - max 15000ms\n"
-                           "3: OUT-4 Glowplug 2 - max 15000ms\n"
-                           "4: OUT-2 Burnwire - max 30s\n"
-                           "5: OUT-5 Solenoid - max 400ms\n"
-                           "6: OUT-6 Electrolyzer - max 30s\n"
-                           "7: RELAY Transmitting Amplifier (PA) - max 30s\n"
-                           "8: OUT-5 with solenoid disconnected - max 30s\n"
-                           "999: Turn OFF all controllable outputs\n"))
+        choice = int(
+            input(
+                "Choose an option:\n"
+                "0: Display Housekeeping Data\n"
+                "1: OUT-1 Receiving Amplifier (LNA) - max 30s \n"
+                "2: OUT-3 Glowplug 1 - max 15000ms\n"
+                "3: OUT-4 Glowplug 2 - max 15000ms\n"
+                "4: OUT-2 Burnwire - max 30s\n"
+                "5: OUT-5 Solenoid - max 400ms\n"
+                "6: OUT-6 Electrolyzer - max 30s\n"
+                "7: RELAY Transmitting Amplifier (PA) - max 30s\n"
+                "8: OUT-5 with solenoid disconnected - max 30s\n"
+                "999: Turn OFF all controllable outputs\n"
+            )
+        )
         if choice == 999:
             gom.all_off()
             ps.displayHk2(gom.get_health_data(level="eps"))
 
         if choice == 0:
-            ps.displayHk2(gom.get_health_data(level='eps'))
+            ps.displayHk2(gom.get_health_data(level="eps"))
 
         if choice in [1, 4, 6, 7, 8]:
             duration = int(input("Duration (integer seconds):\n"))
@@ -33,7 +36,7 @@ try:
             if choice == 1:
                 gom.lna(True)
                 sleep(duration / 2)
-                ps.displayHk2(gom.get_health_data(level='eps'))
+                ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
                 gom.lna(False)
 
@@ -77,7 +80,7 @@ try:
 
             if choice == 5:
                 assert 0 < duration < 400
-                logger.info("Pulsing Solenoid")
+                logging.info("Pulsing Solenoid")
                 gom.solenoid(1e-3 * duration)
 
 finally:

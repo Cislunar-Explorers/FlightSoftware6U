@@ -1,7 +1,7 @@
 from main import MainSatelliteThread
 from utils.exceptions import DeserializationException
 import unittest
-from utils import constants, log
+from utils import constants
 from typing import List
 import logging
 
@@ -20,22 +20,21 @@ class BitFlips(unittest.TestCase):
     def bit_flip_tester(self, flip_bit: bool):
         rejected_by_mac = 0
         cmd_id = constants.CommandEnum.SetParam.value
-        command_kwargs = {"name": "OPNAV_INTERVAL",
-                          "value": 30.0, "hard_set": True}
-        bytes_to_transmit = self.command_handler.pack_command(
-            cmd_id, **command_kwargs)
+        command_kwargs = {"name": "OPNAV_INTERVAL", "value": 30.0, "hard_set": True}
+        bytes_to_transmit = self.command_handler.pack_command(cmd_id, **command_kwargs)
         bits_to_transmit = int.from_bytes(
-            bytes_to_transmit, 'big')  # bits that get transmitted
+            bytes_to_transmit, "big"
+        )  # bits that get transmitted
 
         bad_indecies: List[int] = []
         for i in range(len(bin(bits_to_transmit)[2:])):
             # emulate bitflip at position i using XOR
             received_bits = bits_to_transmit ^ flip_bit << i
             received_bytes = received_bits.to_bytes(
-                len(bytes_to_transmit), 'big')  # repack bitflipped data into bytes
+                len(bytes_to_transmit), "big"
+            )  # repack bitflipped data into bytes
             try:
-                command, arg_data = self.command_handler.unpack_link(
-                    received_bytes)
+                command, arg_data = self.command_handler.unpack_link(received_bytes)
                 # self.assertEqual(counter, COUNTER)
                 self.assertEqual(command.id, cmd_id)
                 self.assertEqual(arg_data, command_kwargs)
@@ -43,21 +42,22 @@ class BitFlips(unittest.TestCase):
                 # if the assertions fail, the data was corrupted and we couldn't do anything about it
                 bad_indecies.append(i)
                 if DEBUG:
-                    log.log_error(ae, logging.error)
+                    logging.error(ae, exc_info=True)
             except DeserializationException as cue:
                 # if the command unpacker catches the error, we're good.
                 if DEBUG:
-                    log.log_error(cue, logging.warning)
+                    logging.warning(cue, exc_info=True)
                     rejected_by_mac += 1
             except Exception as e:
                 # if something else fails, that's bad
                 bad_indecies.append(i)
                 if DEBUG:
-                    log.log_error(e, logging.error)
+                    logging.error(e, exc_info=True)
 
         if DEBUG:
             print(
-                f"Rejected by MAC: {rejected_by_mac}/{len(bin(bits_to_transmit)[2:])}")
+                f"Rejected by MAC: {rejected_by_mac}/{len(bin(bits_to_transmit)[2:])}"
+            )
         self.assertListEqual(bad_indecies, [])
 
     def test_no_bit_flips(self):
@@ -67,5 +67,5 @@ class BitFlips(unittest.TestCase):
         self.bit_flip_tester(True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

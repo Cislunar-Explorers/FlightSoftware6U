@@ -141,3 +141,4 @@ dmypy.json
 
 # Other
 cislunar_data
+cislunar.log*

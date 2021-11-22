@@ -1,5 +1,4 @@
 import logging
-import time
 import board
 import busio
 from adafruit_bus_device.spi_device import SPIDevice

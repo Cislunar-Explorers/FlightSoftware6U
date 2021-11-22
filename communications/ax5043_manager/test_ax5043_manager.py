@@ -2,7 +2,7 @@ import unittest
 import logging
 from communications.ax5043_manager.ax5043_manager import Manager
 from communications.ax5043_manager.mock_ax5043_driver import MockAx5043
-from communications.ax5043_manager.ax5043_driver import Reg, Bits
+from communications.ax5043_manager.ax5043_regs import Reg, Bits
 
 
 class TestManager(unittest.TestCase):
@@ -52,6 +52,6 @@ class TestManager(unittest.TestCase):
         self.assertFalse(mgr.is_faulted())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()

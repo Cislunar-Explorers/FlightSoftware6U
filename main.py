@@ -5,7 +5,7 @@ from time import sleep, time
 from typing import Optional, List
 import os
 import signal
-from flight_modes.flight_mode import FlightMode
+from flight_modes.flight_mode import FlightMode, TestMode
 import logging
 from time import sleep
 import sys
@@ -68,14 +68,19 @@ class MainSatelliteThread(Thread):
         self.opnav_proc_queue = Queue()
         self.opnav_process = Process()  # define the subprocess
 
-        if os.path.isdir(self.log_dir):
-            logging.info("We are in Restart Mode")
-            self.flight_mode = RestartMode(self)
+        if consts.TEST:
+            logging.info("We are in Test Mode")
+            self.flight_mode = TestMode(self)
         else:
-            logging.info("We are in Bootup Mode")
-            os.makedirs(consts.CISLUNAR_BASE_DIR, exist_ok=True)
-            os.mkdir(consts.LOG_DIR)
-            self.flight_mode = BootUpMode(self)
+            if os.path.isdir(self.log_dir):
+                logging.info("We are in Restart Mode")
+                self.flight_mode = RestartMode(self)
+            else:
+                logging.info("We are in Bootup Mode")
+                os.makedirs(consts.CISLUNAR_BASE_DIR, exist_ok=True)
+                os.mkdir(consts.LOG_DIR)
+                self.flight_mode = BootUpMode(self)
+
         self.create_session = create_sensor_tables_from_path(consts.DB_FILE)
         logging.info("Initializing Telemetry")
         self.telemetry = Telemetry(self)

@@ -196,14 +196,16 @@ class PauseBackgroundMode(FlightMode):
 
     def __enter__(self):
         super().__enter__()
-        self._parent.nemo_manager.pause()
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.pause()
         # TODO: Pause Opnav process if running
         gc.disable()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
-        self._parent.nemo_manager.resume()
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.resume()
         # TODO: Resume Opnav process if previously running
         super().__exit__(exc_type, exc_val, exc_tb)
 
@@ -213,8 +215,6 @@ class TestMode(PauseBackgroundMode):
     Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
 
     flight_mode_id = consts.FMEnum.TestMode.value
-
-    downlink_arg_unpackers = {"gyro1": "float", "gyro2": "float", "gyro3": "float"}
 
     def __init__(self, parent):
         super().__init__(parent)

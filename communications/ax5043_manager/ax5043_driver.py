@@ -116,7 +116,7 @@ class Ax5043:
     def __init__(self, bus: SPIDevice):
         self._bus = bus
 
-    def execute(self, cmds: Dict[int, int]):
+    def execute(self, cmds: Dict[Reg, int]):
         last_addr = -2
         addr_wvals = None
         for addr, value in sorted(cmds.items()):

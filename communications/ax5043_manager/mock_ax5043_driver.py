@@ -1,5 +1,5 @@
 from typing import Dict
-from communications.ax5043_manager.ax5043_driver import Ax5043
+from communications.ax5043_manager.ax5043_driver import Ax5043, Reg
 
 # Ideas:
 # * Writes replace read_defaults
@@ -12,7 +12,7 @@ class MockAx5043(Ax5043):
         self.read_defaults = rst_values.copy()
         self.read_queue = {}
 
-    def execute(self, cmds: Dict[int, int]):
+    def execute(self, cmds: Dict[Reg, int]):
         for register, value in cmds.items():
             self.read_defaults[register] = value
 

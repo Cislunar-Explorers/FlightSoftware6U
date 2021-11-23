@@ -1,3 +1,4 @@
+from typing import Dict
 from communications.ax5043_manager.ax5043_driver import Ax5043
 
 # Ideas:
@@ -11,8 +12,9 @@ class MockAx5043(Ax5043):
         self.read_defaults = rst_values.copy()
         self.read_queue = {}
 
-    def execute(self, cmds):
-        pass
+    def execute(self, cmds: Dict[int, int]):
+        for register, value in cmds.items():
+            self.read_defaults[register] = value
 
     def read(self, addr):
         if addr in self.read_queue:
@@ -32,7 +34,7 @@ class MockAx5043(Ax5043):
 
 rst_values = {
     0x000: 0x51,
-    0x001: 0x7D,  # changed from 0x7d to
+    0x001: 0xC5,  # changed from 0x7d to pass unit tests
     0x002: 0x60,
     0x003: 0xF7,
     0x004: 0x77,

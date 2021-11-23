@@ -1,5 +1,6 @@
 from communications.ax5043_manager.ax5043_regs import Reg
 from adafruit_bus_device.spi_device import SPIDevice
+from typing import Dict
 
 
 class Chunk:
@@ -115,7 +116,7 @@ class Ax5043:
     def __init__(self, bus: SPIDevice):
         self._bus = bus
 
-    def execute(self, cmds):
+    def execute(self, cmds: Dict[int, int]):
         last_addr = -2
         addr_wvals = None
         for addr, value in sorted(cmds.items()):

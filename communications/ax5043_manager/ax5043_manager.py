@@ -32,14 +32,14 @@ class Manager:
             logging.error(
                 "Exception exiting state %s: %s", self.state.__class__.__name__, e
             )
-            self.state = Manager.Error(self, e)
+            self.state = Error(self, e)
         try:
             self.state.enter()
         except Exception as e:
             logging.error(
                 "Exception entering state %s: %s", self.state.__class__.__name__, e
             )
-            self.state = Manager.Error(self, e)
+            self.state = Error(self, e)
             # Any exceptions raised by Error.enter() will not be caught
             self.state.enter()
             return
@@ -47,7 +47,7 @@ class Manager:
     def dispatch(self):
         if self.reset_requested:
             logging.info("Resetting")
-            self.transition(Manager.Initializing(self))
+            self.transition(Initializing(self))
         else:
             try:
                 self.state.dispatch()
@@ -69,7 +69,7 @@ class Manager:
         return self.tx_enabled and not self.inbox.empty()
 
     def is_faulted(self):
-        return isinstance(self.state, Manager.Error)
+        return isinstance(self.state, Error)
 
     def poll(self, reg, mask, target=None, timeout=0.1):
         if target is None:
@@ -133,7 +133,7 @@ class Initializing(State):
     def dispatch(self):
         self.mgr.driver.execute(setup_cmds)
         self.mgr.driver.execute(datarate_cmds)
-        self.mgr.transition(Manager.Autoranging(self.mgr))
+        self.mgr.transition(Autoranging(self.mgr))
 
 
 class Autoranging(State):
@@ -170,9 +170,7 @@ class Autoranging(State):
                 self.mgr.poll(Reg.XTALSTATUS, Bits.XTAL_RUN)
             except Exception as e:
                 logging.error(e, exc_info=True)
-                self.mgr.transition(
-                    Manager.Error(self.mgr, "Timeout waiting for XTAL_RUN")
-                )
+                self.mgr.transition(Error(self.mgr, "Timeout waiting for XTAL_RUN"))
                 return
             # Set RNG_START
             self.mgr.driver.execute({Reg.PLLRANGINGA: Bits.RNG_START | 0x08})
@@ -181,13 +179,13 @@ class Autoranging(State):
         # Wait for auto-ranging to terminate
         pllranging = self.mgr.driver.read(Reg.PLLRANGINGA)
         if pllranging & Bits.RNGERR:
-            self.mgr.transition(Manager.Error(self.mgr, "RNGERR"))
+            self.mgr.transition(Error(self.mgr, "RNGERR"))
         elif not (pllranging & Bits.RNG_START):
-            self.mgr.transition(Manager.Idle(self.mgr))
+            self.mgr.transition(Idle(self.mgr))
         else:
             self.poll_count += 1
             if self.poll_count > self.MAX_POLL_COUNT:
-                self.mgr.transition(Manager.Error(self.mgr, "RNG_START"))
+                self.mgr.transition(Error(self.mgr, "RNG_START"))
 
 
 class Idle(State):
@@ -200,9 +198,9 @@ class Idle(State):
     def dispatch(self):
         if self.mgr.should_transmit():
             msg = self.mgr.inbox.get()
-            self.mgr.transition(Manager.Transmitting(self.mgr, msg))
+            self.mgr.transition(Transmitting(self.mgr, msg))
         elif self.mgr.rx_enabled:
-            self.mgr.transition(Manager.Receiving(self.mgr))
+            self.mgr.transition(Receiving(self.mgr))
 
 
 class Transmitting(State):
@@ -240,7 +238,7 @@ class Transmitting(State):
         if not self.mgr.tx_enabled:
             # TODO: abort notice?
             logging.warn("Transmission aborted")
-            self.mgr.transition(Manager.Idle(self.mgr))
+            self.mgr.transition(Idle(self.mgr))
         # Wait until transmission is done (TODO: 0-timeout)
         # radiostate = self.mgr.driver.poll(Reg.RADIOSTATE, 0xFF, 0)
         radiostate = self.mgr.driver.read(Reg.RADIOSTATE)
@@ -250,9 +248,9 @@ class Transmitting(State):
                 self.msg = self.mgr.inbox.get()
                 self.enter()
             elif self.mgr.rx_enabled:
-                self.mgr.transition(Manager.Receiving(self.mgr))
+                self.mgr.transition(Receiving(self.mgr))
             else:
-                self.mgr.transition(Manager.Idle(self.mgr))
+                self.mgr.transition(Idle(self.mgr))
 
     def exit(self):
         self.mgr.enable_pa(False)
@@ -279,9 +277,9 @@ class Receiving(State):
         # TODO: poll radiostate for whether currently receiving?
         if self.mgr.should_transmit():
             msg = self.mgr.inbox.get()
-            self.mgr.transition(Manager.Transmitting(self.mgr, msg))
+            self.mgr.transition(Transmitting(self.mgr, msg))
         elif not self.mgr.rx_enabled:
-            self.mgr.transition(Manager.Idle(self.mgr))
+            self.mgr.transition(Idle(self.mgr))
         else:
             self.drain_fifo()
 
@@ -301,7 +299,7 @@ class Receiving(State):
                 except Exception as e:
                     logging.error(e)
                     self.bad_fifo = True
-                    self.mgr.transition(Manager.Receiving(self.mgr))
+                    self.mgr.transition(Receiving(self.mgr))
                     return
                 logging.debug("Parsed chunk %s", chunk)
                 # TODO: metadata

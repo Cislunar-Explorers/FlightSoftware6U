@@ -363,6 +363,7 @@ class CommandEnum(IntEnum):
 
     SeparationTest = 55
     LongString = 56
+    RegDump = 57
 
     IgnoreLowBatt = 60
     CeaseComms = 170

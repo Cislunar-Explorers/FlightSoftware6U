@@ -187,3 +187,11 @@ class Ax5043:
         with self._bus as spi:
             spi.write_readinto(addr_wvals, rvals)
         return rvals[1:]
+
+    def reg_dump(self) -> Dict[str, int]:
+        """Read and return all registers on the AX5043"""
+        return {
+            reg.name: self.read(reg.value)
+            for reg in Reg
+            if self.read(reg.value) is not None
+        }

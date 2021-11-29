@@ -945,6 +945,22 @@ class get_gom_conf2(Command):
             logging.warning("Can't talk to Gom P31u")
 
 
+class ax5043_reg_dump(Command):
+    id = consts.CommandEnum.RegDump
+    uplink_args = []
+    downlink_telem = []
+
+    def _method(
+        self, parent: MainSatelliteThread, **kwargs
+    ) -> Optional[Dict[str, Union[float, int]]]:
+        registers = parent.radio.driver.reg_dump()
+        # unpack and stack:
+        output_string = ""
+
+        for reg_name, reg_value in registers.items():
+            output_string += f"{reg_name}:\t{hex(reg_value)}"
+
+
 COMMAND_LIST = [
     get_gom_conf2(),
     get_gom_conf1(),
@@ -999,6 +1015,7 @@ COMMAND_LIST = [
     CommandSwitch(),
     AttitudeAdjustmentSwitch(),
     run_opnav(),
+    ax5043_reg_dump(),
 ]
 
 

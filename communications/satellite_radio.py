@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Optional
 
 from adafruit_blinka.agnostic import board_id
 
@@ -93,3 +94,10 @@ class Radio:
                 inflatedByteArray += one_word
 
         return inflatedByteArray
+
+
+class MockRadio(Radio):
+    def __init__(self) -> None:
+        self.manager: Optional[Manager] = None
+        self.driver: Optional[Ax5043] = None
+        self.last_transmit_time = time()

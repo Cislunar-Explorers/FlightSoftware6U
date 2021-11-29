@@ -3,6 +3,8 @@ from utils.constants import CommandEnum, NAME, VALUE, HARD_SET, FMEnum
 from main import MainSatelliteThread
 from communications.command_handler import CommandHandler
 import utils.parameters as params
+from communications.ax5043_manager.mock_ax5043_driver import MockAx5043
+from communications.satellite_radio import MockRadio
 
 
 class CommandTest(unittest.TestCase):
@@ -57,6 +59,13 @@ class CommandTest(unittest.TestCase):
             self.assertEqual(
                 self.sat.flight_mode.flight_mode_id, mode.value
             )  # verify flight mode
+
+    def test_radio_register_dump(self):
+        self.sat.radio = MockRadio()
+        self.sat.radio.driver = MockAx5043()
+        radio_command = self.ground_station.pack_command(CommandEnum.RegDump)
+        self.sat.command_queue.put(radio_command)
+        self.sat.execute_commands()  # satellite executes commands
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ from communications.ax5043_manager.ax5043_driver import Ax5043
 from communications.ax5043_manager.ax5043_manager import Manager
 from bitstring import BitArray
 
-from time import time
+from time import time, sleep
 
 
 class Radio:
@@ -69,7 +69,7 @@ class Radio:
             # or monitor transmitting state and exit when complete)
             if cycles >= 10:
                 break
-            time.sleep(1)
+            sleep(1)
 
         self.mgr.tx_enabled = False
         self.mgr.rx_enabled = False

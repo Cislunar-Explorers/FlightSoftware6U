@@ -549,10 +549,10 @@ psk125_reg_settings = {
     Reg.TXRATE0: 0xD4,  # TX bitrate
     #    Reg.TXPWRCOEFFB1           :0x04,#TX predistortion ... 6.5dBm
     #    Reg.TXPWRCOEFFB0           :0x54,#TX predistortion
-    Reg.TXPWRCOEFFB1: 0x02,  # TX predistortion ... 0dBm
-    Reg.TXPWRCOEFFB0: 0x07,  # TX predistortion
-    #    Reg.TXPWRCOEFFB1           :0x0F,#TX predistortion ... 15dBm
-    #    Reg.TXPWRCOEFFB0           :0xFF,#TX predistortion
+    # Reg.TXPWRCOEFFB1: 0x02,  # TX predistortion ... 0dBm
+    # Reg.TXPWRCOEFFB0: 0x07,  # TX predistortion
+    Reg.TXPWRCOEFFB1: 0x0F,  # TX predistortion ... 15dBm
+    Reg.TXPWRCOEFFB0: 0xFF,  # TX predistortion
     Reg.PLLVCOI: 0x98,  # PLL parameters
     Reg.PLLRNGCLK: 0x05,  # PLL parameters
     Reg.BBTUNE: 0x0F,  # Baseband tuning

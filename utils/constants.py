@@ -18,7 +18,7 @@ os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
 
 SURRENDER_LOCAL_DIR = cast("str", config.get("SURRENDER_LOCAL_DIR"))
 
-FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
+FOR_FLIGHT = config.get("FOR_FLIGHT", "NO") == "1"
 LOG = config["LOG"] == "1"
 
 # SQL Stuff

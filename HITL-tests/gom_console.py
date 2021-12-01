@@ -3,6 +3,8 @@ import drivers.power.power_structs as ps
 from time import sleep
 import logging
 
+from utils.constants import GomOutputs
+
 
 gom = Gomspace()
 
@@ -58,11 +60,11 @@ try:
                 gom.set_pa(False)
 
             if choice == 8:
-                gom.pc.set_single_output(4, 1, 0)
+                gom.pc.set_single_output(GomOutputs.solenoid.name, 1, 0)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.pc.set_single_output(4, 0, 0)
+                gom.pc.set_single_output(GomOutputs.solenoid.name, 0, 0)
 
         if choice in [2, 3, 5]:
             duration = int(input("Duration (integer milliseconds):\n"))

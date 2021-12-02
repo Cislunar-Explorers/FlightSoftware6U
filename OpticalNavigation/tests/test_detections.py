@@ -109,7 +109,7 @@ class Detections(unittest.TestCase):
         print("Sun accuracy: ", sunTotal - sunWrong, "/", sunTotal, "=", 1 - sunWrong/sunTotal)
         print("Total accuracy: ", total - (earthWrong + moonWrong + sunWrong), "/", total, "=", total_accuracy)
 
-        self.assertGreaterEqual(total_accuracy, 0.90, "Find algorithm is not 100% accurate!")
+        self.assertGreaterEqual(total_accuracy, 0.90, "Find algorithm is < 90% accurate!")
             
 if __name__ == '__main__':
     unittest.main()

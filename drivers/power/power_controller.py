@@ -215,7 +215,7 @@ class Power:
     # delay   [2 bytes] -> [seconds]
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
-    def set_single_output(self, channel, value, delay):
+    def set_single_output(self, channel: str, value: int, delay: int):
         logging.debug(
             "Setting single channel %s output to value %s after delay %s",
             channel,
@@ -236,7 +236,7 @@ class Power:
     # volt1~volt3 [2 bytes] -> value in mV
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
-    def set_pv_volt(self, volt1, volt2, volt3):
+    def set_pv_volt(self, volt1: int, volt2: int, volt3: int):
         logging.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
         if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
             logging.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")

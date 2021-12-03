@@ -33,7 +33,7 @@ class FM_Switch(Command):
     downlink_telem = []
     id: int
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         logging.critical(f"Manual FM change commanded: {self.id}")
         parent.replace_flight_mode_by_id(self.id)
 
@@ -91,7 +91,7 @@ class separation_test(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         parent.gom.burnwire1(consts.SPLIT_BURNWIRE_DURATION)
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
@@ -113,7 +113,7 @@ class run_opnav(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         """Schedules Opnav mode into the FM queue"""
         parent.FMQueue.put(consts.FMEnum.OpNav.value)
 
@@ -176,7 +176,7 @@ class acs_pulse_timing(Command):
     ]
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         pulse_start_time = kwargs[consts.START]  # double, seconds
         pulse_duration = kwargs[consts.PULSE_DURATION]  # ushort, milliseconds
         pulse_num = kwargs[consts.PULSE_NUM]  # ushort, number
@@ -207,7 +207,7 @@ class critical_telem(Command):
     ]
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, parent: MainSatelliteThread, **kwargs
     ) -> Dict[str, Union[float, int]]:
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
         # downlinking them (think about a low-power scenario where the most important thing is our power in and out)
@@ -244,7 +244,7 @@ class basic_telem(Command):
     ]
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, parent: MainSatelliteThread, **kwargs
     ) -> Dict[str, Union[float, int]]:
         # what's defined in section 3.6.1 of https://cornell.app.box.com/file/629596158344 would be a good packet
         return parent.telemetry.standard_packet_dict()
@@ -320,9 +320,7 @@ class detailed_telem(Command):
     ]
     # Needs validation
 
-    def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
-    ) -> Dict[str, int | float]:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> Dict[str, int | float]:
         return parent.telemetry.detailed_packet_dict()
 
 
@@ -360,7 +358,7 @@ class schedule_maneuver(Command):
     downlink_telem = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         time_burn = kwargs[consts.MANEUVER_TIME]
         logging.info("Scheduling a maneuver at: " + str(float(time_burn)))
         if params.SCHEDULED_BURN_TIME > 0:
@@ -437,7 +435,7 @@ class reboot_gom(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         parent.gom.pc.reboot()
 
 
@@ -446,7 +444,7 @@ class power_cycle(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         parent.gom.hard_reset(True)
 
 
@@ -546,7 +544,7 @@ class activate_file(Command):
     uplink_args = [Codec(consts.TOTAL_BLOCKS, "ushort")]
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         file_path = params.FILE_UPDATE_PATH
         total_blocks = kwargs[consts.TOTAL_BLOCKS]
 
@@ -594,7 +592,7 @@ class nemo_write_register(Command):
     uplink_args = [Codec(consts.REG_ADDRESS, "uint8"), Codec(consts.REG_VALUE, "uint8")]
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         if parent.nemo_manager is not None:
             reg_address = kwargs[consts.REG_ADDRESS]
             values = [kwargs[consts.REG_VALUE]]
@@ -612,7 +610,7 @@ class nemo_read_register(Command):
     uplink_args = [Codec(consts.REG_ADDRESS, "uint8"), Codec(consts.REG_SIZE, "uint8")]
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         if parent.nemo_manager is not None:
             reg_address = kwargs[consts.REG_ADDRESS]
             size = kwargs[consts.REG_SIZE]
@@ -648,7 +646,7 @@ class nemo_set_config(Command):
 
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.set_config(**kwargs)
 
@@ -661,7 +659,7 @@ class nemo_power_off(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.power_off()
         else:
@@ -673,7 +671,7 @@ class nemo_power_on(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.power_on()
 
@@ -686,7 +684,7 @@ class nemo_reboot(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         if parent.nemo_manager is not None:
             parent.nemo_manager.reboot()
 
@@ -699,7 +697,7 @@ class nemo_process_rate_data(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
 
         if parent.nemo_manager is not None:
             t_start = kwargs[consts.T_START]
@@ -723,7 +721,7 @@ class nemo_process_histograms(Command):
     ]
     downlink_telem = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         if parent.nemo_manager is not None:
             t_start = kwargs[consts.T_START]
             t_stop = kwargs[consts.T_STOP]

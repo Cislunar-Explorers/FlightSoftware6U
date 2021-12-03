@@ -20,6 +20,7 @@ SURRENDER_LOCAL_DIR = cast("str", config.get("SURRENDER_LOCAL_DIR"))
 
 FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
 LOG = config["LOG"] == "1"
+TEST = config.get("TEST", "0") == "1"
 
 # SQL Stuff
 DB_ENTRY_LIMIT = 1000  # TODO update # maximum number of entries in any of the databases

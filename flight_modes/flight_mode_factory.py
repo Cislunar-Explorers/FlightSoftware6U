@@ -1,20 +1,19 @@
+from utils.constants import FMEnum
+from utils.exceptions import UnknownFlightModeException
+
+from flight_modes.attitude_adjustment import AAMode
 from flight_modes.flight_mode import (
+    CommandMode,
+    CommsMode,
     NormalMode,
     SafeMode,
     SensorMode,
     TestMode,
-    CommsMode,
-    OpNavMode,
-    CommandMode,
 )
-
 from flight_modes.low_battery import LowBatterySafetyMode
-
-from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.maneuver_flightmode import ManeuverMode
-from flight_modes.attitude_adjustment import AAMode
-from utils.constants import FMEnum
-from utils.exceptions import UnknownFlightModeException
+from flight_modes.opnav_flightmode import OpNavMode
+from flight_modes.restart_reboot import BootUpMode, RestartMode
 
 FLIGHT_MODE_DICT = {
     FMEnum.Boot.value: BootUpMode,

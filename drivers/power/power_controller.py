@@ -455,9 +455,9 @@ class Power:
             "Pulsing glowplug for %i ms with a delay of %i sec", duration, delay
         )
         sleep(delay)
-        self.set_single_output(GomOutputs.glowplug, 1, 0)
+        self.set_single_output(GomOutputs.glowplug_1, 1, 0)
         sleep(0.001 * duration)
-        self.set_single_output(GomOutputs.glowplug, 0, 0)
+        self.set_single_output(GomOutputs.glowplug_1, 0, 0)
 
     # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.

@@ -32,7 +32,7 @@ class LowBatterySafetyMode(FlightMode):
                 self._parent.gom.rf_transmitting_switch(receive=True)
                 self._parent.gom.set_electrolysis(False)
                 self._parent.gom.pc.set_single_output(GomOutputs.burnwire_1, 0, 0)
-                self._parent.gom.pc.set_single_output(GomOutputs.glowplug, 0, 0)
+                self._parent.gom.pc.set_single_output(GomOutputs.glowplug_1, 0, 0)
                 self._parent.gom.pc.set_single_output(GomOutputs.glowplug_2, 0, 0)
                 self._parent.gom.pc.set_single_output(GomOutputs.solenoid, 0, 0)
 

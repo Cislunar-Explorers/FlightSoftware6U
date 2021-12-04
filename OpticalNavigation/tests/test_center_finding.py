@@ -7,7 +7,9 @@ from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours im
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
-import argparse
+import math
+
+# import argparse
 
 
 def __get_difference(body, truths, body_vals):
@@ -27,7 +29,7 @@ def __get_difference(body, truths, body_vals):
 
 
 # TODO: Allow a different find algorithm to be tested easily
-def test_center_finding(dir, results_file, st_gn, pixel=False):
+def test_center_finding(dir, results_file, st_gn, pixel=True):
     """
     The main function for feature testing center finding. The function takes in a directory where all the files
     are located (images, observations.json, and cameras.json files). It then uses the find algorithm to determine
@@ -112,7 +114,7 @@ def __diff_histogram(results, center, filename, show, name, st_gn):
     """
     Generates the histogram of the difference between the truth value and the found value.
     """
-    idx = 1 if center else 0
+    idx = 0 if center else 1
     center_radius = "Center" if center else "Radius"
     title = "{} Absolute Difference {} {}".format(center_radius, name, st_gn)
     data = []
@@ -162,14 +164,24 @@ def center_finding_results(
 ):
     name = dir.split("/")[-1]
     results = test_center_finding(dir, results_file, st_gn)
-    center_histogram(results, center_histogram_file, name, st_gn=st_gn)
-    radius_histogram(results, radius_histogram_file, name, st_gn=st_gn)
+    center_data = center_histogram(results, center_histogram_file, name, st_gn=st_gn)
+    radius_data = radius_histogram(results, radius_histogram_file, name, st_gn=st_gn)
+    total_detections = len(center_data)
+    correct_detections = 0
+    # TODO: make the thresholds below into parameters
+    for i in range(len(center_data)):
+        if center_data[i] <= math.sqrt(8) and radius_data[i] <= 2:
+            correct_detections += 1
+    passing_detections = correct_detections / total_detections
+    if passing_detections >= 0.7:
+        return True
+    return False
 
 
 def test_traj_case_1c():
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, "../simulations/sim/data/traj-case1c_sim")
-    center_finding_results(
+    return center_finding_results(
         filename,
         "center_finding_results_traj_case_1c_sim.csv",
         "center_histogram_traj_case1c.png",
@@ -180,7 +192,7 @@ def test_traj_case_1c():
 def test_trajectory():
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, "../simulations/sim/data/trajectory_sim")
-    center_finding_results(
+    return center_finding_results(
         filename,
         "center_finding_results_trajectory_sim.csv",
         "center_histogram_trajectory.png",
@@ -188,44 +200,47 @@ def test_trajectory():
     )
 
 
-if __name__ == "__main__":
-    """
-    Run "python3 test_center_finding.py -d=<DIRECTORY> -r=<RESULTS_FILE>
-    -ch=<CENTER_HISTOGRAM_FILE> -rh=<RADIUS_HISTOGRAM_FILE> [-st_gn=<STEREOGRAPHIC_OR_GNOMONIC>]" to test this module
-    """
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-d", "--directory", help="path to trajectory directory")
-    ap.add_argument("-r", "--results_file", help="results file to output results")
-    ap.add_argument(
-        "-ch",
-        "--center_histogram_file",
-        help="histogram file to output center results histogram",
-    )
-    ap.add_argument(
-        "-rh",
-        "--radius_histogram_file",
-        help="histogram file to output radius results histogram",
-    )
-    ap.add_argument(
-        "-st_gn",
-        "--stereographic_or_gnomonic",
-        nargs="?",
-        help="whether this is stereographic or gnomonic",
-    )
-    args = vars(ap.parse_args())
-    st_gn = args.get("st_gn")
-    if st_gn:
-        center_finding_results(
-            args["directory"],
-            args["results_file"],
-            args["center_histogram_file"],
-            args["radius_histogram_file"],
-            st_gn,
-        )
-    else:
-        center_finding_results(
-            args["directory"],
-            args["results_file"],
-            args["center_histogram_file"],
-            args["radius_histogram_file"],
-        )
+test_traj_case_1c()
+test_trajectory()
+
+# if __name__ == "__main__":
+#     """
+#     Run "python3 test_center_finding.py -d=<DIRECTORY> -r=<RESULTS_FILE>
+#     -ch=<CENTER_HISTOGRAM_FILE> -rh=<RADIUS_HISTOGRAM_FILE> [-st_gn=<STEREOGRAPHIC_OR_GNOMONIC>]" to test this module
+#     """
+#     ap = argparse.ArgumentParser()
+#     ap.add_argument("-d", "--directory", help="path to trajectory directory")
+#     ap.add_argument("-r", "--results_file", help="results file to output results")
+#     ap.add_argument(
+#         "-ch",
+#         "--center_histogram_file",
+#         help="histogram file to output center results histogram",
+#     )
+#     ap.add_argument(
+#         "-rh",
+#         "--radius_histogram_file",
+#         help="histogram file to output radius results histogram",
+#     )
+#     ap.add_argument(
+#         "-st_gn",
+#         "--stereographic_or_gnomonic",
+#         nargs="?",
+#         help="whether this is stereographic or gnomonic",
+#     )
+#     args = vars(ap.parse_args())
+#     st_gn = args.get("st_gn")
+#     if st_gn:
+#         center_finding_results(
+#             args["directory"],
+#             args["results_file"],
+#             args["center_histogram_file"],
+#             args["radius_histogram_file"],
+#             st_gn,
+#         )
+#     else:
+#         center_finding_results(
+#             args["directory"],
+#             args["results_file"],
+#             args["center_histogram_file"],
+#             args["radius_histogram_file"],
+#         )

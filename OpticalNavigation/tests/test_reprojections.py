@@ -75,7 +75,9 @@ class TestReprojections(unittest.TestCase):
 
         cv2.imwrite("comp/%s_%s_%s.png" % (outputString, i, j), composite)
 
-    def reproj(self, write_remapped=False, write_composite=False):
+    def reproj(self, write_remapped: bool, write_composite: bool):
+        """Main reprojection function."""
+
         # Glob gnomonic images as filenames ending in "_gn.png"
         gnomonicList = glob.glob("images/*_gn.png")
 
@@ -209,8 +211,8 @@ class TestReprojections(unittest.TestCase):
     def test_reprojection(self):
         self.reproj(self, write_remapped=False, write_composite=False)
 
-    def test_reprojection_with_image_output(self):
-        self.reproj(self, write_remapped=True, write_composite=True)
+    # def test_reprojection_with_image_output(self):
+    #     self.reproj(self, write_remapped=True, write_composite=True)
 
 
 if __name__ == "__main__":

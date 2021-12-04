@@ -209,10 +209,10 @@ class TestReprojections(unittest.TestCase):
                         self.write_composite_image(outc, tgtc, cmp, gnName, i, j)
 
     def test_reprojection(self):
-        self.reproj(self, write_remapped=False, write_composite=False)
+        self.reproj(False, False)
 
     # def test_reprojection_with_image_output(self):
-    #     self.reproj(self, write_remapped=True, write_composite=True)
+    #     self.reproj(True, True)
 
 
 if __name__ == "__main__":

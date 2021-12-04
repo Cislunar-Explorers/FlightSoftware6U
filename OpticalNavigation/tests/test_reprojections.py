@@ -151,7 +151,16 @@ class TestReprojections(unittest.TestCase):
                     else:
                         tgtc = cv2.resize(tgtc, (w, h), interpolation=cv2.INTER_AREA)
 
-                    diff = np.average(cv2.subtract(outc, tgtc))
+                    # Calculate the difference between the two contours
+                    d = cv2.subtract(outc, tgtc)
+                    d = cv2.cvtColor(d, cv2.COLOR_BGR2HSV)
+                    d = cv2.inRange(d, np.array([0, 0, 10]), np.array([255, 255, 255]))
+                    d = d * cv2.cvtColor(cv2.absdiff(outc, tgtc), cv2.COLOR_BGR2GRAY)
+
+                    # Average the difference image to get a single value and divide
+                    # to get a value between 0 and 1.
+                    diff = np.mean(d) / 255
+
                     cmp = cv2.addWeighted(outc, 0.5, tgtc, 0.5, 0)
                     cmp[np.where((outc != tgtc).all(axis=2))] = [0, 0, 255]
 
@@ -165,6 +174,11 @@ class TestReprojections(unittest.TestCase):
                         " remapped with difference ",
                         diff,
                     )
+
+                    try:
+                        assert diff < 0.1
+                    except AssertionError:
+                        print("Difference is greater than 0.1")
 
                     # Save the composite image with filename "*_composite.png" to folder "comp"
                     # if write_composite is True.

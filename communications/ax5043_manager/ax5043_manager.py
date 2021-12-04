@@ -110,7 +110,7 @@ class Manager:
 
         def dispatch(self):
             self.mgr.driver.execute(setup_cmds)
-            self.mgr.driver.execute(datarate_cmds)
+            # self.mgr.driver.execute(datarate_cmds)
             self.mgr.transition(Manager.Autoranging(self.mgr))
 
     class Autoranging(State):

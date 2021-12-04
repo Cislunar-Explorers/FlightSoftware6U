@@ -26,6 +26,7 @@ def __get_difference(body, truths, body_vals):
     return perf_values
 
 
+# TODO: Allow a different find algorithm to be tested easily
 def test_center_finding(dir, results_file, st_gn, pixel=False):
     """
     The main function for feature testing center finding. The function takes in a directory where all the files
@@ -163,6 +164,28 @@ def center_finding_results(
     results = test_center_finding(dir, results_file, st_gn)
     center_histogram(results, center_histogram_file, name, st_gn=st_gn)
     radius_histogram(results, radius_histogram_file, name, st_gn=st_gn)
+
+
+def test_traj_case_1c():
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, "../simulations/sim/data/traj-case1c_sim")
+    center_finding_results(
+        filename,
+        "center_finding_results_traj_case_1c_sim.csv",
+        "center_histogram_traj_case1c.png",
+        "radius_histogram_traj_case1c.png",
+    )
+
+
+def test_trajectory():
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, "../simulations/sim/data/trajectory_sim")
+    center_finding_results(
+        filename,
+        "center_finding_results_trajectory_sim.csv",
+        "center_histogram_trajectory.png",
+        "radius_histogram_trajectory.png",
+    )
 
 
 if __name__ == "__main__":

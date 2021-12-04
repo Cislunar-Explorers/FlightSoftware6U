@@ -1,6 +1,5 @@
 import logging
 import random
-import threading
 from datetime import datetime, timedelta
 
 from db import db
@@ -30,27 +29,20 @@ def test_db_att_adjust():
     res = db.update_failed_att_adjust_runs()
     assert res == 2
     res2 = db.query_earliest_att_adjust_run()
-    assert now + timedelta(seconds=15) == res2.time
+    assert res2 is not None and now + timedelta(seconds=15) == res2.time
 
 
 def main_test():
-    main_satellite = MainSatellite()
-
     now = datetime.now()
-    db.add_op_nav_run(now + timedelta(seconds=3))
-    db.add_op_nav_run(now + timedelta(seconds=15))
-    # db.add_att_adjust_data(now + timedelta(seconds=5))
+    db.add_att_adjust_data(now + timedelta(seconds=4))
+    db.add_op_nav_run(now + timedelta(seconds=2))
+    db.add_op_nav_run(now + timedelta(seconds=16))
 
-    threads = [
-        threading.Thread(name="main-sat", target=main_satellite.run, daemon=True)
-    ]
-
-    for thread in threads:
-        thread.start()
+    th = MainSatellite(daemon=True)
+    th.start()
 
     try:
-        for thread in threads:
-            thread.join()
+        th.join()
     except KeyboardInterrupt:
         logging.info("Keyboard Interrupt received; exiting")
 
@@ -58,29 +50,3 @@ def main_test():
 if __name__ == "__main__":
     log.set_up_logging()
     main_test()
-    # tests = [
-    #     ("General functions", test_db_functions),
-    #     ("Att adjust functions", test_db_att_adjust),
-    # ]
-
-    # for (test_name, test_func) in tests:
-    #     print(f">>>{test_name}")
-    #     test_func()
-    #     print("---\n")
-
-    # op_nav mode addds new event to queue after completion
-
-    """
-    main loops, updating some sensor data every 3 sec
-        needs ability to be the only thread running (lock)
-    op_nav needs access to data
-        needs ability to be the only thread running
-        requires knowledge of propulsion events
-
-    each tries to acquire lock A. waits until lock B
-
-
-    goal for tomorrow: main writend checks for most recent op_nav result
-    op_nav read main data and writes
-    """
-    # EXPECT: 3 added rows, 2 failed status

@@ -9,7 +9,6 @@ Subpackages
     todo_project_name.db
     todo_project_name.flight_sw
     todo_project_name.op_nav
-    todo_project_name.threads
     todo_project_name.utils
 
 Submodules

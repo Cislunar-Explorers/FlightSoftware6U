@@ -54,17 +54,12 @@ def update_flight_data(id: int, number) -> None:
     return __update_data(models.FlightData, id, number=number)
 
 
-def update_att_adjust(id: int, state: models.RunState) -> None:
+def update_att_adjust_run(id: int, state: models.RunState) -> None:
     return __update_data(models.AttAdjustRun, id, state=state)
 
 
 def update_op_nav_run(id: int, state: models.RunState) -> None:
-    with Session.begin() as session:
-        row = session.query(models.OpNavRun).filter(models.OpNavRun.id == id).first()
-        if row is not None:
-            row.state = state
-            logging.info(f"Set {row} to {state}")
-    # session.commit() and session.close()
+    return __update_data(models.OpNavRun, id, state=state)
 
 
 def __update_failed_runs(model: models.Base) -> int:
@@ -112,11 +107,11 @@ def __query_all_data(model: models.Base) -> typing.List[models.Base]:
     return result
 
 
-def query_all_flight_data() -> None:
+def query_all_flight_data() -> typing.List[models.FlightData]:
     return __query_all_data(models.FlightData)
 
 
-def query_all_op_nav_data() -> None:
+def query_all_op_nav_data() -> typing.List[models.OpNavData]:
     return __query_all_data(models.OpNavData)
 
 
@@ -142,27 +137,24 @@ def query_latest_op_nav_data() -> typing.Union[models.OpNavData, None]:
     return result[0]
 
 
-def query_earliest_att_adjust_run() -> typing.Union[models.AttAdjustRun, None]:
+def __query_earliest(
+    model: models.Base,
+) -> typing.Union[typing.List[models.Base], None]:
     with Session() as session:
         result = (
-            session.query(models.AttAdjustRun, sa.func.min(models.AttAdjustRun.time))
-            .filter(models.AttAdjustRun.state.is_(models.RunState.QUEUED))
+            session.query(model, sa.func.min(model.time))
+            .filter(model.state.is_(models.RunState.QUEUED))
             .first()
         )
         session.expunge_all()
     # session.close()
-    logging.info(f"Get min att-adjust run: {result[0]}")
+    logging.info(f"Get earliest {model.__tablename__}: {result[0]}")
     return result[0]
+
+
+def query_earliest_att_adjust_run() -> typing.Union[models.AttAdjustRun, None]:
+    return __query_earliest(models.AttAdjustRun)
 
 
 def query_earliest_op_nav_run() -> typing.Union[models.OpNavRun, None]:
-    with Session() as session:
-        result = (
-            session.query(models.OpNavRun, sa.func.min(models.OpNavRun.time))
-            .filter(models.OpNavRun.state.is_(models.RunState.QUEUED))
-            .first()
-        )
-        session.expunge_all()
-    # session.close()
-    logging.info(f"Get min op-nav run: {result[0]}")
-    return result[0]
+    return __query_earliest(models.OpNavRun)

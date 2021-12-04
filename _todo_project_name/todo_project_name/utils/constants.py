@@ -17,9 +17,12 @@ class __Const(object):
         :return: sql database parent path
         :rtype: str
         """
-        if os.path.isabs(self.__config["DATA_PATH"]):
-            return self.__config["DATA_PATH"]
-        return os.path.join(self.__project_path, self.__config["DATA_PATH"])
+        data_path = (
+            self.__config["DATA_PATH"] if self.__config["DATA_PATH"] is not None else ""
+        )
+        if os.path.isabs(data_path):
+            return data_path
+        return os.path.join(self.__project_path, data_path)
 
     @property
     def DATA_RESET(self) -> bool:
@@ -46,7 +49,7 @@ class __Const(object):
         :return: difference in seconds
         :rtype: float
         """
-        return 10.0
+        return 5.0
 
     @property
     def OP_NAV_RUN_BUFFER(self) -> float:
@@ -55,7 +58,25 @@ class __Const(object):
         :return: difference in seconds
         :rtype: float
         """
-        return 10.0
+        return 5.0
+
+    @property
+    def MAX_ATT_ADJUST_TIME(self) -> float:
+        """Worst case time to complete an att-adjust
+
+        :return: time in seconds
+        :rtype: float
+        """
+        return 6.0
+
+    @property
+    def MAX_OP_NAV_CAMERA_TIME(self) -> float:
+        """Worst case time to complete an op-nav camera run
+
+        :return: time in seconds
+        :rtype: float
+        """
+        return 20.0
 
 
 CONST = __Const()

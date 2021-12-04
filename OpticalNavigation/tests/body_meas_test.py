@@ -1,8 +1,10 @@
 import numpy as np
 import unittest
+import os
 
 from core.const import CisLunarCameraParameters
 from core.opnav import _tZeroRotMatrix
+from utils.constants import FLIGHT_SOFTWARE_PATH
 
 class BodyMeas(unittest.TestCase):
 
@@ -24,6 +26,12 @@ class BodyMeas(unittest.TestCase):
         bodyT0 = np.dot(T0RotMatrix, bodyVec)
         return bodyT0
 
+
+    def get_traj_case_1c_data():
+        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations")
+        data = open(path)
+        observation = json.load(data)
+        
     def test_body_meas(self):
         '''
         # Get params from json

@@ -162,7 +162,12 @@ def measureMoon(img, w, h):
     return __findBody(img, cv2.inRange(img, MOON_THRESH[0], MOON_THRESH[1]), "m", w, h)
 
 
-def find(src, camera_params: CameraParameters = CisLunarCameraParameters, st=False):
+def find(
+    src,
+    camera_params: CameraParameters = CisLunarCameraParameters,
+    st=False,
+    pixel=True,
+):
     cam = Camera(
         radians(camera_params.hFov),
         radians(camera_params.vFov),
@@ -258,7 +263,14 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters, st=Fal
             sun = measureSun(f, w, h)
             if sun is not None:
                 (sX, sY), sR = sun
-                body_values["Sun"] = [x + sX - 1640, y + sY - 1232, sR]
+                if pixel:
+                    body_values["Sun"] = [x + sX - 1640, y + sY - 1232, sR]
+                else:
+                    body_values["Sun"] = [
+                        cam.normalize_st(x + sX, y + sY)[0],
+                        cam.normalize_st(x + sX, y + sY)[1],
+                        sR,
+                    ]
                 sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
                 sRho2 = sXst ** 2 + sYst ** 2
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
@@ -268,7 +280,7 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters, st=Fal
     else:
         earth = None
         index = 0
-        for f in [out, out2]:
+        for f in [out]:
             # if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f, w, h) is not None:
             #     continue
             if earth is not None:
@@ -277,7 +289,14 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters, st=Fal
                 earth = measureEarth(f, w, h)
             if earth is not None:
                 (eX, eY), eR = earth
-                body_values["Earth"] = [x + eX - 1640, y + eY - 1232, eR]
+                if pixel:
+                    body_values["Earth"] = [x + eX - 1640, y + eY - 1232, eR]
+                else:
+                    body_values["Earth"] = [
+                        cam.normalize_st(x + eX, y + eY)[0],
+                        cam.normalize_st(x + eX, y + eY)[1],
+                        eR,
+                    ]
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
                 eRho2 = eXst ** 2 + eYst ** 2
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
@@ -287,7 +306,14 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters, st=Fal
                 moon = measureMoon(f, w, h)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    body_values["Moon"] = [x + mX - 1640, y + mY - 1232, mR]
+                    if pixel:
+                        body_values["Moon"] = [x + mX - 1640, y + mY - 1232, mR]
+                    else:
+                        body_values["Moon"] = [
+                            cam.normalize_st(x + mX, y + mY)[0],
+                            cam.normalize_st(x + mX, y + mY)[1],
+                            mR,
+                        ]
                     mXst, mYst = None, None
                     # Checks whether moon contour is first or second contour
                     if index == 0:

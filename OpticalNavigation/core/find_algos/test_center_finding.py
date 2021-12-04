@@ -26,7 +26,7 @@ def __get_difference(body, truths, body_vals):
     return perf_values
 
 
-def test_center_finding(dir, results_file, st_gn):
+def test_center_finding(dir, results_file, st_gn, pixel=False):
     """
     The main function for feature testing center finding. The function takes in a directory where all the files
     are located (images, observations.json, and cameras.json files). It then uses the find algorithm to determine
@@ -47,7 +47,10 @@ def test_center_finding(dir, results_file, st_gn):
     c = open(os.path.join(dir, "cameras.json"))
     observations = json.load(o)
     cameras = json.load(c)
-    st_scale = cameras["cameras"][0]["stereographic_scale"]
+    if pixel:
+        st_scale = cameras["cameras"][0]["stereographic_scale"]
+    else:
+        st_scale = 1
 
     # Reading in truth values from observations.json
     all_truth_vals = {}
@@ -63,12 +66,15 @@ def test_center_finding(dir, results_file, st_gn):
             image_type = "image_stereographic" if st_gn == "st" else "image_gnomonic"
             all_truth_vals[frame[image_type]] = frame_truth_vals
     results = []
-
     # Comparing found values with truth values
     for i in range(len(frames)):
         frame = frames[i]
         truths = all_truth_vals[frame.split("/")[-1]]
-        _, body_vals = find(frame, st=True) if st_gn == "st" else find(frame)
+        _, body_vals = (
+            find(frame, st=True, pixel=pixel)
+            if st_gn == "st"
+            else find(frame, pixel=pixel)
+        )
         sun_vals = body_vals.get("Sun")
         if sun_vals:
             perf_values = __get_difference("Sun", truths, sun_vals)

@@ -28,5 +28,6 @@ jobs:
       - name: Test with pytest
         run: |
           pytest
+          pytest OpticalNavigation/tests/test_center_finding.py
       - name: Run pyright
         uses: jakebailey/pyright-action@v1.0.2

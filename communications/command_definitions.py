@@ -950,15 +950,15 @@ class ax5043_reg_dump(Command):
     uplink_args = []
     downlink_telem = []
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, Union[float, int]]]:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         registers = parent.radio.driver.reg_dump()
         # unpack and stack:
         output_string = ""
 
         for reg_name, reg_value in registers.items():
-            output_string += f"{reg_name}:\t{hex(reg_value)}"
+            output_string += f"{reg_name}:\t{hex(reg_value)}\n"
+
+        logging.info(f"AX5043 Register dump:\n{output_string}")
 
 
 COMMAND_LIST = [

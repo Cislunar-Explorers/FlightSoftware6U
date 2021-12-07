@@ -1,15 +1,13 @@
 from communications.satellite_radio import Radio
-from communications.commands import CommandHandler
-from communications.downlink import DownlinkHandler
+from communications.command_handler import CommandHandler
 import time
 
 # Setup
-ch = CommandHandler()
-dh = DownlinkHandler()
+ch = CommandHandler(None)
 groundstation = Radio()
 
 # Send command to get gyro/mag/acc data
-gmaCommand = ch.pack_command(1, 8, 7)
+gmaCommand = ch.pack_command(7)
 groundstation.transmit(gmaCommand)
 print('GMA Command Transmitted')
 
@@ -24,8 +22,9 @@ while True:
 
     if downlink is not None:
         print('Downlink Received:')
-        data = dh.unpack_downlink(downlink)[-1]
-        print('Gyro: ' + str(data['gyro1']) + ', ' + str(data['gyro2']) + ', ' + str(data['gyro3']))
+        data = ch.unpack_telemetry(downlink)[-1]
+        print('Gyro: ' + str(data['gyro1']) + ', ' +
+              str(data['gyro2']) + ', ' + str(data['gyro3']))
         break
 
     cycle += 1

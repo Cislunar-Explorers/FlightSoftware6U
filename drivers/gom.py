@@ -4,9 +4,7 @@ import utils.parameters as params
 from utils.constants import GomOutputs
 
 import drivers.power.power_controller as power_controller
-import drivers.power.power_structs as ps
-
-logger = ps.gom_logger
+import logging
 
 
 class Hk(Enum):
@@ -49,10 +47,10 @@ class Gomspace:
         }
 
         try:
-            logger.debug("Getting health data %s from get_health_data" % level)
+            logging.debug("Getting health data %s from get_health_data" % level)
             return hk_dict[level.lower()]()
         except KeyError:
-            logger.warning(
+            logging.warning(
                 "Invalid argument in get_health_data. Getting default health data"
             )
             return self.pc.get_hk_1()
@@ -67,18 +65,18 @@ class Gomspace:
 
     def all_off(self):
         """Turns off all controllable outputs on the Gomspace"""
-        logger.debug("Turning off all controllable outputs")
+        logging.debug("Turning off all controllable outputs")
         self.set_pa(False)
         self.pc.set_output(0)
 
     def hard_reset(self, passcode):
         """Performs a hard reset of the P31u, including cycling permanent 5V and 3.3V and battery outputs"""
-        logger.info("Performing hard reset soon with passcode %s", passcode)
+        logging.info("Performing hard reset soon with passcode %s", passcode)
         self.pc.hard_reset(are_you_sure=passcode)
 
     def display_all(self):
         """Prints Housekeeping, config, and config2 data"""
-        logger.debug("Printing housekeeping, config and config2 data")
+        logging.debug("Printing housekeeping, config and config2 data")
         self.pc.displayAll()
 
     def solenoid(self, hold):

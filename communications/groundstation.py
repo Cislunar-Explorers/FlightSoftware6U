@@ -1,27 +1,24 @@
 # Packing Imports
 
-# Transimission Imports
-
-# Transimission Imports
+# Transmission Imports
 import logging
 import time
 from datetime import datetime
 
-import board
-import busio
-from adafruit_bus_device.spi_device import SPIDevice
 from bitstring import BitArray
 
-from communications.ax5043_manager.ax5043_driver import Ax5043
-from communications.ax5043_manager.ax5043_manager import Manager
+from communications.satellite_radio import Radio
+
 from utils.constants import ZERO_WORD, ONE_WORD
 
 
 class Groundstation:
+    """A Mock ground station using the AX5043 (the same chip that we use on the spacecraft)as the radio."""
 
     def __init__(self):
-        self.driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))
-        self.mgr = Manager(self.driver)
+        self.radio = Radio()
+        self.driver = self.radio.driver
+        self.mgr = self.radio.mgr
         self.last_transmit_time = datetime.today()
         self.last_telemetry_time = datetime.today()
 
@@ -44,7 +41,7 @@ class Groundstation:
         else:
             downlink = self.mgr.outbox.get()
             print('Inflated Bytes: ' + str(downlink))
-            return self.bit_deflation(downlink, ZERO_WORD, ONE_WORD)
+            return bit_deflation(downlink, ZERO_WORD, ONE_WORD)
 
     # Downlink given bytearray to ground station
     def transmit(self, signal: bytes):
@@ -72,20 +69,21 @@ class Groundstation:
 
         self.last_transmit_time = datetime.today()
 
-    def bit_deflation(self, downlink: bytearray, zero_word: bytes, one_word: bytes):
 
-        deflatedBitArray = BitArray('', bin='')
+def bit_deflation(downlink: bytearray, zero_word: bytes, one_word: bytes):
 
-        # Recover
-        for i in range(len(downlink) // 2):
-            byte = downlink[i * 2:(i * 2) + 2]
+    deflatedBitArray = BitArray('', bin='')
 
-            if byte == zero_word:
-                deflatedBitArray += '0b0'
-            elif byte == one_word:
-                deflatedBitArray += '0b1'
-            else:
-                # TODO try and figure out whether it's a 1 or 0
-                pass
+    # Recover
+    for i in range(len(downlink) // 2):
+        byte = downlink[i * 2:(i * 2) + 2]
 
-        return deflatedBitArray.bytes
+        if byte == zero_word:
+            deflatedBitArray += '0b0'
+        elif byte == one_word:
+            deflatedBitArray += '0b1'
+        else:
+            # TODO try and figure out whether it's a 1 or 0
+            pass
+
+    return deflatedBitArray.bytes

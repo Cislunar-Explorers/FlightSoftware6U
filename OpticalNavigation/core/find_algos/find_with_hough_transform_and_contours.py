@@ -1,4 +1,4 @@
-from OpticalNavigation.core.const import (
+from core.const import (
     ImageDetectionCircles,
     CameraParameters,
     CisLunarCameraParameters,
@@ -31,11 +31,10 @@ import cv2
 import numpy as np
 from math import radians
 import re
-from utils.log import get_log
+import logging
 
 import argparse
 
-logger = get_log()
 
 
 def drawContourCircle(img, xy, r, contours):
@@ -214,7 +213,7 @@ def find(
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) == 0:
-        logger.info("[OPNAV]: No contours found")
+        logging.info("[OPNAV]: No contours found")
         return result, {}
 
     areas = [cv2.contourArea(c) for c in contours]

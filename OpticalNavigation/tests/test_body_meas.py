@@ -1,6 +1,8 @@
 import numpy as np
 import unittest
 import os
+import json
+import re
 
 from core.const import CisLunarCameraParameters
 from core.opnav import _tZeroRotMatrix
@@ -28,9 +30,18 @@ class BodyMeas(unittest.TestCase):
 
 
     def get_traj_case_1c_data():
-        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations")
+        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json")
         data = open(path)
-        observation = json.load(data)
+        obs = json.load(data)
+        frames = obs["observations"][0]["frames"][0]
+        camNum = frames["camera"]
+        camNum = 1 if camNum == "A" else 2 if camNum == "B" else 3
+        print(camNum)
+        camVec = frames["detections"][0]["direction_cam"]
+        print(camVec)
+        img_name = frames["image_gnomonic"]
+        dt = float(re.search(r"[dt](\d*\.?\d+)", img_name).group(1))
+        print(dt)
         
     def test_body_meas(self):
         '''
@@ -54,4 +65,5 @@ class BodyMeas(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    #unittest.main()
+    BodyMeas.get_traj_case_1c_data()

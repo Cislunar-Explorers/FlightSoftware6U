@@ -4,12 +4,13 @@ import drivers.power.power_controller as pc
 import logging
 import time
 
+from utils.constants import GomOutputs
+
 HITL_test = pc.Power()
 
 logging.debug("Turning off all outputs")
-OUTPUTS = ["comms", "burnwire_1", "glowplug_2", "glowplug", "solenoid", "electrolyzer"]
-for i in range(0, 6):
-    HITL_test.set_single_output(OUTPUTS[i], 0, 0)
+for output in GomOutputs:
+    HITL_test.set_single_output(output, 0, 0)
 
 logging.debug(" --- TESTING  displayAll --- \n")
 HITL_test.displayAll()
@@ -28,18 +29,15 @@ time.sleep(5)
 
 # Turn every channel on then off sequentially using set_single_output
 logging.debug("\n --- TESTING OUPUTS --- \n")
-out_num = 0
-for i in OUTPUTS:
-    current_output = i
-    logging.debug(" ### TESTING OUT_" + str(out_num) + " ###\n")
-    HITL_test.set_single_output(current_output, 1, 0)  # Turns on channel
+for output in GomOutputs:
+    logging.debug(f" ### TESTING OUT_{output.value} ###\n")
+    HITL_test.set_single_output(output, 1, 0)  # Turns on channel
     time.sleep(1)  # wait one second
     HK_data = HITL_test.get_hk_2()  # get the housekeeping data
-    HITL_test.set_single_output(current_output, 0, 0)  # Turn off channel
-    logging.debug("OUT_" + str(out_num) + " System Current: " + str(HK_data.cursys))
-    logging.debug("OUT_" + str(out_num) + " Battery Voltage: " + str(HK_data.vbatt))
+    HITL_test.set_single_output(output, 0, 0)  # Turn off channel
+    logging.debug(f"OUT_{output.value} System Current: " + str(HK_data.cursys))
+    logging.debug(f"OUT_{output.value} Battery Voltage: " + str(HK_data.vbatt))
     logging.debug("\n")
-    out_num = out_num + 1
     time.sleep(5)
 
 # Test the component-functions

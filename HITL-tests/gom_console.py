@@ -3,6 +3,8 @@ import drivers.power.power_structs as ps
 from time import sleep
 import logging
 
+from utils.constants import GomOutputs
+
 
 gom = Gomspace()
 
@@ -58,25 +60,25 @@ try:
                 gom.set_pa(False)
 
             if choice == 8:
-                gom.pc.set_single_output(4, 1, 0)
+                gom.pc.set_single_output(GomOutputs.solenoid, 1, 0)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.pc.set_single_output(4, 0, 0)
+                gom.pc.set_single_output(GomOutputs.solenoid, 0, 0)
 
         if choice in [2, 3, 5]:
             duration = int(input("Duration (integer milliseconds):\n"))
             if choice == 2:
-                gom.pc.set_single_output("glowplug_2", 1, 0)
+                gom.pc.set_single_output(GomOutputs.glowplug_2, 1, 0)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(1e-3 * duration)
-                gom.pc.set_single_output("glowplug_2", 0, 0)
+                gom.pc.set_single_output(GomOutputs.glowplug_2, 0, 0)
 
             if choice == 3:
-                gom.pc.set_single_output("glowplug", 1, 0)
+                gom.pc.set_single_output(GomOutputs.glowplug_1, 1, 0)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(1e-3 * duration)
-                gom.pc.set_single_output("glowplug", 0, 0)
+                gom.pc.set_single_output(GomOutputs.glowplug_1, 0, 0)
 
             if choice == 5:
                 assert 0 < duration < 400

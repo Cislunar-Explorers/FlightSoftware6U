@@ -374,7 +374,7 @@ def c_bytesToStruct(i: bytearray, s: str):
 # bytearray -> byte[]
 # converts a python bytearray [b] to a python list.
 # raises: AssertionError if b is not a python bytearray
-def bytesToList(b):
+def bytesToList(b: bytearray):
     assert type(b) == bytearray
     acc = []
     for n in b:

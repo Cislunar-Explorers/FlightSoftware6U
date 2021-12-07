@@ -31,10 +31,10 @@ class LowBatterySafetyMode(FlightMode):
                 self._parent.gom.rf_receiving_switch(receive=True)
                 self._parent.gom.rf_transmitting_switch(receive=True)
                 self._parent.gom.set_electrolysis(False)
-                self._parent.gom.burnwire1(False)
-                self._parent.gom.glowplug(False)
-                self._parent.gom.glowplug2(False)
-                self._parent.gom.pc.set_single_output(4, False, 0)
+                self._parent.gom.pc.set_single_output(GomOutputs.burnwire_1, 0, 0)
+                self._parent.gom.pc.set_single_output(GomOutputs.glowplug_1, 0, 0)
+                self._parent.gom.pc.set_single_output(GomOutputs.glowplug_2, 0, 0)
+                self._parent.gom.pc.set_single_output(GomOutputs.solenoid, 0, 0)
 
             self.completed_task()
 
@@ -52,9 +52,11 @@ class LowBatterySafetyMode(FlightMode):
             return FMEnum.Normal.value
 
         time_for_opnav = (
-            time() - self._parent.last_opnav_run) // 60 < params.LB_OPNAV_INTERVAL
+            time() - self._parent.last_opnav_run
+        ) // 60 < params.LB_OPNAV_INTERVAL
         time_for_telem = (
-            time() - self._parent.radio.last_transmit_time) // 60 < params.LB_TLM_INTERVAL
+            time() - self._parent.radio.last_transmit_time
+        ) // 60 < params.LB_TLM_INTERVAL
 
         if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._parent.FMQueue:
             self._parent.FMQueue.put(FMEnum.OpNav.value)
@@ -63,7 +65,8 @@ class LowBatterySafetyMode(FlightMode):
             # Add a minimal data packet to our periodic downlink beacon
             telem = self._parent.telemetry.minimal_packet()
             downlink = self._parent.command_handler.pack_telemetry(
-                CommandEnum.CritTelem, **telem)
+                CommandEnum.CritTelem, **telem
+            )
             self._parent.downlink_queue.put(downlink)
             logging.info("Added a minimal data packet to our downlink")
 

@@ -10,7 +10,7 @@
 # Status: Main functionality completed
 #         Higher level functions completed
 #         Some testing necessary
-from typing import cast
+from typing import List, cast
 
 import pigpio
 import drivers.power.power_structs as ps
@@ -128,12 +128,12 @@ class Power:
     # writes byte list [values] with command register [cmd]
     # raises: ValueError if cmd or values are not bytes
     # TODO: Implement PowerWriteError once we switch to new I2C library
-    def write(self, cmd, values):
+    def write(self, cmd: int, values: List[int]):
         logging.debug("Writing to register %s with byte list %s", cmd, values)
         self._pi.i2c_write_device(self._dev, bytearray([cmd] + values))
 
     # reads [bytes] number of bytes from the device and returns a bytearray
-    def read(self, num_bytes):
+    def read(self, num_bytes: int):
         # first two read bytes -> [command][error code][data]
         logging.debug("Reading %s bytes from the device", num_bytes)
         (x, r) = self._pi.i2c_read_device(self._dev, num_bytes + 2)
@@ -215,7 +215,7 @@ class Power:
     # delay   [2 bytes] -> [seconds]
     # raises: AssertionError if channel or value are out of range
     # 		  AssertionError if delay is not a number
-    def set_single_output(self, channel, value, delay):
+    def set_single_output(self, channel: GomOutputs, value: int, delay: int):
         logging.debug(
             "Setting single channel %s output to value %s after delay %s",
             channel,
@@ -226,7 +226,7 @@ class Power:
         if value not in [0, 1]:
             raise PowerInputError("Invalid Input: value must be 0 or 1")
         else:
-            channel_num = GomOutputs[channel].value
+            channel_num = channel.value
             d = ps.toBytes(delay, 2)
 
             self.write(CMD_SET_SINGLE_OUTPUT, [channel_num, value] + list(d))
@@ -236,7 +236,7 @@ class Power:
     # volt1~volt3 [2 bytes] -> value in mV
     # raises: PowerInputError if voltages are over the max pv voltage
     # Not tested
-    def set_pv_volt(self, volt1, volt2, volt3):
+    def set_pv_volt(self, volt1: int, volt2: int, volt3: int):
         logging.debug("Setting PV voltage: %s, %s, %s", volt1, volt2, volt3)
         if volt1 > MAX_PV_VOLTAGE or volt2 > MAX_PV_VOLTAGE or volt3 > MAX_PV_VOLTAGE:
             logging.error("PV volt is attempting to be set above MAX_PV_VOLTAGE")
@@ -257,7 +257,7 @@ class Power:
     # MODE = 2: Fixed software powerpoint, value set with SET_PV_VOLT, default 4V
     # raises: PowerInputError if mode is not 0, 1, or 2
     # Not tested
-    def set_pv_auto(self, mode):
+    def set_pv_auto(self, mode: int):
         logging.debug("Setting solar cell power tracking to mode %i", mode)
         if mode not in [0, 1, 2]:
             raise PowerInputError("Invalid Input: mode must be 0, 1 or 2")
@@ -271,7 +271,7 @@ class Power:
     # return    [2 bytes] -> heater modes
     # raises: PowerInputError if variables are not in correct range
     # Not tested
-    def set_heater(self, command, heater, mode):
+    def set_heater(self, command: int, heater: int, mode: int):
         logging.debug("Setting heater %i to mode %i", heater, mode)
         if command != 0 or heater not in [0, 1, 2] and mode not in [0, 1]:
             logging.error(
@@ -306,7 +306,7 @@ class Power:
     # Use this command to control the config system.
     # cmd [1 byte] -> cmd = 1: Restore default config
     # raises: PowerInputError if command is not 1
-    def config_cmd(self, command):
+    def config_cmd(self, command: int):
         logging.debug("Running config_cmd: restoring default config")
         if command != 1:
             logging.error("Invalid input: command must be 1")
@@ -344,7 +344,7 @@ class Power:
     # Use this command to control the config 2 system.
     # cmd [1 byte] -> cmd=1: Restore default config; cmd=2: Confirm current config
     # raises: PowerInputError if command is not a valid value
-    def config2_cmd(self, command):
+    def config2_cmd(self, command: int):
         logging.debug("Running config2_cmd with command=%s", command)
         if command not in [1, 2]:
             logging.error("Invalid Input: command must be 1 or 2")
@@ -373,8 +373,10 @@ class Power:
     # pulses output [output] high for some amount of
     # milliseconds [duration]; called after a delay of
     # [delay] seconds.
-    def pulse(self, output, duration, delay=0):
-        logging.debug("Pulsing Gom output %i on for %i ms after a %i sec delay")
+    def pulse(self, output: GomOutputs, duration: int, delay=0):
+        logging.debug(
+            f"Pulsing Gom output {output} on for {duration} ms after a {delay} sec delay"
+        )
         sleep(delay)
         self.set_single_output(output, 1, 0)
         sleep(duration * 0.001)
@@ -382,7 +384,7 @@ class Power:
 
     # output must be off before the function is called
     # pulses high for duration amount of milliseconds
-    def pulse_pi(self, output, duration, delay=0):
+    def pulse_pi(self, output: int, duration, delay=0):
         logging.debug("Pulsing GPIO channel %i High for %i ms after a %i sec delay")
         sleep(delay)
         logging.debug("Setting GPIO channel %i HIGH", output)
@@ -394,11 +396,11 @@ class Power:
     # switches on if [switch] is true, off otherwise, with a
     # delay of [delay] seconds.
     # Input switch is of type bool
-    def electrolyzer(self, switch, delay=0):
+    def electrolyzer(self, switch: bool, delay=0):
         logging.debug(
             "Setting electrolyzer to mode %i after a delay of %i seconds", switch, delay
         )
-        self.set_single_output("electrolyzer", int(switch), delay)
+        self.set_single_output(GomOutputs.electrolyzer, int(switch), delay)
 
     # spikes the solenoid for [spike] milliseconds and
     # holds at 5v for [hold] milliseconds with a
@@ -453,9 +455,9 @@ class Power:
             "Pulsing glowplug for %i ms with a delay of %i sec", duration, delay
         )
         sleep(delay)
-        self.set_single_output("glowplug", 1, 0)
+        self.set_single_output(GomOutputs.glowplug_1, 1, 0)
         sleep(0.001 * duration)
-        self.set_single_output("glowplug", 0, 0)
+        self.set_single_output(GomOutputs.glowplug_1, 0, 0)
 
     # turns both burnwires on for [duration] seconds, with a
     # delay of [delay] seconds.
@@ -466,11 +468,11 @@ class Power:
             delay,
         )
         sleep(delay)
-        self.set_single_output("burnwire_1", 1, 0)
+        self.set_single_output(GomOutputs.burnwire_1, 1, 0)
         sleep(duration / 2)
         self.displayAll()
         sleep(duration / 2)
-        self.set_single_output("burnwire_1", 0, 0)
+        self.set_single_output(GomOutputs.burnwire_1, 0, 0)
 
     # turns both burnwire 2 on for [duration] seconds, with a
     # delay of [delay] seconds.
@@ -482,11 +484,11 @@ class Power:
         )
 
         sleep(delay)
-        self.set_single_output("glowplug_2", 1, 0)
+        self.set_single_output(GomOutputs.glowplug_2, 1, 0)
         sleep(duration * 0.001 / 2)
         self.displayAll()
         sleep(duration * 0.001 / 2)
-        self.set_single_output("glowplug_2", 0, 0)
+        self.set_single_output(GomOutputs.glowplug_2, 0, 0)
 
     # tell RF switch to either transmit or receive
     def rf_transmitting_switch(self, receive: bool = True):
@@ -512,7 +514,7 @@ class Power:
     # Toggles receiving comms amp on/off
     # Input on is either True (on) or False (off)
     def comms_amplifier(self, on: bool):
-        self.set_single_output("comms", int(on), 0)
+        self.set_single_output(GomOutputs.comms, int(on), 0)
 
     def set_GPIO_low(self):
         self.rf_transmitting_switch()

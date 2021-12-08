@@ -4,14 +4,15 @@ import os
 import json
 import re
 
+
 from core.const import CisLunarCameraParameters
 from core.opnav import _tZeroRotMatrix
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 class BodyMeas(unittest.TestCase):
-
-    cam_params = CisLunarCameraParameters
+    
     def cam2body(self, camVec, camNum) -> np.ndarray:
+        cam_params = CisLunarCameraParameters
         if camNum == 1:
             return cam_params.cam1Rotation.dot(camVec)
         elif camNum == 2:
@@ -28,42 +29,50 @@ class BodyMeas(unittest.TestCase):
         bodyT0 = np.dot(T0RotMatrix, bodyVec)
         return bodyT0
 
-
-    def get_traj_case_1c_data():
+    def get_traj_case_1c_data(self):
         path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json")
         data = open(path)
         obs = json.load(data)
-        frames = obs["observations"][0]["frames"][0]
+        frames = obs["observations"][0]["frames"][0] # Need to iterate over all frames
+        
         camNum = frames["camera"]
         camNum = 1 if camNum == "A" else 2 if camNum == "B" else 3
-        print(camNum)
+        
         camVec = frames["detections"][0]["direction_cam"]
-        print(camVec)
+        
         img_name = frames["image_gnomonic"]
         dt = float(re.search(r"[dt](\d*\.?\d+)", img_name).group(1))
-        print(dt)
+        
+        gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
+        
+        truthT0Vec = obs["observations"][0]["observed_bodies"][2]["direction_body"]
+        data.close()
+        return camNum, camVec, dt, gyroY, truthT0Vec
         
     def test_body_meas(self):
-        '''
-        # Get params from json
-        camVec = json.get("direction_cam")
-        camNum = json.get("camera".convert to [1, 2, 3])
-        dt = json.get(parse filename for dt)
-        gyroY = json.get("omega_body"[1])
-        truthT0Vec = json.get("observed_bodies"->"body"->"direction_body")
-        
+        camNum, camVec, dt, gyroY, truthT0Vec = self.get_traj_case_1c_data()
+        print("Camera Number: ", camNum)
+        print("Camera Vector: ", camVec)
+        # Need to rotate camVec 180dg about z axis because of differences in how camera frame is defined in sim vs fsw
+        # This allows for our transofmration functions to work, we end up in the same T0 frame
+        camVec[0] = -1 * camVec[0]
+        camVec[1] = -1 * camVec[1]
         # Camera frame to satellite body frame
-        bodyVec = cam2body(camVec, camNum)
+        bodyVec = self.cam2body(camVec, camNum)
+        print("Satellite Frame Vector: ", bodyVec)
 
         # Satellite body frame to T0 frame
-        finalT0Vec = body2T0(bodyVec, gyroY, timeElapsed=dt)
+        finalT0Vec = self.body2T0(bodyVec, gyroY, timeElapsed=dt)
+        print("Observe Start Vector: ", finalT0Vec)
+
+        print("Actual Vector: ", truthT0Vec)
 
         vecDist = np.linalg.norm(finalT0Vec - truthT0Vec)
-        accuracy = math.abs((finalT0Vec - truthT0Vec)/truthT0Vec)
-        self.assertLessEqual(accuracy, 0.05, "Body transformations do not match within margin of error!")
-        '''
+        print("Vect Dist: ", vecDist)
+        self.assertLessEqual(vecDist, 0.05, "Body transformations do not match within margin of error!")
+        
 
 
 if __name__ == '__main__':
-    #unittest.main()
-    BodyMeas.get_traj_case_1c_data()
+    unittest.main()
+    #BodyMeas.get_traj_case_1c_data()

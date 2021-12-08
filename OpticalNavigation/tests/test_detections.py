@@ -1,16 +1,17 @@
 from OpticalNavigation.core.find_with_contours import *
 from OpticalNavigation.core.const import ImageDetectionCircles
+from utils.constants import FLIGHT_SOFTWARE_PATH, SURRENDER_LOCAL_DIR
 import numpy as np
 import unittest
 import glob
 import os
 
 # Change these two paths for your own testing
-repoPath = "/home/stephen/code/FlightSoftware/"
-surrenderBase = "/home/stephen/Desktop/surrender_images/"
+repoPath = FLIGHT_SOFTWARE_PATH
+surrenderBase = SURRENDER_LOCAL_DIR
 
-truthValueFile = repoPath + "OpticalNavigation/tests/truth_detections_case1c.csv"
-surrenderPath = surrenderBase + "cislunar_case1c/*.jpg"
+truthValueFile = os.path.join(repoPath, "OpticalNavigation/tests/truth_detections_case1c.csv")
+surrenderPath = os.path.join(surrenderBase, "*.jpg")
 
 class Detections(unittest.TestCase):
     """Tests the detection accuracy of a given find algorithm. This tests whether we are able to 

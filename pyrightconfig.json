@@ -25,11 +25,10 @@
     "OpticalNavigation/core/opnav.py",
     "OpticalNavigation/core/find.py",
     "OpticalNavigation/core/find_with_blobs.py",
-    "OpticalNavigation/core/find_with_kmeans.py"
+    "OpticalNavigation/core/find_with_kmeans.py",
+    "_todo_project_name"
   ],
-  "extraPaths": [
-    "OpticalNavigation/"
-  ],
+  "extraPaths": ["OpticalNavigation/"],
   "pythonVersion": "3.7",
   "pythonPlatform": "Linux",
   "reportUnboundVariable": "warning",

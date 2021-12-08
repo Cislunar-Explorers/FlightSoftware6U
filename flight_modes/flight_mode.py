@@ -10,17 +10,18 @@ if TYPE_CHECKING:
     # It lets your IDE know what type(self._parent) is, without causing any circular imports at runtime.
 
 import gc
-from time import sleep, time
-from multiprocessing import Process
-import subprocess
-from queue import Empty
-from traceback import format_tb
 import logging
+from queue import Empty
+from time import sleep, time
+from traceback import format_tb
 
 import utils.constants as consts
 import utils.parameters as params
-
 from utils.exceptions import UnknownFlightModeException
+
+# import subprocess
+# from multiprocessing import Process
+
 
 no_transition_modes = [
     consts.FMEnum.SensorMode.value,
@@ -185,8 +186,8 @@ class FlightMode:
 
 class PauseBackgroundMode(FlightMode):
     """Model for FlightModes that require precise timing
-        Pause garbage collection and anything else that could
-        interrupt critical thread"""
+    Pause garbage collection and anything else that could
+    interrupt critical thread"""
 
     def run_mode(self):
         super().run_mode()
@@ -300,49 +301,6 @@ class CommsMode(FlightMode):
         self.completed_task()
 
 
-class OpNavMode(FlightMode):
-    """FMID 5: Optical Navigation Flight Mode
-    This flight mode is dedicated to starting the Opnav process"""
-
-    # TODO: Flight Software/Opnav interface
-    flight_mode_id = consts.FMEnum.OpNav.value
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def run_mode(self):
-        # TODO: overhaul so opnav calculation only occur while in opnav mode
-        if not self._parent.opnav_process.is_alive():
-            logging.info("[OPNAV]: Able to run next opnav")
-            self._parent.last_opnav_run = time()
-            logging.info("[OPNAV]: Starting opnav subprocess")
-            self._parent.opnav_process = Process(
-                target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,)
-            )
-            self._parent.opnav_process.start()
-        self.completed_task()
-
-    def update_state(self) -> int:
-        super_fm = super().update_state()
-        if super_fm != consts.NO_FM_CHANGE:
-            return super_fm
-
-        # check if opnav db has been updated, then set self.task_completed true
-
-        return consts.NO_FM_CHANGE
-
-    def opnav_subprocess(self, q):
-        # TODO put in try...except
-        # TODO change from pytest to actual opnav
-        # os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
-        # subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
-        subprocess.run(
-            "echo [OPNAV]: Subprocess Start; sleep 1m; echo [OPNAV]: Subprocess end",
-            shell=True,
-        )
-        q.put("Opnav Finished")
-
-
 class SensorMode(FlightMode):
     """FMID 7: Sensor Mode
     This flight mode is not really well defined and has kinda been forgotten about. One potential idea for it is that
@@ -398,7 +356,9 @@ class NormalMode(FlightMode):
         time_for_telem: bool = (
             time() - self._parent.radio.last_transmit_time
         ) // 60 < params.TELEM_INTERVAL
-        need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        need_to_electrolyze: bool = (
+            self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        )
         currently_electrolyzing = self._parent.telemetry.gom.is_electrolyzing
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false

@@ -18,7 +18,7 @@ os.makedirs(CISLUNAR_BASE_DIR, exist_ok=True)
 
 SURRENDER_LOCAL_DIR = cast("str", config.get("SURRENDER_LOCAL_DIR"))
 
-FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
+FOR_FLIGHT = config.get("FOR_FLIGHT", "NO") == "1"
 LOG = config["LOG"] == "1"
 TEST = config.get("TEST", "0") == "1"
 
@@ -368,6 +368,7 @@ class CommandEnum(IntEnum):
 
     SeparationTest = 55
     LongString = 56
+    RegDump = 57
 
     IgnoreLowBatt = 60
     CeaseComms = 170

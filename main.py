@@ -85,8 +85,7 @@ class MainSatelliteThread(Thread):
         logging.info("Initializing Telemetry")
         self.telemetry = Telemetry(self)
 
-
-        logger.info("opening UDP client socket")
+        logging.info("opening UDP client socket")
         self.client = Client("192.168.0.200", 3333)
 
         logging.info("Done intializing")
@@ -297,7 +296,7 @@ class MainSatelliteThread(Thread):
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
 
-                # send data udp 
+                # send data udp
                 self.client.send_data(self.telemetry.detailed_packet_dict())
 
         except (Exception, SystemExit) as e:

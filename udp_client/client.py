@@ -4,7 +4,6 @@ import logging
 
 
 class Client:
-
     def __init__(self, addr: str, port: int):
         """
         create a UDP socket at client side
@@ -21,8 +20,8 @@ class Client:
 
         @param: data_dict: the data, in python dictionary format
         """
-        json_dict = json.dumps(data_dict).encode('utf-8')
+        json_dict = json.dumps(data_dict).encode("utf-8")
         self.clientSock.sendto(json_dict, self.serverAddressPort)
         # print for testing purposes
-        logging.info("sent the following data:")
-        logging.info(data_dict)
+        logging.info("Sent data over UDP")
+        logging.debug(data_dict)

@@ -115,10 +115,12 @@ class Gomspace:
         """Turns on/off the power circuit for the PA"""
         self.pc.set_pa(on)
 
-    def is_electrolyzing(self):
+    def is_electrolyzing(self) -> bool:
         """Returns status of electrolyzer"""
         output_struct = self.get_health_data(level=Hk.OUT.value)
-        return bool(output_struct.output[GomOutputs.electrolyzer.value])
+        electrolyzer_on = output_struct.output[GomOutputs.electrolyzer.value]
+        logging.info(f"Electrolyzer is {electrolyzer_on}")
+        return bool(electrolyzer_on)
 
     def read_battery_percentage(self):
         """DEPRECATED. Use self.get_health_data(level=Hk.EPS.value).vbatt instead"""

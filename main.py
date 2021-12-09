@@ -88,9 +88,8 @@ class MainSatelliteThread(Thread):
         logger.info("Initializing Telemetry")
         self.telemetry = Telemetry(self)
 
-        # _____________need the ground station pi IP address + server port for the socket ______
         logger.info("opening UDP client socket")
-        self.client = Client("192.168.0.101", 3333)
+        self.client = Client("192.168.0.200", 3333)
 
         logger.info("Done intializing")
 
@@ -313,7 +312,7 @@ class MainSatelliteThread(Thread):
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()
 
-                # ________________send data udp  _______________________#
+                # send data udp 
                 self.client.send_data(self.telemetry.detailed_packet_dict())
 
         except Exception as e:

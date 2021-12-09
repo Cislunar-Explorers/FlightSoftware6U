@@ -59,6 +59,8 @@ development.
    pre-commit install
    ```
 
+   Create a `.env` file based off of `.env.example`.
+
 3. Create a branch for local development.
 
    ```bash

@@ -1,8 +1,9 @@
 # Testing all untested and new Gom-related commands
 
-from drivers.gom import Gomspace, logger
-from drivers.power.power_structs import displayHK, displayHk2, displayStruct
+from drivers.gom import Gomspace
+from drivers.power.power_structs import displayStruct
 from time import sleep
+import logging
 
 test = Gomspace()
 
@@ -47,16 +48,16 @@ test.burnwire1(5)
 
 sleep(3)
 
-logger.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
+logging.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
 
 test.set_electrolysis(True)
 sleep(1)
-logger.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
+logging.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
 test.set_electrolysis(False)
 sleep(1)
-logger.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
+logging.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
 
-logger.info("Battery %: " + str(test.read_battery_percentage()))
+logging.info("Battery %: " + str(test.read_battery_percentage()))

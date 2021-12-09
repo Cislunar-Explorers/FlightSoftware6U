@@ -13,9 +13,7 @@
 from drivers.ADCDriver import ADC
 from drivers.gyro import GyroSensor
 import time
-from utils.log import get_log
-
-test_log = get_log()
+import logging
 
 assert sum([1, 2, 3]) == 6, "Should be 6"
 
@@ -25,21 +23,23 @@ def test_ADC_initialize():
 
 
 def test_ADC_read_pressure(testADC):
-    test_log.info(testADC.read_pressure())
+    logging.info(testADC.read_pressure())
 
 
 def test_ADC_read_pressure_continuous(testADC):
     while True:
-        test_log.info(testADC.read_pressure())
+        logging.info(testADC.read_pressure())
         time.sleep(1)
 
 
 def test_ADC_read_pressure_20(testADC):
     x = 0
-    test_log.info(
-        "These are pressure readings when the analog to digital converter is connected to the 0 volt ground pin, 3.3V, and 5V on the RPi.")
-    test_log.info("Ouput given in psi.")
-    test_log.info("Readings taken once per second for 20 seconds.")
+    logging.info(
+        "These are pressure readings when the analog to digital converter is connected to"
+        "the 0 volt ground pin, 3.3V, and 5V on the RPi."
+    )
+    logging.info("Ouput given in psi.")
+    logging.info("Readings taken once per second for 20 seconds.")
     while x < 20:
         test_ADC_read_pressure(testADC)
         x = x + 1
@@ -47,10 +47,10 @@ def test_ADC_read_pressure_20(testADC):
 
 
 def test_ADC_read_temperature(testADC):
-    test_log.info("--------------------------")
+    logging.info("--------------------------")
     cel = testADC.read_temperature()
 
-    test_log.info(f"{cel} degC; {cel * 1.8 + 32} degF ")
+    logging.info(f"{cel} degC; {cel * 1.8 + 32} degF ")
 
 
 def test_ADC_read_temperature_continuous(testADC):
@@ -68,8 +68,8 @@ def test_ADC_read_temperature_20(testADC):
 
 
 def test_ADC_get_gyro_temp(testADC):
-    test_log.info("Cold junction temperature from gyro sensor in Celsius:")
-    test_log.info(testADC.get_gyro_temp())
+    logging.info("Cold junction temperature from gyro sensor in Celsius:")
+    logging.info(testADC.get_gyro_temp())
 
 
 if True:

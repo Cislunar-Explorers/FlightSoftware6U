@@ -141,3 +141,8 @@ dmypy.json
 
 # Other
 cislunar_data
+cislunar.log*
+
+# Opnav test results
+*.csv
+*.png

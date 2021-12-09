@@ -325,7 +325,7 @@ class detailed_telem(Command):
 
 class electrolysis(Command):
     id = consts.CommandEnum.SetElectrolysis
-    uplink_args = [Codec(consts.IGNORE, "bool")]
+    uplink_args = [Codec(consts.STATE, "bool")]
     downlink_telem = []
 
     # Needs validation

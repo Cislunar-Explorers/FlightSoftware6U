@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from utils.constants import MIN_COMMAND_SIZE
+from utils.constants import MIN_COMMAND_SIZE, CommandEnum
 from utils.exceptions import CommandException
 from typing import TYPE_CHECKING, Union, Dict, List, Any, Optional
 from communications.codec import Codec
@@ -13,9 +13,20 @@ if TYPE_CHECKING:
 
 
 class Command(ABC):
+    """Base class for all commands
+    If you want to implement a new command, go to command_definitions.py and add your command there.
+    All you need to do if you want to implement a new command is to:
+        1. Go to command_definitions.py and make a class inheriting from this class
+        2. Override the `self._method` method which can only take in a kwarg dictionary: no args other than `parent`
+        3. Add the relevant Codecs - make sure you're unpacking and packing the dict correctly in self._method
+        4. Specify the command's `id`. You'll need to add the id to the CommandEnum in utils.constants
+        5. Add your new command class to the `COMMAND_LIST` defined at the bottom of command_definitions.py
+        6. Make a unit test for your command and add it to tests/commands_test.py
+    The rest of this class is used for handling and executing the _method. See also command_handler.py"""
+
     uplink_args: List[Codec]
     downlink_telem: List[Codec]
-    id: int  # ID must be between 0 and 255 - every command ID must be different.
+    id: CommandEnum  # ID must be between 0 and 255 - every command ID must be different.
     # I can't think of a way to autogenerate these, so this will have to be enforced in practice (and unit test)
 
     def __init__(self) -> None:

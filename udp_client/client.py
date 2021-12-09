@@ -1,5 +1,6 @@
 import json
 import socket
+import logging
 
 
 class Client:
@@ -23,5 +24,5 @@ class Client:
         json_dict = json.dumps(data_dict).encode('utf-8')
         self.clientSock.sendto(json_dict, self.serverAddressPort)
         # print for testing purposes
-        print("sent the following data:")
-        print(data_dict)
+        logging.info("sent the following data:")
+        logging.info(data_dict)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import TYPE_CHECKING, Dict, Optional, Union, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 from communications.codec import Codec
 from communications.commands import Command
 from communications import codecs
@@ -943,7 +943,7 @@ class get_gom_conf2(Command):
             logging.warning("Can't talk to Gom P31u")
 
 
-COMMAND_LIST = [
+COMMAND_LIST: List[Command] = [
     get_gom_conf2(),
     get_gom_conf1(),
     set_gom_conf1(),

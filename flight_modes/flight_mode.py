@@ -435,7 +435,7 @@ class NormalMode(FlightMode):
 
         if time_for_telem:
             # Add a standard packet to the downlink queue for our period telemetry beacon
-            telem = self._parent.telemetry.standard_packet_dict()
+            telem = self._parent.telemetry.minimal_packet()
             downlink = self._parent.command_handler.pack_telemetry(
                 consts.CommandEnum.BasicTelem, **telem
             )

@@ -106,9 +106,8 @@ class FlightMode:
             else:
                 return self._parent.FMQueue.get()
 
-        return (
-            consts.NO_FM_CHANGE
-        )  # returns -1 if the logic here does not make any FM changes
+        # returns -1 if the logic here does not make any FM changes
+        return consts.NO_FM_CHANGE
 
     def run_mode(self):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
@@ -447,7 +446,7 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logging.info("In NORMAL flight mode")
-        self.completed_task()
+        # self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):

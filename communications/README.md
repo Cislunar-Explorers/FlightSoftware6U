@@ -1,41 +1,40 @@
-# 1.1 General Command Specification
+# General Command Specification
 
+Command bytes consist of the following set of data which define which command gets executed and whether it's safe to execute.
+The MAC is generated from the rest of the contents of the message.
+The Counter is simply a counter of all commands/telemetry sent.
+More info on the MAC/Counter implementation can be found at https://cornell.app.box.com/file/759191053032
+The id is the ID number of the command to be executed. These IDs are defined in the CommandEnum in utils.constants
+len_data is the number of bytes in data, which is stored as one byte.
+data is the data as to be packed/unpacked by the command's codecs.
 
-Commands will be broken up by the mode they are intended for, the property or function of that mode, and the data or arguments to be passed to it. The current specification is as follows with the mode and property stored as single bytes and the data as an unsigned short specifying the length followed by the data itself.
-
-Note: this gives the data passed to commands a maximum length of 65535.
+Note: this gives the data passed to commands a maximum length of 256. The buffer size on the AX5043 radio chip is also 256 bytes [citation needed].
 
 ```boo
 +-----------+------------+--------------------------------+
-| mode      : byte       |                        1 bytes |
+| MAC       : bytes      |                        4 bytes |
 +-----------+------------+--------------------------------+
-| property  : byte       |                        1 bytes |
+| Counter   : bytes      |                        3 bytes |
 +-----------+------------+--------------------------------+
-| data      : bytes      |                  2 + len(data) |
+| id        : byte       |                         1 byte |
 +-----------+------------+--------------------------------+
-                         |            4 + len(data) bytes |
+| len_data  : byte       |                         1 byte |
++-----------+------------+--------------------------------+
+| data      : bytes      |                len(data) bytes |
++-----------+------------+--------------------------------+
+                         |            9 + len(data) bytes |
                          +--------------------------------+
 ```
 
 
-# 2.1 Design Goal
+# Design Goal
 
-Desire is to make this as similar as possible to RPC protocol. This means that every mode will be capable of individually handling the commands.
+Prior work had each flight mode individually handle the (de)serialization of each command, but this led to much frustration because it required altering six different files just to implement one command.
+Now the desire is to make the command system as easy to implement new commands while making everything much more self-documenting.
 
-This has the complication of requiring that each flight mode be responsible for serialization/deserialization of the commands that it handles.
-
-Are there any workarounds to this that still give us the benefit of handling the commands separately?
-
-
-# 3. Forward Work
-
-# 3.1 Commands and Flight Mode Transition
-
-Flight Mode enums are specified in the constants.py file, which dictate which mode should be invoked to handle the command. It remains to be decided if receiving a command specifying a particular flight mode should immediately cause a jump into that flight mode, so that it can be handled.
-
-This seems to be the easiest way to implement it, so in the name of simplicity it's how we will begin. We must consider in the future, when should we not allow a command to cause this immediate jump? For now, the base flight mode will implement the functionality of handling a command and triggering the flight mode change and it will simply allow the commands to always interrupt the current flight mode and set a new one on the receipt of a command. In the future, individual flight modes with priority, should override this handle in order to ensure that it can queue the command, finish up its operation, clean up, and then cleanly pass control over to the execution of the new command.
-
-
-# 3.2 Breakdown of Possiblee Commands
-
-We need to break down the list of possible commands, in order to begin handling them.
+# Forward Work
+- [ ] Document all required commands
+- [ ] Better command error handling/error codes
+- [ ] Document and Implement restrictions on commands (maybe there are some commands we don't want to execute in a give flight mode)
+## Breakdown of All Commands
+All commmands are defined in `command_definitions.py`, and are further documented on Box.

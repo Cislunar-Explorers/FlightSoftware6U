@@ -31,7 +31,6 @@ class FM_Switch(Command):
 
     uplink_args = []
     downlink_telem = []
-    id: int
 
     def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         logging.critical(f"Manual FM change commanded: {self.id}")

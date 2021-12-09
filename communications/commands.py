@@ -21,7 +21,7 @@ class Command(ABC):
         3. Add the relevant Codecs - make sure you're unpacking and packing the dict correctly in self._method
         4. Specify the command's `id`. You'll need to add the id to the CommandEnum in utils.constants
         5. Add your new command class to the `COMMAND_LIST` defined at the bottom of command_definitions.py
-        6. Make a unit test for your command and add it to tests/commands_def_test.py
+        6. Make a unit test for your command and add it to tests/commands_test.py
     The rest of this class is used for handling and executing the _method. See also command_handler.py"""
 
     uplink_args: List[Codec]

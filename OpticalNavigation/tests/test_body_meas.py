@@ -11,6 +11,12 @@ from utils.constants import FLIGHT_SOFTWARE_PATH
 
 class BodyMeas(unittest.TestCase):
     
+    def st_to_sph(self, x, y):
+        """Convert stereographic coordinates to spherical coordinates."""
+        norm = x ** 2 + y ** 2 + 4
+        # Added a negative sign to z value below
+        return 4 * x / norm, 4 * y / norm, -(norm - 8) / norm
+
     def cam2body(self, camVec, camNum) -> np.ndarray:
         cam_params = CisLunarCameraParameters
         if camNum == 1:
@@ -34,29 +40,28 @@ class BodyMeas(unittest.TestCase):
         data = open(path)
         obs = json.load(data)
         frames = obs["observations"][0]["frames"][0] # Need to iterate over all frames
-        
+        print(frames)
         camNum = frames["camera"]
         camNum = 1 if camNum == "A" else 2 if camNum == "B" else 3
         
-        camVec = frames["detections"][0]["direction_cam"]
+        #camVec = frames["detections"][0]["direction_cam"]
+        center_st = frames["detections"][0]["center_st"]
         
         img_name = frames["image_gnomonic"]
         dt = float(re.search(r"[dt](\d*\.?\d+)", img_name).group(1))
         
         gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
         
-        truthT0Vec = obs["observations"][0]["observed_bodies"][2]["direction_body"]
+        truthT0Vec = obs["observations"][0]["observed_bodies"][2]["direction_body"] # Depends on body
         data.close()
-        return camNum, camVec, dt, gyroY, truthT0Vec
+        return camNum, center_st, dt, gyroY, truthT0Vec
         
     def test_body_meas(self):
-        camNum, camVec, dt, gyroY, truthT0Vec = self.get_traj_case_1c_data()
+        camNum, center_st, dt, gyroY, truthT0Vec = self.get_traj_case_1c_data()
         print("Camera Number: ", camNum)
-        print("Camera Vector: ", camVec)
-        # Need to rotate camVec 180dg about z axis because of differences in how camera frame is defined in sim vs fsw
-        # This allows for our transofmration functions to work, we end up in the same T0 frame
-        camVec[0] = -1 * camVec[0]
-        camVec[1] = -1 * camVec[1]
+        print("Center Stereo: ", center_st)
+        camVec = self.st_to_sph(center_st[0], center_st[1])
+        print("Cam Vec: ", camVec)
         # Camera frame to satellite body frame
         bodyVec = self.cam2body(camVec, camNum)
         print("Satellite Frame Vector: ", bodyVec)

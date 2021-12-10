@@ -391,6 +391,10 @@ class NormalMode(FlightMode):
         if super_fm != consts.NO_FM_CHANGE:
             return super_fm
 
+        # since Normal mode never completes its task, we need to check the queue here instead of in super.update_state
+        if not self._parent.FMQueue.empty():
+            return self._parent.FMQueue.get()
+
         time_for_opnav: bool = (
             time() - self._parent.last_opnav_run
         ) // 60 < params.OPNAV_INTERVAL
@@ -415,7 +419,7 @@ class NormalMode(FlightMode):
             self._parent.gom.set_electrolysis(False)
 
         if currently_electrolyzing and need_to_electrolyze:
-            logging.info("Already electrolyzing")
+            logging.debug("Already electrolyzing")
             pass  # we are already in the state we want to be in
 
         # if below pressure and not electrolyzing, start electrolyzing
@@ -424,20 +428,20 @@ class NormalMode(FlightMode):
             self._parent.gom.set_electrolysis(True)
 
         if not currently_electrolyzing and not need_to_electrolyze:
-            logging.info("Electrolyzers already OFF")
+            logging.debug("Electrolyzers already OFF")
             pass  # we are already in the state we want to be in
 
         # note: at this point, the variable "need_to_electrolyze" is equivalent to the new state of the electrolyzer
 
         if time_for_opnav:
-            logging.info("Time to run Opnav")
+            logging.info("Time to run opnav")
             self._parent.FMQueue.put(consts.FMEnum.OpNav.value)
 
         if time_for_telem:
             # Add a standard packet to the downlink queue for our period telemetry beacon
-            telem = self._parent.telemetry.minimal_packet()
+            telem = self._parent.telemetry.standard_packet()
             downlink = self._parent.command_handler.pack_telemetry(
-                consts.CommandEnum.CritTelem, **telem
+                consts.CommandEnum.BasicTelem, **telem
             )
             self._parent.downlink_queue.put(downlink)
             logging.info("Added a standard telemetry packet to the downlink queue")
@@ -446,7 +450,6 @@ class NormalMode(FlightMode):
 
     def run_mode(self):
         logging.info("In NORMAL flight mode")
-        # self.completed_task()
 
 
 class CommandMode(PauseBackgroundMode):

@@ -397,11 +397,11 @@ class NormalMode(FlightMode):
 
         time_for_opnav: bool = (
             time() - self._parent.last_opnav_run
-        ) // 60 < params.OPNAV_INTERVAL
+        ) // 60 > params.OPNAV_INTERVAL
 
         time_for_telem: bool = (
             time() - self._parent.radio.last_transmit_time
-        ) // 60 < params.TELEM_INTERVAL
+        ) // 60 > params.TELEM_INTERVAL
 
         need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
 

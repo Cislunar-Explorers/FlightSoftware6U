@@ -50,10 +50,11 @@ class CommandHandler:
     command_list: List[Command] = COMMAND_LIST
     uplink_counter: int  # how many times we've received a valid data packet
     downlink_counter: int  # how many times we've downlinked something
-    inflation: bool  # flag to do bit inflation; must be True for flight, can be False for testing
+    # flag to do bit inflation; must be True for flight (if not done in Radio), can be False for testing
+    inflation: bool
     _parent: Optional[MainSatelliteThread] = None
 
-    def __init__(self, parent: Optional[MainSatelliteThread], inflation=True) -> None:
+    def __init__(self, parent: Optional[MainSatelliteThread], inflation=False) -> None:
         self.inflation = inflation
         self._parent = parent
         self.uplink_counter = params.UPLINK_COUNTER

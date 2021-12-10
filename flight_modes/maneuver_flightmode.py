@@ -44,7 +44,7 @@ class ManeuverMode(PauseBackgroundMode):
             # TODO what if SCHEDULED_BURN_TIME is too far into the future
             self.task_completed = False
             # sleeping for 5 fewer seconds than the delay for safety
-            sleep(min(0, (params.SCHEDULED_BURN_TIME - time()) - 5))
+            sleep(max(0, (params.SCHEDULED_BURN_TIME - time()) - 5))
             logging.info("Heating up glowplug to execute a maneuver...")
 
             prior_pressure = self.get_pressure()

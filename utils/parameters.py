@@ -28,7 +28,7 @@ SPLIT_BURNWIRE_DURATION = 1  # seconds
 ANTENNAE_BURNWIRE_DURATION = 1  # seconds
 
 # TODO: validate these values:
-GLOWPLUG_DURATION = 1  # seconds
+GLOWPLUG_DURATION = 5  # seconds # changed from 1 to 5 for demonstration purposes
 GLOW_WAIT_TIME = 5  # seconds
 PRESSURE_THRESHOLD = 1000  # TODO ???
 PRESSURE_DELTA = -1  # ???

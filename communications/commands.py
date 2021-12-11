@@ -80,7 +80,7 @@ class Command(ABC):
     def pack_telem(self, **kwargs) -> bytes:
         return self._pack(kwargs, self.downlink_telem, self.downlink_buffer_size)
 
-    def packing_check(self, telem: Dict, codec_list: List[Codec]) -> bool:
+    def packing_check(self, telem: Optional[Dict], codec_list: List[Codec]):
         error = False
         downlink_name_dict = {codec.name: None for codec in codec_list}
         if telem is None:
@@ -93,7 +93,7 @@ class Command(ABC):
             logging.error(
                 f"The packed data does not have the dictionary keys that are defined in the codec list. \
                     Double-check the implementation of _method and uplink_args and downlink_telem are \
-                         consistent in {self.command_id}"
+                         consistent in {self.id}"
             )
             raise CommandException
 

@@ -426,7 +426,7 @@ class get_param(Command):
 
     def _method(
         self, parent: Optional[MainSatelliteThread] = None, **kwargs
-    ) -> Dict[consts.VALUE, float]:
+    ) -> Dict[str, float]:
         name = kwargs[consts.NAME]
         value = getattr(params, name)
         logging.info(f"{name}: {value}")

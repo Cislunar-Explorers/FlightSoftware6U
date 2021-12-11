@@ -418,15 +418,19 @@ class set_system_time(Command):
 
 
 class get_param(Command):
+    """Gets the value of an int or float parameter, logs it, and downlinks it as a (double) float"""
+
     id = consts.CommandEnum.GetParam
     uplink_args = [Codec(consts.NAME, "string")]
     downlink_telem = [Codec(consts.VALUE, "double")]
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+    def _method(
+        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+    ) -> Dict[consts.VALUE, float]:
         name = kwargs[consts.NAME]
         value = getattr(params, name)
         logging.info(f"{name}: {value}")
-        return {consts.NAME: value}
+        return {consts.VALUE: value}
 
 
 class reboot_gom(Command):
@@ -439,11 +443,14 @@ class reboot_gom(Command):
 
 
 class power_cycle(Command):
+    """Powers off the entire spacecraft for 400ms"""
+
     id = consts.CommandEnum.PowerCycle
     uplink_args = []
     downlink_telem = []
 
     def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+        # TODO: safe shutdown RPi before hard reset
         parent.gom.hard_reset(True)
 
 

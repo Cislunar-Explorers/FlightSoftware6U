@@ -43,7 +43,7 @@ class Command(ABC):
     def _method(
         self, parent: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Optional[Dict[str, Union[float, int]]]:
-        pass
+        ...
 
     @staticmethod
     def _unpack(data: bytes, codec_list: List[Codec]) -> Dict[str, Any]:
@@ -80,9 +80,27 @@ class Command(ABC):
     def pack_telem(self, **kwargs) -> bytes:
         return self._pack(kwargs, self.downlink_telem, self.downlink_buffer_size)
 
+    def packing_check(self, telem: Dict, codec_list: List[Codec]) -> bool:
+        error = False
+        downlink_name_dict = {codec.name: None for codec in codec_list}
+        if telem is None:
+            if len(downlink_name_dict) != 0:
+                error = True
+        elif telem.keys() != downlink_name_dict.keys():
+            error = True
+
+        if error:
+            logging.error(
+                f"The packed data does not have the dictionary keys that are defined in the codec list. \
+                    Double-check the implementation of _method and uplink_args and downlink_telem are \
+                         consistent in {self.command_id}"
+            )
+            raise CommandException
+
     def run(self, parent: Optional[MainSatelliteThread] = None, **kwargs):
         try:
             downlink = self._method(parent=parent, **kwargs)
+            self.packing_check(downlink, self.downlink_telem)
             return downlink
         except Exception as e:
             logging.error("Unhandled command exception")

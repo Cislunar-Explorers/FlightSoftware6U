@@ -9,8 +9,8 @@ from core.const import CisLunarCameraParameters
 from core.opnav import _tZeroRotMatrix
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
+
 class BodyMeas(unittest.TestCase):
-    
     def st_to_sph(self, x, y):
         """Convert stereographic coordinates to spherical coordinates."""
         norm = x ** 2 + y ** 2 + 4
@@ -27,8 +27,8 @@ class BodyMeas(unittest.TestCase):
             return cam_params.cam3Rotation.dot(camVec)
         else:
             print("Error")
-            return np.array([0,0,0])
-    
+            return np.array([0, 0, 0])
+
     def body2T0(self, bodyVec, gyroY, timeElapsed) -> np.ndarray:
         bodyRotation = gyroY * timeElapsed
         T0RotMatrix = _tZeroRotMatrix(bodyRotation)
@@ -36,10 +36,13 @@ class BodyMeas(unittest.TestCase):
         return bodyT0
 
     def get_traj_case_1c_data(self):
-        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json")
+        path = os.path.join(
+            FLIGHT_SOFTWARE_PATH,
+            "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
+        )
         data = open(path)
         obs = json.load(data)
-        frames = obs["observations"][0]["frames"] # Need to iterate over all frames
+        frames = obs["observations"][0]["frames"]  # Need to iterate over all frames
         camNum = []
         centerSt = []
         dt = []
@@ -49,23 +52,24 @@ class BodyMeas(unittest.TestCase):
             camNum.append(cam)
 
             centerSt.append(frame["detections"][0]["center_st"])
-        
+
             imgName = frame["image_gnomonic"]
             dtFrame = float(re.search(r"[dt](\d*\.?\d+)", imgName).group(1))
             dt.append(dtFrame)
-            
-        
-        truthT0Vec = obs["observations"][0]["observed_bodies"][2]["direction_body"] # Depends on body
-        
+
+        truthT0Vec = obs["observations"][0]["observed_bodies"][2][
+            "direction_body"
+        ]  # Depends on body
+
         gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
-        
+
         data.close()
         return camNum, centerSt, dt, truthT0Vec, gyroY
-        
+
     def test_body_meas(self):
         camNum, centerSt, dt, truthT0Vec, gyroY = self.get_traj_case_1c_data()
         print("Camera Numbers: ", camNum)
-        
+
         for i in range(len(camNum)):
             print("CamNun: ", camNum[i])
             print(i)
@@ -78,6 +82,7 @@ class BodyMeas(unittest.TestCase):
             print("Satellite Frame Vector: ", bodyVec)
 
             # Satellite body frame to T0 frame
+            print("dt: ", dt[i])
             finalT0Vec = self.body2T0(bodyVec, gyroY, dt[i])
             print("Observe Start Vector: ", finalT0Vec)
 
@@ -85,35 +90,15 @@ class BodyMeas(unittest.TestCase):
 
             vecDist = np.linalg.norm(finalT0Vec - truthT0Vec)
             print("Vect Dist: ", vecDist)
-            self.assertLessEqual(vecDist, 0.05, "Body transformations do not match within margin of error!")
+            self.assertLessEqual(
+                vecDist,
+                0.05,
+                "Body transformations do not match within margin of error!",
+            )
             print()
-    """
-    def get_traj_case_1c_data(self):
-        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json")
-        data = open(path)
-        obs = json.load(data)
-        frames = obs["observations"][0]["frames"][0] # Need to iterate over all frames
-        for i in range(4):
-            print(obs["observations"][0]["frames"][i], "\n")
-        print(frames)
-        camNum = frames["camera"]
-        camNum = 1 if camNum == "A" else 2 if camNum == "B" else 3
-        
-        #camVec = frames["detections"][0]["direction_cam"]
-        center_st = frames["detections"][0]["center_st"]
-        
-        img_name = frames["image_gnomonic"]
-        dt = float(re.search(r"[dt](\d*\.?\d+)", img_name).group(1))
-        
-        gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
-        
-        truthT0Vec = obs["observations"][0]["observed_bodies"][2]["direction_body"] # Depends on body
-        data.close()
-        return camNum, center_st, dt, gyroY, truthT0Vec
-    """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-    #a = BodyMeas()
-    #a.get_traj_case_1c_data()
+    # a = BodyMeas()
+    # a.get_traj_case_1c_data()

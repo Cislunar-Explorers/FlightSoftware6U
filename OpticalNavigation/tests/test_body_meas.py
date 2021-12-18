@@ -39,7 +39,62 @@ class BodyMeas(unittest.TestCase):
         path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json")
         data = open(path)
         obs = json.load(data)
+        frames = obs["observations"][0]["frames"] # Need to iterate over all frames
+        camNum = []
+        centerSt = []
+        dt = []
+        for frame in frames:
+            cam = frame["camera"]
+            cam = 1 if cam == "A" else 2 if cam == "B" else 3
+            camNum.append(cam)
+
+            centerSt.append(frame["detections"][0]["center_st"])
+        
+            imgName = frame["image_gnomonic"]
+            dtFrame = float(re.search(r"[dt](\d*\.?\d+)", imgName).group(1))
+            dt.append(dtFrame)
+            
+        
+        truthT0Vec = obs["observations"][0]["observed_bodies"][2]["direction_body"] # Depends on body
+        
+        gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
+        
+        data.close()
+        return camNum, centerSt, dt, truthT0Vec, gyroY
+        
+    def test_body_meas(self):
+        camNum, centerSt, dt, truthT0Vec, gyroY = self.get_traj_case_1c_data()
+        print("Camera Numbers: ", camNum)
+        
+        for i in range(len(camNum)):
+            print("CamNun: ", camNum[i])
+            print(i)
+            print("center_st: ", centerSt[i])
+            camVec = self.st_to_sph(centerSt[i][0], centerSt[i][1])
+            print("Cam Vec: ", camVec)
+
+            # Camera frame to satellite body frame
+            bodyVec = self.cam2body(camVec, camNum[i])
+            print("Satellite Frame Vector: ", bodyVec)
+
+            # Satellite body frame to T0 frame
+            finalT0Vec = self.body2T0(bodyVec, gyroY, dt[i])
+            print("Observe Start Vector: ", finalT0Vec)
+
+            print("Actual Vector: ", truthT0Vec)
+
+            vecDist = np.linalg.norm(finalT0Vec - truthT0Vec)
+            print("Vect Dist: ", vecDist)
+            self.assertLessEqual(vecDist, 0.05, "Body transformations do not match within margin of error!")
+            print()
+    """
+    def get_traj_case_1c_data(self):
+        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json")
+        data = open(path)
+        obs = json.load(data)
         frames = obs["observations"][0]["frames"][0] # Need to iterate over all frames
+        for i in range(4):
+            print(obs["observations"][0]["frames"][i], "\n")
         print(frames)
         camNum = frames["camera"]
         camNum = 1 if camNum == "A" else 2 if camNum == "B" else 3
@@ -55,29 +110,10 @@ class BodyMeas(unittest.TestCase):
         truthT0Vec = obs["observations"][0]["observed_bodies"][2]["direction_body"] # Depends on body
         data.close()
         return camNum, center_st, dt, gyroY, truthT0Vec
-        
-    def test_body_meas(self):
-        camNum, center_st, dt, gyroY, truthT0Vec = self.get_traj_case_1c_data()
-        print("Camera Number: ", camNum)
-        print("Center Stereo: ", center_st)
-        camVec = self.st_to_sph(center_st[0], center_st[1])
-        print("Cam Vec: ", camVec)
-        # Camera frame to satellite body frame
-        bodyVec = self.cam2body(camVec, camNum)
-        print("Satellite Frame Vector: ", bodyVec)
-
-        # Satellite body frame to T0 frame
-        finalT0Vec = self.body2T0(bodyVec, gyroY, timeElapsed=dt)
-        print("Observe Start Vector: ", finalT0Vec)
-
-        print("Actual Vector: ", truthT0Vec)
-
-        vecDist = np.linalg.norm(finalT0Vec - truthT0Vec)
-        print("Vect Dist: ", vecDist)
-        self.assertLessEqual(vecDist, 0.05, "Body transformations do not match within margin of error!")
-        
+    """
 
 
 if __name__ == '__main__':
     unittest.main()
-    #BodyMeas.get_traj_case_1c_data()
+    #a = BodyMeas()
+    #a.get_traj_case_1c_data()

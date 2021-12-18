@@ -46,6 +46,7 @@ class BodyMeas(unittest.TestCase):
         camNum = []
         centerSt = []
         dt = []
+        truthT0Vec = []
         for frame in frames:
             cam = frame["camera"]
             cam = 1 if cam == "A" else 2 if cam == "B" else 3
@@ -57,9 +58,11 @@ class BodyMeas(unittest.TestCase):
             dtFrame = float(re.search(r"[dt](\d*\.?\d+)", imgName).group(1))
             dt.append(dtFrame)
 
-        truthT0Vec = obs["observations"][0]["observed_bodies"][2][
-            "direction_body"
-        ]  # Depends on body
+            body = frame["detections"][0]["body"]
+            bodyNum = 0 if body == "Earth" else 1 if body == "Moon" else 2
+            truthT0Vec.append(
+                obs["observations"][0]["observed_bodies"][bodyNum]["direction_body"]
+            )  # Depends on body
 
         gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
 
@@ -86,9 +89,9 @@ class BodyMeas(unittest.TestCase):
             finalT0Vec = self.body2T0(bodyVec, gyroY, dt[i])
             print("Observe Start Vector: ", finalT0Vec)
 
-            print("Actual Vector: ", truthT0Vec)
+            print("Actual Vector: ", truthT0Vec[i])
 
-            vecDist = np.linalg.norm(finalT0Vec - truthT0Vec)
+            vecDist = np.linalg.norm(finalT0Vec - truthT0Vec[i])
             print("Vect Dist: ", vecDist)
             self.assertLessEqual(
                 vecDist,

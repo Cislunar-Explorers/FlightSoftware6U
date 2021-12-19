@@ -1,5 +1,4 @@
 import logging
-import time
 
 from adafruit_blinka.agnostic import board_id
 

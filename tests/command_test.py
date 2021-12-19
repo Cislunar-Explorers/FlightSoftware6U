@@ -60,6 +60,7 @@ class CommandTest(unittest.TestCase):
             )  # verify flight mode
 
     def test_get_param_command(self):
+        """Tests whether we can 'get' the value of every parameter thru the command structure."""
         from utils.parameter_utils import get_parameter_list, get_parameter_from_name
 
         param_list = get_parameter_list()
@@ -76,11 +77,14 @@ class CommandTest(unittest.TestCase):
                 )
                 self.sat.command_queue.put(uplink)
                 self.sat.execute_commands()  # satellite executes command (prints param value)
-
+                # the command adds the parameter value to the downlink queue
+                # emulate downlinking
                 downlink = self.sat.downlink_queue.get()
                 downlink_command, downlink_args = self.ground_station.unpack_telemetry(
                     downlink
                 )
+
+                # verify that what we downlink checks out
                 self.assertEqual(downlink_command.id, CommandEnum.GetParam)
                 self.assertEqual(
                     list(downlink_args.values())[0], get_parameter_from_name(param_name)

@@ -463,7 +463,7 @@ class gom_outputs(Command):
     ]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         output_channel = kwargs[consts.OUTPUT_CHANNEL]
         # if 'state' is not found in kwargs, assume we want it to turn off
         state = kwargs.get(consts.STATE, 0)
@@ -503,7 +503,7 @@ class add_file_block(Command):
     ]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         block_number = kwargs[consts.BLOCK_NUMBER]
         block_text = kwargs[consts.BLOCK_TEXT]
 
@@ -522,9 +522,7 @@ class get_file_blocks_info(Command):
         Codec(consts.MISSING_BLOCKS, "string"),
     ]
 
-    def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
-    ) -> Dict[str, str]:
+    def _method(self, parent: MainSatelliteThread, **kwargs) -> Dict[str, str]:
         time.sleep(15)  # For testing only
 
         total_blocks = kwargs[consts.TOTAL_BLOCKS]

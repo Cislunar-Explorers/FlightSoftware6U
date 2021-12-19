@@ -80,6 +80,7 @@ class MainSatelliteThread(Thread):
                 os.makedirs(consts.CISLUNAR_BASE_DIR, exist_ok=True)
                 os.mkdir(consts.LOG_DIR)
                 self.flight_mode = BootUpMode(self)
+                self.need_to_reboot = True
 
         self.create_session = create_sensor_tables_from_path(consts.DB_FILE)
         logging.info("Initializing Telemetry")

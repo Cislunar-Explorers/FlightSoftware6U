@@ -1,4 +1,6 @@
+import logging
 import unittest
+from utils import constants
 from utils.constants import CommandEnum, NAME, VALUE, HARD_SET, FMEnum
 from main import MainSatelliteThread
 from communications.command_handler import CommandHandler
@@ -13,9 +15,8 @@ class CommandTest(unittest.TestCase):
         - Packing the telemetry, bit inflating and downlinking it
         - Receiving the inflated telemetry and unpacking ut"""
 
-    def setUp(self) -> None:
-        self.ground_station = CommandHandler(None)
-        self.sat = MainSatelliteThread()
+    ground_station = CommandHandler(None)
+    sat = MainSatelliteThread()
 
     def test_commands(self):
         new_value = 33
@@ -23,7 +24,7 @@ class CommandTest(unittest.TestCase):
         command_0 = self.ground_station.pack_command(CommandEnum.Normal)
         command_1 = self.ground_station.pack_command(
             CommandEnum.SetParam,
-            **{NAME: "OPNAV_INTERVAL", VALUE: new_value, HARD_SET: False}
+            **{NAME: "OPNAV_INTERVAL", VALUE: new_value, HARD_SET: False},
         )
 
         # emulate sending command to satellite
@@ -57,6 +58,42 @@ class CommandTest(unittest.TestCase):
             self.assertEqual(
                 self.sat.flight_mode.flight_mode_id, mode.value
             )  # verify flight mode
+
+    def test_get_param_command(self):
+        """Tests whether we can 'get' the value of every parameter thru the command structure."""
+        from utils.parameter_utils import get_parameter_list, get_parameter_from_name
+
+        param_list = get_parameter_list()
+        # loop thru all parameters and get their value
+
+        # `FILE_UPDATE_PATH` is the one parameter that's a string. all others are ints/floats
+        # The get_param command can only downlink floats. Will need to def another command to downlink strings
+        param_list.remove("FILE_UPDATE_PATH")
+
+        for param_name in param_list:
+            try:
+                uplink = self.ground_station.pack_command(
+                    CommandEnum.GetParam, **{constants.NAME: param_name}
+                )
+                self.sat.command_queue.put(uplink)
+                self.sat.execute_commands()  # satellite executes command (prints param value)
+                # the command adds the parameter value to the downlink queue
+                # emulate downlinking
+                downlink = self.sat.downlink_queue.get()
+                downlink_command, downlink_args = self.ground_station.unpack_telemetry(
+                    downlink
+                )
+
+                # verify that what we downlink checks out
+                self.assertEqual(downlink_command.id, CommandEnum.GetParam)
+                self.assertEqual(
+                    list(downlink_args.values())[0], get_parameter_from_name(param_name)
+                )
+                self.assertEqual(list(downlink_args.keys())[0], constants.VALUE)
+
+            except Exception:
+                logging.error(f"Parameter {param_name} failed")
+                raise
 
 
 if __name__ == "__main__":

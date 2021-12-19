@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
@@ -72,7 +72,9 @@ class CommandHandler:
         except IndexError:
             raise CommandUnpackingException(f"Command {command_id} not found")
 
-    def unpack_link(self, data: bytes, uplink: bool = True) -> Tuple[Command, Dict]:
+    def unpack_link(
+        self, data: bytes, uplink: bool = True
+    ) -> Tuple[Command, Dict[str, Any]]:
         if not uplink and self.inflation:
             # deflate bits
             data = bit_deflation(bytearray(data), ZERO_WORD, ONE_WORD)

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
@@ -50,10 +50,11 @@ class CommandHandler:
     command_list: List[Command] = COMMAND_LIST
     uplink_counter: int  # how many times we've received a valid data packet
     downlink_counter: int  # how many times we've downlinked something
-    inflation: bool  # flag to do bit inflation; must be True for flight, can be False for testing
+    # flag to do bit inflation; must be True for flight (if not done in Radio), can be False for testing
+    inflation: bool
     _parent: Optional[MainSatelliteThread] = None
 
-    def __init__(self, parent: Optional[MainSatelliteThread], inflation=True) -> None:
+    def __init__(self, parent: Optional[MainSatelliteThread], inflation=False) -> None:
         self.inflation = inflation
         self._parent = parent
         self.uplink_counter = params.UPLINK_COUNTER
@@ -71,7 +72,9 @@ class CommandHandler:
         except IndexError:
             raise CommandUnpackingException(f"Command {command_id} not found")
 
-    def unpack_link(self, data: bytes, uplink: bool = True) -> Tuple[Command, Dict]:
+    def unpack_link(
+        self, data: bytes, uplink: bool = True
+    ) -> Tuple[Command, Dict[str, Any]]:
         if not uplink and self.inflation:
             # deflate bits
             data = bit_deflation(bytearray(data), ZERO_WORD, ONE_WORD)

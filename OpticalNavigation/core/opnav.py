@@ -15,13 +15,11 @@ from core.const import (
 import core.ukf as traj_ukf
 import core.attitude as attitude
 
-# from core.sense import select_camera, record_video
-from core.sense import record_gyro
+# from core.sense import select_camera, record_video, record_gyro
 
 # from core.preprocess import extract_frames
 from core.find_with_contours import *
 from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
-import numpy as np
 from utils.db import (
     create_sensor_tables_from_path,
     OpNavTrajectoryStateModel,
@@ -36,6 +34,8 @@ from utils.db import (
 from utils.constants import SURRENDER_LOCAL_DIR, DB_FILE, OPNAV_MEDIA_DIR
 from utils.log import *
 import utils.parameters as params
+
+import numpy as np
 from datetime import datetime, timezone
 import math
 from sqlalchemy import desc
@@ -50,7 +50,11 @@ import os
 # from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 # import sys
 
-# from picamera import PiCamera
+from adafruit_blinka.agnostic import board_id
+
+if board_id and board_id != "GENERIC_LINUX_PC":
+    # from picamera import PiCamera
+    pass
 
 
 """

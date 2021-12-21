@@ -15,7 +15,8 @@ from core.const import (
 import core.ukf as traj_ukf
 import core.attitude as attitude
 
-# from core.sense import select_camera, record_video, record_gyro
+# from core.sense import select_camera, record_video,
+from core.sense import record_gyro
 
 # from core.preprocess import extract_frames
 from core.find_with_contours import *
@@ -53,7 +54,7 @@ import os
 from adafruit_blinka.agnostic import board_id
 
 if board_id and board_id != "GENERIC_LINUX_PC":
-    # from picamera import PiCamera
+    # from picamera import PiCamera # TODO: only commented because of commented out camera section
     pass
 
 
@@ -498,13 +499,9 @@ def __observe(
     """
 
     #####
-    # On HITL, path to images will be /home/pi/surrender_images/*.jpg
+    # On HITL, path to images will be /home/pi/surrender_images/ (i.e. SURRENDER_LOCAL_DIR)
 
-    # Overwrite frames to separate path
-    # frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
-    # frames = glob.glob("/Users/adam/Desktop/College/Fall2021/CislunarFA2021/cislunar_case1c/*.jpg")
-    # print(SURRENDER_LOCAL_DIR)
-    frames = glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "*.jpg"))
+    frames = glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "cislunar_case1c", "*.jpg"))
 
     logging.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 

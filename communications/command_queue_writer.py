@@ -1,4 +1,4 @@
-"""command_queue_writer.py: a temporary workaround to not having functioning radio drivers. Instead of sending
+"""command_queue_writer.py: a workaround to not having a radio. Instead of sending
 commands to the EDU/HITL through the radio board, use this to write commands to a txt file, which is then read by
 main.py's read_command_queue_from_file method """
 

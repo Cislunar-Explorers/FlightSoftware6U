@@ -1,7 +1,7 @@
 # Find Algorithms
 This folder contains all the implementations of the find algorithm that have been worked on over the years. Below is a description of each of the find algorithms and their status.<br><br>
 
-## Current Implementation in Use <code>find_with_contours.py</code><br><br>
+## Current Implementation in Use: <code>find_with_contours.py</code><br><br>
 
 ## <code>find.py</code><br>
 Status: 🟥Not viable<br>
@@ -20,7 +20,7 @@ Description: Not too sure about this one. Uses find_with_kmeans to get a binary 
 
 ## <code>find_with contrours.py</code><br>
 Status: 🟩Potentially viable<br>
-Primary Developer: Stephen Zakoworotny, Dr.Muhlberger, Matthew Hall-Pena<br>
+Primary Developer(s): Stephen Zakoworotny, Dr.Muhlberger, Matthew Hall-Pena<br>
 Description:
 
 ## <code>find_with_hough_transform_and_contours.py</code><br>

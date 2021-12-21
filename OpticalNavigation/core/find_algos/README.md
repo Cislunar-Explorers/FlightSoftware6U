@@ -1,8 +1,7 @@
 # Find Algorithms
 This folder contains all the implementations of the find algorithm that have been worked on over the years. Below is a description of each of the find algorithms and their status.<br><br>
 
-## Current Implementation in Use
-<code>find_with_contours.py</code><br><br>
+## Current Implementation in Use <code>find_with_contours.py</code><br><br>
 
 ## <code>find.py</code><br>
 Status: 🟥Not viable<br>
@@ -15,9 +14,9 @@ Primary Developer: Adam Nasir<br>
 Description:
 
 ## <code>find_with_blobs.py</code><br>
-Status: 🟥Experimental, untested<br>
+Status: ⬜Experimental, untested<br>
 Primary Developer: Sean Kumar<br>
-Description:
+Description: Not too sure about this one. Uses find_with_kmeans to get a binary image of detected bodies, and also detects/circles blobs in these contours. These blobs seem to be places where misclassifications are occuring within a contour
 
 ## <code>find_with contrours.py</code><br>
 Status: 🟩Potentially viable<br>
@@ -30,9 +29,9 @@ Primary Developer: Andrew Xu<br>
 Description:
 
 ## <code>find_with_kmeans.py</code><br>
-Status: 🟥Experimental, untested<br>
+Status: ⬜Experimental, tested<br>
 Primary Developer: Sean Kumar<br>
-Description:
+Description: Uses k-means clustering to classify pixels as either being part of a body or not. Could be helpful in classifying bodies.
 
 ## <code>find_with_threepoint.py</code><br>
 Status: 🟩Experiemntal, potentially viable<br>

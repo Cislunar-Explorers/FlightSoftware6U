@@ -21,7 +21,7 @@ Description: Not too sure about this one. Uses find_with_kmeans to get a binary 
 ## <code>find_with contrours.py</code><br>
 Status: 🟩Potentially viable<br>
 Primary Developer(s): Stephen Zakoworotny, Dr.Muhlberger, Matthew Hall-Pena<br>
-Description:
+Description: Find implementation that takes into account camera characteristics, as well as rolling shutter. Performs transofmrations from pixel coordinates to gnominic projection to spherical coordiantes, and back to the stereographic projection and back to pixel coordinates. Returns results as an ImageDetectionCricles object ([OpticalNavigation/core/const.py](https://github.com/Cislunar-Explorers/FlightSoftware/blob/master/OpticalNavigation/core/const.py#L205)), which encapsulates the center and size information for each body.
 
 ## <code>find_with_hough_transform_and_contours.py</code><br>
 Status: 🟩Potentially viable<br>

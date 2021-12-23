@@ -209,9 +209,9 @@ class ImageDetectionCircles:
     """
 
     def __init__(self) -> None:
-        self.__earth_detection = None
-        self.__moon_detection = None
-        self.__sun_detection = None
+        self.__earth_detection = np.array([0, 0, 0, 0], dtype=float)
+        self.__moon_detection = np.array([0, 0, 0, 0], dtype=float)
+        self.__sun_detection = np.array([0, 0, 0, 0], dtype=float)
 
     def set_earth_detection(
         self,
@@ -480,40 +480,75 @@ class Matrix6x6:
     Contains 6x6 matrix, stores in a numpy matrix
     """
 
-    def __init__(
-        self,
-        r1: Vector6,
-        r2: Vector6,
-        r3: Vector6,
-        r4: Vector6,
-        r5: Vector6,
-        r6: Vector6,
-    ) -> None:
-        """
-        Matrix6x6 Constructor
-        [r1]: Vector6 row 1
-        [r2]: Vector6 row 2
-        [r3]: Vector6 row 3
-        [r4]: Vector6 row 4
-        [r5]: Vector6 row 5
-        [r6]: Vector6 row 6
-        """
-        self.data = np.array(
-            [
-                r1.data.reshape(6),
-                r2.data.reshape(6),
-                r3.data.reshape(6),
-                r4.data.reshape(6),
-                r5.data.reshape(6),
-                r6.data.reshape(6),
-            ],
-            dtype=float,
-        )
-        self.data = self.data.reshape(6, 6)
+    def __init__(self, *args) -> None:
+        print(type(args[0]))
+        if len(args) == 1 and type(args[0]) == np.ndarray:
+            # if sending in numpy matrix
+            matrix = args[0]
+            assert matrix.shape[0] == matrix.shape[1] == 6
+            self.data = matrix
+        elif len(args) == 6 and type(args[0]) == Vector6:
+            """
+            Matrix6x6 Constructor
+            [r1]: Vector6 row 1
+            [r2]: Vector6 row 2
+            [r3]: Vector6 row 3
+            [r4]: Vector6 row 4
+            [r5]: Vector6 row 5
+            [r6]: Vector6 row 6
+            """
+            r1, r2, r3, r4, r5, r6 = args
+            self.data = np.array(
+                [
+                    r1.data.reshape(6),
+                    r2.data.reshape(6),
+                    r3.data.reshape(6),
+                    r4.data.reshape(6),
+                    r5.data.reshape(6),
+                    r6.data.reshape(6),
+                ],
+                dtype=float,
+            )
+            self.data = self.data.reshape(6, 6)
+        else:
+            raise Exception("Incorrect input to Matrix6x6")
 
-    def __init__(self, matrix: np.ndarray) -> None:
-        assert matrix.shape[0] == matrix.shape[1] == 6
-        self.data = matrix
+    # Keeping below code commented out because above implementation that conforms to pyright has not been tested
+
+    # def __init__(
+    #     self,
+    #     r1: Vector6,
+    #     r2: Vector6,
+    #     r3: Vector6,
+    #     r4: Vector6,
+    #     r5: Vector6,
+    #     r6: Vector6,
+    # ) -> None:
+    #     """
+    #     Matrix6x6 Constructor
+    #     [r1]: Vector6 row 1
+    #     [r2]: Vector6 row 2
+    #     [r3]: Vector6 row 3
+    #     [r4]: Vector6 row 4
+    #     [r5]: Vector6 row 5
+    #     [r6]: Vector6 row 6
+    #     """
+    #     self.data = np.array(
+    #         [
+    #             r1.data.reshape(6),
+    #             r2.data.reshape(6),
+    #             r3.data.reshape(6),
+    #             r4.data.reshape(6),
+    #             r5.data.reshape(6),
+    #             r6.data.reshape(6),
+    #         ],
+    #         dtype=float,
+    #     )
+    #     self.data = self.data.reshape(6, 6)
+
+    # def __init__(self, matrix: np.ndarray) -> None:
+    #     assert matrix.shape[0] == matrix.shape[1] == 6
+    #     self.data = matrix
 
 
 class CovarianceMatrix(Matrix6x6):

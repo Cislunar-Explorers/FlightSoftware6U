@@ -3,6 +3,7 @@
 import numpy as np
 from enum import Enum
 import math
+import re
 
 # The system will wait for the expected time elapsed
 # for the spacecraft to face the angle that is 45 degrees
@@ -254,6 +255,27 @@ class ImageDetectionCircles:
 
     def get_sun_detection(self) -> np.ndarray:
         return self.__sun_detection
+
+
+class FileData:
+    def __init__(self, filename: str) -> None:
+        self.filename: str = filename
+        self.cam_num: int = int(re.search(r"[cam](\d+)", filename).group(1))
+        self.exposure: str = str(re.search(r"[exp](High|Low)", filename).group(1))
+        self.frame_num: int = int(re.search(r"[f](\d+)", filename).group(1))
+        self.timestamp: int = int(
+            re.search(r"[t](\d+)", filename).group(1)
+        ) * 1000  # 1000 factor only for case1c
+
+
+class DetectionData:
+    def __init__(
+        self, filedata: FileData, vector: np.array, ang_diam: float, detection: str
+    ) -> None:
+        self.filedata: FileData = filedata
+        self.vector: np.array = vector
+        self.ang_diam: float = ang_diam
+        self.detection: str = detection
 
 
 class Vector3:

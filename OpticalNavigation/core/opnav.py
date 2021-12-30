@@ -20,7 +20,12 @@ from core.sense import record_gyro
 
 # from core.preprocess import extract_frames
 from core.find_with_contours import *
-from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
+from core.const import (
+    OPNAV_EXIT_STATUS,
+    CisLunarCameraParameters,
+    FileData,
+    DetectionData,
+)
 from utils.db import (
     create_sensor_tables_from_path,
     OpNavTrajectoryStateModel,
@@ -202,6 +207,43 @@ def __calculate_cam_measurements(body1: np.ndarray, body2: np.ndarray) -> float:
     return 2 * math.asin(d_em / 2)
 
 
+# Make this run on a singular frame, update detections list outside of function, in observe
+def get_detections(frames):
+    logging.info("[OPNAV]: Finding...")
+    progress = 1
+    detections = []
+    for f in range(len(frames)):
+        logging.info(f"[OPNAV]: Image {progress}/{len(frames)}: {frames[f]}")
+        fileInfo = FileData(frames[f])
+        detectedBodies = find(frames[f])
+
+        earthDetection = detectedBodies.get_earth_detection()
+        if np.isnan(earthDetection):
+            detectionData = DetectionData(
+                fileInfo, earthDetection[0:3], earthDetection[3], "earth"
+            )
+            detections.append(detectionData)
+
+        moonDetection = detectedBodies.get_moon_detection()
+        if np.isnan(moonDetection):
+            detectionData = DetectionData(
+                fileInfo, moonDetection[0:3], moonDetection[3], "moon"
+            )
+            detections.append(detectionData)
+
+        sunDetection = detectedBodies.get_sun_detection()
+        if np.isnan(sunDetection):
+            detectionData = DetectionData(
+                fileInfo, sunDetection[0:3], sunDetection[3], "sun"
+            )
+            detections.append(detectionData)
+
+    return detections
+
+
+# __________________________OLD_______________________________________
+
+
 def __get_elapsed_time(bestTuple, timeDeltaAvgs, observeStart):
     """
     Calculates the elapsed time (in seconds, floating pt) between the beginning of the opnav observe call and the
@@ -365,6 +407,7 @@ def body_to_T0_transform(
         bestSunTuple[2][2] = coordArray[2]
 
 
+# ___________________________________END OLD_______________________________
 ################################
 
 

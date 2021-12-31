@@ -25,6 +25,7 @@ from core.const import (
     CisLunarCameraParameters,
     FileData,
     DetectionData,
+    Vector3,
 )
 from utils.db import (
     create_sensor_tables_from_path,
@@ -218,27 +219,82 @@ def get_detections(frames):
         detectedBodies = find(frames[f])
 
         earthDetection = detectedBodies.get_earth_detection()
-        if np.isnan(earthDetection):
+        if not np.isnan(earthDetection):
             detectionData = DetectionData(
-                fileInfo, earthDetection[0:3], earthDetection[3], "earth"
+                fileInfo,
+                Vector3(earthDetection[0], earthDetection[1], earthDetection[2]),
+                earthDetection[3],
+                "earth",
             )
             detections.append(detectionData)
 
         moonDetection = detectedBodies.get_moon_detection()
-        if np.isnan(moonDetection):
+        if not np.isnan(moonDetection):
             detectionData = DetectionData(
-                fileInfo, moonDetection[0:3], moonDetection[3], "moon"
+                fileInfo,
+                Vector3(moonDetection[0], mooonDetection[1], moonDetection[2]),
+                moonDetection[3],
+                "moon",
             )
             detections.append(detectionData)
 
         sunDetection = detectedBodies.get_sun_detection()
-        if np.isnan(sunDetection):
+        if not np.isnan(sunDetection):
             detectionData = DetectionData(
-                fileInfo, sunDetection[0:3], sunDetection[3], "sun"
+                fileInfo,
+                Vector3(sunDetection[0], sunDetection[1], sunDetection[2]),
+                sunDetection[3],
+                "sun",
             )
             detections.append(detectionData)
 
     return detections
+
+
+def get_best_detection(detections):
+    closest_e = (np.inf, None)
+    closest_m = (np.inf, None)
+    closest_s = (np.inf, None)
+    for d in detections:
+        center_dist = math.sqrt(d.vector.x ** 2 + d.vector.y ** 2)
+        if d.detection == "earth" and center_dist < closest_e:
+            closest_e = (center_dist, d)
+        elif d.detection == "moon" and center_dist < closest_m:
+            closest_m = (center_dist, d)
+        elif d.detection == "sun" and center_dist < closest_s:
+            closest_s = (center_dist, d)
+    return closest_e[1], closest_m[1], closest_s[1]
+
+
+def cam_to_body(detection):
+    camNum = detection.filedata.cam_num
+    if camNum == 1:
+        res = (camera_params.cam1Rotation).dot(detection.vector.data)
+        detection.vector = Vector3(res[0], res[1], res[2])
+    elif camNum == 2:
+        res = (camera_params.cam2Rotation).dot(detection.vector.data)
+        detection.vector = Vector3(res[0], res[1], res[2])
+    elif camNum == 3:
+        res = (camera_params.cam3Rotation).dot(detection.vector.data)
+        detection.vector = Vector3(res[0], res[1], res[2])
+    return detection
+
+
+def _tZeroRotMatrix(rotation):
+    """Creates a y-axis rotation matrix"""
+    return np.array(
+        [
+            math.cos(rotation),
+            0,
+            math.sin(rotation),
+            0,
+            1,
+            0,
+            -1 * math.sin(rotation),
+            0,
+            math.cos(rotation),
+        ]
+    ).reshape(3, 3)
 
 
 # __________________________OLD_______________________________________
@@ -548,6 +604,11 @@ def __observe(
 
     logging.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
+    detections = get_detections(frames)
+    print(detections.vector.data)
+
+    # ____________________OLD___________________________________________
+
     """Find funtion: get_detections(frames) -> earthDetectionArray, moonDetectionArray,sunDetectionArray"""
     earthDetectionArray, moonDetectionArray, sunDetectionArray = get_detections(frames)
 
@@ -595,7 +656,7 @@ def __observe(
         timeDeltaAvgs,
         observeStart,
     )
-
+    # ____________________END OLD____________________________________________
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(
         bestEarthTuple[2][0],

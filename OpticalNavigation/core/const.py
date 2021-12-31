@@ -203,6 +203,26 @@ class OPNAV_EXIT_STATUS(Enum):
     NO_EPHEMERIS_ENTRY_FOUND = 6
 
 
+class Vector3:
+    def __init__(self, x: float, y: float, z: float):
+        self.data = np.array([x, y, z], dtype=float)
+        self.x = x
+        self.y = y
+        self.z = z
+
+
+class Vector6:
+    def __init__(
+        self, x1: float, x2: float, x3: float, x4: float, x5: float, x6: float
+    ):
+        self.data = np.array([x1, x2, x3, x4, x5, x6], dtype=float)
+
+
+class Vector4:
+    def __init__(self, x1: float, x2: float, x3: float, x4: float):
+        self.data = np.array([x1, x2, x3, x4], dtype=float)
+
+
 class ImageDetectionCircles:
     """
     Stores circle center of detected Sun, Moon and Earth in spherical coordinates
@@ -270,29 +290,12 @@ class FileData:
 
 class DetectionData:
     def __init__(
-        self, filedata: FileData, vector: np.array, ang_diam: float, detection: str
+        self, filedata: FileData, vector: Vector3, ang_diam: float, detection: str
     ) -> None:
         self.filedata: FileData = filedata
-        self.vector: np.array = vector
+        self.vector: Vector3 = vector
         self.ang_diam: float = ang_diam
         self.detection: str = detection
-
-
-class Vector3:
-    def __init__(self, x: float, y: float, z: float):
-        self.data = np.array([x, y, z], dtype=float)
-
-
-class Vector6:
-    def __init__(
-        self, x1: float, x2: float, x3: float, x4: float, x5: float, x6: float
-    ):
-        self.data = np.array([x1, x2, x3, x4, x5, x6], dtype=float)
-
-
-class Vector4:
-    def __init__(self, x1: float, x2: float, x3: float, x4: float):
-        self.data = np.array([x1, x2, x3, x4], dtype=float)
 
 
 """

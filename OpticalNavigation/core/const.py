@@ -1,7 +1,7 @@
 # import utils.parameters as params
 
 import numpy as np
-from enum import Enum
+from enum import unique, IntEnum, Enum
 import math
 import re
 
@@ -277,6 +277,13 @@ class ImageDetectionCircles:
         return self.__sun_detection
 
 
+@unique
+class BodyEnum(IntEnum):
+    Earth = 0
+    Moon = 1
+    Sun = 2
+
+
 class FileData:
     def __init__(self, filename: str) -> None:
         self.filename: str = filename
@@ -290,12 +297,12 @@ class FileData:
 
 class DetectionData:
     def __init__(
-        self, filedata: FileData, vector: Vector3, ang_diam: float, detection: str
+        self, filedata: FileData, vector: Vector3, ang_diam: float, detection: BodyEnum
     ) -> None:
         self.filedata: FileData = filedata
         self.vector: Vector3 = vector
         self.ang_diam: float = ang_diam
-        self.detection: str = detection
+        self.detection: BodyEnum = detection
 
 
 """

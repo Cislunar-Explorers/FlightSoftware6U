@@ -23,6 +23,7 @@ from core.find_with_contours import *
 from core.const import (
     OPNAV_EXIT_STATUS,
     CisLunarCameraParameters,
+    BodyEnum,
     FileData,
     DetectionData,
     Vector3,
@@ -224,7 +225,7 @@ def get_detections(frames):
                 fileInfo,
                 Vector3(earthDetection[0], earthDetection[1], earthDetection[2]),
                 earthDetection[3],
-                "earth",
+                BodyEnum.Earth,
             )
             detections.append(detectionData)
 
@@ -234,7 +235,7 @@ def get_detections(frames):
                 fileInfo,
                 Vector3(moonDetection[0], mooonDetection[1], moonDetection[2]),
                 moonDetection[3],
-                "moon",
+                BodyEnum.Moon,
             )
             detections.append(detectionData)
 
@@ -244,7 +245,7 @@ def get_detections(frames):
                 fileInfo,
                 Vector3(sunDetection[0], sunDetection[1], sunDetection[2]),
                 sunDetection[3],
-                "sun",
+                BodyEnum.Sun,
             )
             detections.append(detectionData)
 
@@ -257,11 +258,11 @@ def get_best_detection(detections):
     closest_s = (np.inf, None)
     for d in detections:
         center_dist = math.sqrt(d.vector.x ** 2 + d.vector.y ** 2)
-        if d.detection == "earth" and center_dist < closest_e:
+        if d.detection == BodyEnum.Earth and center_dist < closest_e:
             closest_e = (center_dist, d)
-        elif d.detection == "moon" and center_dist < closest_m:
+        elif d.detection == BodyEnum.Moon and center_dist < closest_m:
             closest_m = (center_dist, d)
-        elif d.detection == "sun" and center_dist < closest_s:
+        elif d.detection == BodyEnum.Sun and center_dist < closest_s:
             closest_s = (center_dist, d)
     return closest_e[1], closest_m[1], closest_s[1]
 
@@ -295,6 +296,18 @@ def _tZeroRotMatrix(rotation):
             math.cos(rotation),
         ]
     ).reshape(3, 3)
+
+
+def __get_elapsed_time(fileData, timeDeltaAvgs, observeStart):
+    """
+    Calculates the elapsed time (in seconds, floating pt) between the beginning of the opnav observe call and the
+    timestamp of a selected frame
+    """
+    timestamp = fileData.timestamp
+    camNum = fileData.cam_num
+    timestampUnix = timestamp + timeDeltaAvgs[camNum - 1]
+    timeElapsed = (timestampUnix - observeStart) * 10 ** -6
+    return timeElapsed
 
 
 # __________________________OLD_______________________________________

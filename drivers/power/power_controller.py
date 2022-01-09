@@ -182,11 +182,11 @@ class Power:
         return ps.c_bytesToStruct(array, "eps_hk_vi_t")
 
     # returns eps_hk_out_t struct
-    def get_hk_out(self):
+    def get_hk_out(self) -> ps.eps_hk_out_t:
         logging.debug("Running get_hk_out")
         self.write(CMD_GET_HK, [0x02])
         array = self.read(SIZE_EPS_HK_OUT_T)
-        return ps.c_bytesToStruct(array, "eps_hk_out_t")
+        return cast(ps.eps_hk_out_t, ps.c_bytesToStruct(array, "eps_hk_out_t"))
 
     # returns eps_hk_wdt_t struct
     def get_hk_wdt(self):

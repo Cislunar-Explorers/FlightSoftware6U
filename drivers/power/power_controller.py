@@ -393,15 +393,6 @@ class Power:
         self._pi.write(output, 0)
         logging.debug("Set GPIO channel %i LOW", output)
 
-    # switches on if [switch] is true, off otherwise, with a
-    # delay of [delay] seconds.
-    # Input switch is of type bool
-    def electrolyzer(self, switch: bool, delay=0):
-        logging.debug(
-            "Setting electrolyzer to mode %i after a delay of %i seconds", switch, delay
-        )
-        self.set_single_output(GomOutputs.electrolyzer, int(switch), delay)
-
     # spikes the solenoid for [spike] milliseconds and
     # holds at 5v for [hold] milliseconds with a
     # delay of [delay] seconds.
@@ -423,7 +414,7 @@ class Power:
         self.set_single_output("solenoid", 0, 0)
 
     # Experimental implementation of above functionality
-    def solenoid_single_wave(self, hold):
+    def solenoid_single_wave(self, hold: float):
         # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
         # enables vboost - async
@@ -489,6 +480,12 @@ class Power:
         self.displayAll()
         sleep(duration * 0.001 / 2)
         self.set_single_output(GomOutputs.glowplug_2, 0, 0)
+
+    def set_gpio(self, pin_num: int, state: bool):
+        return self._pi.write(pin_num, state)
+
+    def get_gpio(self, pin_num: int) -> bool:
+        return self._pi.read(pin_num)
 
     # tell RF switch to either transmit or receive
     def rf_transmitting_switch(self, receive: bool = True):

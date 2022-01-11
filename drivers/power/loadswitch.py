@@ -2,6 +2,7 @@ from typing import Union
 from drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
 from abc import ABC, abstractmethod
 import time
+import math
 from dataclasses import dataclass
 
 from utils.constants import GomOutputs
@@ -57,6 +58,12 @@ class LoadSwitch(ABC):
         """Makes the hardware call to get new telemetry from the device"""
         ...
 
+    def pulse(self, duration: Union[float, int], delay: Union[float, int] = 0):
+        time.sleep(delay)
+        self.set(True)
+        time.sleep(duration)
+        self.set(False)
+
 
 class P31uLoadSwitch(LoadSwitch):
     """Loadswitch for devices connected to the Gomspace P31u"""
@@ -82,10 +89,7 @@ class P31uLoadSwitch(LoadSwitch):
             self.set(True, delay=delay)
             self.set(False, delay=delay + duration)
         else:
-            time.sleep(delay)
-            self.set(True)
-            time.sleep(duration)
-            self.set(False)
+            super().pulse(duration)
 
     def get_new_telem(self) -> P31uLoadSwitchTelem:
         struct = self.driver.get_hk_out()  # query gomspace p31u for data
@@ -99,6 +103,20 @@ class P31uLoadSwitch(LoadSwitch):
             struct.latchup[self.p31u_output_id],
         )
         return self.telem
+
+
+class mockP31uLoadSwitch(P31uLoadSwitch):
+    def __init__(self) -> None:
+        self._state = False
+
+    def _set(self, state: bool, delay: int = 0):
+        time.sleep(delay)
+        self._state = state
+
+    def get_new_telem(self) -> P31uLoadSwitchTelem:
+        return P31uLoadSwitchTelem(
+            self._state, self._state * int(1800 + 100 * math.sin(time.time())), 0, 0, 0
+        )
 
 
 class lna(P31uLoadSwitch):

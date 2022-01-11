@@ -73,7 +73,7 @@ class Gomspace:
             )
             return self.driver.get_hk_1()
 
-    def set_output(self, channel, value, delay=0):
+    def set_single_output(self, channel, value, delay=0):
         """Sets a single controllable output either on or off.
         channel must be a string that corresponds to one of
         the outputs (see power_controller.py)
@@ -104,3 +104,7 @@ class Gomspace:
         vmin = params.GOM_VOLTAGE_MIN
         vmax = params.GOM_VOLTAGE_MAX
         return (battery_voltage - vmin) / (vmax - vmin)
+
+    def is_electrolyzing(self) -> bool:
+        """Returns whether the electrolyzer loadswitch is on"""
+        return self.electrolyzers.get_telem().state

@@ -1,3 +1,4 @@
+from typing import Union
 from drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
 from abc import ABC, abstractmethod
 import time
@@ -8,15 +9,15 @@ from utils.constants import GomOutputs
 
 @dataclass
 class LoadSwitchTelem:
-    state: bool
+    state: bool  # is the loadswitch on or off?
 
 
 @dataclass
 class P31uLoadSwitchTelem(LoadSwitchTelem):
-    current_draw: int
-    time_to_on: int
-    time_to_off: int
-    latchups: int
+    current_draw: int  # mA
+    time_to_on: int  # seconds
+    time_to_off: int  # seconds
+    latchups: int  # number of latchups reported by the P31u
 
 
 class LoadSwitch(ABC):
@@ -64,6 +65,27 @@ class P31uLoadSwitch(LoadSwitch):
 
     def _set(self, state: bool, delay: int = 0):
         self.driver.set_single_output(self.p31u_output_id, int(state), delay)
+
+    def set(self, on: bool, delay: int = 0):
+        self._set(on, delay=delay)
+        self.get_new_telem()
+
+    def pulse(
+        self,
+        duration: Union[float, int],
+        delay: Union[float, int] = 0,
+        asynchronous: bool = False,
+    ):
+        if asynchronous:
+            delay = int(delay)
+            duration = int(duration)
+            self.set(True, delay=delay)
+            self.set(False, delay=delay + duration)
+        else:
+            time.sleep(delay)
+            self.set(True)
+            time.sleep(duration)
+            self.set(False)
 
     def get_new_telem(self) -> P31uLoadSwitchTelem:
         struct = self.driver.get_hk_out()  # query gomspace p31u for data

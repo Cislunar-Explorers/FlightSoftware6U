@@ -2,10 +2,10 @@ from typing import Union
 from drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
 from abc import ABC, abstractmethod
 import time
-import math
 from dataclasses import dataclass
 
 from utils.constants import GomOutputs
+import random
 
 
 @dataclass
@@ -106,17 +106,22 @@ class P31uLoadSwitch(LoadSwitch):
 
 
 class mockP31uLoadSwitch(P31uLoadSwitch):
-    def __init__(self) -> None:
+    def __init__(self, current_draw: int = 1800, variability: int = 100) -> None:
         self._state = False
+        self.current_draw = current_draw  # mA
+        self.variability = variability  # mA
+        self.latchups: int = 0
 
     def _set(self, state: bool, delay: int = 0):
         time.sleep(delay)
         self._state = state
 
     def get_new_telem(self) -> P31uLoadSwitchTelem:
-        return P31uLoadSwitchTelem(
-            self._state, self._state * int(1800 + 100 * math.sin(time.time())), 0, 0, 0
+        current_draw = self._state * int(
+            self.current_draw + self.variability * random.uniform(-1, 1)
         )
+        self.latchups += random.random() < 0.01
+        return P31uLoadSwitchTelem(self._state, current_draw, 0, 0, self.latchups)
 
 
 class lna(P31uLoadSwitch):

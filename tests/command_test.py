@@ -1,7 +1,6 @@
 import logging
 import unittest
-from utils import constants
-from utils.constants import CommandEnum, NAME, VALUE, HARD_SET, FMEnum
+from utils.constants import CommandEnum, FMEnum, CommandKwargs as ck
 from main import MainSatelliteThread
 from communications.command_handler import CommandHandler
 import utils.parameters as params
@@ -21,10 +20,10 @@ class CommandTest(unittest.TestCase):
     def test_commands(self):
         new_value = 33
 
-        command_0 = self.ground_station.pack_command(CommandEnum.Normal)
+        command_0 = self.ground_station.pack_command(CommandEnum.Normal, {})
         command_1 = self.ground_station.pack_command(
             CommandEnum.SetParam,
-            **{NAME: "OPNAV_INTERVAL", VALUE: new_value, HARD_SET: False},
+            {ck.NAME: "OPNAV_INTERVAL", ck.VALUE: new_value, ck.HARD_SET: False},
         )
 
         # emulate sending command to satellite
@@ -46,13 +45,12 @@ class CommandTest(unittest.TestCase):
         # print(downlink.hex())
         # print(downlink_args)
         self.assertEqual(downlink_command.id, CommandEnum.SetParam)
-        self.assertEqual(downlink_args[VALUE], new_value)
-        self.assertFalse(downlink_args[HARD_SET])
+        self.assertEqual(downlink_args[ck.VALUE], new_value)
 
     def test_manual_fm_commands(self):
         """Commands the spacecraft to go into every flight mode """
         for mode in FMEnum:
-            uplink = self.ground_station.pack_command(mode.value)
+            uplink = self.ground_station.pack_command(mode.value, {})
             self.sat.command_queue.put(uplink)
             self.sat.execute_commands()  # satellite executes commands
             self.assertEqual(
@@ -73,7 +71,7 @@ class CommandTest(unittest.TestCase):
         for param_name in param_list:
             try:
                 uplink = self.ground_station.pack_command(
-                    CommandEnum.GetParam, **{constants.NAME: param_name}
+                    CommandEnum.GetParam, {ck.NAME: param_name}
                 )
                 self.sat.command_queue.put(uplink)
                 self.sat.execute_commands()  # satellite executes command (prints param value)
@@ -89,7 +87,7 @@ class CommandTest(unittest.TestCase):
                 self.assertEqual(
                     list(downlink_args.values())[0], get_parameter_from_name(param_name)
                 )
-                self.assertEqual(list(downlink_args.keys())[0], constants.VALUE)
+                self.assertEqual(list(downlink_args.keys())[0], ck.VALUE)
 
             except Exception:
                 logging.error(f"Parameter {param_name} failed")

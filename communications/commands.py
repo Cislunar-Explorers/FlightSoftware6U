@@ -71,14 +71,14 @@ class Command(ABC):
     def unpack_args(self, arg_data: bytes) -> Dict[str, Any]:
         return self._unpack(arg_data, self.uplink_codecs)
 
-    def pack_args(self, **kwargs) -> bytes:
-        return self._pack(kwargs, self.uplink_codecs, self.uplink_buffer_size)
+    def pack_args(self, arg_dict) -> bytes:
+        return self._pack(arg_dict, self.uplink_codecs, self.uplink_buffer_size)
 
     def unpack_telem(self, arg_data: bytes) -> Dict[str, Any]:
         return self._unpack(arg_data, self.downlink_codecs)
 
-    def pack_telem(self, **kwargs) -> bytes:
-        return self._pack(kwargs, self.downlink_codecs, self.downlink_buffer_size)
+    def pack_telem(self, telem_dict) -> bytes:
+        return self._pack(telem_dict, self.downlink_codecs, self.downlink_buffer_size)
 
     def packing_check(self, telem: Optional[Dict], codec_list: List[Codec]):
         error = False

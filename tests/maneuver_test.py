@@ -46,10 +46,10 @@ def test_maneuver_selection(m: MainSatelliteThread, mocker):
         consts.CommandEnum.ScheduleManeuver
     )
     m.command_handler.run_command(
-        maneuver_command, **{consts.MANEUVER_TIME: cur_time + 1000}
+        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 1000}
     )
     m.command_handler.run_command(
-        maneuver_command, **{consts.MANEUVER_TIME: cur_time + 100}
+        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 100}
     )
 
     # m.command_definitions.schedule_maneuver(time=cur_time + 1000)

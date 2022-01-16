@@ -2,8 +2,12 @@ from random import randint
 import drivers.power.power_structs as ps
 from main import MainSatelliteThread
 from utils.constants import CommandEnum
-from utils.gom_util import dict_from_eps_config, eps_config_from_dict, dict_from_eps_config2, \
-    eps_config2_from_dict
+from utils.gom_util import (
+    dict_from_eps_config,
+    eps_config_from_dict,
+    dict_from_eps_config2,
+    eps_config2_from_dict,
+)
 
 
 def test_config_command():
@@ -62,12 +66,13 @@ def test_config_command():
     ch = m.command_handler
 
     command_bytes = ch.pack_link(
-        True, COUNTER, CommandEnum.GomConf1Set.value, **config_dict)
+        True, COUNTER, CommandEnum.GomConf1Set.value, config_dict
+    )
     command, kwargs = ch.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf1Set.value
 
-    unpacked_config = eps_config_from_dict(**kwargs)
+    unpacked_config = eps_config_from_dict(kwargs)
 
     # ps.displayConfig(config)
     # ps.displayConfig(unpacked_config)
@@ -94,8 +99,13 @@ def test_config_command():
     assert config.output_safe_value[6] == unpacked_config.output_safe_value[6]
     assert config.output_safe_value[7] == unpacked_config.output_safe_value[7]
 
-    assert config.output_initial_on_delay[0] == unpacked_config.output_initial_on_delay[0]
-    assert config.output_initial_off_delay[0] == unpacked_config.output_initial_off_delay[0]
+    assert (
+        config.output_initial_on_delay[0] == unpacked_config.output_initial_on_delay[0]
+    )
+    assert (
+        config.output_initial_off_delay[0]
+        == unpacked_config.output_initial_off_delay[0]
+    )
 
     assert config.vboost[0] == unpacked_config.vboost[0]
     assert config.vboost[1] == unpacked_config.vboost[1]
@@ -116,8 +126,7 @@ def test_config2_command():
     m = MainSatelliteThread()
     ch = m.command_handler
 
-    command_bytes = ch.pack_link(
-        True, COUNTER, CommandEnum.GomConf2Set.value, **config2_dict)
+    command_bytes = ch.pack_link(True, COUNTER, CommandEnum.GomConf2Set, config2_dict)
     command, kwargs = ch.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf2Set.value
@@ -186,7 +195,7 @@ def prep_config():
     return config_dict
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_config_command()
     test_config2_command()
     print(prep_config())

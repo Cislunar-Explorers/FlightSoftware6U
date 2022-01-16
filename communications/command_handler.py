@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
@@ -15,12 +15,13 @@ from utils.constants import (
     MIN_COMMAND_SIZE,
     ONE_WORD,
     ZERO_WORD,
+    CommandEnum,
 )
 
 from typing import List, Optional, Tuple, Dict
 import hashlib
 from communications.commands import Command
-from communications.command_definitions import COMMAND_LIST
+from communications.command_definitions import COMMAND_DICT, COMMAND_LIST
 from utils.exceptions import CommandUnpackingException
 from communications.downlink import bit_inflation
 from communications.groundstation import bit_deflation
@@ -66,9 +67,7 @@ class CommandHandler:
 
     def get_command_from_id(self, command_id: int):
         try:
-            return [
-                command for command in self.command_list if command.id == command_id
-            ][0]
+            return COMMAND_DICT[command_id]
         except IndexError:
             raise CommandUnpackingException(f"Command {command_id} not found")
 
@@ -122,15 +121,17 @@ class CommandHandler:
             logging.warning(f"Incorrect MAC, ignoring command {data.hex()}")
             raise CommandUnpackingException("MAC discrepancy - not running command")
 
-    def pack_link(self, uplink: bool, counter: int, command_id: int, **kwargs) -> bytes:
+    def pack_link(
+        self, uplink: bool, counter: int, command_id: int, kwarg_dict: Dict[str, Any]
+    ) -> bytes:
         command = self.get_command_from_id(command_id)
 
         if uplink:
             buffer_size = command.uplink_buffer_size
-            link_data = command.pack_args(**kwargs)
+            link_data = command.pack_args(kwarg_dict)
         else:
             buffer_size = command.downlink_buffer_size
-            link_data = command.pack_telem(**kwargs)
+            link_data = command.pack_telem(kwarg_dict)
 
         data_buffer = bytearray(MIN_COMMAND_SIZE - MAC_LENGTH + buffer_size)
         data_buffer[:COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE, "big")
@@ -160,19 +161,21 @@ class CommandHandler:
             self.uplink_counter += 1
 
         # run command
-        downlink_data = self.run_command(command, **kwargs)
+        downlink_data = self.run_command(command, kwargs)
         # pack downlinks
         if downlink_data is not None:
-            downlink = self.pack_telemetry(command.id, **downlink_data)
+            downlink = self.pack_telemetry(command.id, downlink_data)
         else:
             return None
         return downlink
 
-    def run_command(self, command: Command, **kwargs):
+    def run_command(self, command: Command, kwargs: Dict[str, Union[int, float, str]]):
         return command.run(parent=self._parent, **kwargs)
 
-    def pack_telemetry(self, id, **kwargs) -> bytes:
-        telemetry_bytes = self.pack_link(False, self.downlink_counter, id, **kwargs)
+    def pack_telemetry(
+        self, id: CommandEnum, telem_dict: Dict[str, float | int]
+    ) -> bytes:
+        telemetry_bytes = self.pack_link(False, self.downlink_counter, id, telem_dict)
         self.downlink_counter += 1
         return telemetry_bytes
 
@@ -181,7 +184,7 @@ class CommandHandler:
         self.downlink_counter += 1
         return unpacked_data
 
-    def pack_command(self, id, **kwargs) -> bytes:
-        command_bytes = self.pack_link(True, self.uplink_counter, id, **kwargs)
+    def pack_command(self, id, kwargs) -> bytes:
+        command_bytes = self.pack_link(True, self.uplink_counter, id, kwargs)
         self.uplink_counter += 1
         return command_bytes

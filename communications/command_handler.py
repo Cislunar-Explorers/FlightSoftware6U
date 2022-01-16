@@ -18,10 +18,10 @@ from utils.constants import (
     CommandEnum,
 )
 
-from typing import List, Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict
 import hashlib
 from communications.commands import Command
-from communications.command_definitions import COMMAND_DICT, COMMAND_LIST
+from communications.command_definitions import COMMAND_DICT
 from utils.exceptions import CommandUnpackingException
 from communications.downlink import bit_inflation
 from communications.groundstation import bit_deflation
@@ -48,7 +48,6 @@ def verify_mac(data: bytes) -> bool:
 class CommandHandler:
     """Handling the packing, unpacking, and execution of uplinks (commands) and downlinks (telemetry)"""
 
-    command_list: List[Command] = COMMAND_LIST
     uplink_counter: int  # how many times we've received a valid data packet
     downlink_counter: int  # how many times we've downlinked something
     # flag to do bit inflation; must be True for flight (if not done in Radio), can be False for testing

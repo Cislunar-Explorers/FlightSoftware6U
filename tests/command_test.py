@@ -15,8 +15,9 @@ class CommandTest(unittest.TestCase):
         - Packing the telemetry, bit inflating and downlinking it
         - Receiving the inflated telemetry and unpacking ut"""
 
-    ground_station = CommandHandler(None)
-    sat = MainSatelliteThread()
+    def setUp(self) -> None:
+        self.ground_station = CommandHandler(None)
+        self.sat = MainSatelliteThread()
 
     def test_commands(self):
         new_value = 33
@@ -70,6 +71,10 @@ class CommandTest(unittest.TestCase):
         # The get_param command can only downlink floats. Will need to def another command to downlink strings
         param_list.remove("FILE_UPDATE_PATH")
 
+        # Dont wanna mess with the counter values
+        param_list.remove("DOWNLINK_COUNTER")
+        param_list.remove("UPLINK_COUNTER")
+
         for param_name in param_list:
             try:
                 uplink = self.ground_station.pack_command(
@@ -94,6 +99,13 @@ class CommandTest(unittest.TestCase):
             except Exception:
                 logging.error(f"Parameter {param_name} failed")
                 raise
+
+    def test_counter_persistence(self):
+        """Test whether the uplink and downlink counters remain consistent even if the thread stops"""
+        self.test_commands()  # run the same test as before (to make sure that the counters aren't 0)
+        self.sat = MainSatelliteThread()  # re-init the object
+
+        self.test_commands()
 
 
 if __name__ == "__main__":

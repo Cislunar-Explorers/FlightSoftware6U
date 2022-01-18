@@ -16,8 +16,8 @@ class CommandTest(unittest.TestCase):
         - Receiving the inflated telemetry and unpacking ut"""
 
     def setUp(self) -> None:
-        self.ground_station = CommandHandler(None)
         self.sat = MainSatelliteThread()
+        self.ground_station = CommandHandler(None)
 
     def test_commands(self):
         new_value = 33

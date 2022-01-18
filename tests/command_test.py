@@ -103,7 +103,19 @@ class CommandTest(unittest.TestCase):
     def test_counter_persistence(self):
         """Test whether the uplink and downlink counters remain consistent even if the thread stops"""
         self.test_commands()  # run the same test as before (to make sure that the counters aren't 0)
+
+        up_before, down_before = (
+            self.sat.command_handler.uplink_counter,
+            self.sat.command_handler.downlink_counter,
+        )
         self.sat = MainSatelliteThread()  # re-init the object
+        up_after, down_after = (
+            self.sat.command_handler.uplink_counter,
+            self.sat.command_handler.downlink_counter,
+        )
+
+        self.assertEqual(up_before, up_after)
+        self.assertEqual(down_before, down_after)
 
         self.test_commands()
 

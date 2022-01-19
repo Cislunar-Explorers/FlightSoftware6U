@@ -14,7 +14,7 @@
 
 from adafruit_blinka.agnostic import board_id
 from drivers.device import Device
-from drivers.gyro import Gyro
+from drivers.imu import Gyro
 
 
 if board_id and board_id != "GENERIC_LINUX_PC":

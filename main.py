@@ -22,7 +22,7 @@ from udp_client.client import Client
 from communications.comms_driver import CommunicationsSystem
 from communications.satellite_radio import Radio
 from drivers.gom import Gomspace
-from drivers.gyro import GyroSensor
+from drivers.imu import GyroSensor
 from drivers.adc import ADC
 from drivers.rtc import RTC
 from drivers.nemo.nemo_manager import NemoManager

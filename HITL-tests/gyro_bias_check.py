@@ -1,4 +1,4 @@
-from drivers.gyro import Gyro
+from drivers.imu import Gyro
 import numpy as np
 import logging
 from typing import List, Tuple

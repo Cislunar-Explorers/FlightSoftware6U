@@ -1,6 +1,6 @@
 from drivers.gom import Gomspace
 from drivers.rtc import RTC
-from drivers.gyro import GyroSensor
+from drivers.imu import GyroSensor
 from drivers.adc import ADC
 from communications.satellite_radio import Radio
 from core.camera import PiCam

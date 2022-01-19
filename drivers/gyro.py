@@ -51,9 +51,6 @@ class Gyro(Device):
     def _collect_temp(self) -> int:
         return self.driver._read_u8(0x12)
 
-    def collect_telem(self) -> tuple:
-        return super().collect_telem()
-
 
 class MagnetAccelerometer(Device):
     driver: adafruit_fxos8700.FXOS8700

@@ -27,7 +27,7 @@ class Device(ABC):
         ...
 
     @abstractmethod
-    def _collect_telem(self):
+    def _collect_telem(self) -> Any:
         ...
 
     def collect_telem(self):
@@ -40,6 +40,8 @@ class Device(ABC):
             logging.warning(
                 f"Not connected to device {self.name}, unable to collect telemetry"
             )
+
+        return "DEVICE_NOT_CONNECTED"
 
     def _self_test(self):
         self._collect_telem()

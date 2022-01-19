@@ -1,10 +1,11 @@
-from drivers.gyro import GyroSensor
+from drivers.gyro import Gyro
 import numpy as np
 import logging
 from typing import List, Tuple
 
 
-gyro = GyroSensor()
+gyro = Gyro()
+gyro.connect()
 
 # take 500 gyro measurements and store data
 

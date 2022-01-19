@@ -1076,7 +1076,7 @@ COMMAND_LIST: List[Command] = [
 
 #     def rtc_test(self):
 #         logging.info(
-#             f"Oscillator Disabled: {parent.rtc.ds3231.disable_oscillator}")
+#             f"Oscillator Disabled: {parent.rtc.driver.disable_oscillator}")
 #         logging.info(f"RTC Temp: {parent.rtc.get_temp()}")
 #         logging.info(f"RTC Time: {parent.rtc.get_time()}")
 #         # time.sleep(1)

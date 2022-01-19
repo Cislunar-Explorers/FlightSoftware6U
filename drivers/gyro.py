@@ -1,47 +1,75 @@
 from adafruit_blinka.agnostic import board_id
 
-if board_id and board_id != 'GENERIC_LINUX_PC':
+if board_id and board_id != "GENERIC_LINUX_PC":
     import board
     import busio
 import adafruit_fxos8700
 import adafruit_fxas21002c
-from typing import Tuple, cast
 from utils.constants import GYRO_RANGE
 import utils.parameters as params
+from drivers.device import Device
 
 gyro_biases = (params.GYRO_BIAS_X, params.GYRO_BIAS_Y, params.GYRO_BIAS_Z)
-gyro_biases_temperature_dependence = (params.GYRO_BIAS_DXDT,
-                                      params.GYRO_BIAS_DYDT,
-                                      params.GYRO_BIAS_DZDT)
+gyro_biases_temperature_dependence = (
+    params.GYRO_BIAS_DXDT,
+    params.GYRO_BIAS_DYDT,
+    params.GYRO_BIAS_DZDT,
+)
 
 
-class GyroSensor:  # TODO rename class and file to something more representative
+class Gyro(Device):
+    driver: adafruit_fxas21002c.FXAS21002C
 
-    def __init__(self):
+    def __init__(self) -> None:
+        super().__init__("GYRO")
+
+    def _connect_to_hardware(self):
         i2c = busio.I2C(board.SCL, board.SDA)
-        self.fxos = adafruit_fxos8700.FXOS8700(i2c)
-        self.fxas = adafruit_fxas21002c.FXAS21002C(i2c, gyro_range=GYRO_RANGE)
+        self.driver = adafruit_fxas21002c.FXAS21002C(i2c, gyro_range=GYRO_RANGE)
 
-    def get_acceleration(self) -> Tuple[float, float, float]:
-        return self.fxos.accelerometer  # m/s^2
+    def _collect_telem(self):
+        return self._collect_gyro(), self._collect_temp()
 
-    def get_gyro(self) -> Tuple[float, float, float]:
-        return self.fxas.gyroscope  # rad/s
+    def _collect_gyro(self, corrected=False):
+        gyro_data: list[float] = self.driver.gyroscope
 
-    def get_gyro_corrected(self) -> Tuple[float, float, float]:
-        """Returns gyro data with corrections for measured bias"""
-        gyro_data = self.get_gyro()
-        delta_gyro_temp = self.get_temp() - params.GYRO_BIAS_TEMPERATURE
-        corrected_gyro_data = [0.0, 0.0, 0.0]
-        for i in range(3):
-            corrected_gyro_data[i] = gyro_data[i] - gyro_biases[i]
-            corrected_gyro_data[i] = corrected_gyro_data[i] + gyro_biases_temperature_dependence[i] * float(
-                delta_gyro_temp)
-        return_tuple: Tuple[float, float, float] = cast('Tuple[float, float, float]', tuple(corrected_gyro_data))
-        return return_tuple
+        if corrected:
+            # correcting for any bias caused by temperature differences
+            # these parameters will need to be determined via TVAC testing
+            delta_gyro_temp = self._collect_temp() - params.GYRO_BIAS_TEMPERATURE
+            corrected_gyro_data = [0.0, 0.0, 0.0]
+            for i in range(3):
+                corrected_gyro_data[i] = gyro_data[i] - gyro_biases[i]
+                corrected_gyro_data[i] = corrected_gyro_data[
+                    i
+                ] + gyro_biases_temperature_dependence[i] * float(delta_gyro_temp)
 
-    def get_mag(self) -> Tuple[float, float, float]:
-        return self.fxos.magnetometer  # microTeslas
+            return corrected_gyro_data
 
-    def get_temp(self) -> int:
-        return self.fxas._read_u8(0x12)
+        return gyro_data
+
+    def _collect_temp(self) -> int:
+        return self.driver._read_u8(0x12)
+
+    def collect_telem(self) -> tuple:
+        return super().collect_telem()
+
+
+class MagnetAccelerometer(Device):
+    driver: adafruit_fxos8700.FXOS8700
+
+    def __init__(self) -> None:
+        super().__init__("MAG/ACC")
+
+    def _connect_to_hardware(self):
+        i2c = busio.I2C(board.SCL, board.SDA)
+        self.driver = adafruit_fxos8700.FXOS8700(i2c)
+
+    def _collect_accelerometer(self):
+        return self.driver.accelerometer
+
+    def _collect_magnetometer(self):
+        return self.driver.magnetometer
+
+    def _collect_telem(self):
+        return self._collect_magnetometer(), self._collect_accelerometer()

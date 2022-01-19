@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import Optional, Any
+from typing import Any
 
 
 class Device(ABC):
-    def __init__(self, name) -> None:
+    driver: Any
+
+    def __init__(self, name: str) -> None:
         self.name: str = name
-        self.state: bool = False
-        self.driver: Optional[Any] = None
+        self.connected: bool = False
 
     def connect(self):
         try:
@@ -32,7 +33,7 @@ class Device(ABC):
     def collect_telem(self):
         if self.connected:
             try:
-                self._collect_telem()
+                return self._collect_telem()
             except Exception as e:
                 logging.error(e, exc_info=True)
         else:

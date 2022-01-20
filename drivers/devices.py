@@ -35,3 +35,6 @@ class DeviceContainer:
             logging.info("All devices succefully connected!")
 
         return result
+
+    def device_status(self):
+        return {device.name: device.connected for device in self.devices}

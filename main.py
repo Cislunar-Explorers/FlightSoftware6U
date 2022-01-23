@@ -20,11 +20,7 @@ from utils.boot_cause import hard_boot
 from udp_client.client import Client
 
 from communications.comms_driver import CommunicationsSystem
-from communications.satellite_radio import Radio
-from drivers.gom import Gomspace
-from drivers.gyro import GyroSensor
-from drivers.ADCDriver import ADC
-from drivers.rtc import RTC
+from drivers.devices import DeviceContainer
 from drivers.nemo.nemo_manager import NemoManager
 import core.camera as camera
 from utils.parameter_utils import init_parameters
@@ -55,11 +51,8 @@ class MainSatelliteThread(Thread):
         self.attach_sigint_handler()  # FIXME
         self.file_block_bank = {}
         self.need_to_reboot = False
-        self.gom: Optional[Gomspace] = None
-        self.gyro: Optional[GyroSensor] = None
-        self.adc: Optional[ADC] = None
-        self.rtc: Optional[RTC] = None
-        self.radio: Optional[Radio] = None
+
+        self.devices = DeviceContainer()
         self.mux: Optional[camera.CameraMux] = None
         self.camera: Optional[camera.PiCam] = None
         self.nemo_manager: Optional[NemoManager] = None
@@ -97,41 +90,8 @@ class MainSatelliteThread(Thread):
         self.comms.listen()
 
     def init_sensors(self) -> int:
-        try:
-            self.gom = Gomspace()
-        except Exception as e:
-            logging.error(e)
-            logging.error("GOM initialization failed")
-        else:
-            logging.info("Gom initialized")
 
-        try:
-            self.gyro = GyroSensor()
-        except Exception as e:
-            logging.error(e)
-            logging.error("GYRO initialization failed")
-        else:
-            logging.info("Gyro initialized")
-
-        try:
-            self.adc = ADC(self.gyro)
-            self.adc.read_temperature()
-        except Exception as e:
-
-            logging.error(e)
-            logging.error("ADC initialization failed")
-        else:
-            logging.info("ADC initialized")
-
-        try:
-            self.rtc = RTC()
-            self.rtc.get_time()
-        except Exception as e:
-
-            logging.error(e)
-            logging.error("RTC initialization failed")
-        else:
-            logging.info("RTC initialized")
+        connected_devices = self.devices.connect()
 
         try:
             self.nemo_manager = NemoManager(
@@ -143,15 +103,6 @@ class MainSatelliteThread(Thread):
             logging.error("NEMO initialization failed")
         else:
             logging.info("NEMO initialized")
-
-        try:
-            self.radio = Radio()
-        except Exception as e:
-
-            logging.error(e)
-            logging.error("RADIO initialization failed")
-        else:
-            logging.info("Radio initialized")
 
         # initialize the Mux, select a camera
         try:
@@ -195,18 +146,11 @@ class MainSatelliteThread(Thread):
             self.need_to_reboot = True
 
         # make a bitmask of the initialized sensors for downlinking
-        sensors = [
-            self.gom,
-            self.radio,
-            self.gyro,
-            self.adc,
-            self.rtc,
-            self.mux,
-            self.camera,
-        ]
+        sensors = [self.mux, self.camera]
         sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
         sensor_functioning_list.extend(cameras_list)
-        sensor_bitmask = "".join(map(str, sensor_functioning_list))
+        connected_devices.extend(sensor_functioning_list)
+        sensor_bitmask = "".join(map(str, connected_devices))
         logging.debug(f"Sensors: {sensor_bitmask}")
         return int(sensor_bitmask, 2)
 

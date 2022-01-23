@@ -1,6 +1,6 @@
 from drivers.gom import Gomspace
 import logging
-from drivers.gyro import GyroSensor
+from drivers.imu import Gyro
 from time import sleep, time
 import threading
 
@@ -27,10 +27,11 @@ def gyro_thread(gyro_freq: int):
 
 if __name__ == "__main__":
 
-    gyro = GyroSensor()
+    gyro = Gyro()
+    gyro.connect()
     gom_controller = Gomspace()
 
     # start new thread to log gyro data
     gyro_threader = threading.Thread(target=gyro_thread)
     gyro_threader.start()
-    gom_controller.burnwire1(2)
+    gom_controller.burnwire.pulse(2)  # TODO, use gom's async instead of threading

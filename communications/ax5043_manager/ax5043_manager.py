@@ -1,7 +1,15 @@
 import logging
 import queue
 import time
-from communications.ax5043_manager.ax5043_driver import Reg, Pwrmode, Bits, Fifocmd, Chunk, DataChunk
+from communications.ax5043_manager.ax5043_driver import (
+    Reg,
+    Pwrmode,
+    Bits,
+    Fifocmd,
+    Chunk,
+    DataChunk,
+)
+
 
 class Manager:
     def __init__(self, driver):
@@ -18,20 +26,25 @@ class Manager:
         self.state.enter()
 
     def transition(self, new_state):
-        logging.debug('Transitioning from %s to %s',
-                      self.state.__class__.__name__, new_state.__class__.__name__)
+        logging.debug(
+            "Transitioning from %s to %s",
+            self.state.__class__.__name__,
+            new_state.__class__.__name__,
+        )
         try:
             self.state.exit()
             self.state = new_state
         except Exception as e:
-            logging.error('Exception exiting state %s: %s',
-                          self.state.__class__.__name__, e)
+            logging.error(
+                "Exception exiting state %s: %s", self.state.__class__.__name__, e
+            )
             self.state = Manager.Error(self, e)
         try:
             self.state.enter()
         except Exception as e:
-            logging.error('Exception entering state %s: %s',
-                          self.state.__class__.__name__, e)
+            logging.error(
+                "Exception entering state %s: %s", self.state.__class__.__name__, e
+            )
             self.state = Manager.Error(self, e)
             # Any exceptions raised by Error.enter() will not be caught
             self.state.enter()
@@ -39,19 +52,24 @@ class Manager:
 
     def dispatch(self):
         if self.reset_requested:
-            logging.info('Resetting')
+            logging.info("Resetting")
             self.transition(Manager.Initializing(self))
         else:
             try:
                 self.state.dispatch()
             except Exception as e:
-                logging.error('Exception dispatching state %s: %s',
-                              self.state.__class__.__name__, e)
+                logging.error(
+                    "Exception dispatching state %s: %s",
+                    self.state.__class__.__name__,
+                    e,
+                )
 
     def enable_pa(self, enabled):
         # TODO: enable power amp
-        if enabled: logging.info('Enabling PA')
-        else: logging.info('Disabling PA')
+        if enabled:
+            logging.info("Enabling PA")
+        else:
+            logging.info("Disabling PA")
 
     def should_transmit(self):
         return self.tx_enabled and not self.inbox.empty()
@@ -60,31 +78,34 @@ class Manager:
         return isinstance(self.state, Manager.Error)
 
     def poll(self, reg, mask, target=None, timeout=0.1):
-        if target is None: target = mask
+        if target is None:
+            target = mask
         start_time = time.monotonic()
         val = self.driver.read(reg)
         while (val & mask) != target:
             val = self.driver.read(reg)
             dt = time.monotonic() - start_time
             if dt > timeout:
-                raise RuntimeError('Timeout (%s > %s) polling for register %02X, '
-                                   'mask %02X, to reach %02X (last value was %02X)'
-                                   % (dt, timeout, reg, mask, target, val))
+                raise RuntimeError(
+                    "Timeout (%s > %s) polling for register %02X, "
+                    "mask %02X, to reach %02X (last value was %02X)"
+                    % (dt, timeout, reg, mask, target, val)
+                )
         return val
 
     def post(self):
         rev = self.driver.read(Reg.SILICONREVISION)
         if rev != 0x51:
-            logging.error('Expected rev 0x51, but got %02X' % rev)
+            logging.error("Expected rev 0x51, but got %02X" % rev)
             return False
         s = self.driver.read(Reg.SCRATCH)
         if s != 0xC5:
-            logging.error('Expected initial scratch to be 0xC5, but got %02X' % s)
+            logging.error("Expected initial scratch to be 0xC5, but got %02X" % s)
             return False
         self.driver.execute({Reg.SCRATCH: 0x3A})
         s = self.driver.read(Reg.SCRATCH)
         if s != 0x3A:
-            logging.error('Expected scratch to be set to 0x3A, but got %02X' % s)
+            logging.error("Expected scratch to be set to 0x3A, but got %02X" % s)
             return False
         return True
 
@@ -93,20 +114,25 @@ class Manager:
             assert mgr is not None
             self.mgr = mgr
 
-        def enter(self): pass
-        def exit(self): pass
-        def dispatch(self): pass
+        def enter(self):
+            pass
+
+        def exit(self):
+            pass
+
+        def dispatch(self):
+            pass
 
     class Initializing(State):
         def __init__(self, mgr):
             super().__init__(mgr)
 
         def enter(self):
-            logging.info('Initializing')
+            logging.info("Initializing")
             self.mgr.driver.reset()
             if not self.mgr.post():
-                raise RuntimeError('POST failed')
-            logging.info('POST passed')
+                raise RuntimeError("POST failed")
+            logging.info("POST passed")
 
         def dispatch(self):
             self.mgr.driver.execute(setup_cmds)
@@ -122,7 +148,7 @@ class Manager:
             self.poll_count = 0
 
         def enter(self):
-            logging.info('Autoranging')
+            logging.info("Autoranging")
             self.mgr.driver.set_pwrmode(Pwrmode.STANDBY)
 
             # Wait until crystal oscillator is ready
@@ -135,7 +161,7 @@ class Manager:
             except Exception as e:
                 logging.warning(e)
                 return
-            
+
             # Set RNG_START
             self.mgr.driver.execute({Reg.PLLRANGINGA: Bits.RNG_START | 0x08})
             self.started = True
@@ -146,7 +172,10 @@ class Manager:
                 try:
                     self.mgr.poll(Reg.XTALSTATUS, Bits.XTAL_RUN)
                 except Exception as e:
-                    self.mgr.transition(Manager.Error(self.mgr, 'Timeout waiting for XTAL_RUN'))
+                    logging.error(e)
+                    self.mgr.transition(
+                        Manager.Error(self.mgr, "Timeout waiting for XTAL_RUN")
+                    )
                     return
                 # Set RNG_START
                 self.mgr.driver.execute({Reg.PLLRANGINGA: Bits.RNG_START | 0x08})
@@ -155,13 +184,13 @@ class Manager:
             # Wait for auto-ranging to terminate
             pllranging = self.mgr.driver.read(Reg.PLLRANGINGA)
             if pllranging & Bits.RNGERR:
-                self.mgr.transition(Manager.Error(self.mgr, 'RNGERR'))
+                self.mgr.transition(Manager.Error(self.mgr, "RNGERR"))
             elif not (pllranging & Bits.RNG_START):
                 self.mgr.transition(Manager.Idle(self.mgr))
             else:
                 self.poll_count += 1
-                if self.poll_count > MAX_POLL_COUNT:
-                    self.mgr.transition(Manager.Error(self.mgr, 'RNG_START'))
+                if self.poll_count > self.MAX_POLL_COUNT:
+                    self.mgr.transition(Manager.Error(self.mgr, "RNG_START"))
 
     class Idle(State):
         def __init__(self, mgr):
@@ -181,10 +210,10 @@ class Manager:
         def __init__(self, mgr, msg):
             super().__init__(mgr)
             self.msg = msg
- 
+
         def enter(self):
             assert self.mgr.tx_enabled
-            logging.info('Transmitting %d bytes', len(self.msg))
+            logging.info("Transmitting %d bytes", len(self.msg))
             drv = self.mgr.driver
             # Write to PWRMODE to avoid errata
             drv.set_pwrmode(Pwrmode.FIFOON)
@@ -211,10 +240,10 @@ class Manager:
         def dispatch(self):
             if not self.mgr.tx_enabled:
                 # TODO: abort notice?
-                logging.warn('Transmission aborted')
+                logging.warn("Transmission aborted")
                 self.mgr.transition(Manager.Idle(self.mgr))
             # Wait until transmission is done (TODO: 0-timeout)
-            #radiostate = self.mgr.driver.poll(Reg.RADIOSTATE, 0xFF, 0)
+            # radiostate = self.mgr.driver.poll(Reg.RADIOSTATE, 0xFF, 0)
             radiostate = self.mgr.driver.read(Reg.RADIOSTATE)
             if radiostate == 0:
                 if self.mgr.should_transmit():
@@ -274,17 +303,21 @@ class Manager:
                         self.bad_fifo = True
                         self.mgr.transition(Manager.Receiving(self.mgr))
                         return
-                    logging.debug('Parsed chunk %s', chunk)
+                    logging.debug("Parsed chunk %s", chunk)
                     # TODO: metadata
-                    if isinstance(chunk, DataChunk): 
+                    if isinstance(chunk, DataChunk):
                         # TODO: multipart
-                        logging.info('Received %d bytes', len(chunk.data))
+                        logging.info("Received %d bytes", len(chunk.data))
                         assert len(chunk.data) > 0
                         # First byte is packet length (including itself)
                         if chunk.data[0] == len(chunk.data):
                             self.mgr.outbox.put(chunk.data[1:])
                         else:
-                            logging.error('First byte (%d) does not match length (%d)', chunk.data[0], len(chunk.data))
+                            logging.error(
+                                "First byte (%d) does not match length (%d)",
+                                chunk.data[0],
+                                len(chunk.data),
+                            )
                             # TODO: What next?
                     elif chunk is None:
                         # TODO: abort if not making progress

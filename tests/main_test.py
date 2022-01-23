@@ -4,6 +4,7 @@ What is the purpose of this test?
 - To run a quick sanity check that the attributes of the thread object are what we expect them to be
 """
 import unittest
+from drivers.devices import DeviceContainer
 from main import MainSatelliteThread
 from queue import Queue
 
@@ -35,15 +36,11 @@ class MainThreadInitTestCase(unittest.TestCase):
         self.assertIsInstance(m.flight_mode, FlightMode)
 
         # verify all sensor objects exist and are None
-        self.assertIsNone(m.gom)
-        self.assertIsNone(m.gyro)
-        self.assertIsNone(m.adc)
-        self.assertIsNone(m.rtc)
-        self.assertIsNone(m.radio)
+        self.assertIsInstance(m.devices, DeviceContainer)
         self.assertIsNone(m.mux)
         self.assertIsNone(m.camera)
         self.assertIsNone(m.nemo_manager)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

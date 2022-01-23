@@ -1,12 +1,12 @@
 import time
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE
+from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
 from flight_modes.flight_mode import FlightMode
 import os
 import logging
-from utils.constants import FMEnum
 import psutil
+import utils.parameters as params
 
 
 class BootUpMode(FlightMode):
@@ -29,7 +29,7 @@ class BootUpMode(FlightMode):
         # deploy antennae
         # FIXME: differentiate between Hydrogen and Oxygen. Each satellite now has different required Bootup behaviors
         logging.info("Antennae deploy...")
-        self._parent.gom.burnwire1(5)
+        self._parent.gom.burnwire.pulse(params.ANTENNAE_BURNWIRE_DURATION)
 
         if self._parent.need_to_reboot:
             # TODO: double check the boot db history to make sure we aren't going into a boot loop

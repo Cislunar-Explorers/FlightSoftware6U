@@ -39,13 +39,6 @@ class LoadSwitch(ABC):
         self._set(on)
         self.get_new_telem()
 
-    def bounce(self, downtime=0.1):
-        """If the loadswitch is on, flips the loadswitch off and back on"""
-        if self.telem.state:
-            self.set(False)
-            time.sleep(downtime)
-            self.set(True)
-
     def get_telem(self) -> LoadSwitchTelem:
         """Returns the latest queued telemetry."""
         try:
@@ -82,12 +75,15 @@ class P31uLoadSwitch(LoadSwitch):
         duration: Union[float, int],
         delay: Union[float, int] = 0,
         asynchronous: bool = False,
+        on: bool = True,
     ):
         if asynchronous:
+            # I think the gomspace p31u can only turn outputs on/off with second-level precision
+            # so cast all floats to ints. Above assumption may not be true, but isn't that critical
             delay = int(delay)
             duration = int(duration)
-            self.set(True, delay=delay)
-            self.set(False, delay=delay + duration)
+            self.set(on, delay=delay)
+            self.set(on, delay=delay + duration)
         else:
             super().pulse(duration)
 
@@ -106,8 +102,12 @@ class P31uLoadSwitch(LoadSwitch):
 
 
 class mockP31uLoadSwitch(P31uLoadSwitch):
+    """Mocked loadswitch class. This loadswitch simulates the behavior of a real, hardware-connected
+    loadswitch but purely in software. Useful for unit testing
+    """
+
     def __init__(self, current_draw: int = 1800, variability: int = 100) -> None:
-        self._state = False
+        self._state = False  # whether the loadswitch is on or off
         self.current_draw = current_draw  # mA
         self.variability = variability  # mA
         self.latchups: int = 0
@@ -117,10 +117,14 @@ class mockP31uLoadSwitch(P31uLoadSwitch):
         self._state = state
 
     def get_new_telem(self) -> P31uLoadSwitchTelem:
+        """Since we have no hardware to get telemetry from, we generate some based off the loadswitch's state"""
+        # adding in some variability to the measurement to be more realistic
         current_draw = self._state * int(
             self.current_draw + self.variability * random.uniform(-1, 1)
         )
-        self.latchups += random.random() < 0.01
+        self.latchups += (
+            random.random() < 0.01
+        )  # latchups are single events effects that are (hopefully) quite rare
         return P31uLoadSwitchTelem(self._state, current_draw, 0, 0, self.latchups)
 
 
@@ -172,7 +176,7 @@ class electrolyzers(P31uLoadSwitch):
 class GPIOLoadSwitch(LoadSwitch):
     """Base loadswitch class for devices actuated solely by the GPIO pins on the RPi"""
 
-    gpio_pin: int
+    gpio_pin: int  # the pin number on the Raspberry pi, must be between 1-40
 
     def _set(self, state: bool):
         self.driver.set_gpio(self.gpio_pin, state)
@@ -181,6 +185,18 @@ class GPIOLoadSwitch(LoadSwitch):
         state = self.driver.get_gpio(self.gpio_pin)
         self.telem = LoadSwitchTelem(state)
         return self.telem
+
+
+class mockGPIOLoadSwitch(GPIOLoadSwitch):
+    def __init__(self):
+        self._state = False
+
+    def _set(self, state: bool, delay: int = 0):
+        time.sleep(delay)
+        self._state = state
+
+    def get_new_telem(self) -> P31uLoadSwitchTelem:
+        return LoadSwitchTelem(self._state)
 
 
 class power_amplifier(GPIOLoadSwitch):

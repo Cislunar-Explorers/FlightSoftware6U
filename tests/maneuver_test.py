@@ -7,7 +7,7 @@ import utils.parameters as params
 from flight_modes.maneuver_flightmode import ManeuverMode
 from main import MainSatelliteThread
 from drivers.gom import Gomspace
-from drivers.power.loadswitch import mockP31uLoadSwitch
+from drivers.power.loadswitch import mockGPIOLoadSwitch, mockP31uLoadSwitch
 
 # to speed testing
 params.GLOW_WAIT_TIME = 0.01
@@ -20,7 +20,11 @@ class FakeGOM(Gomspace):
         self.glowplug_2 = mockP31uLoadSwitch()
         self.electrolyzers = mockP31uLoadSwitch()
         self.burnwire = mockP31uLoadSwitch()
-        self.lna = mockP31uLoadSwitch()
+        self.lna = mockP31uLoadSwitch(current_draw=145, variability=5)
+
+        self.pa = mockGPIOLoadSwitch()
+        self.rf_rx = mockGPIOLoadSwitch()
+        self.rf_tx = mockGPIOLoadSwitch()
 
 
 @pytest.fixture

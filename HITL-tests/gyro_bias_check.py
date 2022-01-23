@@ -1,7 +1,7 @@
 from drivers.imu import Gyro
 import numpy as np
 import logging
-from typing import List, Tuple
+from typing import List
 
 
 gyro = Gyro()
@@ -9,11 +9,11 @@ gyro.connect()
 
 # take 500 gyro measurements and store data
 
-data: List[Tuple[float, float, float]] = []
+data: List[List[float]] = []
 # print("getting data")
-temperature = gyro.get_temp()
+temperature = gyro._collect_temp()
 for i in range(500):
-    data.append(gyro.get_gyro())
+    data.append(gyro._collect_gyro())
 
 # print("Done getting data")
 

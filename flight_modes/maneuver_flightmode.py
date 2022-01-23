@@ -20,7 +20,7 @@ class ManeuverMode(PauseBackgroundMode):
         super().__init__(parent)
 
     def get_pressure(self):
-        return self._parent.adc.read_pressure()
+        return self._parent.devices.adc.read_pressure()
 
     def valid_glowplug(self, current_pressure, prior_pressure):
         """Check pressure in place of acceleration for glowplug validation."""
@@ -50,7 +50,7 @@ class ManeuverMode(PauseBackgroundMode):
             prior_pressure = self.get_pressure()
             print(prior_pressure)
             if params.GLOWPLUG1_VALID:
-                self._parent.gom.glowplug_1.pulse(params.GLOWPLUG_DURATION)
+                self._parent.devices.gom.glowplug_1.pulse(params.GLOWPLUG_DURATION)
                 sleep(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(
@@ -58,7 +58,7 @@ class ManeuverMode(PauseBackgroundMode):
                 )
                 set_parameter("GLOWPLUG1_VALID", self.task_completed, consts.FOR_FLIGHT)
             if not params.GLOWPLUG1_VALID and params.GLOWPLUG2_VALID:
-                self._parent.gom.glowplug_2.pulse(params.GLOWPLUG_DURATION)
+                self._parent.devices.gom.glowplug_2.pulse(params.GLOWPLUG_DURATION)
                 sleep(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(

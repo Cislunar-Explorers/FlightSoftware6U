@@ -8,13 +8,12 @@ import psutil
 from adafruit_blinka.agnostic import board_id
 from uptime import uptime
 
-from drivers.power.power_structs import eps_hk_t, hkparam_t
+from drivers.power.power_structs import eps_hk_t
 from telemetry.sensor import SynchronousSensor
 from utils import constants
 from utils.constants import DB_FILE
 from utils.constants import (
     MAX_GYRO_RATE,
-    GomOutputs,
     BATTERY_VOLTAGE,
     SUN_CURRENT,
     SYSTEM_CURRENT,
@@ -60,15 +59,10 @@ class GomSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
         self.hk = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
-        self.hkparam = hkparam_t()  # hkparam_t struct
-        self.is_electrolyzing = bool()
 
     def poll(self):
         super().poll()
-        if self._parent.gom is not None:
-            self.hk = self._parent.gom.get_health_data(level="eps")
-            self.hkparam = self._parent.gom.get_health_data()
-            self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
+        self.hk = self._parent.devices.gom.collect_telem()
 
 
 class GyroSensor(SynchronousSensor):
@@ -81,11 +75,8 @@ class GyroSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self._parent.gyro is not None:
-            self.rot = self._parent.gyro.get_gyro_corrected()
-            self.mag = self._parent.gyro.get_mag()
-            self.acc = self._parent.gyro.get_acceleration()
-            self.tmp = self._parent.gyro.get_temp()
+        self.rot, self.tmp = self._parent.devices.gyro.collect_telem()
+        self.mag, self.acc = self._parent.devices.magacc.collect_telem()
 
         # self.result = ImuResult(*self.rot, *self.mag, *self.acc)
 
@@ -95,7 +86,7 @@ class GyroSensor(SynchronousSensor):
         n_data = freq * duration
         data = []
         for _ in range(n_data):
-            data.append(self._parent.gyro.get_gyro_corrected())
+            data.append(self._parent.devices.gyro._collect_gyro())
             sleep(1.0 / freq)
 
         data = np.asarray(data).T
@@ -139,8 +130,8 @@ class PressureSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self._parent.adc is not None:
-            self.pressure = self._parent.adc.read_pressure()
+        if self._parent.devices.adc is not None:
+            self.pressure = self._parent.devices.adc.read_pressure()
 
 
 class ThermocoupleSensor(SynchronousSensor):
@@ -150,16 +141,16 @@ class ThermocoupleSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self._parent.adc is not None:
-            self.tmp = self._parent.adc.read_temperature()
+        if self._parent.devices.adc is not None:
+            self.tmp = self._parent.devices.adc.read_temperature()
 
 
 class PiSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.cpu: int = int()  # can be packed as short
-        self.ram: int = int()  # can be packed as short
-        self.disk: int = int()  # can be packed as short
+        self.cpu: int = int()  # can be packed as uint8
+        self.ram: int = int()  # can be packed as uint8
+        self.disk: int = int()  # can be packed as uint8
         self.boot_time: float = float()
         self.up_time: int = int()
         self.tmp: float = float()  # can be packed as a short
@@ -189,11 +180,11 @@ class RtcSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
         self.rtc_time = int()
+        self.rtc_temp = int()
 
     def poll(self):
         super().poll()
-        if self._parent.rtc is not None:
-            self.rtc_time = self._parent.rtc.get_time()
+        self.rtc_time, self.rtc_temp = self._parent.devices.rtc.collect_telem()
 
 
 class OpNavSensor(SynchronousSensor):

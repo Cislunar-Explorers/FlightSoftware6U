@@ -12,9 +12,8 @@ def gyro_thread(gyro_freq: int):
     gyro_data = []
     logging.info("Reading Gyro data (rad/s)")
     for _ in range(2000):
-        gyro_reading = gyro.get_gyro()
+        gyro_list = gyro._collect_gyro()
         gyro_time = time()
-        gyro_list = list(gyro_reading)
         gyro_list.append(gyro_time)
         gyro_data.append(gyro_list)
         sleep(1.0 / gyro_freq)

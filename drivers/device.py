@@ -13,13 +13,13 @@ class Device(ABC):
     def connect(self):
         try:
             self._connect_to_hardware()
-            self._self_test()
+            result = self._self_test()
         except Exception as e:
             logging.error(f"Unable to connect to {self.name}")
             logging.error(e, exc_info=True)
             self.connected = False
         else:
-            logging.info(f"{self.name} initialized successfully")
+            logging.info(f"{self.name} initialized successfully: {result}")
             self.connected = True
 
     @abstractmethod
@@ -36,12 +36,13 @@ class Device(ABC):
                 return self._collect_telem()
             except Exception as e:
                 logging.error(e, exc_info=True)
+                raise  # TODO, return same type as _collect_telem (but dummy) and don't raise
         else:
             logging.warning(
                 f"Not connected to device {self.name}, unable to collect telemetry"
             )
 
-        return "DEVICE_NOT_CONNECTED"
+            raise RuntimeError(f"Device {self.name} not connected")
 
     def _self_test(self):
-        self._collect_telem()
+        return self._collect_telem()

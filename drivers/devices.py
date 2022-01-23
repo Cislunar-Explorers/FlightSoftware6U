@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import Dict
 from drivers import adc, gom, imu, rtc
 from communications.satellite_radio import Radio
 from drivers.device import Device
@@ -7,6 +7,8 @@ from drivers.device import Device
 
 class DeviceContainer:
     """Container class allowing the easy initialization to all Devices on the spacecraft"""
+
+    __dict__: Dict[str, Device]
 
     def __init__(self) -> None:
         self.gom = gom.Gomspace()
@@ -16,25 +18,16 @@ class DeviceContainer:
         self.adc = adc.ADC(self.gyro)
         self.rtc = rtc.RTC()
 
-        self.devices: List[Device] = [
-            self.gom,
-            self.radio,
-            self.gyro,
-            self.magacc,
-            self.adc,
-            self.rtc,
-        ]
-
     def connect(self):
-        result: List[bool] = []
-        for device in self.devices:
+        result: Dict[str, bool] = {}
+        for name, device in self.__dict__.items():
             device.connect()
-            result.append(device.connected)
+            result.update({name: device.connected})
 
         if all(result):
             logging.info("All devices succefully connected!")
-
+        else:
+            logging.error(
+                f"Devices not connected: {[name for name, connected in result if connected is False]}"
+            )
         return result
-
-    def device_status(self):
-        return {device.name: device.connected for device in self.devices}

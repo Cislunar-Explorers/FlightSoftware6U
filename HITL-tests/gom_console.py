@@ -1,3 +1,8 @@
+# If you are comfortable with python and the Gomspace P31u,
+# I would recommend using an ipython session to control the gom.
+# Be careful though when hardware is connected - the ipython notebook
+# does NOT have the same precautionary measures in place that are defined in this file.
+
 from drivers.gom import Gomspace
 import drivers.power.power_structs as ps
 from time import sleep
@@ -25,10 +30,10 @@ try:
         )
         if choice == 999:
             gom.all_off()
-            ps.displayHk2(gom.get_health_data(level="eps"))
+            ps.displayHk2(gom.collect_telem())
 
         if choice == 0:
-            ps.displayHk2(gom.get_health_data(level="eps"))
+            ps.displayHk2(gom.collect_telem())
 
         if choice in [1, 4, 6, 7, 8]:
             duration = int(input("Duration (integer seconds):\n"))
@@ -36,7 +41,7 @@ try:
             if choice == 1:
                 gom.lna.set(True)
                 sleep(duration / 2)
-                ps.displayHk2(gom.get_health_data(level="eps"))
+                ps.displayHk2(gom.collect_telem())
                 sleep(duration / 2)
                 gom.lna.set(False)
 
@@ -46,21 +51,21 @@ try:
             if choice == 6:
                 gom.electrolyzers.set(True)
                 sleep(duration / 2)
-                ps.displayHk2(gom.get_health_data(level="eps"))
+                ps.displayHk2(gom.collect_telem())
                 sleep(duration / 2)
                 gom.electrolyzers.set(False)
 
             if choice == 7:
                 gom.pa.set(True)
                 sleep(duration / 2)
-                ps.displayHk2(gom.get_health_data(level="eps"))
+                ps.displayHk2(gom.collect_telem())
                 sleep(duration / 2)
                 gom.pa.set(False)
 
             if choice == 8:
                 gom.solenoid.set(True)
                 sleep(duration / 2)
-                ps.displayHk2(gom.get_health_data(level="eps"))
+                ps.displayHk2(gom.collect_telem())
                 sleep(duration / 2)
                 gom.solenoid.set(False)
 
@@ -68,18 +73,17 @@ try:
             duration = int(input("Duration (integer milliseconds):\n"))
             if choice == 2:
                 gom.glowplug_2.set(True)
-                ps.displayHk2(gom.get_health_data(level="eps"))
+                ps.displayHk2(gom.collect_telem())
                 sleep(1e-3 * duration)
                 gom.glowplug_2.set(False)
 
             if choice == 3:
                 gom.glowplug_1.set(True)
-                ps.displayHk2(gom.get_health_data(level="eps"))
+                ps.displayHk2(gom.collect_telem())
                 sleep(1e-3 * duration)
                 gom.glowplug_1.set(False)
 
             if choice == 5:
-                assert 0 < duration < 400
                 logging.info("Pulsing Solenoid")
                 gom.solenoid.pulse()
 

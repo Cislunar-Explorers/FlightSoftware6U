@@ -91,11 +91,13 @@ class separation_test(Command):
     downlink_codecs = []
 
     def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.gom.burnwire.pulse(consts.SPLIT_BURNWIRE_DURATION, asynchronous=True)
+        parent.devices.gom.burnwire.pulse(
+            consts.SPLIT_BURNWIRE_DURATION, asynchronous=True
+        )
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
         for _ in range(1000):
-            gyro_reading = parent.gyro.get_gyro()
+            gyro_reading = parent.devices.gyro.collect_telem()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
             gyro_list.append(gyro_time)
@@ -439,7 +441,7 @@ class reboot_gom(Command):
     downlink_codecs = []
 
     def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.gom.driver.reboot()
+        parent.devices.gom.driver.reboot()
 
 
 class power_cycle(Command):
@@ -451,7 +453,7 @@ class power_cycle(Command):
 
     def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
         # TODO: safe shutdown RPi before hard reset
-        parent.gom.hard_reset(True)
+        parent.devices.gom.hard_reset(True)
 
 
 class gom_outputs(Command):
@@ -470,7 +472,9 @@ class gom_outputs(Command):
         # if 'delay' is not found in kwargs, assume we want it immediately
         delay = kwargs.get(consts.DELAY, 0)
 
-        parent.gom.set_single_output(output_channel, int(state), delay=delay)
+        parent.devices.gom.driver.set_single_output(
+            output_channel, int(state), delay=delay
+        )
 
 
 class pi_shutdown(Command):
@@ -875,10 +879,10 @@ class set_gom_conf1(Command):
         logging.info("New config to be set:")
         ps.displayConfig(new_config)
 
-        if parent.gom is not None:
+        if parent.devices.gom is not None:
             try:
-                parent.gom.driver.config_set(new_config)
-                updated_config: ps.eps_config_t = parent.gom.driver.config_get()
+                parent.devices.gom.driver.config_set(new_config)
+                updated_config: ps.eps_config_t = parent.devices.gom.driver.config_get()
                 new_config_dict = gom_util.dict_from_eps_config(updated_config)
                 return new_config_dict
 
@@ -897,9 +901,9 @@ class get_gom_conf1(Command):
     def _method(
         self, parent: MainSatelliteThread, **kwargs
     ) -> Optional[Dict[str, int]]:
-        if parent.gom is not None:
+        if parent.devices.gom is not None:
             current_config: ps.eps_config_t = cast(
-                "ps.eps_config_t", parent.gom.get_health_data(level="config")
+                "ps.eps_config_t", parent.devices.gom.driver.config_get()
             )
             ps.displayConfig(current_config)
             current_config_dict = gom_util.dict_from_eps_config(current_config)
@@ -924,12 +928,14 @@ class set_gom_conf2(Command):
     def _method(
         self, parent: MainSatelliteThread, **kwargs
     ) -> Optional[Dict[str, int]]:
-        if parent.gom is not None:
+        if parent.devices.gom is not None:
             new_conf2 = gom_util.eps_config2_from_dict(kwargs)
-            parent.gom.driver.config2_set(new_conf2)
-            parent.gom.driver.config2_cmd(2)
+            parent.devices.gom.driver.config2_set(new_conf2)
+            parent.devices.gom.driver.config2_cmd(2)
 
-            return gom_util.dict_from_eps_config2(parent.gom.driver.config2_get())
+            return gom_util.dict_from_eps_config2(
+                parent.devices.gom.driver.config2_get()
+            )
         else:
             logging.warning("Can't talk to Gom P31u")
 
@@ -942,9 +948,9 @@ class get_gom_conf2(Command):
     def _method(
         self, parent: MainSatelliteThread, **kwargs
     ) -> Optional[Dict[str, int]]:
-        if parent.gom is not None:
+        if parent.devices.gom is not None:
             current_conf2 = cast(
-                "ps.eps_config2_t", parent.gom.get_health_data(level="config2")
+                "ps.eps_config2_t", parent.devices.gom.driver.config2_get()
             )
             ps.displayConfig2(current_conf2)
             current_config2_dict = gom_util.dict_from_eps_config2(current_conf2)
@@ -1060,44 +1066,44 @@ COMMAND_LIST: List[Command] = [
 #         # tests integration of ADC into the rest of the FSW
 #         logging.info(
 #             "Cold junction temperature for gyro sensor in Celsius:")
-#         logging.info(parent.adc.get_gyro_temp())
+#         logging.info(parent.devices.adc.get_gyro_temp())
 
 #         logging.info(
-#             f"Pressure: {parent.adc.read_pressure()} psi")
+#             f"Pressure: {parent.devices.adc.read_pressure()} psi")
 #         logging.info(
-#             f"Temperature: {parent.adc.read_temperature()} deg C")
+#             f"Temperature: {parent.devices.adc.read_temperature()} deg C")
 
 #         logging.info("Conversion sanity check: 25.6 degrees")
-#         logging.info(parent.adc.convert_volt_to_temp(
-#             parent.adc.convert_temp_to_volt(25.6)))
+#         logging.info(parent.devices.adc.convert_volt_to_temp(
+#             parent.devices.adc.convert_temp_to_volt(25.6)))
 #         logging.info("Conversion sanity check: 2.023 mV")
-#         logging.info(parent.adc.convert_temp_to_volt(
-#             parent.adc.convert_volt_to_temp(2.023)))
+#         logging.info(parent.devices.adc.convert_temp_to_volt(
+#             parent.devices.adc.convert_volt_to_temp(2.023)))
 
 #     def rtc_test(self):
 #         logging.info(
-#             f"Oscillator Disabled: {parent.rtc.driver.disable_oscillator}")
-#         logging.info(f"RTC Temp: {parent.rtc.get_temp()}")
-#         logging.info(f"RTC Time: {parent.rtc.get_time()}")
+#             f"Oscillator Disabled: {parent.devices.rtc.driver.disable_oscillator}")
+#         logging.info(f"RTC Temp: {parent.devices.rtc.get_temp()}")
+#         logging.info(f"RTC Time: {parent.devices.rtc.get_time()}")
 #         # time.sleep(1)
 #         logging.info("Setting RTC time to 1e9")
-#         parent.rtc.set_time(int(1e9))
-#         logging.info("New RTC Time: {parent.rtc.get_time()}")
+#         parent.devices.rtc.set_time(int(1e9))
+#         logging.info("New RTC Time: {parent.devices.rtc.get_time()}")
 #         # time.sleep(1)
 #         logging.info("Incrementing RTC Time by 5555 seconds")
-#         parent.rtc.increment_rtc(5555)
+#         parent.devices.rtc.increment_rtc(5555)
 #         logging.info(
-#             f"New RTC Time: {parent.rtc.get_time()}")
+#             f"New RTC Time: {parent.devices.rtc.get_time()}")
 #         logging.info("Disabling Oscillator, waiting 10 seconds")
-#         # parent.rtc.disable_oscillator()
+#         # parent.devices.rtc.disable_oscillator()
 #         time.sleep(10)
 #         logging.info(
-#             f"RTC Time after disabling oscillator: {parent.rtc.get_time()}")
+#             f"RTC Time after disabling oscillator: {parent.devices.rtc.get_time()}")
 #         logging.info("Enabling Oscillator, waiting 10 seconds")
-#         # parent.rtc.enable_oscillator()
+#         # parent.devices.rtc.enable_oscillator()
 #         time.sleep(10)
 #         logging.info(
-#             f"RTC Time after re-enabling oscillator: {parent.rtc.get_time()}")
+#             f"RTC Time after re-enabling oscillator: {parent.devices.rtc.get_time()}")
 #         logging.info("Disabling Oscillator")
-#         # parent.rtc.disable_oscillator()
+#         # parent.devices.rtc.disable_oscillator()
 #         parent.handle_sigint(None, None)

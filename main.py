@@ -149,8 +149,8 @@ class MainSatelliteThread(Thread):
         sensors = [self.mux, self.camera]
         sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
         sensor_functioning_list.extend(cameras_list)
-        connected_devices.extend(sensor_functioning_list)
-        sensor_bitmask = "".join(map(str, connected_devices))
+        sensor_functioning_list.extend(connected_devices.values())
+        sensor_bitmask = "".join(map(str, sensor_functioning_list))
         logging.debug(f"Sensors: {sensor_bitmask}")
         return int(sensor_bitmask, 2)
 
@@ -165,9 +165,9 @@ class MainSatelliteThread(Thread):
 
         self.flight_mode.poll_inputs()
         # TODO: move this following if block to the telemetry module
-        if self.radio is not None:
+        if self.devices.radio.connected:
             # Listening for new commands
-            newCommand = self.radio.receiveSignal()
+            newCommand = self.devices.radio.receiveSignal()
             if newCommand is not None:
                 self.command_queue.put(bytes(newCommand))
             else:
@@ -256,8 +256,8 @@ class MainSatelliteThread(Thread):
                 self.shutdown()
 
     def shutdown(self):
-        if self.gom is not None:
-            self.gom.all_off()
+        if self.devices.gom.connected:
+            self.devices.gom.all_off()
         if self.nemo_manager is not None:
             self.nemo_manager.close()
         logging.critical("Shutting down flight software")

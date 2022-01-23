@@ -1,10 +1,11 @@
 from enum import Enum
-from typing import Any
 from drivers.device import Device
 import drivers.power.loadswitch as ls
 
 import drivers.power.power_controller as power_controller
 import logging
+
+from drivers.power.power_structs import eps_hk_t
 
 
 class Hk(Enum):
@@ -22,12 +23,12 @@ class Gomspace(Device):
 
     driver: power_controller.Power
 
-    lna: ls.lna
-    burnwire: ls.burnwire
-    glowplug_1: ls.glowplug_1
-    glowplug_2: ls.glowplug_2
+    lna: ls.P31uLoadSwitch
+    burnwire: ls.P31uLoadSwitch
+    glowplug_1: ls.P31uLoadSwitch
+    glowplug_2: ls.P31uLoadSwitch
     solenoid: ls.solenoid
-    electrolyzers: ls.electrolyzers
+    electrolyzers: ls.P31uLoadSwitch
     pa: ls.power_amplifier
     rf_tx: ls.rf_switch_tx
     rf_rx: ls.rf_switch_rx
@@ -57,8 +58,11 @@ class Gomspace(Device):
         # for switch in loadswitches:
         #     setattr(self, type(switch).__name__, switch(self.driver))
 
-    def _collect_telem(self) -> Any:
+    def _collect_telem(self) -> eps_hk_t:
         return self.driver.get_hk_2()
+
+    def collect_telem(self) -> eps_hk_t:
+        return super().collect_telem()
 
     def tick_wdt(self):
         """Resets dedicated WDT"""

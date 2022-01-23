@@ -12,13 +12,10 @@
 # look at the accompanying End of Semester Report found here:
 # https://cornell.app.box.com/file/664230352636
 
-from adafruit_blinka.agnostic import board_id
 from drivers.device import Device
 from drivers.imu import Gyro
 
-
-if board_id and board_id != "GENERIC_LINUX_PC":
-    import ADS1115
+import ADS1115
 
 
 class ADC(Device):

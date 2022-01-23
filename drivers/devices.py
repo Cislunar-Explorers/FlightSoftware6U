@@ -13,7 +13,7 @@ class DeviceContainer:
         self.radio = Radio()
         self.gyro = imu.Gyro()
         self.magacc = imu.MagnetAccelerometer()
-        self.adc = adc.ADC()
+        self.adc = adc.ADC(self.gyro)
         self.rtc = rtc.RTC()
 
         self.devices: List[Device] = [

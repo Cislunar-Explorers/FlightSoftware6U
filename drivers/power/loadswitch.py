@@ -195,7 +195,7 @@ class mockGPIOLoadSwitch(GPIOLoadSwitch):
         time.sleep(delay)
         self._state = state
 
-    def get_new_telem(self) -> P31uLoadSwitchTelem:
+    def get_new_telem(self) -> LoadSwitchTelem:
         return LoadSwitchTelem(self._state)
 
 

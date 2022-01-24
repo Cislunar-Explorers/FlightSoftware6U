@@ -70,6 +70,8 @@ class StringEnum(str, Enum):
 # Keyword Argument Definitions for Commands
 @unique
 class CommandKwargs(StringEnum):
+    """Enum of all the keyword argument names that are used in commands"""
+
     NAME = "name"
     VALUE = "value"
 
@@ -138,11 +140,11 @@ class CommandKwargs(StringEnum):
     OUTPUT_CHANNEL = "output_channel"
 
 
-# Keyword argument definitions for downlink
-
-
+# Keyword argument definitions for downlinks
 @unique
 class DownlinkKwargs(StringEnum):
+    """Enum of all the keyword argument names used for downlinking."""
+
     VALUE = "value"
 
     RTC_TIME = "rtc_time"
@@ -235,6 +237,7 @@ class DownlinkKwargs(StringEnum):
     RETURN_CODE = "return_code"
 
 
+# Constants related to the CQC competition
 a = 1664525
 b = 1013904223
 M = 2 ** 32
@@ -253,7 +256,6 @@ NO_FM_CHANGE = -1
 GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 # Gyro specific constants
-# TODO: make sure that we change this to 500 if need be
 GYRO_RANGE = 500  # degrees per second
 
 # Gom config command args:
@@ -261,6 +263,9 @@ GYRO_RANGE = 500  # degrees per second
 
 @unique
 class GomConfKwargs(StringEnum):
+    """Enum of all the arguments in the P31u's config"""
+
+    # Conf1:
     PPT_MODE = "ppt_mode"
     BATTHEATERMODE = "battheater_mode"
     BATTHEATERLOW = "battheater_low"
@@ -287,12 +292,15 @@ class GomConfKwargs(StringEnum):
     VBOOST2 = "vboost2"
     VBOOST3 = "vboost3"
 
+    # Conf2:
     MAX_VOLTAGE = "max_voltage"
     NORM_VOLTAGE = "norm_voltage"
     SAFE_VOLTAGE = "safe_voltage"
     CRIT_VOLTAGE = "crit_voltage"
 
 
+# Bit inflation definition
+# TODO: move to parameters
 ZERO_WORD = b"\xcb\x51"
 ONE_WORD = b"\xdc\x2c"
 
@@ -306,9 +314,8 @@ class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
     glowplug_2 = 2
-    glowplug_1 = (
-        3
-    )  # I know this looks backwards, but this is correct for historical reasons
+    # I know this looks backwards, but this is correct for historical reasons
+    glowplug_1 = 3
     solenoid = 4
     electrolyzer = 5
 

@@ -859,7 +859,6 @@ GomConf1Codecs = [
 
 
 class set_gom_conf1(Command):
-
     id = CommandEnum.GomConf1Set
     uplink_codecs = GomConf1Codecs
     downlink_codecs = GomConf1Codecs

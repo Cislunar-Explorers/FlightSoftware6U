@@ -33,13 +33,13 @@ WDT_COUNTS_GND_codec = Codec(dk.WDT_COUNTS_GND, "int")
 GOM_BOOTS_codec = Codec(dk.GOM_BOOTS, "int")
 GOM_BOOTCAUSE_codec = Codec(dk.GOM_BOOTCAUSE, "uint8")
 GOM_BATTMODE_codec = Codec(dk.GOM_BATTMODE, "uint8")
-# beware integer underflow erro
+# beware integer underflow error
 HK_TEMP_1_codec = Codec(dk.HK_TEMP_1, "uint8")
-# beware integer underflow erro
+# beware integer underflow error
 HK_TEMP_2_codec = Codec(dk.HK_TEMP_2, "uint8")
-# beware integer underflow erro
+# beware integer underflow error
 HK_TEMP_3_codec = Codec(dk.HK_TEMP_3, "uint8")
-# beware integer underflow erro
+# beware integer underflow error
 HK_TEMP_4_codec = Codec(dk.HK_TEMP_4, "uint8")
 GOM_PPT_MODE_codec = Codec(dk.GOM_PPT_MODE, "uint8")
 RESERVED2_codec = Codec(dk.RESERVED2, "ushort")

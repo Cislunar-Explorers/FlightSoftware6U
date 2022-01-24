@@ -51,11 +51,11 @@ try:
                 gom.electrolyzers.set(False)
 
             if choice == 7:
-                gom.pa.set(True)
+                gom.power_amplifier.set(True)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.pa.set(False)
+                gom.power_amplifier.set(False)
 
             if choice == 8:
                 gom.solenoid.set(True)
@@ -65,23 +65,26 @@ try:
                 gom.solenoid.set(False)
 
         if choice in [2, 3, 5]:
-            duration = int(input("Duration (integer milliseconds):\n"))
+            duration = int(
+                input(
+                    "Duration (float seconds, less than 2.0 seconds with a solenoid valve connected):\n"
+                )
+            )
             if choice == 2:
                 gom.glowplug_2.set(True)
                 ps.displayHk2(gom.get_health_data(level="eps"))
-                sleep(1e-3 * duration)
+                sleep(duration)
                 gom.glowplug_2.set(False)
 
             if choice == 3:
                 gom.glowplug_1.set(True)
                 ps.displayHk2(gom.get_health_data(level="eps"))
-                sleep(1e-3 * duration)
+                sleep(duration)
                 gom.glowplug_1.set(False)
 
             if choice == 5:
-                assert 0 < duration < 400
                 logging.info("Pulsing Solenoid")
-                gom.solenoid.pulse()
+                gom.solenoid.pulse(duration)
 
 finally:
     gom.all_off()

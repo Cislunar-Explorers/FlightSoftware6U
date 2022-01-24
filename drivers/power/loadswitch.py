@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 from drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
 from abc import ABC, abstractmethod
@@ -157,14 +158,23 @@ class solenoid(P31uLoadSwitch):
     This loadswitch is significantly different from the other loadswitches
     because of the unique pulse characteristics required by the solenoid valve.
     Thus, when using with a real solenoid in the loop, use the `pulse` method rather than the `set` method.
-    The `set` method will still work, but should not be used to properly actuate the solenoid valve."""
+    The `set` method will still work, but should not be used to properly actuate the solenoid valve.
+    LEAVING THIS ON FOR MORE THAN A FEW SECONDS WHILE A PHYSICAL SOLENOID VALVE IS CONNECTED WILL BREAK THE VALVE.
+    DO NOT PLAN ON BREAKING A VALVE. THEY ARE LITERALLY IRREPLACEABLE (no longer manufactured and we have no spares)"""
 
     p31u_output_id = GomOutputs.solenoid
 
-    def pulse(self):
-        """The implementation of this will likely change soon
+    def pulse(self, duration: float):
+        """Pulses the solenoid and holds it open for `duration` seconds
+        The implementation of this will likely change soon
         because the solenoid driver circuit is probably changing."""
-        self.driver.solenoid_single_wave(0.1)
+
+        if 0 < duration <= 3:
+            self.driver.solenoid_single_wave(duration)
+        else:
+            logging.warning(
+                "Invalid or unsafe solenoid valve pulse duration. You should NOT pulse the valve for more than 3 sec"
+            )
 
 
 class electrolyzers(P31uLoadSwitch):
@@ -188,6 +198,10 @@ class GPIOLoadSwitch(LoadSwitch):
 
 
 class mockGPIOLoadSwitch(GPIOLoadSwitch):
+    """Mocked loadswitch class. This loadswitch simulates the behavior of a real, hardware-connected
+    GPIO loadswitch but purely in software. Useful for unit testing
+    """
+
     def __init__(self):
         self._state = False
 

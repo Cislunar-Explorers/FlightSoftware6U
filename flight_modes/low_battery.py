@@ -27,7 +27,7 @@ class LowBatterySafetyMode(FlightMode):
         else:
             if self._parent.gom is not None:
                 # turn off all devices except for LNA. Most of this stuff is redundant, but better safe than sorry
-                self._parent.gom.pa.set(False)  # turn off PA loadswitch
+                self._parent.gom.power_amplifier.set(False)  # turn off PA loadswitch
                 self._parent.gom.rf_tx.set(False)  # Switch RF switch to RX
                 self._parent.gom.rf_rx.set(True)  # Switch RF switch to RX
 

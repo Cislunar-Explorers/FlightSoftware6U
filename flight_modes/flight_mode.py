@@ -255,12 +255,12 @@ class CommsMode(FlightMode):
         self._parent.gom.rf_tx.set(True)
 
         # Turn on power amplifier
-        self._parent.gom.pa.set(True)
+        self._parent.gom.power_amplifier.set(True)
 
     def exit_transmit_safe_mode(self):
 
         # Turn off power amplifier
-        self._parent.gom.pa.set(False)
+        self._parent.gom.power_amplifier.set(False)
 
         # Set RF transmitting side to low
         self._parent.gom.rf_tx.set(False)

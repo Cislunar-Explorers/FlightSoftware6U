@@ -9,14 +9,14 @@ Primary Developer: Sean Kumar<br>
 Description: This was the first find algorithm developed which utilizes the hough circle transform for detection. First the sun is searched for in the image, and if found, is erased from the image. This modified image is then used for Earth detection, and a similar process is done for altering the image to be used for moon detection. Unfortunately, the computational constraints of the Raspberry Pi 1A+ meant that the hough transform operation was too memory intensive to function, leading this algorithm (more importantly, the hough transform on full 4K images) to be a non-viable option.
 
 ## <code>find_with_binary_thresh.py</code><br>
-Status: 🟩Experimental, potentially viable<br>
+Status: 🟥Experimental, potentially unviable<br>
 Primary Developer: Adam Nasir<br>
-Description: Circle detection algorithm done in a similar way to find_with_contours. Uses the Hough transform.
+Description: Circle detection algorithm done in a similar way to find_with_contours. Uses the Hough transform, in original performance-inhibiting way.
 
 ## <code>find_with_blobs.py</code><br>
 Status: ⬜Experimental, untested<br>
 Primary Developer: Sean Kumar<br>
-Description: Not too sure about this one. Uses find_with_kmeans to get a binary image of detected bodies, and also detects/circles blobs in these contours. These blobs seem to be places where misclassifications are occuring within a contour
+Description: Not too sure about this one. Uses find_with_kmeans to get a binary image of detected bodies, and also detects/circles blobs in these contours. These blobs seem to be places where misclassifications are occuring within a contour.
 
 ## <code>find_with contrours.py</code><br>
 Status: 🟩Potentially viable<br>

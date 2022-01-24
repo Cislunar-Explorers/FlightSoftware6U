@@ -11,7 +11,7 @@ Description: This was the first find algorithm developed which utilizes the houg
 ## <code>find_with_binary_thresh.py</code><br>
 Status: 🟩Experimental, potentially viable<br>
 Primary Developer: Adam Nasir<br>
-Description:
+Description: Circle detection algorithm done in a similar way to find_with_contours. Uses the Hough transform.
 
 ## <code>find_with_blobs.py</code><br>
 Status: ⬜Experimental, untested<br>
@@ -26,7 +26,7 @@ Description: Find implementation that takes into account camera characteristics,
 ## <code>find_with_hough_transform_and_contours.py</code><br>
 Status: 🟩Potentially viable<br>
 Primary Developer: Andrew Xu<br>
-Description:
+Description: Performs circle detection by using the Hough transform on a small region of interest (for efficiency, as well as accuracy), while defaulting to the find_with_contours implementation if the Hough transform does not find any contours.
 
 ## <code>find_with_kmeans.py</code><br>
 Status: ⬜Experimental, tested<br>
@@ -34,6 +34,6 @@ Primary Developer: Sean Kumar<br>
 Description: Uses k-means clustering to classify pixels as either being part of a body or not. Could be helpful in classifying bodies.
 
 ## <code>find_with_threepoint.py</code><br>
-Status: 🟩Experiemntal, potentially viable<br>
+Status: 🟩Experimental, potentially viable<br>
 Primary Developer: Adam Nasir<br>
-Description:
+Description: Performs circle detection using three points which lie on the edge of a circle.

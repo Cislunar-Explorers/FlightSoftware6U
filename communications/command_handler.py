@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Union
+from utils import parameter_utils
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
@@ -15,7 +16,6 @@ from utils.constants import (
     MIN_COMMAND_SIZE,
     ONE_WORD,
     ZERO_WORD,
-    CommandEnum,
 )
 
 from typing import Optional, Tuple, Dict
@@ -64,6 +64,14 @@ class CommandHandler:
             f"Uplink/Downlink counters: {self.uplink_counter}/{self.downlink_counter}"
         )
 
+    def increment_downlink_counter(self):
+        self.downlink_counter += 1
+        parameter_utils.set_parameter("DOWNLINK_COUNTER", self.downlink_counter, True)
+
+    def increment_uplink_counter(self):
+        self.uplink_counter += 1
+        parameter_utils.set_parameter("UPLINK_COUNTER", self.uplink_counter, True)
+
     def get_command_from_id(self, command_id: int):
         try:
             return COMMAND_DICT[command_id]
@@ -89,12 +97,14 @@ class CommandHandler:
 
             if counter < self.uplink_counter and uplink:
                 raise CommandUnpackingException(
-                    "Command counter is less than uplink counter. Ingoring command"
+                    f"Command counter ({counter}) is less than uplink counter ({self.uplink_counter})."
+                    f"Ignoring command"
                 )
 
             if counter < self.downlink_counter and not uplink:
                 raise CommandUnpackingException(
-                    "Command counter is less than downlink counter. Ingoring command"
+                    f"Command counter ({counter}) is less than downlink counter ({self.downlink_counter})."
+                    f"Ignoring command"
                 )
 
             if data_length != len(kwarg_data):
@@ -157,7 +167,7 @@ class CommandHandler:
             return None
         else:
             # increment counter
-            self.uplink_counter += 1
+            self.increment_uplink_counter()
 
         # run command
         downlink_data = self.run_command(command, kwargs)
@@ -171,11 +181,9 @@ class CommandHandler:
     def run_command(self, command: Command, kwargs: Dict[str, Union[int, float, str]]):
         return command.run(parent=self._parent, **kwargs)
 
-    def pack_telemetry(
-        self, id: CommandEnum, telem_dict: Dict[str, float | int]
-    ) -> bytes:
-        telemetry_bytes = self.pack_link(False, self.downlink_counter, id, telem_dict)
-        self.downlink_counter += 1
+    def pack_telemetry(self, id, kwargs) -> bytes:
+        telemetry_bytes = self.pack_link(False, self.downlink_counter, id, kwargs)
+        self.increment_downlink_counter()
         return telemetry_bytes
 
     def unpack_telemetry(self, data: bytes):

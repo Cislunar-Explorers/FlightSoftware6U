@@ -111,6 +111,6 @@ class Command(ABC):
             self.packing_check(downlink, self.downlink_codecs)
             return downlink
         except Exception as e:
-            logging.error("Unhandled command exception")
+            logging.error(f"Unhandled exception running command {self.id}")
             logging.error(e, exc_info=True)
             raise CommandException

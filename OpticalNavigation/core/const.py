@@ -209,9 +209,9 @@ class ImageDetectionCircles:
     """
 
     def __init__(self) -> None:
-        self.__earth_detection = np.array([0, 0, 0, 0], dtype=float)
-        self.__moon_detection = np.array([0, 0, 0, 0], dtype=float)
-        self.__sun_detection = np.array([0, 0, 0, 0], dtype=float)
+        self.__earth_detection = None
+        self.__moon_detection = None
+        self.__sun_detection = None
 
     def set_earth_detection(
         self,

@@ -3,6 +3,7 @@
 import numpy as np
 from enum import Enum
 import math
+from typing import Optional
 
 # The system will wait for the expected time elapsed
 # for the spacecraft to face the angle that is 45 degrees
@@ -209,9 +210,9 @@ class ImageDetectionCircles:
     """
 
     def __init__(self) -> None:
-        self.__earth_detection = None
-        self.__moon_detection = None
-        self.__sun_detection = None
+        self.__earth_detection: Optional[np.ndarray] = None
+        self.__moon_detection: Optional[np.ndarray] = None
+        self.__sun_detection: Optional[np.ndarray] = None
 
     def set_earth_detection(
         self,
@@ -246,13 +247,13 @@ class ImageDetectionCircles:
             [spherical_x, spherical_y, spherical_z, angular_diameter], dtype=float
         )
 
-    def get_earth_detection(self) -> np.ndarray:
+    def get_earth_detection(self) -> Optional[np.ndarray]:
         return self.__earth_detection
 
-    def get_moon_detection(self) -> np.ndarray:
+    def get_moon_detection(self) -> Optional[np.ndarray]:
         return self.__moon_detection
 
-    def get_sun_detection(self) -> np.ndarray:
+    def get_sun_detection(self) -> Optional[np.ndarray]:
         return self.__sun_detection
 
 

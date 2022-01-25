@@ -16,10 +16,7 @@
     "flight_modes/opnav_flightmode.py",
     "communications/downlink.py",
     "OpticalNavigation/core/ukf.py",
-    "OpticalNavigation/core/opnav.py",
-    "OpticalNavigation/core/find.py",
-    "OpticalNavigation/core/find_with_blobs.py",
-    "OpticalNavigation/core/find_with_kmeans.py"
+    "OpticalNavigation/core/opnav.py"
   ],
   "extraPaths": [
     "OpticalNavigation/"

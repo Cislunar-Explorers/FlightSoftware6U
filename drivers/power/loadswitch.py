@@ -158,11 +158,19 @@ class solenoid(P31uLoadSwitch):
     This loadswitch is significantly different from the other loadswitches
     because of the unique pulse characteristics required by the solenoid valve.
     Thus, when using with a real solenoid in the loop, use the `pulse` method rather than the `set` method.
-    The `set` method will still work, but should not be used to properly actuate the solenoid valve.
+    The `_set` method will still work, but should not be used to properly actuate the solenoid valve.
     LEAVING THIS ON FOR MORE THAN A FEW SECONDS WHILE A PHYSICAL SOLENOID VALVE IS CONNECTED WILL BREAK THE VALVE.
     DO NOT PLAN ON BREAKING A VALVE. THEY ARE LITERALLY IRREPLACEABLE (no longer manufactured and we have no spares)"""
 
     p31u_output_id = GomOutputs.solenoid
+
+    def set(self):
+        msg = (
+            "The solenoid valve cannot be actuated correctly using the set method."
+            "If you want to actuate a physical solenoid valve, use the `pulse` method."
+            "If you want to turn on the pin on the P31u without a solenoid in the loop, use the `_set` method"
+        )
+        logging.error(msg)
 
     def pulse(self, duration: float):
         """Pulses the solenoid and holds it open for `duration` seconds

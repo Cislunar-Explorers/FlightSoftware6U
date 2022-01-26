@@ -279,6 +279,9 @@ class ImageDetectionCircles:
 
 @unique
 class BodyEnum(IntEnum):
+    def __str__(self):
+        return str(self.name)
+
     Earth = 0
     Moon = 1
     Sun = 2

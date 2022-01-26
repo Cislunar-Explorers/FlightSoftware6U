@@ -417,38 +417,59 @@ def __observe(
     )
     session.add(new_entry)
 
-    '''
     """Ephemeris function"""
     current_time = observeStart
-    observeStart = observeStart - timedelta(microseconds=11716*1000)
-    sun_init_au = get_sun(Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format='isot', scale='tdb')).cartesian
-    sun_init = CartesianRepresentation( [sun_init_au.x,sun_init_au.y,sun_init_au.z],unit="km")
-    sun_current_au = get_sun(Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format='isot', scale='tdb')).cartesian
-    sun_current = CartesianRepresentation( [sun_current_au.x, sun_current_au.y, sun_current_au.z],unit="km")
+    observeStart = observeStart - timedelta(microseconds=11716 * 1000)
+    sun_init_au = get_sun(
+        Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+    ).cartesian
+    sun_init = CartesianRepresentation(
+        [sun_init_au.x, sun_init_au.y, sun_init_au.z], unit="km"
+    )
+    sun_current_au = get_sun(
+        Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+    ).cartesian
+    sun_current = CartesianRepresentation(
+        [sun_current_au.x, sun_current_au.y, sun_current_au.z], unit="km"
+    )
     sx = sun_current.x.value
     sy = sun_current.y.value
     sz = sun_current.z.value
-    svx =  (sx - sun_init.x.value)/(current_time - observeStart).seconds
-    svy =  (sy - sun_init.y.value)/(current_time - observeStart).seconds
-    svz =  (sz - sun_init.z.value)/(current_time - observeStart).seconds
+    svx = (sx - sun_init.x.value) / (current_time - observeStart).seconds
+    svy = (sy - sun_init.y.value) / (current_time - observeStart).seconds
+    svz = (sz - sun_init.z.value) / (current_time - observeStart).seconds
 
-    moon_init_au = get_moon(Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format='isot', scale='tdb')).cartesian
-    moon_init = CartesianRepresentation( [moon_init_au.x,moon_init_au.y,moon_init_au.z],unit="km")
-    moon_current_au = get_moon(Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format='isot', scale='tdb')).cartesian
-    moon_current = CartesianRepresentation( [moon_current_au.x, moon_current_au.y, moon_current_au.z],unit="km")
+    logging.info("Sun pos: ", sx, sy, sz)
+    logging.info("Sun vel: ", svx, svy, svz)
+
+    moon_init_au = get_moon(
+        Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+    ).cartesian
+    moon_init = CartesianRepresentation(
+        [moon_init_au.x, moon_init_au.y, moon_init_au.z], unit="km"
+    )
+    moon_current_au = get_moon(
+        Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+    ).cartesian
+    moon_current = CartesianRepresentation(
+        [moon_current_au.x, moon_current_au.y, moon_current_au.z], unit="km"
+    )
     mx = moon_current.x.value
     my = moon_current.y.value
     mz = moon_current.z.value
-    mvx =  (mx - moon_init.x.value)/(current_time - observeStart).seconds
-    mvy =  (my - moon_init.y.value)/(current_time - observeStart).seconds
-    mvz =  (mz - moon_init.z.value)/(current_time - observeStart).seconds
+    mvx = (mx - moon_init.x.value) / (current_time - observeStart).seconds
+    mvy = (my - moon_init.y.value) / (current_time - observeStart).seconds
+    mvz = (mz - moon_init.z.value) / (current_time - observeStart).seconds
+
+    logging.info("Moon pos: ", mx, my, mz)
+    logging.info("Moon vel: ", mvx, mvy, mvz)
+
     new_entry1 = OpNavEphemerisModel.from_tuples(
-            sun_eph=[-sx,-sy,-sz,-svx,-svy,-svz],
-            moon_eph=[-mx,-my,-mz,-mvx,-mvy,-mvz],
-            time=current_time
+        sun_eph=[-sx, -sy, -sz, -svx, -svy, -svz],
+        moon_eph=[-mx, -my, -mz, -mvx, -mvy, -mvz],
+        time=current_time,
     )
     session.add(new_entry1)
-    '''
 
     session.commit()
     logging.info("[OPNAV]: Observe Complete!")

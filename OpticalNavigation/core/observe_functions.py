@@ -4,6 +4,9 @@ from core.find_with_contours import *
 import numpy as np
 import math
 import logging
+from astropy.time import Time
+from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
+from datetime import timedelta
 
 
 # Make this run on a singular frame, update detections list outside of function, in observe
@@ -121,3 +124,36 @@ def body_to_T0(detection, timeElapsed, avgGyroY):
     res = (tZeroRotation).dot(detection.vector.data)
     detection.vector = Vector3(res[0], res[1], res[2])
     return detection
+
+
+def get_ephemeris(observeStart, body):
+    current_time = observeStart
+    observeStart = observeStart - timedelta(microseconds=11716 * 1000)
+    init_au = None
+    current_au = None
+    if body == BodyEnum.Sun:
+        init_au = get_sun(
+            Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+        ).cartesian
+        current_au = get_sun(
+            Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+        ).cartesian
+    elif body == BodyEnum.Moon:
+        init_au = get_moon(
+            Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+        ).cartesian
+        current_au = get_moon(
+            Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
+        ).cartesian
+
+    init = CartesianRepresentation([init_au.x, init_au.y, init_au.z], unit="km")
+    current = CartesianRepresentation(
+        [current_au.x, current_au.y, current_au.z], unit="km"
+    )
+    x = current.x.value
+    y = current.y.value
+    z = current.z.value
+    vx = (x - init.x.value) / (current_time - observeStart).seconds
+    vy = (y - init.y.value) / (current_time - observeStart).seconds
+    vz = (z - init.z.value) / (current_time - observeStart).seconds
+    return vx, vy, vz

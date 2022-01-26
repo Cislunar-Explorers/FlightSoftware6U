@@ -119,7 +119,7 @@ def test_start(mocker):
 
     mocker.patch("core.opnav.record_gyro", side_effect=record_gyro_mock)
 
-    def __get_elapsed_time_mock(fileData, timeDeltaAvgs, observeStart):
+    def get_elapsed_time_mock(fileData, timeDeltaAvgs, observeStart):
         """ Calculates the time from between the start of observation and a specified frame without the use of Picamera
             hardware """
         print("get_elapsed_time_mock")
@@ -130,7 +130,10 @@ def test_start(mocker):
         timeElapsed = (dateTime - observeStart).total_seconds()
         return timeElapsed
 
-    mocker.patch("core.opnav.__get_elapsed_time", side_effect=__get_elapsed_time_mock)
+    mocker.patch(
+        "core.observe_functions.get_elapsed_time", side_effect=get_elapsed_time_mock
+    )
+    mocker.patch("core.opnav.get_elapsed_time", side_effect=get_elapsed_time_mock)
 
     # start opnav system
     opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)

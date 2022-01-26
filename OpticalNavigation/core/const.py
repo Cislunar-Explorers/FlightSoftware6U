@@ -204,6 +204,9 @@ class OPNAV_EXIT_STATUS(Enum):
 
 
 class Vector3:
+    def __str__(self):
+        return str(self.data)
+
     def __init__(self, x: float, y: float, z: float):
         self.data = np.array([x, y, z], dtype=float)
         self.x = x

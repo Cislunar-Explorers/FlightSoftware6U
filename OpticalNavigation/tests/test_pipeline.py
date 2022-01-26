@@ -1,5 +1,6 @@
 import numpy as np
-import re
+
+# import re
 from datetime import datetime, timedelta
 
 import core.opnav as opnav
@@ -118,15 +119,13 @@ def test_start(mocker):
 
     mocker.patch("core.opnav.record_gyro", side_effect=record_gyro_mock)
 
-    def __get_elapsed_time_mock(bestTuple, timeDeltaAvgs, observeStart):
+    def __get_elapsed_time_mock(fileData, timeDeltaAvgs, observeStart):
         """ Calculates the time from between the start of observation and a specified frame without the use of Picamera
             hardware """
         print("get_elapsed_time_mock")
+        timestamp = fileData.timestamp
         observeStart = datetime.utcfromtimestamp(observeStart * 10 ** -6)
         lastReboot = datetime(2020, 7, 28, 22, 8, 3)
-        timestamp = (
-            int(re.search(r"[t](\d+)", bestTuple[0]).group(1)) * 1000
-        )  # factor if 1000 ONLY for case1c
         dateTime = lastReboot + timedelta(microseconds=timestamp)
         timeElapsed = (dateTime - observeStart).total_seconds()
         return timeElapsed

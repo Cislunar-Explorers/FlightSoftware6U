@@ -220,6 +220,7 @@ def get_detections(frames):
         fileInfo = FileData(frames[f])
         detectedBodies = find(frames[f])
 
+        # Make this small part into a template function that can be reused for e/m/s
         earthDetection = detectedBodies.get_earth_detection()
         if earthDetection is not None:
             detectionData = DetectionData(
@@ -264,16 +265,16 @@ def get_best_detection(detections):
     closest_s = (np.inf, None)
     for d in detections:
         center_dist = math.sqrt(d.vector.x ** 2 + d.vector.y ** 2)
-        if d.detection == BodyEnum.Earth and center_dist < closest_e:
+        if d.detection == BodyEnum.Earth and center_dist < closest_e[0]:
             closest_e = (center_dist, d)
-        elif d.detection == BodyEnum.Moon and center_dist < closest_m:
+        elif d.detection == BodyEnum.Moon and center_dist < closest_m[0]:
             closest_m = (center_dist, d)
-        elif d.detection == BodyEnum.Sun and center_dist < closest_s:
+        elif d.detection == BodyEnum.Sun and center_dist < closest_s[0]:
             closest_s = (center_dist, d)
     return closest_e[1], closest_m[1], closest_s[1]
 
 
-def cam_to_body(detection):
+def cam_to_body(detection, camera_params):
     camNum = detection.filedata.cam_num
     if camNum == 1:
         res = (camera_params.cam1Rotation).dot(detection.vector.data)
@@ -317,11 +318,13 @@ def __get_elapsed_time(fileData, timeDeltaAvgs, observeStart):
 
 
 def body_to_T0(detection, timeDeltaAvgs, observeStart, avgGyroY):
-    timeElapsed = __get_elapsed_time(detection, timeDeltaAvgs, observeStart)
+    timeElapsed = __get_elapsed_time(detection.filedata, timeDeltaAvgs, observeStart)
     logging.info(f"[OPNAV]: {detection.detection} Time Elapsed= {timeElapsed}")
     rotation = avgGyroY * timeElapsed
     tZeroRotation = __tZeroRotMatrix(rotation)
-    detection.vector = (tZeroRotation).dot(detection.vector.data)
+    res = (tZeroRotation).dot(detection.vector.data)
+    detection.vector = Vector3(res[0], res[1], res[2])
+    return detection
 
 
 # __________________________OLD_______________________________________
@@ -655,9 +658,9 @@ def __observe(
     avgGyroY = np.mean(gyro_meas, axis=0)[1]
     # Rotation is product of angular speed and time between frame and start of observation
 
-    for i in best_e, best_m, best_s:
-        cam_to_body(i)
-        body_to_T0(i, timeDeltaAvgs, observeStart, avgGyroY)
+    for best in best_e, best_m, best_s:
+        best = cam_to_body(best, camera_params)
+        best = body_to_T0(best, timeDeltaAvgs, observeStart, avgGyroY)
 
     # ____________________OLD___________________________________________
 
@@ -711,44 +714,19 @@ def __observe(
     # # ____________________END OLD____________________________________________
     bestDetectedCircles = ImageDetectionCircles()
     bestDetectedCircles.set_earth_detection(
-        bestEarthTuple[2][0],
-        bestEarthTuple[2][1],
-        bestEarthTuple[2][2],
-        bestEarthTuple[2][3],
+        best_e.vector.x, best_e.vector.y, best_e.vector.z, best_e.ang_diam
     )
     bestDetectedCircles.set_moon_detection(
-        bestMoonTuple[2][0],
-        bestMoonTuple[2][1],
-        bestMoonTuple[2][2],
-        bestMoonTuple[2][3],
+        best_m.vector.x, best_m.vector.y, best_m.vector.z, best_m.ang_diam
     )
     bestDetectedCircles.set_sun_detection(
-        bestSunTuple[2][0], bestSunTuple[2][1], bestSunTuple[2][2], bestSunTuple[2][3]
-    )
-    # As tuples
-    best_e = (
-        bestEarthTuple[2][0],
-        bestEarthTuple[2][1],
-        bestEarthTuple[2][2],
-        bestEarthTuple[2][3],
-    )
-    best_m = (
-        bestMoonTuple[2][0],
-        bestMoonTuple[2][1],
-        bestMoonTuple[2][2],
-        bestMoonTuple[2][3],
-    )
-    best_s = (
-        bestSunTuple[2][0],
-        bestSunTuple[2][1],
-        bestSunTuple[2][2],
-        bestSunTuple[2][3],
+        best_s.vector.x, best_s.vector.y, best_s.vector.z, best_s.ang_diam
     )
     ######
 
-    logging.info(f"[OPNAV]: Best Earth {best_e}")
-    logging.info(f"[OPNAV]: Best Sun {best_s}")
-    logging.info(f"[OPNAV]: Best Moon {best_m}")
+    logging.info(f"[OPNAV]: Best Earth {best_e.vector}")
+    logging.info(f"[OPNAV]: Best Moon {best_m.vector}")
+    logging.info(f"[OPNAV]: Best Sun {best_s.vector}")
 
     # Calculate angular separation
     ang_em = __calculate_cam_measurements(
@@ -772,9 +750,9 @@ def __observe(
             ang_em=ang_em,
             ang_es=ang_es,
             ang_ms=ang_ms,
-            e_dia=best_e[3],
-            m_dia=best_m[3],
-            s_dia=best_s[3],
+            e_dia=best_e.ang_diam,
+            m_dia=best_m.ang_diam,
+            s_dia=best_s.ang_diam,
         ),
         time=datetime.now(),
     )

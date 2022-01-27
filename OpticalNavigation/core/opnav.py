@@ -19,7 +19,7 @@ import core.attitude as attitude
 from core.sense import record_gyro
 
 # from core.preprocess import extract_frames
-from core.find_with_contours import *
+# from core.find_algos.find_with_contours import find
 from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
 from core.observe_functions import *
 

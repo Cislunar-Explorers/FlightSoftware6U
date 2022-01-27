@@ -1,5 +1,5 @@
 from core.const import BodyEnum, FileData, DetectionData, Vector3
-from core.find_with_contours import *
+from core.find_algos.find_with_contours import *
 
 import numpy as np
 import math

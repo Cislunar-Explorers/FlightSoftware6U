@@ -19,7 +19,7 @@ import core.attitude as attitude
 from core.sense import record_gyro
 
 # from core.preprocess import extract_frames
-from core.find_with_contours import *
+from core.find_algos.find_with_contours import find
 from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
 import numpy as np
 from utils.db import (
@@ -500,7 +500,7 @@ def __observe(
     # frames = glob.glob("/home/pi/cislunar_case1c/*.jpg")
     # frames = glob.glob("/Users/adam/Desktop/College/Fall2021/CislunarFA2021/cislunar_case1c/*.jpg")
     # print(SURRENDER_LOCAL_DIR)
-    frames = glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "*.jpg"))
+    frames = glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "cislunar_case1c", "*.jpg"))
 
     logging.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 

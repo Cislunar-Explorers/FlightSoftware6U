@@ -4,6 +4,7 @@ from core.find_algos.find_with_contours import *
 import numpy as np
 import math
 import logging
+from datetime import datetime
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 from datetime import timedelta
@@ -127,7 +128,7 @@ def body_to_T0(detection, timeElapsed, avgGyroY):
 
 
 def get_ephemeris(observeStart, body):
-    current_time = observeStart
+    current_time = datetime.utcfromtimestamp(observeStart * 10 ** -6)
     observeStart = observeStart - timedelta(microseconds=11716 * 1000)
     init_au = None
     current_au = None
@@ -156,4 +157,8 @@ def get_ephemeris(observeStart, body):
     vx = (x - init.x.value) / (current_time - observeStart).seconds
     vy = (y - init.y.value) / (current_time - observeStart).seconds
     vz = (z - init.z.value) / (current_time - observeStart).seconds
-    return vx, vy, vz
+
+    logging.info(f"{body} pos: ", x, y, z)
+    logging.info(f"{body} vel: ", vx, vy, vz)
+
+    return x, y, z, vx, vy, vz

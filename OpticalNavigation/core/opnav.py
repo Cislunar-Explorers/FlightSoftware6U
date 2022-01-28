@@ -20,7 +20,7 @@ from core.sense import record_gyro
 
 # from core.preprocess import extract_frames
 # from core.find_algos.find_with_contours import find
-from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters
+from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, BodyEnum
 from core.observe_functions import *
 
 from utils.db import (
@@ -418,6 +418,7 @@ def __observe(
     session.add(new_entry)
 
     """Ephemeris function"""
+    """
     current_time = observeStart
     observeStart = observeStart - timedelta(microseconds=11716 * 1000)
     sun_init_au = get_sun(
@@ -463,6 +464,9 @@ def __observe(
 
     logging.info("Moon pos: ", mx, my, mz)
     logging.info("Moon vel: ", mvx, mvy, mvz)
+    """
+    sx, sy, sz, svx, svy, svz = get_ephemeris(observeStart, BodyEnum.Sun)
+    mx, my, mz, mvx, mvy, mvz = get_ephemeris(observeStart, BodyEnum.Moon)
 
     new_entry1 = OpNavEphemerisModel.from_tuples(
         sun_eph=[-sx, -sy, -sz, -svx, -svy, -svz],

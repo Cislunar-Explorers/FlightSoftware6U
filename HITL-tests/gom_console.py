@@ -58,11 +58,11 @@ try:
                 gom.power_amplifier.set(False)
 
             if choice == 8:
-                gom.solenoid.set(True)
+                gom.solenoid._set(True)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.solenoid.set(False)
+                gom.solenoid._set(False)
 
         if choice in [2, 3, 5]:
             duration = int(

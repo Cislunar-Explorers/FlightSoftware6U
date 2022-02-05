@@ -164,13 +164,20 @@ class solenoid(P31uLoadSwitch):
 
     p31u_output_id = GomOutputs.solenoid
 
-    def set(self):
+    def set(self, on: bool, delay: int = 0):
         msg = (
             "The solenoid valve cannot be actuated correctly using the set method."
             "If you want to actuate a physical solenoid valve, use the `pulse` method."
             "If you want to turn on the pin on the P31u without a solenoid in the loop, use the `_set` method"
         )
-        logging.error(msg)
+
+        if on:
+            # If you try to turn on this load switch, error. Turns off just fine though.
+            logging.critical(msg)
+        else:
+            self._set(on, delay=delay)
+
+        self.get_new_telem()
 
     def pulse(self, duration: float):
         """Pulses the solenoid and holds it open for `duration` seconds

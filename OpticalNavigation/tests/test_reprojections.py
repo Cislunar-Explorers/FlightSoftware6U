@@ -89,9 +89,7 @@ class TestReprojections(unittest.TestCase):
 
             gnName = gnName.split("images/")[1]
 
-            cam = tiled_remap.Camera(
-                tiled_remap.radians(62.2), tiled_remap.radians(48.8), 3280, 2464
-            )
+            cam = tiled_remap.Camera(62.2, 48.8, 3280, 2464)
 
             # Determine which camera is used based on whether filename contains
             # "camA", "camB", or "camC"

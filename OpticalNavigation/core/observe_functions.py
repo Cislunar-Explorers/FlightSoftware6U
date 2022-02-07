@@ -4,10 +4,8 @@ from core.find_algos.find_with_contours import *
 import numpy as np
 import math
 import logging
-from datetime import datetime
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
-from datetime import timedelta
 
 
 # Make this run on a singular frame, update detections list outside of function, in observe
@@ -128,14 +126,14 @@ def body_to_T0(detection, timeElapsed, avgGyroY):
 
 
 def get_ephemeris(observeStart, body):
-    current_time = datetime.utcfromtimestamp(observeStart * 10 ** -6)
-    observeStart = observeStart - timedelta(microseconds=11716 * 1000)
+    # current_time = datetime.utcfromtimestamp(observeStart * 10 ** -6)
+    current_time = observeStart
+    # observeStart = observeStart - timedelta(microseconds=11716 * 1000)
+    observeStart = observeStart - 11.716
     init_au = None
     current_au = None
     if body == BodyEnum.Sun:
-        init_au = get_sun(
-            Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-        ).cartesian
+        init_au = get_sun(Time(observeStart, format="unix")).cartesian
         current_au = get_sun(
             Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
         ).cartesian

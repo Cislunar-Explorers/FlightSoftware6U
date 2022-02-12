@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from numpy import radians
 import glob
 import tiled_remap
 import unittest
@@ -81,6 +82,9 @@ class TestReprojections(unittest.TestCase):
         # Glob gnomonic images as filenames ending in "_gn.png"
         gnomonicList = glob.glob("images/*_gn.png")
 
+        # Create list to store differences
+        diffs = []
+
         for gnName in gnomonicList:
 
             # Load the images
@@ -89,7 +93,7 @@ class TestReprojections(unittest.TestCase):
 
             gnName = gnName.split("images/")[1]
 
-            cam = tiled_remap.Camera(62.2, 48.8, 3280, 2464)
+            cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
 
             # Determine which camera is used based on whether filename contains
             # "camA", "camB", or "camC"
@@ -109,7 +113,7 @@ class TestReprojections(unittest.TestCase):
 
             # Two largest contours from the remapped image
             grayOut = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
-            _, threshOut = cv2.threshold(grayOut, 0, 255, cv2.THRESH_BINARY)
+            _, threshOut = cv2.threshold(grayOut, 0, 255, cv2.THRESH_OTSU)
             contoursOut, _ = cv2.findContours(
                 threshOut, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
@@ -117,7 +121,7 @@ class TestReprojections(unittest.TestCase):
 
             # Two largest contours from the target image
             grayTgt = cv2.cvtColor(tgt, cv2.COLOR_BGR2GRAY)
-            _, threshTgt = cv2.threshold(grayTgt, 0, 255, cv2.THRESH_BINARY)
+            _, threshTgt = cv2.threshold(grayTgt, 0, 255, cv2.THRESH_OTSU)
             contoursTgt, _ = cv2.findContours(
                 threshTgt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
@@ -142,7 +146,17 @@ class TestReprojections(unittest.TestCase):
                     # Skip if either contour is more than 2 times the size of the other.
                     # They should be close to the same size; if they aren't, they are
                     # likely not the same object.
-                    if max(w, h) > 2 * max(w2, h2) or min(w, h) < 0.5 * min(w2, h2):
+                    # if max(w, h) > 2 * max(w2, h2) or min(w, h) < 0.5 * min(w2, h2):
+                    #     continue
+
+                    # Skip if the average hue of the contours are too different.
+                    # They should be close to the same color; if they aren't, they are
+                    # likely not the same object.
+                    hsvOut = cv2.cvtColor(outc, cv2.COLOR_BGR2HSV)
+                    hsvTgt = cv2.cvtColor(tgtc, cv2.COLOR_BGR2HSV)
+                    hOut = np.average(hsvOut[:, :, 0])
+                    hTgt = np.average(hsvTgt[:, :, 0])
+                    if abs(hOut - hTgt) > 10:
                         continue
 
                     # Resize either tgtc or outc to be the size of the largest of the two
@@ -171,14 +185,14 @@ class TestReprojections(unittest.TestCase):
                         gnName,
                         " contour ",
                         i,
+                        " compared to contour ",
+                        j,
                         " remapped with difference ",
                         diff,
                     )
 
-                    try:
-                        assert diff < 0.1
-                    except AssertionError:
-                        print("Difference is greater than 0.1")
+                    # Add diff to diffs
+                    diffs.append(diff)
 
                     # Save the composite image with filename "*_composite.png" to folder "comp"
                     # if write_composite is True.
@@ -205,9 +219,14 @@ class TestReprojections(unittest.TestCase):
                                 interpolation=cv2.INTER_AREA,
                             )
                         self.write_composite_image(outc, tgtc, cmp, gnName, i, j)
+        return diffs
 
     def test_reprojection(self):
-        self.reproj(False, False)
+        diffs = self.reproj(False, False)
+
+        # Assert that each difference in diffs is less than 0.15
+        for d in diffs:
+            assert d < 0.15
 
     # def test_reprojection_with_image_output(self):
     #     self.reproj(True, True)

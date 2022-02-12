@@ -77,14 +77,13 @@ class TestReprojections(unittest.TestCase):
         cv2.imwrite("comp/%s_%s_%s.png" % (outputString, i, j), composite)
 
     def reproj(self, write_remapped: bool, write_composite: bool):
-        """Main reprojection function."""
+        """Main reprojection function. Asserts that difference values between
+        corresponding contours is less than 0.15."""
 
         # Glob gnomonic images as filenames ending in "_gn.png"
         gnomonicList = glob.glob("images/*_gn.png")
 
-        # Create list to store differences
-        diffs = []
-
+        # For each gnomonic image
         for gnName in gnomonicList:
 
             # Load the images
@@ -146,6 +145,8 @@ class TestReprojections(unittest.TestCase):
                     # Skip if either contour is more than 2 times the size of the other.
                     # They should be close to the same size; if they aren't, they are
                     # likely not the same object.
+                    # This code is currently commented out because hue difference is used to
+                    # determine corresponding contours (below).
                     # if max(w, h) > 2 * max(w2, h2) or min(w, h) < 0.5 * min(w2, h2):
                     #     continue
 
@@ -191,16 +192,16 @@ class TestReprojections(unittest.TestCase):
                         diff,
                     )
 
-                    # Add diff to diffs
-                    diffs.append(diff)
+                    # Assert that difference is less than 0.15.
+                    assert diff < 0.15
 
                     # Save the composite image with filename "*_composite.png" to folder "comp"
                     # if write_composite is True.
                     # Note that a folder named "comp" needs to be created first.
                     if write_composite:
                         minW = 180
-                        # If the image width is less than 256, resize all three images to have
-                        # width of 256 and height determined by the aspect ratio of the
+                        # If the image width is less than minW, resize all three images to have
+                        # width of minW and height determined by the aspect ratio of the
                         # original image.
                         if w < minW:
                             outc = cv2.resize(
@@ -219,15 +220,12 @@ class TestReprojections(unittest.TestCase):
                                 interpolation=cv2.INTER_AREA,
                             )
                         self.write_composite_image(outc, tgtc, cmp, gnName, i, j)
-        return diffs
 
+    # Test reprojections
     def test_reprojection(self):
-        diffs = self.reproj(False, False)
+        self.reproj(False, False)
 
-        # Assert that each difference in diffs is less than 0.15
-        for d in diffs:
-            assert d < 0.15
-
+    # Test reprojectons with image output
     # def test_reprojection_with_image_output(self):
     #     self.reproj(True, True)
 

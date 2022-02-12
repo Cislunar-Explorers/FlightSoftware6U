@@ -15,10 +15,10 @@ from multiprocessing import Process
 import subprocess
 from queue import Empty
 from traceback import format_tb
+import logging
 
 import utils.constants as consts
 import utils.parameters as params
-from utils.log import get_log
 
 from utils.exceptions import UnknownFlightModeException
 
@@ -29,8 +29,6 @@ no_transition_modes = [
 ]
 # this line of code brought to you by https://stackoverflow.com/questions/29503339/
 all_modes = list(map(int, consts.FMEnum))
-
-logger = get_log()
 
 NO_ARGS = ([], 0)
 
@@ -52,11 +50,11 @@ class FlightMode:
             try:
                 self._parent.opnav_process.join(timeout=1)
                 result = self._parent.opnav_proc_queue.get(timeout=1)
-                logger.info("[OPNAV]: ", result)
+                logging.info("[OPNAV]: ", result)
             except Empty:
                 if not self._parent.opnav_process.is_alive():
                     self._parent.opnav_process.terminate()
-                    logger.info("[OPNAV]: Process Terminated")
+                    logging.info("[OPNAV]: Process Terminated")
 
         flight_mode_id = self.flight_mode_id
 
@@ -72,7 +70,7 @@ class FlightMode:
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
                     return consts.FMEnum.Maneuver.value
             else:
-                logger.info(
+                logging.info(
                     f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped"
                 )
 
@@ -108,9 +106,8 @@ class FlightMode:
             else:
                 return self._parent.FMQueue.get()
 
-        return (
-            consts.NO_FM_CHANGE
-        )  # returns -1 if the logic here does not make any FM changes
+        # returns -1 if the logic here does not make any FM changes
+        return consts.NO_FM_CHANGE
 
     def run_mode(self):
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
@@ -173,16 +170,16 @@ class FlightMode:
     #            params.TELEM_DOWNLINK_TIME = 60
 
     def __enter__(self):
-        logger.debug(f"Starting flight mode {self.flight_mode_id}")
+        logging.debug(f"Starting flight mode {self.flight_mode_id}")
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        logger.debug(f"Finishing flight mode {self.flight_mode_id}")
+        logging.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
-            logger.error(
+            logging.error(
                 f"Flight Mode failed with error type {exc_type} and value {exc_value}"
             )
-            logger.error(f"Failed with traceback:\n {format_tb(tb)}")
+            logging.error(f"Failed with traceback:\n {''.join(format_tb(tb))}")
 
 
 class PauseBackgroundMode(FlightMode):
@@ -198,14 +195,16 @@ class PauseBackgroundMode(FlightMode):
 
     def __enter__(self):
         super().__enter__()
-        self._parent.nemo_manager.pause()
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.pause()
         # TODO: Pause Opnav process if running
         gc.disable()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
-        self._parent.nemo_manager.resume()
+        if self._parent.nemo_manager is not None:
+            self._parent.nemo_manager.resume()
         # TODO: Resume Opnav process if previously running
         super().__exit__(exc_type, exc_val, exc_tb)
 
@@ -215,8 +214,6 @@ class TestMode(PauseBackgroundMode):
     Used to run tests while software is still in development. Could potentially be used for on-orbit testing."""
 
     flight_mode_id = consts.FMEnum.TestMode.value
-
-    downlink_arg_unpackers = {"gyro1": "float", "gyro2": "float", "gyro3": "float"}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -315,9 +312,9 @@ class OpNavMode(FlightMode):
     def run_mode(self):
         # TODO: overhaul so opnav calculation only occur while in opnav mode
         if not self._parent.opnav_process.is_alive():
-            logger.info("[OPNAV]: Able to run next opnav")
+            logging.info("[OPNAV]: Able to run next opnav")
             self._parent.last_opnav_run = time()
-            logger.info("[OPNAV]: Starting opnav subprocess")
+            logging.info("[OPNAV]: Starting opnav subprocess")
             self._parent.opnav_process = Process(
                 target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,)
             )
@@ -377,7 +374,7 @@ class SafeMode(FlightMode):
 
     def run_mode(self):
         # TODO
-        logger.info("Execute safe mode")
+        logging.info("Execute safe mode")
 
 
 class NormalMode(FlightMode):
@@ -394,13 +391,20 @@ class NormalMode(FlightMode):
         if super_fm != consts.NO_FM_CHANGE:
             return super_fm
 
+        # since Normal mode never completes its task, we need to check the queue here instead of in super.update_state
+        if not self._parent.FMQueue.empty():
+            return self._parent.FMQueue.get()
+
         time_for_opnav: bool = (
             time() - self._parent.last_opnav_run
-        ) // 60 < params.OPNAV_INTERVAL
+        ) // 60 > params.OPNAV_INTERVAL
+
         time_for_telem: bool = (
             time() - self._parent.radio.last_transmit_time
-        ) // 60 < params.TELEM_INTERVAL
+        ) // 60 > params.TELEM_INTERVAL
+
         need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+
         currently_electrolyzing = self._parent.telemetry.gom.is_electrolyzing
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
@@ -411,22 +415,26 @@ class NormalMode(FlightMode):
 
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
+            logging.info("No need to electrolyze, turning OFF electrolyzers")
             self._parent.gom.set_electrolysis(False)
 
         if currently_electrolyzing and need_to_electrolyze:
+            logging.debug("Already electrolyzing")
             pass  # we are already in the state we want to be in
 
         # if below pressure and not electrolyzing, start electrolyzing
         if not currently_electrolyzing and need_to_electrolyze:
+            logging.info("Not electrolyzing, turning ON electrolyzers")
             self._parent.gom.set_electrolysis(True)
 
         if not currently_electrolyzing and not need_to_electrolyze:
+            logging.debug("Electrolyzers already OFF")
             pass  # we are already in the state we want to be in
 
         # note: at this point, the variable "need_to_electrolyze" is equivalent to the new state of the electrolyzer
 
         if time_for_opnav:
-            logger.info("Time to run Opnav")
+            logging.info("Time to run opnav")
             self._parent.FMQueue.put(consts.FMEnum.OpNav.value)
 
         if time_for_telem:
@@ -436,13 +444,12 @@ class NormalMode(FlightMode):
                 consts.CommandEnum.BasicTelem, **telem
             )
             self._parent.downlink_queue.put(downlink)
-            logger.info("Added a standard telemetry packet to the downlink queue")
+            logging.info("Added a standard telemetry packet to the downlink queue")
 
         return consts.NO_FM_CHANGE
 
     def run_mode(self):
-        logger.info("In NORMAL flight mode")
-        self.completed_task()
+        logging.info("In NORMAL flight mode")
 
 
 class CommandMode(PauseBackgroundMode):

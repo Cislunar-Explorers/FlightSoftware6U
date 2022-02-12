@@ -2,8 +2,16 @@ from random import randint
 import drivers.power.power_structs as ps
 from main import MainSatelliteThread
 from utils.constants import CommandEnum
-from utils.gom_util import dict_from_eps_config, eps_config_from_dict, dict_from_eps_config2, \
-    eps_config2_from_dict
+from communications.command_handler import CommandHandler
+from utils.gom_util import (
+    dict_from_eps_config,
+    eps_config_from_dict,
+    dict_from_eps_config2,
+    eps_config2_from_dict,
+)
+
+m = MainSatelliteThread()
+gs = CommandHandler(None)
 
 
 def test_config_command():
@@ -56,14 +64,8 @@ def test_config_command():
 
     config_dict = dict_from_eps_config(config)
 
-    COUNTER = 0
-
-    m = MainSatelliteThread()
-    ch = m.command_handler
-
-    command_bytes = ch.pack_link(
-        True, COUNTER, CommandEnum.GomConf1Set.value, **config_dict)
-    command, kwargs = ch.unpack_link(command_bytes)
+    command_bytes = gs.pack_command(CommandEnum.GomConf1Set.value, **config_dict)
+    command, kwargs = m.command_handler.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf1Set.value
 
@@ -94,8 +96,13 @@ def test_config_command():
     assert config.output_safe_value[6] == unpacked_config.output_safe_value[6]
     assert config.output_safe_value[7] == unpacked_config.output_safe_value[7]
 
-    assert config.output_initial_on_delay[0] == unpacked_config.output_initial_on_delay[0]
-    assert config.output_initial_off_delay[0] == unpacked_config.output_initial_off_delay[0]
+    assert (
+        config.output_initial_on_delay[0] == unpacked_config.output_initial_on_delay[0]
+    )
+    assert (
+        config.output_initial_off_delay[0]
+        == unpacked_config.output_initial_off_delay[0]
+    )
 
     assert config.vboost[0] == unpacked_config.vboost[0]
     assert config.vboost[1] == unpacked_config.vboost[1]
@@ -111,14 +118,8 @@ def test_config2_command():
 
     config2_dict = dict_from_eps_config2(config2)
 
-    COUNTER = 0
-
-    m = MainSatelliteThread()
-    ch = m.command_handler
-
-    command_bytes = ch.pack_link(
-        True, COUNTER, CommandEnum.GomConf2Set.value, **config2_dict)
-    command, kwargs = ch.unpack_link(command_bytes)
+    command_bytes = gs.pack_command(CommandEnum.GomConf2Set.value, **config2_dict)
+    command, kwargs = m.command_handler.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf2Set.value
 
@@ -140,43 +141,14 @@ def prep_config():
     config.battheater_mode = 1
     config.battheater_low = 0
     config.battheater_high = 1
-    config.output_normal_value[0] = 0
-    config.output_normal_value[1] = 0
-    config.output_normal_value[2] = 0
-    config.output_normal_value[3] = 0
-    config.output_normal_value[4] = 0
-    config.output_normal_value[5] = 0
-    config.output_normal_value[6] = 0
-    config.output_normal_value[7] = 0
-
-    config.output_safe_value[0] = 0
-    config.output_safe_value[1] = 0
-    config.output_safe_value[2] = 0
-    config.output_safe_value[3] = 0
-    config.output_safe_value[4] = 0
-    config.output_safe_value[5] = 0
-    config.output_safe_value[6] = 0
-    config.output_safe_value[7] = 0
 
     initial_on = 0
-    config.output_initial_on_delay[0] = initial_on
-    config.output_initial_on_delay[1] = initial_on
-    config.output_initial_on_delay[2] = initial_on
-    config.output_initial_on_delay[3] = initial_on
-    config.output_initial_on_delay[4] = initial_on
-    config.output_initial_on_delay[5] = initial_on
-    config.output_initial_on_delay[6] = initial_on
-    config.output_initial_on_delay[7] = initial_on
-
     initial_off = 0
-    config.output_initial_off_delay[0] = initial_off
-    config.output_initial_off_delay[1] = initial_off
-    config.output_initial_off_delay[2] = initial_off
-    config.output_initial_off_delay[3] = initial_off
-    config.output_initial_off_delay[4] = initial_off
-    config.output_initial_off_delay[5] = initial_off
-    config.output_initial_off_delay[6] = initial_off
-    config.output_initial_off_delay[7] = initial_off
+    for i in range(8):
+        config.output_normal_value[i] = 0
+        config.output_safe_value[i] = 0
+        config.output_initial_on_delay[i] = initial_on
+        config.output_initial_off_delay[i] = initial_off
 
     config.vboost[0] = 2410
     config.vboost[1] = 2410
@@ -186,7 +158,7 @@ def prep_config():
     return config_dict
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_config_command()
     test_config2_command()
     print(prep_config())

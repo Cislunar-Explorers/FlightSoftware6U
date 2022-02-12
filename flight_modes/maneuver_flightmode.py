@@ -1,12 +1,12 @@
 from time import sleep, time
 
 from .flight_mode import PauseBackgroundMode
-from utils.log import get_log
+import logging
 from utils.parameter_utils import set_parameter
 import utils.constants as consts
 import utils.parameters as params
 
-logger = get_log()
+
 NO_ARGS = ([], 0)
 
 
@@ -31,7 +31,7 @@ class ManeuverMode(PauseBackgroundMode):
 
     def update_state(self) -> int:
         if self.task_completed is True:
-            logger.info("Maneuver complete. Exiting maneuver mode...")
+            logging.info("Maneuver complete. Exiting maneuver mode...")
             return consts.FMEnum.Normal.value
         return consts.NO_FM_CHANGE
 
@@ -39,13 +39,13 @@ class ManeuverMode(PauseBackgroundMode):
         """Activate glowplugs until one works."""
         # TODO send info to ground??
         if params.SCHEDULED_BURN_TIME < time():
-            logger.info("Maneuver time passed. Skipped.")
+            logging.info("Maneuver time passed. Skipped.")
         else:
             # TODO what if SCHEDULED_BURN_TIME is too far into the future
             self.task_completed = False
             # sleeping for 5 fewer seconds than the delay for safety
-            sleep(min(0, (params.SCHEDULED_BURN_TIME - time()) - 5))
-            logger.info("Heating up glowplug to execute a maneuver...")
+            sleep(max(0, (params.SCHEDULED_BURN_TIME - time()) - 5))
+            logging.info("Heating up glowplug to execute a maneuver...")
 
             prior_pressure = self.get_pressure()
             print(prior_pressure)
@@ -67,7 +67,7 @@ class ManeuverMode(PauseBackgroundMode):
                 set_parameter("GLOWPLUG2_VALID", self.task_completed, consts.FOR_FLIGHT)
             if not params.GLOWPLUG1_VALID and not params.GLOWPLUG2_VALID:
                 # TODO ground msg?... do a final check?
-                logger.info("All glowplugs failed.")
+                logging.info("All glowplugs failed.")
                 self.task_completed = True
 
         # prepare next maneuver
@@ -77,7 +77,7 @@ class ManeuverMode(PauseBackgroundMode):
             if smallest_time_burn < time():
                 # TODO send info to ground / store skipped in database
                 smallest_time_burn = -1
-                logger.info("Maneuver time passed. Skipped.")
+                logging.info("Maneuver time passed. Skipped.")
             else:
                 break
 

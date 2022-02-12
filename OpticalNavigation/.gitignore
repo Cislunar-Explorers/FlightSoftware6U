@@ -1,3 +1,5 @@
 __pycache__
-tests/images
 .DS_STORE
+tests/*.csv
+tests/*.png
+!tests/truth_detections_case1c.csv

@@ -435,7 +435,7 @@ def UKFSingle(
 
     return AttitudeEstimateOutput(
         new_state=AttitudeStateVector.from_numpy_array(state=xhat_kp1),
-        new_P=CovarianceMatrix(matrix=Phat_kp1),
+        new_P=CovarianceMatrix(Phat_kp1),
         new_quat=QuaternionVector.from_numpy_array(quat=qhat_kp1),
     )
 

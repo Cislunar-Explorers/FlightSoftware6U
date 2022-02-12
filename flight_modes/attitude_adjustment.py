@@ -5,6 +5,7 @@ from time import sleep, time
 from utils.constants import FMEnum, GOM_TIMING_FUDGE_FACTOR
 import utils.parameters as params
 from flight_modes.flight_mode import PauseBackgroundMode
+import logging
 
 # from math import sin, cos
 import gc
@@ -78,7 +79,7 @@ class AAMode(PauseBackgroundMode):
                 pulse_num,
                 pulse_dt,
             ) = self._parent.reorientation_list[0]
-            self._parent.logger.debug(
+            logging.debug(
                 f"ACS start:{pulse_start}, duration:{pulse_duration}, num:{pulse_num}, dt:{pulse_dt}"
             )
             pulse_dt *= 1e-3  # convert from ms to seconds
@@ -88,39 +89,33 @@ class AAMode(PauseBackgroundMode):
             # https://www.geeksforgeeks.org/python-adding-k-to-each-element-in-a-list-of-integers/
             absolute_pulse_times = [pulse_start + x for x in relative_pulse_times]
             for i in absolute_pulse_times:
-                self._parent.logger.debug(f"Pulsing ACS at {i}")
+                logging.debug(f"Pulsing ACS at {i}")
             # garbage collect one last time before timing critical applications start
             gc.collect()
-            self._parent.logger.debug("Done garbage collecting")
+            logging.debug("Done garbage collecting")
 
             if pulse_start - time() < 0.125:
                 # we missed the timing of the maneuver. Make a note and add relevant stuff to comms queue
                 self.missed_timing(pulse_start)
             else:
-                self._parent.logger.debug(f"Sleeping {pulse_start - time()}s")
+                logging.debug(f"Sleeping {pulse_start - time()}s")
                 self._parent.gom.pc.calculate_solenoid_wave()
                 sleep(max([(pulse_start - time()) - 2, 0]))
-                self._parent.logger.info(
+                logging.info(
                     f"Experimental solenoid function. spike={params.ACS_SPIKE_DURATION}, hold={pulse_duration}"
                 )
                 # pulse ACS according to timings
-                try:
-                    for pulse_time in absolute_pulse_times:
-                        sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
-                        self._parent.gom.pc.solenoid_single_wave(pulse_duration)
-                except ValueError:
-                    self.missed_timing(pulse_time)
-
+                for pulse_time in absolute_pulse_times:
+                    sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
+                    self._parent.gom.pc.solenoid_single_wave(pulse_duration)
             self._parent.reorientation_list.pop(0)
         else:
-            self._parent.logger.warning("No data for reorientation pulses found")
+            logging.warning("No data for reorientation pulses found")
 
         self.completed_task()
 
     def missed_timing(self, missed_pulse_timing):
-        self._parent.logger.error(
-            f"Missed attitude adjustment maneuver at {missed_pulse_timing}"
-        )
+        logging.error(f"Missed attitude adjustment maneuver at {missed_pulse_timing}")
         # self._parent.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
 
     # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and

@@ -18,8 +18,6 @@ from fractions import Fraction
 
 from utils.log import *
 
-logger = get_log()
-
 
 class CameraMux:
     def __init__(self):
@@ -146,7 +144,7 @@ class PiCam:
                 indices.append(f.index)
 
             camera.stop_recording()
-            logger.info(f"Filename: {filename}")
-            logger.info(f"Indices: {indices}")
+            logging.info(f"Filename: {filename}")
+            logging.info(f"Indices: {indices}")
             # Timestamp is in microseconds, relative to last system reboot (default clock_mode='raw')
             return (filename, timestamps)

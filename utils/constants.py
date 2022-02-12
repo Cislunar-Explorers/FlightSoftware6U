@@ -20,6 +20,7 @@ SURRENDER_LOCAL_DIR = cast("str", config.get("SURRENDER_LOCAL_DIR"))
 
 FOR_FLIGHT = config["FOR_FLIGHT"] == "1"
 LOG = config["LOG"] == "1"
+TEST = config.get("TEST", "0") == "1"
 
 # SQL Stuff
 DB_ENTRY_LIMIT = 1000  # TODO update # maximum number of entries in any of the databases
@@ -276,10 +277,14 @@ ONE_WORD = b"\xdc\x2c"
 # TODO: re-evaluate and double check before flight for each satellite half
 @unique
 class GomOutputs(IntEnum):
+    """IntEnum class defining the outputs of the GOMSpace P31u"""
+
     comms = 0
     burnwire_1 = 1
     glowplug_2 = 2
-    glowplug = 3
+    glowplug_1 = (
+        3
+    )  # I know this looks backwards, but this is correct for historical reasons
     solenoid = 4
     electrolyzer = 5
 

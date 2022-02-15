@@ -1,11 +1,65 @@
 from core.const import BodyEnum, FileData, DetectionData, Vector3
 from core.find_algos.find_with_contours import *
+from core.sense import select_camera, record_video
+
+from adafruit_blinka.agnostic import board_id
+
+if board_id and board_id != "GENERIC_LINUX_PC":
+    from picamera import (
+        PiCamera,
+    )  # TODO: only commented because of commented out camera section
+
+    # pass
+from utils.constants import OPNAV_MEDIA_DIR
 
 import numpy as np
 import math
+import time
 import logging
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
+
+
+def record_with_timedelta(camNum, camera_rec_params):
+    select_camera(id=camNum)
+
+    # Get Unix time before recording(in seconds floating point -> microseconds)
+    # Get camera time (in microseconds)
+    linuxTime1: int
+    cameraTime1: int
+    with PiCamera() as camera:
+        linuxTime1 = int(time.time() * 10 ** 6)
+        cameraTime1 = camera.timestamp
+    # Get difference between two clocks
+    timeDelta1 = linuxTime1 - cameraTime1
+
+    logging.info(f"[OPNAV]: Recording from camera {camNum}")
+    vidDataLow = record_video(
+        OPNAV_MEDIA_DIR + f"cam{camNum}_expLow.mjpeg",
+        framerate=camera_rec_params.fps,
+        recTime=camera_rec_params.recTime,
+        exposure=camera_rec_params.expLow,
+    )
+    vidDataHigh = record_video(
+        OPNAV_MEDIA_DIR + f"cam{camNum}_expHigh.mjpeg",
+        framerate=camera_rec_params.fps,
+        recTime=camera_rec_params.recTime,
+        exposure=camera_rec_params.expHigh,
+    )
+
+    # Get Unix time after recording(in seconds floating point -> microseconds)
+    # Get camera time (in microseconds)
+    linuxTime2: int
+    cameraTime2: int
+    with PiCamera() as camera:
+        linuxTime2 = time.time() * 10 ** 6
+        cameraTime2 = camera.timestamp
+    # Get difference between two clocks
+    timeDelta2 = linuxTime2 - cameraTime2
+
+    timeDeltaAvg = (timeDelta1 + timeDelta2) / 2
+
+    return vidDataLow, vidDataHigh, timeDeltaAvg
 
 
 # Make this run on a singular frame, update detections list outside of function, in observe

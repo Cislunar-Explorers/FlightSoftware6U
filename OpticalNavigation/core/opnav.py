@@ -12,15 +12,16 @@ from core.const import (
     # TrajUKFConstants,
     TrajectoryStateVector,
 )
+from core.preprocess import extract_frames
 import core.ukf as traj_ukf
 import core.attitude as attitude
 
-# from core.sense import select_camera, record_video,
+# from core.sense import select_camera, record_video
 from core.sense import record_gyro
 
 # from core.preprocess import extract_frames
 # from core.find_algos.find_with_contours import find
-from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters, BodyEnum
+from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters  # , BodyEnum
 from core.observe_functions import *
 
 from utils.db import (
@@ -55,10 +56,6 @@ import os
 # import sys
 
 from adafruit_blinka.agnostic import board_id
-
-if board_id and board_id != "GENERIC_LINUX_PC":
-    # from picamera import PiCamera # TODO: only commented because of commented out camera section
-    pass
 
 
 """
@@ -238,10 +235,9 @@ def start(
     )
 
     # Check if there are files in opnav_media folder and delete
-
     if len(os.listdir(OPNAV_MEDIA_DIR)) != 0:
         logging.info("[OPNAV]: Deleting files from opnav_media folder")
-        rm_cmd = "rm -f" + OPNAV_MEDIA_DIR + "*"
+        rm_cmd = "rm -f" + OPNAV_MEDIA_DIR + "*.jpg"
         os.system(rm_cmd)
 
     propulsion_exit_status = __process_propulsion_events(session)
@@ -284,60 +280,32 @@ def __observe(
     observeStart = int(
         observeStart.replace(tzinfo=timezone.utc).timestamp() * 10 ** 6
     )  # In unix time
-    # recordings = [] # Commented for formatting
+    recordings = []
     timeDeltaAvgs = [0, 0, 0]
+    frames = []
 
-    """Acquisition function: acquire(recordings, timeDeltaAvgs)"""
-    """
-    for i in [1, 2, 3]: # These are the hardware IDs of the camera mux ports
-        select_camera(id = i)
+    if board_id and board_id != "GENERIC_LINUX_PC":
 
-        # Get Unix time before recording(in seconds floating point -> microseconds)
-        # Get camera time (in microseconds)
-        linuxTime1:int
-        cameraTime1:int
-        with PiCamera() as camera:
-            linuxTime1 = int(time.time() * 10 ** 6)
-            cameraTime1 = camera.timestamp
-        # Get difference between two clocks
-        timeDelta1 = linuxTime1 - cameraTime1
+        for i in [1, 2, 3]:  # These are the hardware IDs of the camera mux ports
+            vidDataLow, vidDataHigh, timeDeltaAvg = record_with_timedelta(
+                i, camera_rec_params
+            )
+            recordings.append(vidDataLow)
+            recordings.append(vidDataHigh)
+            timeDeltaAvgs[i - 1] = timeDeltaAvg
 
-        logging.info(f"[OPNAV]: Recording from camera {i}")
-        # TODO: figure out exposure parameters
-        vidData1 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expLow.mjpeg", framerate = camera_rec_params.fps,
-                    recTime=camera_rec_params.recTime, exposure=camera_rec_params.expLow)
-        vidData2 = record_video(OPNAV_MEDIA_PATH + f"cam{i}_expHigh.mjpeg", framerate = camera_rec_params.fps,
-                    recTime=camera_rec_params.recTime, exposure=camera_rec_params.expHigh)
-
-        # Get Unix time after recording(in seconds floating point -> microseconds)
-        # Get camera time (in microseconds)
-        linuxTime2:int
-        cameraTime2:int
-        with PiCamera() as camera:
-            linuxTime2 = time.time() * 10 ** 6
-            cameraTime2 = camera.timestamp
-        # Get difference between two clocks
-        timeDelta2 = linuxTime2 - cameraTime2
-
-        timeDeltaAvg = (timeDelta1 + timeDelta2) / 2
-        timeDeltaAvgs[i-1] = timeDeltaAvg
-
-        recordings.append(vidData1)
-        recordings.append(vidData2)
-
-    logging.info("[OPNAV]: Extracting frames...")
-    frames0 = extract_frames(vid_dir=recordings[0][0], timestamps=recordings[0][1], cameraRecParams=camera_rec_params)
-    frames1 = extract_frames(vid_dir=recordings[1][0], timestamps=recordings[1][1], cameraRecParams=camera_rec_params)
-    frames2 = extract_frames(vid_dir=recordings[2][0], timestamps=recordings[2][1], cameraRecParams=camera_rec_params)
-    frames3 = extract_frames(vid_dir=recordings[3][0], timestamps=recordings[3][1], cameraRecParams=camera_rec_params)
-    frames4 = extract_frames(vid_dir=recordings[4][0], timestamps=recordings[4][1], cameraRecParams=camera_rec_params)
-    frames5 = extract_frames(vid_dir=recordings[5][0], timestamps=recordings[5][1], cameraRecParams=camera_rec_params)
-    frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
-    """
+        logging.info("[OPNAV]: Extracting frames...")
+        for i in range(6):
+            f = extract_frames(
+                vid_dir=recordings[i][0],
+                timestamps=recordings[i][1],
+                cameraRecParams=camera_rec_params,
+            )
+            frames.append(f)
 
     #####
     # On HITL, path to images will be /home/pi/surrender_images/ (i.e. SURRENDER_LOCAL_DIR)
-
+    # Manual insertion of frames for testing
     frames = sorted(
         glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "cislunar_case1c", "*.jpg"))
     )
@@ -417,64 +385,16 @@ def __observe(
     )
     session.add(new_entry)
 
-    """Ephemeris function"""
-    """
-    current_time = observeStart
-    observeStart = observeStart - timedelta(microseconds=11716 * 1000)
-    sun_init_au = get_sun(
-        Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-    ).cartesian
-    sun_init = CartesianRepresentation(
-        [sun_init_au.x, sun_init_au.y, sun_init_au.z], unit="km"
-    )
-    sun_current_au = get_sun(
-        Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-    ).cartesian
-    sun_current = CartesianRepresentation(
-        [sun_current_au.x, sun_current_au.y, sun_current_au.z], unit="km"
-    )
-    sx = sun_current.x.value
-    sy = sun_current.y.value
-    sz = sun_current.z.value
-    svx = (sx - sun_init.x.value) / (current_time - observeStart).seconds
-    svy = (sy - sun_init.y.value) / (current_time - observeStart).seconds
-    svz = (sz - sun_init.z.value) / (current_time - observeStart).seconds
-
-    logging.info("Sun pos: ", sx, sy, sz)
-    logging.info("Sun vel: ", svx, svy, svz)
-
-    moon_init_au = get_moon(
-        Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-    ).cartesian
-    moon_init = CartesianRepresentation(
-        [moon_init_au.x, moon_init_au.y, moon_init_au.z], unit="km"
-    )
-    moon_current_au = get_moon(
-        Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-    ).cartesian
-    moon_current = CartesianRepresentation(
-        [moon_current_au.x, moon_current_au.y, moon_current_au.z], unit="km"
-    )
-    mx = moon_current.x.value
-    my = moon_current.y.value
-    mz = moon_current.z.value
-    mvx = (mx - moon_init.x.value) / (current_time - observeStart).seconds
-    mvy = (my - moon_init.y.value) / (current_time - observeStart).seconds
-    mvz = (mz - moon_init.z.value) / (current_time - observeStart).seconds
-
-    logging.info("Moon pos: ", mx, my, mz)
-    logging.info("Moon vel: ", mvx, mvy, mvz)
-    """
-    sx, sy, sz, svx, svy, svz = get_ephemeris(observeStart, BodyEnum.Sun)
-    mx, my, mz, mvx, mvy, mvz = get_ephemeris(observeStart, BodyEnum.Moon)
-
-    new_entry1 = OpNavEphemerisModel.from_tuples(
-        sun_eph=[-sx, -sy, -sz, -svx, -svy, -svz],
-        moon_eph=[-mx, -my, -mz, -mvx, -mvy, -mvz],
-        time=current_time,
-    )
-    session.add(new_entry1)
-
+    # sx, sy, sz, svx, svy, svz = get_ephemeris(observeStart, BodyEnum.Sun)
+    # mx, my, mz, mvx, mvy, mvz = get_ephemeris(observeStart, BodyEnum.Moon)
+    #
+    # new_entry1 = OpNavEphemerisModel.from_tuples(
+    # sun_eph=[-sx, -sy, -sz, -svx, -svy, -svz],
+    # moon_eph=[-mx, -my, -mz, -mvx, -mvy, -mvz],
+    # time=current_time,
+    # )
+    # session.add(new_entry1)
+    #
     session.commit()
     logging.info("[OPNAV]: Observe Complete!")
 

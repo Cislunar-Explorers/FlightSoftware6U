@@ -5,9 +5,7 @@ from core.sense import select_camera, record_video
 from adafruit_blinka.agnostic import board_id
 
 if board_id and board_id != "GENERIC_LINUX_PC":
-    from picamera import (
-        PiCamera,
-    )  # TODO: only commented because of commented out camera section
+    from picamera import PiCamera
 
     # pass
 from utils.constants import OPNAV_MEDIA_DIR
@@ -16,7 +14,7 @@ import numpy as np
 import math
 import time
 import logging
-from astropy.time import Time
+from astropy.time import Time, TimeUnix
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 
 
@@ -184,10 +182,21 @@ def get_ephemeris(observeStart, body):
     current_time = observeStart
     # observeStart = observeStart - timedelta(microseconds=11716 * 1000)
     observeStart = observeStart - 11.716
+    logging.info(observeStart)
     init_au = None
     current_au = None
     if body == BodyEnum.Sun:
-        init_au = get_sun(Time(observeStart, format="unix")).cartesian
+        init_au = get_sun(
+            TimeUnix(
+                val1=0,
+                val2=observeStart,
+                scale="utc",
+                precision=1.1574074074074073e-05,
+                in_subfmt="*",
+                out_subfmt="*",
+            )
+        ).cartesian
+        logging.info("Got it!")
         current_au = get_sun(
             Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
         ).cartesian

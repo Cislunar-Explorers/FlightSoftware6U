@@ -334,6 +334,7 @@ def __observe(
     avgGyroY = np.mean(gyro_meas, axis=0)[1]
     # Rotation is product of angular speed and time between frame and start of observation
 
+    # Performs
     for best in best_e, best_m, best_s:
         best = cam_to_body(best, camera_params)
         timeElapsed = get_elapsed_time(best.filedata, timeDeltaAvgs, observeStart)
@@ -384,16 +385,16 @@ def __observe(
     )
     session.add(new_entry)
 
-    # sx, sy, sz, svx, svy, svz = get_ephemeris(observeStart, BodyEnum.Sun)
-    # mx, my, mz, mvx, mvy, mvz = get_ephemeris(observeStart, BodyEnum.Moon)
-    #
-    # new_entry1 = OpNavEphemerisModel.from_tuples(
-    # sun_eph=[-sx, -sy, -sz, -svx, -svy, -svz],
-    # moon_eph=[-mx, -my, -mz, -mvx, -mvy, -mvz],
-    # time=current_time,
-    # )
-    # session.add(new_entry1)
-    #
+    sx, sy, sz, svx, svy, svz = get_ephemeris(observeStart, BodyEnum.Sun)
+    mx, my, mz, mvx, mvy, mvz = get_ephemeris(observeStart, BodyEnum.Moon)
+
+    new_entry1 = OpNavEphemerisModel.from_tuples(
+        sun_eph=[-sx, -sy, -sz, -svx, -svy, -svz],
+        moon_eph=[-mx, -my, -mz, -mvx, -mvy, -mvz],
+        time=current_time,
+    )
+    session.add(new_entry1)
+
     session.commit()
     logging.info("[OPNAV]: Observe Complete!")
 

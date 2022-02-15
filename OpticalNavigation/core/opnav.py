@@ -51,8 +51,6 @@ import glob
 # import time
 import os
 
-# from astropy.time import Time
-# from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 # import sys
 
 from adafruit_blinka.agnostic import board_id
@@ -152,6 +150,7 @@ def __process_propulsion_events(session: session.Session) -> OPNAV_EXIT_STATUS:
 
 
 def __closest(session: session.Session, ts, model):
+    # Most likely not needed since we are not using approximate ephemerides
     """
     Searches for closest ephemeris based on time [ts]
     https://stackoverflow.com/questions/42552696/sqlalchemy-nearest-datetime

@@ -52,7 +52,7 @@ def record_with_timedelta(camNum, camera_rec_params):
     linuxTime2: int
     cameraTime2: int
     with PiCamera() as camera:
-        linuxTime2 = time.time() * 10 ** 6
+        linuxTime2 = int(time.time() * 10 ** 6)
         cameraTime2 = camera.timestamp
     # Get difference between two clocks
     timeDelta2 = linuxTime2 - cameraTime2

@@ -15,8 +15,6 @@
     "HITL-tests/signal_test_satellite.py",
     "flight_modes/opnav_flightmode.py",
     "communications/downlink.py",
-    "OpticalNavigation/core/ukf.py",
-    "OpticalNavigation/core/opnav.py"
   ],
   "extraPaths": [
     "OpticalNavigation/"

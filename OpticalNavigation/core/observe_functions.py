@@ -60,7 +60,6 @@ def record_with_timedelta(camNum, camera_rec_params):
     return vidDataLow, vidDataHigh, timeDeltaAvg
 
 
-# Make this run on a singular frame, update detections list outside of function, in observe
 def get_detections(frames):
     logging.info("[OPNAV]: Finding...")
     progress = 1
@@ -70,7 +69,6 @@ def get_detections(frames):
         fileInfo = FileData(frames[f])
         detectedBodies = find(frames[f])
 
-        # Make this small part into a template function that can be reused for e/m/s
         earthDetection = detectedBodies.get_earth_detection()
         if earthDetection is not None:
             detectionData = DetectionData(
@@ -179,9 +177,7 @@ def body_to_T0(detection, timeElapsed, avgGyroY):
 
 def get_ephemeris(observeStart, body: BodyEnum):
     # Astropy needs unix timestamp in seconds!!!
-    # current_time = datetime.utcfromtimestamp(observeStart * 10 ** -6)
     current_time = observeStart
-    # observeStart = observeStart - timedelta(microseconds=11716 * 1000)
     observeStart = observeStart - 11.716
     logging.info(observeStart)
     init_au = None

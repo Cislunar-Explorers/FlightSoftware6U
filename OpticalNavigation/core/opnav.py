@@ -277,10 +277,10 @@ def __observe(
     # observeStart = time.time() * 10**6 #In usec
     observeStart = datetime(2020, 7, 28, 22, 8, 3)  # TEMPORARY TESTING START TIME
     observeStart = int(
-        observeStart.replace(tzinfo=timezone.utc).timestamp() * 10 ** 6
-    )  # In unix time
+        observeStart.replace(tzinfo=timezone.utc).timestamp()
+    )  # In unix time, seconds
     recordings = []
-    timeDeltaAvgs = [0, 0, 0]
+    timeDeltaAvgs = [0, 0, 0]  # Microseconds
     frames = []
 
     if board_id and board_id != "GENERIC_LINUX_PC":
@@ -305,9 +305,10 @@ def __observe(
     #####
     # On HITL, path to images will be /home/pi/surrender_images/ (i.e. SURRENDER_LOCAL_DIR)
     # Manual insertion of frames for testing
-    frames = sorted(
-        glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "cislunar_case1c", "*.jpg"))
-    )
+    else:
+        frames = sorted(
+            glob.glob(os.path.join(SURRENDER_LOCAL_DIR, "cislunar_case1c", "*.jpg"))
+        )
 
     logging.info(f"[OPNAV]: Total number of frames is {len(frames)}")
 
@@ -329,6 +330,7 @@ def __observe(
         )
         session.add(new_entry)
     # TODO: Make sure that axes are correct - i.e. are consistent with what UKF expects
+    # TODO: Make sure that Opnav databases are using Unix time, not datetime
 
     logging.info("[OPNAV]: Body to T0 rotation...")
     avgGyroY = np.mean(gyro_meas, axis=0)[1]
@@ -337,7 +339,9 @@ def __observe(
     # Performs
     for best in best_e, best_m, best_s:
         best = cam_to_body(best, camera_params)
-        timeElapsed = get_elapsed_time(best.filedata, timeDeltaAvgs, observeStart)
+        timeElapsed = get_elapsed_time(
+            best.filedata, timeDeltaAvgs, observeStart * 10 ** 6
+        )
         best = body_to_T0(best, timeElapsed, avgGyroY)
 
     bestDetectedCircles = ImageDetectionCircles()
@@ -391,7 +395,7 @@ def __observe(
     new_entry1 = OpNavEphemerisModel.from_tuples(
         sun_eph=[-sx, -sy, -sz, -svx, -svy, -svz],
         moon_eph=[-mx, -my, -mz, -mvx, -mvy, -mvz],
-        time=current_time,
+        time=datetime.utcfromtimestamp(observeStart),
     )
     session.add(new_entry1)
 

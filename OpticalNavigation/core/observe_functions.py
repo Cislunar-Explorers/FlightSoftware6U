@@ -164,7 +164,7 @@ def get_elapsed_time(fileData, timeDeltaAvgs, observeStart):
     timestamp = fileData.timestamp
     camNum = fileData.cam_num
     timestampUnix = timestamp + timeDeltaAvgs[camNum - 1]
-    timeElapsed = (timestampUnix - observeStart) * 10 ** -6
+    timeElapsed = (timestampUnix - observeStart) * 10 ** -6  # Microseconds to seconds
     return timeElapsed
 
 
@@ -177,7 +177,7 @@ def body_to_T0(detection, timeElapsed, avgGyroY):
     return detection
 
 
-def get_ephemeris(observeStart, body):
+def get_ephemeris(observeStart, body: BodyEnum):
     # Astropy needs unix timestamp in seconds!!!
     # current_time = datetime.utcfromtimestamp(observeStart * 10 ** -6)
     current_time = observeStart
@@ -188,17 +188,10 @@ def get_ephemeris(observeStart, body):
     current_au = None
     if body == BodyEnum.Sun:
         init_au = get_sun(Time(observeStart, format="unix")).cartesian
-        logging.info("Got it!")
-        current_au = get_sun(
-            Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-        ).cartesian
+        current_au = get_sun(Time(current_time, format="unix")).cartesian
     elif body == BodyEnum.Moon:
-        init_au = get_moon(
-            Time(observeStart.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-        ).cartesian
-        current_au = get_moon(
-            Time(current_time.strftime("%Y-%m-%dT%H:%M:%S"), format="isot", scale="tdb")
-        ).cartesian
+        init_au = get_moon(Time(observeStart, format="unix")).cartesian
+        current_au = get_moon(Time(current_time, format="unix")).cartesian
 
     init = CartesianRepresentation([init_au.x, init_au.y, init_au.z], unit="km")
     current = CartesianRepresentation(
@@ -207,11 +200,12 @@ def get_ephemeris(observeStart, body):
     x = current.x.value
     y = current.y.value
     z = current.z.value
-    vx = (x - init.x.value) / (current_time - observeStart).seconds
-    vy = (y - init.y.value) / (current_time - observeStart).seconds
-    vz = (z - init.z.value) / (current_time - observeStart).seconds
+    vx = (x - init.x.value) / (current_time - observeStart)
+    vy = (y - init.y.value) / (current_time - observeStart)
+    vz = (z - init.z.value) / (current_time - observeStart)
 
-    logging.info(f"{body} pos: ", x, y, z)
-    logging.info(f"{body} vel: ", vx, vy, vz)
+    logging.info("Got 'em all!")
+    logging.info(f"{body.name} pos:  {x}, {y}, {z}")
+    logging.info(f"{body.name} vel: {vx}, {vy}, {vz}")
 
     return x, y, z, vx, vy, vz

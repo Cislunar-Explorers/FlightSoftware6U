@@ -193,6 +193,8 @@ def __calculate_cam_measurements(body1: np.ndarray, body2: np.ndarray) -> float:
     @return
     angular separation in radians
     """
+
+    # TODO Need to handle none case
     d_em = math.sqrt(
         (body1[0] - body2[0]) ** 2
         + (body1[1] - body2[1]) ** 2
@@ -401,6 +403,7 @@ def __observe(
 
     session.commit()
     logging.info("[OPNAV]: Observe Complete!")
+    return OPNAV_EXIT_STATUS.SUCCESS
 
 
 def __process_propulsion(

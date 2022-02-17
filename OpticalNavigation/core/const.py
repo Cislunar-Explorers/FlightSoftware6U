@@ -271,13 +271,13 @@ class ImageDetectionCircles:
             [spherical_x, spherical_y, spherical_z, angular_diameter], dtype=float
         )
 
-    def get_earth_detection(self):
+    def get_earth_detection(self) -> Optional[np.ndarray]:
         return self.__earth_detection
 
-    def get_moon_detection(self):
+    def get_moon_detection(self) -> Optional[np.ndarray]:
         return self.__moon_detection
 
-    def get_sun_detection(self):
+    def get_sun_detection(self) -> Optional[np.ndarray]:
         return self.__sun_detection
 
 

@@ -179,7 +179,6 @@ def get_ephemeris(observeStart, body: BodyEnum):
     # Astropy needs unix timestamp in seconds!!!
     current_time = observeStart
     observeStart = observeStart - 11.716
-    logging.info(observeStart)
     init_au = None
     current_au = None
     if body == BodyEnum.Sun:

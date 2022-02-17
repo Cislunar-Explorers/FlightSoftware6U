@@ -117,7 +117,7 @@ def __get_covariance_matrix_from_state(state_entry) -> CovarianceMatrix:
             state_entry.r6c6,
         ],
     ]
-    return CovarianceMatrix(matrix=np.array(a_P, dtype=float).reshape(6, 6))
+    return CovarianceMatrix(np.array(a_P, dtype=float).reshape(6, 6))
 
 
 def __process_propulsion_events(session: session.Session) -> OPNAV_EXIT_STATUS:

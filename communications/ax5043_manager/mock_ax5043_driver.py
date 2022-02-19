@@ -21,6 +21,7 @@ class MockAx5043(Ax5043):
     def read_fifo(self, count): return bytearray(count)
     def write_fifo(self, values): pass
 
+# TODO: Document importance of rst_values
 rst_values = {
     0x000: 0x51,
     0x001: 0x7d,

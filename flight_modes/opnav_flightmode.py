@@ -11,7 +11,7 @@ from .flight_mode import PauseBackgroundMode
 
 
 class OpNavMode(PauseBackgroundMode):
-
+    # FIXME: There is another class in flight mode with the same name that is in-use. This class is unused.
     flight_mode_id = FMEnum.OpNav.value
 
     def __init__(self, parent):

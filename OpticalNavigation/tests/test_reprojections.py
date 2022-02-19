@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from numpy import radians
 import glob
-import tiled_remap
+from OpticalNavigation.core.find_algos import tiled_remap
 import unittest
 
 
@@ -81,7 +81,7 @@ class TestReprojections(unittest.TestCase):
         corresponding contours is less than 0.15."""
 
         # Glob gnomonic images as filenames ending in "_gn.png"
-        gnomonicList = glob.glob("images/*_gn.png")
+        gnomonicList = sorted(glob.glob("images/*_gn.png"))
 
         # For each gnomonic image
         for gnName in gnomonicList:
@@ -219,7 +219,7 @@ class TestReprojections(unittest.TestCase):
                                 (minW, int(minW * h / w)),
                                 interpolation=cv2.INTER_AREA,
                             )
-                        self.write_composite_image(outc, tgtc, cmp, gnName, i, j)
+                        self.write_composite_image(outc, tgtc, cmp, gnName, i, j, diff)
 
     # Test reprojections
     def test_reprojection(self):

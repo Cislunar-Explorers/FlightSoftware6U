@@ -24,6 +24,7 @@ class LowBatterySafetyMode(FlightMode):
     def run_mode(self):
         if self.task_completed:
             sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
+            # TODO: not clear what this line is doing...
         else:
             if self._parent.gom is not None:
                 # turn off all devices except for LNA. Most of this stuff is redundant, but better safe than sorry

@@ -4,6 +4,9 @@ from numpy import radians
 import glob
 from OpticalNavigation.core.find_algos import tiled_remap
 import unittest
+from utils.constants import FLIGHT_SOFTWARE_PATH
+
+DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "OpticalNavigation/tests/data/"
 
 
 class TestReprojections(unittest.TestCase):
@@ -81,7 +84,9 @@ class TestReprojections(unittest.TestCase):
         corresponding contours is less than 0.15."""
 
         # Glob gnomonic images as filenames ending in "_gn.png"
-        gnomonicList = sorted(glob.glob("images/*_gn.png"))
+        gnomonicList = sorted(
+            glob.glob(DATA_DIR + "traj-case1c_sim_no_outline/images/*_gn.png")
+        )
 
         # For each gnomonic image
         for gnName in gnomonicList:

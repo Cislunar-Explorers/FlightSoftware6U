@@ -12,6 +12,9 @@ from drivers.gom import Gomspace
 # to speed testing
 params.GLOW_WAIT_TIME = 0.01
 
+# TODO: document/write a comment about the purpose of the class and functions below,
+# and how the tests accomplish that purpose
+
 
 class FakeGOM(Gomspace):
     def __init__(self):

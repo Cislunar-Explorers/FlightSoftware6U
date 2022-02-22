@@ -40,6 +40,11 @@ def m(mocker):
 
 
 def test_maneuver_selection(m: MainSatelliteThread, mocker):
+
+    # override these parameters so that pytest runs quicker
+    params.GLOWPLUG_DURATION = 0.01
+    params.GLOW_WAIT_TIME = 0.01
+
     mocker.patch(
         "flight_modes.maneuver_flightmode.ManeuverMode.get_pressure",
         side_effect=[100, 90, 80, 70],
@@ -51,33 +56,27 @@ def test_maneuver_selection(m: MainSatelliteThread, mocker):
         consts.CommandEnum.ScheduleManeuver
     )
     m.command_handler.run_command(
-        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 16}
+        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 6}
     )
 
-    logging.info(params.SCHEDULED_BURN_TIME)
     m.command_handler.run_command(
         maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 2}
     )
 
-    # m.command_definitions.schedule_maneuver(time=cur_time + 1000)
-    # m.command_definitions.schedule_maneuver(time=cur_time + 100)
-    logging.info(m.maneuver_queue)
-    logging.info(params.SCHEDULED_BURN_TIME)
-
     assert len(m.maneuver_queue.queue) == 1
     assert params.SCHEDULED_BURN_TIME == cur_time + 2
     m.flight_mode.run_mode()
-    logging.info("After first run_mode")
-    logging.info(m.maneuver_queue)
-    logging.info(params.SCHEDULED_BURN_TIME)
+    logging.debug("After first run_mode")
+    logging.debug(m.maneuver_queue)
+    logging.debug(params.SCHEDULED_BURN_TIME)
 
     assert m.maneuver_queue.empty()
-    assert params.SCHEDULED_BURN_TIME == cur_time + 16
+    assert params.SCHEDULED_BURN_TIME == cur_time + 6
     m.flight_mode.run_mode()
 
-    logging.info("After second run_mode")
-    logging.info(m.maneuver_queue)
-    logging.info(params.SCHEDULED_BURN_TIME)
+    logging.debug("After second run_mode")
+    logging.debug(m.maneuver_queue)
+    logging.debug(params.SCHEDULED_BURN_TIME)
 
     assert m.maneuver_queue.empty()
     assert params.SCHEDULED_BURN_TIME == -1

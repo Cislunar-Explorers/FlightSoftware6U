@@ -58,11 +58,21 @@ try:
                 gom.power_amplifier.set(False)
 
             if choice == 8:
-                gom.solenoid._set(True)
-                sleep(duration / 2)
-                ps.displayHk2(gom.get_health_data(level="eps"))
-                sleep(duration / 2)
-                gom.solenoid._set(False)
+                print(
+                    "Are you sure that the solenoid valve is completely DISCONNECTED from the Gomspace P31u (yes/no)"
+                )
+                response = input("If you are unsure, simply say 'no'")
+                if response == "yes":
+                    logging.info("Turning on solenoid loadswitch")
+                    gom.solenoid._set(True)
+                    sleep(duration / 2)
+                    ps.displayHk2(gom.get_health_data(level="eps"))
+                    sleep(duration / 2)
+                    gom.solenoid._set(False)
+                else:
+                    logging.error(
+                        "Solenoid is still connected, not actuating loadswitch"
+                    )
 
         if choice in [2, 3, 5]:
             duration = int(

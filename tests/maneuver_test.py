@@ -8,6 +8,7 @@ from flight_modes.maneuver_flightmode import ManeuverMode
 from main import MainSatelliteThread
 from drivers.gom import Gomspace
 from drivers.power.loadswitch import mockGPIOLoadSwitch, mockP31uLoadSwitch
+import logging
 
 # to speed testing
 params.GLOW_WAIT_TIME = 0.01
@@ -50,20 +51,34 @@ def test_maneuver_selection(m: MainSatelliteThread, mocker):
         consts.CommandEnum.ScheduleManeuver
     )
     m.command_handler.run_command(
-        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 6}
+        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 16}
     )
+
+    logging.info(params.SCHEDULED_BURN_TIME)
     m.command_handler.run_command(
         maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 2}
     )
 
     # m.command_definitions.schedule_maneuver(time=cur_time + 1000)
     # m.command_definitions.schedule_maneuver(time=cur_time + 100)
+    logging.info(m.maneuver_queue)
+    logging.info(params.SCHEDULED_BURN_TIME)
+
     assert len(m.maneuver_queue.queue) == 1
     assert params.SCHEDULED_BURN_TIME == cur_time + 2
     m.flight_mode.run_mode()
+    logging.info("After first run_mode")
+    logging.info(m.maneuver_queue)
+    logging.info(params.SCHEDULED_BURN_TIME)
+
     assert m.maneuver_queue.empty()
-    assert params.SCHEDULED_BURN_TIME == cur_time + 6
+    assert params.SCHEDULED_BURN_TIME == cur_time + 16
     m.flight_mode.run_mode()
+
+    logging.info("After second run_mode")
+    logging.info(m.maneuver_queue)
+    logging.info(params.SCHEDULED_BURN_TIME)
+
     assert m.maneuver_queue.empty()
     assert params.SCHEDULED_BURN_TIME == -1
 

@@ -1,5 +1,5 @@
 from core.const import BodyEnum, FileData, DetectionData, Vector3
-from core.find_algos.find_with_contours import *
+from core.find_algos.find_with_contours import find
 from core.sense import select_camera, record_video
 
 from adafruit_blinka.agnostic import board_id

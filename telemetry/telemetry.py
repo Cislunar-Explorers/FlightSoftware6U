@@ -10,17 +10,7 @@ from uptime import uptime
 
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from telemetry.sensor import SynchronousSensor
-from utils import constants
-from utils.constants import DB_FILE
-from utils.constants import (
-    MAX_GYRO_RATE,
-    GomOutputs,
-    BATTERY_VOLTAGE,
-    SUN_CURRENT,
-    SYSTEM_CURRENT,
-    BATT_MODE,
-    PPT_MODE,
-)
+from utils.constants import DB_FILE, MAX_GYRO_RATE, GomOutputs, DownlinkKwargs as dk
 
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
@@ -323,16 +313,16 @@ class Telemetry(SynchronousSensor):
             "prs_pressure": self.prs.pressure,
         }
 
-    def minimal_packet(self):
+    def minimal_packet(self) -> Dict[str, Union[int, float]]:
         return {
-            BATTERY_VOLTAGE: self.gom.hk.vbatt,
-            SUN_CURRENT: self.gom.hk.cursun,
-            SYSTEM_CURRENT: self.gom.hk.cursys,
-            BATT_MODE: self.gom.hk.battmode,
-            PPT_MODE: self.gom.hk.pptmode,
+            dk.BATTERY_VOLTAGE: self.gom.hk.vbatt,
+            dk.SUN_CURRENT: self.gom.hk.cursun,
+            dk.SYSTEM_CURRENT: self.gom.hk.cursys,
+            dk.BATT_MODE: self.gom.hk.battmode,
+            dk.GOM_PPT_MODE: self.gom.hk.pptmode,
         }
 
-    def detailed_packet_dict(self) -> Dict[str, Union[int, float]]:
+    def detailed_packet_dict(self) -> Dict[dk, Union[int, float]]:
         """Returns a dictionary of every possible data point we'd want to downlink. The implementation of this is
         barbaric at best, but works. Something like a NamedTuple would work fantastic here, but would require
         overhaul of quite a bit of FSW"""
@@ -341,71 +331,71 @@ class Telemetry(SynchronousSensor):
         ax, ay, az = self.gyr.get_acc()  # acc
         bx, by, bz = self.gyr.get_mag()  # mag
         return {
-            constants.TIME: self.poll_time,
-            constants.VBOOST_1: self.gom.hk.vboost[0],
-            constants.VBOOST_2: self.gom.hk.vboost[1],
-            constants.VBOOST_3: self.gom.hk.vboost[2],
-            constants.BATTERY_VOLTAGE: self.gom.hk.vbatt,
-            constants.CURRENT_IN_1: self.gom.hk.curin[0],
-            constants.CURRENT_IN_2: self.gom.hk.curin[1],
-            constants.CURRENT_IN_3: self.gom.hk.curin[2],
-            constants.CURSUN: self.gom.hk.cursun,
-            constants.SYSTEM_CURRENT: self.gom.hk.cursys,
-            constants.RESERVED1: self.gom.hk.reserved1,
-            constants.CUROUT1: self.gom.hk.curout[0],
-            constants.CUROUT2: self.gom.hk.curout[1],
-            constants.CUROUT3: self.gom.hk.curout[2],
-            constants.CUROUT4: self.gom.hk.curout[3],
-            constants.CUROUT5: self.gom.hk.curout[4],
-            constants.CUROUT6: self.gom.hk.curout[5],
-            constants.OUTPUTS: int(
+            dk.TIME: self.poll_time,
+            dk.VBOOST_1: self.gom.hk.vboost[0],
+            dk.VBOOST_2: self.gom.hk.vboost[1],
+            dk.VBOOST_3: self.gom.hk.vboost[2],
+            dk.BATTERY_VOLTAGE: self.gom.hk.vbatt,
+            dk.CURRENT_IN_1: self.gom.hk.curin[0],
+            dk.CURRENT_IN_2: self.gom.hk.curin[1],
+            dk.CURRENT_IN_3: self.gom.hk.curin[2],
+            dk.CURSUN: self.gom.hk.cursun,
+            dk.SYSTEM_CURRENT: self.gom.hk.cursys,
+            dk.RESERVED1: self.gom.hk.reserved1,
+            dk.CUROUT1: self.gom.hk.curout[0],
+            dk.CUROUT2: self.gom.hk.curout[1],
+            dk.CUROUT3: self.gom.hk.curout[2],
+            dk.CUROUT4: self.gom.hk.curout[3],
+            dk.CUROUT5: self.gom.hk.curout[4],
+            dk.CUROUT6: self.gom.hk.curout[5],
+            dk.OUTPUTS: int(
                 str(self.gom.hk.output[:]).replace(",", "").replace(" ", "")[1:-1], 2
             ),
-            constants.LATCHUPS1: self.gom.hk.latchup[0],
-            constants.LATCHUPS2: self.gom.hk.latchup[1],
-            constants.LATCHUPS3: self.gom.hk.latchup[2],
-            constants.LATCHUPS4: self.gom.hk.latchup[3],
-            constants.LATCHUPS5: self.gom.hk.latchup[4],
-            constants.LATCHUPS6: self.gom.hk.latchup[5],
-            constants.WDT_TIME_LEFT_I2C: self.gom.hk.wdt_i2c_time_left,
-            constants.WDT_TIME_LEFT_GND: self.gom.hk.wdt_gnd_time_left,
-            constants.WDT_COUNTS_I2C: self.gom.hk.counter_wdt_i2c,
-            constants.WDT_COUNTS_GND: self.gom.hk.counter_wdt_gnd,
-            constants.GOM_BOOTS: self.gom.hk.counter_boot,
-            constants.GOM_BOOTCAUSE: self.gom.hk.bootcause,
-            constants.GOM_BATTMODE: self.gom.hk.battmode,
-            constants.HK_TEMP_1: self.gom.hk.temp[0],
-            constants.HK_TEMP_2: self.gom.hk.temp[1],
-            constants.HK_TEMP_3: self.gom.hk.temp[2],
-            constants.HK_TEMP_4: self.gom.hk.temp[3],
-            constants.GOM_PPT_MODE: self.gom.hk.pptmode,
-            constants.RESERVED2: self.gom.hk.reserved2,
-            constants.RTC_TIME: self.rtc.rtc_time,
-            constants.RPI_CPU: self.rpi.cpu,
-            constants.RPI_RAM: self.rpi.ram,
-            constants.RPI_DSK: self.rpi.disk,
-            constants.RPI_TEMP: self.rpi.tmp,
-            constants.RPI_BOOT: self.rpi.boot_time,
-            constants.RPI_UPTIME: self.rpi.up_time,
-            constants.GYROX: gx,
-            constants.GYROY: gy,
-            constants.GYROZ: gz,
-            constants.ACCX: ax,
-            constants.ACCY: ay,
-            constants.ACCZ: az,
-            constants.MAGX: bx,
-            constants.MAGY: by,
-            constants.MAGZ: bz,
-            constants.GYRO_TEMP: self.gyr.tmp,
-            constants.THERMOCOUPLE_TEMP: self.thm.tmp,
-            constants.PROP_TANK_PRESSURE: self.prs.pressure,
-            constants.POS_X: 0,
-            constants.POS_Y: 1,
-            constants.POS_Z: 2,
-            constants.ATT_1: 3,
-            constants.ATT_2: 4,
-            constants.ATT_3: 5,
-            constants.ATT_4: 6,
+            dk.LATCHUPS1: self.gom.hk.latchup[0],
+            dk.LATCHUPS2: self.gom.hk.latchup[1],
+            dk.LATCHUPS3: self.gom.hk.latchup[2],
+            dk.LATCHUPS4: self.gom.hk.latchup[3],
+            dk.LATCHUPS5: self.gom.hk.latchup[4],
+            dk.LATCHUPS6: self.gom.hk.latchup[5],
+            dk.WDT_TIME_LEFT_I2C: self.gom.hk.wdt_i2c_time_left,
+            dk.WDT_TIME_LEFT_GND: self.gom.hk.wdt_gnd_time_left,
+            dk.WDT_COUNTS_I2C: self.gom.hk.counter_wdt_i2c,
+            dk.WDT_COUNTS_GND: self.gom.hk.counter_wdt_gnd,
+            dk.GOM_BOOTS: self.gom.hk.counter_boot,
+            dk.GOM_BOOTCAUSE: self.gom.hk.bootcause,
+            dk.GOM_BATTMODE: self.gom.hk.battmode,
+            dk.HK_TEMP_1: self.gom.hk.temp[0],
+            dk.HK_TEMP_2: self.gom.hk.temp[1],
+            dk.HK_TEMP_3: self.gom.hk.temp[2],
+            dk.HK_TEMP_4: self.gom.hk.temp[3],
+            dk.GOM_PPT_MODE: self.gom.hk.pptmode,
+            dk.RESERVED2: self.gom.hk.reserved2,
+            dk.RTC_TIME: self.rtc.rtc_time,
+            dk.RPI_CPU: self.rpi.cpu,
+            dk.RPI_RAM: self.rpi.ram,
+            dk.RPI_DSK: self.rpi.disk,
+            dk.RPI_TEMP: self.rpi.tmp,
+            dk.RPI_BOOT: self.rpi.boot_time,
+            dk.RPI_UPTIME: self.rpi.up_time,
+            dk.GYROX: gx,
+            dk.GYROY: gy,
+            dk.GYROZ: gz,
+            dk.ACCX: ax,
+            dk.ACCY: ay,
+            dk.ACCZ: az,
+            dk.MAGX: bx,
+            dk.MAGY: by,
+            dk.MAGZ: bz,
+            dk.GYRO_TEMP: self.gyr.tmp,
+            dk.THERMOCOUPLE_TEMP: self.thm.tmp,
+            dk.PROP_TANK_PRESSURE: self.prs.pressure,
+            dk.POS_X: 0,
+            dk.POS_Y: 1,
+            dk.POS_Z: 2,
+            dk.ATT_1: 3,
+            dk.ATT_2: 4,
+            dk.ATT_3: 5,
+            dk.ATT_4: 6,
         }
 
     def write_telem(self):

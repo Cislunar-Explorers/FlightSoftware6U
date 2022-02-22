@@ -48,10 +48,12 @@ if __name__ == "__main__":
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
 
+    cv2.namedWindow("original", cv2.WINDOW_NORMAL)
     imOrig = cv2.imread(args["image"])
     cv2.imshow("original", imOrig)
     cv2.waitKey(0)
     segmented_image = getkmeans(imOrig)
+    cv2.namedWindow("Segmented Image", cv2.WINDOW_NORMAL)
     cv2.imshow("Segmented Image", segmented_image)
     cv2.waitKey(0)
 

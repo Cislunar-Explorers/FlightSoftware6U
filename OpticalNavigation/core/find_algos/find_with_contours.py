@@ -123,7 +123,7 @@ class CameraRotation:
     omega_dt: Angle of rotation during one row's readout time
     """
 
-    u: np.array
+    u: np.ndarray
     omega_dt: float
 
 
@@ -444,7 +444,7 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
                 moon = measureMoon(f)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    mXst, mYst = None, None
+                    mXst, mYst = 0, 0
                     # Checks whether moon contour is first or second contour
                     if index == 0:
                         mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)

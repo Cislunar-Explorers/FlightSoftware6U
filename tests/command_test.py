@@ -1,7 +1,6 @@
 import logging
 import unittest
-from utils import constants
-from utils.constants import CommandEnum, NAME, VALUE, HARD_SET, FMEnum
+from utils.constants import CommandEnum, FMEnum, CommandKwargs as ck
 from main import MainSatelliteThread
 from communications.command_handler import CommandHandler
 import utils.parameters as params
@@ -15,16 +14,17 @@ class CommandTest(unittest.TestCase):
         - Packing the telemetry, bit inflating and downlinking it
         - Receiving the inflated telemetry and unpacking ut"""
 
-    ground_station = CommandHandler(None)
-    sat = MainSatelliteThread()
+    def setUp(self) -> None:
+        self.sat = MainSatelliteThread()
+        self.ground_station = CommandHandler(None)
 
     def test_commands(self):
         new_value = 33
 
-        command_0 = self.ground_station.pack_command(CommandEnum.Normal)
+        command_0 = self.ground_station.pack_command(CommandEnum.Normal, {})
         command_1 = self.ground_station.pack_command(
             CommandEnum.SetParam,
-            **{NAME: "OPNAV_INTERVAL", VALUE: new_value, HARD_SET: False},
+            {ck.NAME: "OPNAV_INTERVAL", ck.VALUE: new_value, ck.HARD_SET: False},
         )
 
         # emulate sending command to satellite
@@ -46,13 +46,12 @@ class CommandTest(unittest.TestCase):
         # print(downlink.hex())
         # print(downlink_args)
         self.assertEqual(downlink_command.id, CommandEnum.SetParam)
-        self.assertEqual(downlink_args[VALUE], new_value)
-        self.assertFalse(downlink_args[HARD_SET])
+        self.assertEqual(downlink_args[ck.VALUE], new_value)
 
     def test_manual_fm_commands(self):
         """Commands the spacecraft to go into every flight mode """
         for mode in FMEnum:
-            uplink = self.ground_station.pack_command(mode.value)
+            uplink = self.ground_station.pack_command(mode.value, {})
             self.sat.command_queue.put(uplink)
             self.sat.execute_commands()  # satellite executes commands
             self.assertEqual(
@@ -70,10 +69,14 @@ class CommandTest(unittest.TestCase):
         # The get_param command can only downlink floats. Will need to def another command to downlink strings
         param_list.remove("FILE_UPDATE_PATH")
 
+        # Dont wanna mess with the counter values
+        param_list.remove("DOWNLINK_COUNTER")
+        param_list.remove("UPLINK_COUNTER")
+
         for param_name in param_list:
             try:
                 uplink = self.ground_station.pack_command(
-                    CommandEnum.GetParam, **{constants.NAME: param_name}
+                    CommandEnum.GetParam, {ck.NAME: param_name}
                 )
                 self.sat.command_queue.put(uplink)
                 self.sat.execute_commands()  # satellite executes command (prints param value)
@@ -89,11 +92,30 @@ class CommandTest(unittest.TestCase):
                 self.assertEqual(
                     list(downlink_args.values())[0], get_parameter_from_name(param_name)
                 )
-                self.assertEqual(list(downlink_args.keys())[0], constants.VALUE)
+                self.assertEqual(list(downlink_args.keys())[0], ck.VALUE)
 
             except Exception:
                 logging.error(f"Parameter {param_name} failed")
                 raise
+
+    def test_counter_persistence(self):
+        """Test whether the uplink and downlink counters remain consistent even if the thread stops"""
+        self.test_commands()  # run the same test as before (to make sure that the counters aren't 0)
+
+        up_before, down_before = (
+            self.sat.command_handler.uplink_counter,
+            self.sat.command_handler.downlink_counter,
+        )
+        self.sat = MainSatelliteThread()  # re-init the object
+        up_after, down_after = (
+            self.sat.command_handler.uplink_counter,
+            self.sat.command_handler.downlink_counter,
+        )
+
+        self.assertEqual(up_before, up_after)
+        self.assertEqual(down_before, down_after)
+
+        self.test_commands()
 
 
 if __name__ == "__main__":

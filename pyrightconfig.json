@@ -30,5 +30,6 @@
   "reportUnusedImport": "warning",
   "reportUnusedVariable": "warning",
   "reportOptionalMemberAccess": "warning",
-  "reportDuplicateImport": "error"
+  "reportDuplicateImport": "error",
+  "reportWildcardImportFromLibrary": "error"
 }

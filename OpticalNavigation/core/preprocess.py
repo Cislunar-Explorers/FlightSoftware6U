@@ -1,5 +1,5 @@
 from __future__ import division
-from math import *
+from math import sin, cos, tan, atan, atan2, radians, sqrt
 import os
 import time
 

@@ -63,9 +63,9 @@ time.sleep(1)
 
 logging.debug("Testing Electrolyzer")
 logging.debug("You should see HITL output 13 light up for 10 seconds")
-HITL_test.set_single_output(GomOutputs.electrolyzer, 1, 0)
+HITL_test.electrolyzer(True)
 time.sleep(10)
-HITL_test.set_single_output(GomOutputs.electrolyzer, 0, 0)
+HITL_test.electrolyzer(False)
 
 logging.debug("\nComponent function testing done")
 time.sleep(2)

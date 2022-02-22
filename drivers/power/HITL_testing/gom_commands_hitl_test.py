@@ -42,7 +42,7 @@ sleep(2)
 
 # testing new burwire functions
 
-test.burnwire.pulse(5)
+test.burnwire1(5)
 
 # test.burnwire2(5)
 
@@ -51,11 +51,11 @@ sleep(3)
 logging.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
 
-test.electrolyzers.set(True)
+test.set_electrolysis(True)
 sleep(1)
 logging.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)
-test.electrolyzers.set(False)
+test.set_electrolysis(False)
 sleep(1)
 logging.info("Is electrolyzing?: " + str(test.is_electrolyzing()))
 sleep(1)

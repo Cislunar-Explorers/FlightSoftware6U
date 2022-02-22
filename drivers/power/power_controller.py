@@ -182,11 +182,11 @@ class Power:
         return ps.c_bytesToStruct(array, "eps_hk_vi_t")
 
     # returns eps_hk_out_t struct
-    def get_hk_out(self) -> ps.eps_hk_out_t:
+    def get_hk_out(self):
         logging.debug("Running get_hk_out")
         self.write(CMD_GET_HK, [0x02])
         array = self.read(SIZE_EPS_HK_OUT_T)
-        return cast(ps.eps_hk_out_t, ps.c_bytesToStruct(array, "eps_hk_out_t"))
+        return ps.c_bytesToStruct(array, "eps_hk_out_t")
 
     # returns eps_hk_wdt_t struct
     def get_hk_wdt(self):
@@ -393,6 +393,15 @@ class Power:
         self._pi.write(output, 0)
         logging.debug("Set GPIO channel %i LOW", output)
 
+    # switches on if [switch] is true, off otherwise, with a
+    # delay of [delay] seconds.
+    # Input switch is of type bool
+    def electrolyzer(self, switch: bool, delay=0):
+        logging.debug(
+            "Setting electrolyzer to mode %i after a delay of %i seconds", switch, delay
+        )
+        self.set_single_output(GomOutputs.electrolyzer, int(switch), delay)
+
     # spikes the solenoid for [spike] milliseconds and
     # holds at 5v for [hold] milliseconds with a
     # delay of [delay] seconds.
@@ -414,7 +423,7 @@ class Power:
         self.set_single_output("solenoid", 0, 0)
 
     # Experimental implementation of above functionality
-    def solenoid_single_wave(self, hold: float):
+    def solenoid_single_wave(self, hold):
         # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
         # enables vboost - async
@@ -480,12 +489,6 @@ class Power:
         self.displayAll()
         sleep(duration * 0.001 / 2)
         self.set_single_output(GomOutputs.glowplug_2, 0, 0)
-
-    def set_gpio(self, pin_num: int, state: bool):
-        return self._pi.write(pin_num, state)
-
-    def get_gpio(self, pin_num: int) -> bool:
-        return self._pi.read(pin_num)
 
     # tell RF switch to either transmit or receive
     def rf_transmitting_switch(self, receive: bool = True):

@@ -64,12 +64,12 @@ def test_config_command():
 
     config_dict = dict_from_eps_config(config)
 
-    command_bytes = gs.pack_command(CommandEnum.GomConf1Set.value, **config_dict)
+    command_bytes = gs.pack_command(CommandEnum.GomConf1Set.value, config_dict)
     command, kwargs = m.command_handler.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf1Set.value
 
-    unpacked_config = eps_config_from_dict(**kwargs)
+    unpacked_config = eps_config_from_dict(kwargs)
 
     # ps.displayConfig(config)
     # ps.displayConfig(unpacked_config)
@@ -118,7 +118,7 @@ def test_config2_command():
 
     config2_dict = dict_from_eps_config2(config2)
 
-    command_bytes = gs.pack_command(CommandEnum.GomConf2Set.value, **config2_dict)
+    command_bytes = gs.pack_command(CommandEnum.GomConf2Set.value, config2_dict)
     command, kwargs = m.command_handler.unpack_link(command_bytes)
 
     assert command.id == CommandEnum.GomConf2Set.value

@@ -6,7 +6,7 @@ from OpticalNavigation.core.find_algos import tiled_remap
 import unittest
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
-DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "OpticalNavigation/tests/data/"
+DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/OpticalNavigation/simulations/sim/data/"
 
 
 class TestReprojections(unittest.TestCase):
@@ -18,12 +18,8 @@ class TestReprojections(unittest.TestCase):
     def get_ucam(self, name):
         """Returns u_cam from filename."""
         cam_dict = {
-            "camA": np.array(
-                [5.00000000e-01, 6.12323400e-17, 8.66025404e-01], dtype=np.float32
-            ),
-            "camB": np.array(
-                [-5.00000000e-01, -6.12323400e-17, -8.66025404e-01], dtype=np.float32
-            ),
+            "camA": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
+            "camB": np.array([-5.00000000e-01, 0, -8.66025404e-01], dtype=np.float32),
             "camC": np.array(
                 [-3.9931775502364646, -3.0090751157602416, 0.0], dtype=np.float32
             )
@@ -82,6 +78,8 @@ class TestReprojections(unittest.TestCase):
     def reproj(self, write_remapped: bool, write_composite: bool):
         """Main reprojection function. Asserts that difference values between
         corresponding contours is less than 0.15."""
+
+        print(DATA_DIR + "traj-case1c_sim_no_outline/images/*_gn.png")
 
         # Glob gnomonic images as filenames ending in "_gn.png"
         gnomonicList = sorted(
@@ -228,6 +226,7 @@ class TestReprojections(unittest.TestCase):
 
     # Test reprojections
     def test_reprojection(self):
+        print("here")
         self.reproj(False, False)
 
     # Test reprojectons with image output

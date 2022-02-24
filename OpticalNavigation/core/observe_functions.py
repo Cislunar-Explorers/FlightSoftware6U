@@ -18,12 +18,12 @@ from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 
 
-def record_with_timedelta(camNum: int, camera_rec_params: CameraRecordingParameters) -> Tuple[Tuple[str, "list[int]", Tuple[str, "list[int]", "list[int]"]]]:
+def record_with_timedelta(camNum: int, camera_rec_params: CameraRecordingParameters) -> Tuple[Tuple[str, "list[int]"], Tuple[str, "list[int]"], "list[int]"]:
     select_camera(id=camNum)
 
     # Get Unix time before recording(in seconds floating point -> microseconds)
     # Get camera time (in microseconds)
-    linuxTime1: int
+ linuxTime1: int
     cameraTime1: int
     with PiCamera() as camera:
         linuxTime1 = int(time.time() * 10 ** 6)

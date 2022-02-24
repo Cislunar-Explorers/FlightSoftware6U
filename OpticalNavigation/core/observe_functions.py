@@ -21,6 +21,7 @@ import numpy as np
 import math
 import time
 import logging
+from Typing import Tuple
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 
@@ -120,7 +121,9 @@ def get_detections(frames: "list[str]") -> "list[DetectionData]":
     return detections
 
 
-def get_best_detection(detections: "list[DetectionData]") -> DetectionData:
+def get_best_detection(
+    detections: "list[DetectionData]"
+) -> Tuple[DetectionData, DetectionData, DetectionData]:
     # (distance to center, DetectionData object)
     closest_e = (np.inf, None)
     closest_m = (np.inf, None)
@@ -137,8 +140,7 @@ def get_best_detection(detections: "list[DetectionData]") -> DetectionData:
 
 
 def cam_to_body(
-    detection: "list[DetectionData]",
-    camera_params: CameraParameters = CisLunarCameraParameters,
+    detection: DetectionData, camera_params: CameraParameters = CisLunarCameraParameters
 ) -> DetectionData:
     camNum = detection.filedata.cam_num
     if camNum == 1:
@@ -186,7 +188,7 @@ def get_elapsed_time(
 
 
 def body_to_T0(
-    detection: "list[DetectionData]", timeElapsed: float, avgGyroY: float
+    detection: DetectionData, timeElapsed: float, avgGyroY: float
 ) -> DetectionData:
     logging.info(f"[OPNAV]: {detection.detection} Time Elapsed= {timeElapsed}")
     rotation = avgGyroY * timeElapsed
@@ -196,7 +198,7 @@ def body_to_T0(
     return detection
 
 
-def get_ephemeris(observeStart: int, body: BodyEnum) -> float:
+def get_ephemeris(observeStart: float, body: BodyEnum) -> float:
     # Astropy needs unix timestamp in seconds!!!
     current_time = observeStart
     observeStart = observeStart - 11.716

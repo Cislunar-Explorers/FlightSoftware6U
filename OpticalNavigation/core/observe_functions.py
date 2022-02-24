@@ -1,4 +1,4 @@
-from core.const import BodyEnum, FileData, DetectionData, Vector3
+from core.const import BodyEnum, CisLunarCameraParameters, FileData, DetectionData, Vector3, CameraParameters
 from core.find_algos.find_with_contours import find
 from core.sense import select_camera, record_video
 
@@ -7,18 +7,18 @@ from adafruit_blinka.agnostic import board_id
 if board_id and board_id != "GENERIC_LINUX_PC":
     from picamera import PiCamera
 
-    # pass
 from utils.constants import OPNAV_MEDIA_DIR
 
 import numpy as np
 import math
 import time
 import logging
+from typing import Tuple
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 
 
-def record_with_timedelta(camNum, camera_rec_params):
+def record_with_timedelta(camNum: int, camera_rec_params: CameraParameters) -> Tuple[str, str, "list[int]"]:
     select_camera(id=camNum)
 
     # Get Unix time before recording(in seconds floating point -> microseconds)
@@ -60,7 +60,7 @@ def record_with_timedelta(camNum, camera_rec_params):
     return vidDataLow, vidDataHigh, timeDeltaAvg
 
 
-def get_detections(frames):
+def get_detections(frames: "list[str]") -> "list[DetectionData]":
     logging.info("[OPNAV]: Finding...")
     progress = 1
     detections = []
@@ -107,7 +107,7 @@ def get_detections(frames):
     return detections
 
 
-def get_best_detection(detections):
+def get_best_detection(detections: "list[DetectionData]") -> DetectionData:
     # (distance to center, DetectionData object)
     closest_e = (np.inf, None)
     closest_m = (np.inf, None)
@@ -123,7 +123,7 @@ def get_best_detection(detections):
     return closest_e[1], closest_m[1], closest_s[1]
 
 
-def cam_to_body(detection, camera_params):
+def cam_to_body(detection: "list[DetectionData]", camera_params: CameraParameters) -> DetectionData:
     camNum = detection.filedata.cam_num
     if camNum == 1:
         res = (camera_params.cam1Rotation).dot(detection.vector.data)
@@ -137,8 +137,8 @@ def cam_to_body(detection, camera_params):
     return detection
 
 
-def tZeroRotMatrix(rotation):
-    """Creates a y-axis rotation matrix"""
+def tZeroRotMatrix(rotation:float) -> np.ndarray:
+    """Creates a y-axis rotation matrix, from rotation rate (rad/s)"""
     return np.array(
         [
             math.cos(rotation),
@@ -154,10 +154,11 @@ def tZeroRotMatrix(rotation):
     ).reshape(3, 3)
 
 
-def get_elapsed_time(fileData, timeDeltaAvgs, observeStart):
+def get_elapsed_time(fileData:FileData, timeDeltaAvgs: "list[int]", observeStart: int) -> float:
     """
     Calculates the elapsed time (in seconds, floating pt) between the beginning of the opnav observe call and the
     timestamp of a selected frame
+    timeDeltaAvgs: microseconds
     """
     timestamp = fileData.timestamp
     camNum = fileData.cam_num
@@ -166,7 +167,7 @@ def get_elapsed_time(fileData, timeDeltaAvgs, observeStart):
     return timeElapsed
 
 
-def body_to_T0(detection, timeElapsed, avgGyroY):
+def body_to_T0(detection: "list[DetectionData]", timeElapsed: float, avgGyroY: float) -> DetectionData:
     logging.info(f"[OPNAV]: {detection.detection} Time Elapsed= {timeElapsed}")
     rotation = avgGyroY * timeElapsed
     tZeroRotation = tZeroRotMatrix(rotation)
@@ -175,7 +176,7 @@ def body_to_T0(detection, timeElapsed, avgGyroY):
     return detection
 
 
-def get_ephemeris(observeStart, body: BodyEnum):
+def get_ephemeris(observeStart: int, body: BodyEnum) -> float:
     # Astropy needs unix timestamp in seconds!!!
     current_time = observeStart
     observeStart = observeStart - 11.716

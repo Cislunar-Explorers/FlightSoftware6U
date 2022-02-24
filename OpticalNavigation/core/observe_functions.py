@@ -1,4 +1,4 @@
-from core.const import BodyEnum, CisLunarCameraParameters, FileData, DetectionData, Vector3, CameraParameters
+from core.const import BodyEnum, CisLunarCameraParameters, FileData, DetectionData, Vector3, CameraRecordingParameters
 from core.find_algos.find_with_contours import find
 from core.sense import select_camera, record_video
 
@@ -18,7 +18,7 @@ from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 
 
-def record_with_timedelta(camNum: int, camera_rec_params: CameraParameters) -> Tuple[str, str, "list[int]"]:
+def record_with_timedelta(camNum: int, camera_rec_params: CameraRecordingParameters) -> Tuple[Tuple[str, "list[int]", Tuple[str, "list[int]", "list[int]"]]]:
     select_camera(id=camNum)
 
     # Get Unix time before recording(in seconds floating point -> microseconds)

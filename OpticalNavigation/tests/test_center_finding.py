@@ -10,13 +10,15 @@ import numpy as np
 import math
 import unittest
 import time
+from utils.constants import FLIGHT_SOFTWARE_PATH
 
 # import argparse
 
 
 class CenterDetections(unittest.TestCase):
     now = int(time.time())
-    cwd = os.getcwd()
+    print(FLIGHT_SOFTWARE_PATH)
+    cwd = f"{FLIGHT_SOFTWARE_PATH}/OpticalNavigation"
 
     def __get_difference(self, body, truths, body_vals):
         """
@@ -102,14 +104,11 @@ class CenterDetections(unittest.TestCase):
 
         # Writing performance values to csv file
         os.makedirs(
-            self.cwd + "/tests/center_find_test_run_" + str(self.now), exist_ok=True
+            f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}",
+            exist_ok=True,
         )
         with open(
-            self.cwd
-            + "/tests/center_find_test_run_"
-            + str(self.now)
-            + "/"
-            + results_file,
+            f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}/results_file",
             "w",
             newline="",
         ) as csvfile:
@@ -161,7 +160,7 @@ class CenterDetections(unittest.TestCase):
         plt.xlabel("Pixel Distance (px)")
         plt.ylabel("Number of Results")
         fig.savefig(
-            self.cwd + "/tests/center_find_test_run_" + str(self.now) + "/" + filename
+            f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}/{filename}"
         )
         if show:
             plt.show()

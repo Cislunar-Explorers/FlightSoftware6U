@@ -21,14 +21,11 @@ import numpy as np
 import math
 import time
 import logging
-from typing import Tuple
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 
 
-def record_with_timedelta(
-    camNum: int, camera_rec_params: CameraRecordingParameters = CisLunarCameraParameters
-) -> Tuple[Tuple[str, "list[int]"], Tuple[str, "list[int]"], "list[int]"]:
+def record_with_timedelta(camNum: int, camera_rec_params: CameraRecordingParameters):
     """
     Outputs:
     vidDataLow, vidDataHigh: tuples of video filename (str) and list to timestamps (int)
@@ -140,7 +137,8 @@ def get_best_detection(detections: "list[DetectionData]") -> DetectionData:
 
 
 def cam_to_body(
-    detection: "list[DetectionData]", camera_params: CameraParameters
+    detection: "list[DetectionData]",
+    camera_params: CameraParameters = CisLunarCameraParameters,
 ) -> DetectionData:
     camNum = detection.filedata.cam_num
     if camNum == 1:

@@ -198,7 +198,9 @@ def body_to_T0(
     return detection
 
 
-def get_ephemeris(observeStart: float, body: BodyEnum) -> float:
+def get_ephemeris(
+    observeStart: float, body: BodyEnum
+) -> Tuple[float, float, float, float, float, float]:
     # Astropy needs unix timestamp in seconds!!!
     current_time = observeStart
     observeStart = observeStart - 11.716

@@ -4,6 +4,7 @@ from core.const import (
     FileData,
     DetectionData,
     Vector3,
+    CameraParameters,
     CameraRecordingParameters,
 )
 from core.find_algos.find_with_contours import find
@@ -139,8 +140,7 @@ def get_best_detection(detections: "list[DetectionData]") -> DetectionData:
 
 
 def cam_to_body(
-    detection: "list[DetectionData]",
-    camera_params: CameraRecordingParameters = CisLunarCameraParameters,
+    detection: "list[DetectionData]", camera_params: CameraParameters
 ) -> DetectionData:
     camNum = detection.filedata.cam_num
     if camNum == 1:

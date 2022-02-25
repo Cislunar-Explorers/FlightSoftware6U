@@ -12,6 +12,9 @@ from drivers.gom import Gomspace
 # to speed testing
 params.GLOW_WAIT_TIME = 0.01
 
+# TODO: document/write a comment about the purpose of the class and functions below,
+# and how the tests accomplish that purpose
+
 
 class FakeGOM(Gomspace):
     def __init__(self):
@@ -46,19 +49,19 @@ def test_maneuver_selection(m: MainSatelliteThread, mocker):
         consts.CommandEnum.ScheduleManeuver
     )
     m.command_handler.run_command(
-        maneuver_command, **{consts.MANEUVER_TIME: cur_time + 1000}
+        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 6}
     )
     m.command_handler.run_command(
-        maneuver_command, **{consts.MANEUVER_TIME: cur_time + 100}
+        maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 2}
     )
 
     # m.command_definitions.schedule_maneuver(time=cur_time + 1000)
     # m.command_definitions.schedule_maneuver(time=cur_time + 100)
     assert len(m.maneuver_queue.queue) == 1
-    assert params.SCHEDULED_BURN_TIME == cur_time + 100
+    assert params.SCHEDULED_BURN_TIME == cur_time + 2
     m.flight_mode.run_mode()
     assert m.maneuver_queue.empty()
-    assert params.SCHEDULED_BURN_TIME == cur_time + 1000
+    assert params.SCHEDULED_BURN_TIME == cur_time + 6
     m.flight_mode.run_mode()
     assert m.maneuver_queue.empty()
     assert params.SCHEDULED_BURN_TIME == -1

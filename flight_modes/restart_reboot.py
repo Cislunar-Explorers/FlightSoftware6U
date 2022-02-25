@@ -12,6 +12,10 @@ import psutil
 class BootUpMode(FlightMode):
     """FMID 0"""
 
+    # TODO: Add description of this FlightMode,
+    # similar to the comment in low_battery.py.
+    # May be beneficial to use the descirption of
+    # this flight mode as stated in the documentation
     flight_mode_id = FMEnum.Boot.value
 
     def __init__(self, parent):

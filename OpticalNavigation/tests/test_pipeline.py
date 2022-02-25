@@ -1,13 +1,10 @@
 import numpy as np
-import re
-from datetime import datetime, timedelta
 
-# from unittest.mock import patch
+# import re
+from datetime import datetime, timedelta
 
 import core.opnav as opnav
 
-# import core.preprocess as preprocess
-# import core.sense as sense
 import core.const as opnav_constants
 from tests.const import CesiumTestCameraParameters
 
@@ -112,99 +109,31 @@ def test_start(mocker):
     ]
     session.bulk_save_objects(entries)
     session.commit()
-    # mocks
-    # do not test observe()
 
-    def observe_mock(session, gyro_count):
-        return opnav_constants.OPNAV_EXIT_STATUS.SUCCESS
-
-    # mocker.patch('core.opnav.__observe', side_effect=observe_mock)
-
-    def select_camera_mock(id):
-        print("select_mock")
-        return
-
-    # Don't use select_camera_mock for software demo
-    # mocker.patch('core.opnav.select_camera', side_effect=select_camera_mock)
-
-    idx = [0]
-    timestamps = [981750, 981750, 2028950, 2028950, 3010700, 3010700]
-    videos = [
-        "/home/stephen_z/Desktop/test-videos/cam1_expLow.mjpeg",
-        "/home/stephen_z/Desktop/test-videos/cam1_expHigh.mjpeg",
-        "/home/stephen_z/Desktop/test-videos/cam2_expLow.mjpeg",
-        "/home/stephen_z/Desktop/test-videos/cam2_expHigh.mjpeg",
-        "/home/stephen_z/Desktop/test-videos/cam3_expLow.mjpeg",
-        "/home/stephen_z/Desktop/test-videos/cam3_expHigh.mjpeg",
-    ]
-
-    def record_video_mock(filename, framerate, recTime, exposure):
-        print("video_mock")
-        time = timestamps[idx[0]]
-        filename = videos[idx[0]]
-        # idx[0] += 1
-        return (filename, 0, time)
-
-    # Don't use record_video mock for software demo
-    # mocker.patch('core.opnav.record_video', side_effect=record_video_mock)
-
+    # mockers
     def record_gyro_mock(count):
+        """ Passes in a hard-coded gyro rate as opposed to reading from the gyros """
         print("gyro_mock")
-        return np.array([[0, 5, 0]])
+        rotation_rate_y = 5  # rad/s
+        return np.array([[0, rotation_rate_y, 0]])
 
     mocker.patch("core.opnav.record_gyro", side_effect=record_gyro_mock)
 
-    path = "../../../../Desktop/cislunar_case1c/"
-    idx = [0]
-    names = [
-        "cam1_expLow_f",
-        "cam1_expHigh_f",
-        "cam2_expLow_f",
-        "cam2_expHigh_f",
-        "cam3_expLow_f",
-        "cam3_expHigh_f",
-    ]
-    # timestamps = [0, 0, 2094400, 2094400, 4188800, 4188800]
-    timestamps = [0, 6283200, 2094400, 2094400 + 6283200, 4188800, 4188800 + 6283200]
-    interval = [65450]
-    # camera_rec_params = opnav_constants.CameraRecordingParameters(
-    #    params.CAMERA_FPS,
-    #    params.CAMERA_RECORDING_TIME,
-    #    params.CAMERA_LOW_EXPOSURE,
-    #    params.CAMERA_HIGH_EXPOSURE,
-    # )
-
-    def extract_frames_mock(vid_dir, frameDiff, endTimestamp, cameraRecParams):
-        frames = []
-        for i in range(0, 20):
-            frames.append(
-                path
-                + names[idx[0]]
-                + str(i)
-                + "_t"
-                + str(int(round((timestamps[idx[0]] + interval[0] * i) / 1000 - 0.01)))
-                + ".jpg"
-            )
-            # print((timestamps[idx[0]] + interval[0]*i)/1000)
-            # print(frames[-1])
-        print("frames_mock")
-        idx[0] += 1
-        return frames
-
-    # mocker.patch('core.opnav.extract_frames', side_effect=extract_frames_mock)
-
-    def __get_elapsed_time_mock(bestTuple, timeDeltaAvgs, observeStart):
+    def get_elapsed_time_mock(fileData, timeDeltaAvgs, observeStart):
+        """ Calculates the time from between the start of observation and a specified frame without the use of Picamera
+            hardware """
         print("get_elapsed_time_mock")
+        timestamp = fileData.timestamp
         observeStart = datetime.utcfromtimestamp(observeStart * 10 ** -6)
         lastReboot = datetime(2020, 7, 28, 22, 8, 3)
-        timestamp = (
-            int(re.search(r"[t](\d+)", bestTuple[0]).group(1)) * 1000
-        )  # factor if 1000 ONLY for case1c
         dateTime = lastReboot + timedelta(microseconds=timestamp)
         timeElapsed = (dateTime - observeStart).total_seconds()
         return timeElapsed
 
-    mocker.patch("core.opnav.__get_elapsed_time", side_effect=__get_elapsed_time_mock)
+    mocker.patch(
+        "core.observe_functions.get_elapsed_time", side_effect=get_elapsed_time_mock
+    )
+    mocker.patch("core.opnav.get_elapsed_time", side_effect=get_elapsed_time_mock)
 
     # start opnav system
     opnav.start(sql_path=sql_path, num_runs=1, gyro_count=2)
@@ -224,6 +153,7 @@ def test_start(mocker):
     #   (it shouldn't matter because they are independent of one another)
 
 
+# Untested!
 def test_RandomData():
     # M M M F F
     batch = [

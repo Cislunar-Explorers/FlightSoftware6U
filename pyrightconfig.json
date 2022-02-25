@@ -4,12 +4,8 @@
     "OpticalNavigation/tests",
     "OpticalNavigation/simulations",
     "OpticalNavigation/experiments",
-    "OpticalNavigation/core/find_with_contours.py",
-    "OpticalNavigation/core/find_with_blobs.py",
-    "OpticalNavigation/core/find_with_kmeans.py",
-    "OpticalNavigation/core/camera.py",
-    "OpticalNavigation/core/const.py",
-    "OpticalNavigation/core/preprocess.py",
+    "OpticalNavigation/core/ukf.py",
+    "OpticalNavigation/core/opnav.py",
     "communications/ax5043_manager",
     "communications/comms_driver.py",
     "HITL-tests/comms_hardware_transmit.py",
@@ -21,11 +17,6 @@
     "HITL-tests/signal_test_satellite.py",
     "flight_modes/opnav_flightmode.py",
     "communications/downlink.py",
-    "OpticalNavigation/core/ukf.py",
-    "OpticalNavigation/core/opnav.py",
-    "OpticalNavigation/core/find.py",
-    "OpticalNavigation/core/find_with_blobs.py",
-    "OpticalNavigation/core/find_with_kmeans.py"
   ],
   "extraPaths": [
     "OpticalNavigation/"

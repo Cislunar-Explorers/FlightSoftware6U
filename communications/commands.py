@@ -38,6 +38,10 @@ class Command(ABC):
         self.downlink_buffer_size = sum(
             [codec.num_bytes for codec in self.downlink_codecs]
         )
+        self.uplink_codecs_dict = {codec.name: codec for codec in self.uplink_codecs}
+        self.downlink_codecs_dict = {
+            codec.name: codec for codec in self.downlink_codecs
+        }
 
     @abstractmethod
     def _method(
@@ -46,39 +50,43 @@ class Command(ABC):
         ...
 
     @staticmethod
-    def _unpack(data: bytes, codec_list: List[Codec]) -> Dict[str, Any]:
+    def _unpack(data: bytes, codec_dict: Dict[str, Codec]) -> Dict[str, Any]:
         offset = 0
         kwargs = {}
-        for point in codec_list:
-            kwarg = point.unpack(data[offset : offset + point.num_bytes])
+        for codec in codec_dict.values():
+            kwarg = codec.unpack(data[offset : offset + codec.num_bytes])
             kwargs.update(kwarg)
-            offset += point.num_bytes
+            offset += codec.num_bytes
 
         return kwargs
 
     @staticmethod
-    def _pack(kwargs: Dict[str, Any], codecs: List[Codec], buffer_size: int) -> bytes:
+    def _pack(
+        kwargs: Dict[str, Any], codecs_dict: Dict[str, Codec], buffer_size: int
+    ) -> bytes:
         buffer = bytearray(buffer_size)
         offset = 0
 
         for name, value in kwargs.items():
-            codec = [p for p in codecs if p.name == name][0]
+            codec = codecs_dict[name]
             buffer[offset : offset + codec.num_bytes] = codec.pack(value)
             offset += codec.num_bytes
 
         return bytes(buffer)
 
     def unpack_args(self, arg_data: bytes) -> Dict[str, Any]:
-        return self._unpack(arg_data, self.uplink_codecs)
+        return self._unpack(arg_data, self.uplink_codecs_dict)
 
-    def pack_args(self, **kwargs) -> bytes:
-        return self._pack(kwargs, self.uplink_codecs, self.uplink_buffer_size)
+    def pack_args(self, arg_dict) -> bytes:
+        return self._pack(arg_dict, self.uplink_codecs_dict, self.uplink_buffer_size)
 
     def unpack_telem(self, arg_data: bytes) -> Dict[str, Any]:
-        return self._unpack(arg_data, self.downlink_codecs)
+        return self._unpack(arg_data, self.downlink_codecs_dict)
 
-    def pack_telem(self, **kwargs) -> bytes:
-        return self._pack(kwargs, self.downlink_codecs, self.downlink_buffer_size)
+    def pack_telem(self, telem_dict) -> bytes:
+        return self._pack(
+            telem_dict, self.downlink_codecs_dict, self.downlink_buffer_size
+        )
 
     def packing_check(self, telem: Optional[Dict], codec_list: List[Codec]):
         error = False
@@ -103,6 +111,6 @@ class Command(ABC):
             self.packing_check(downlink, self.downlink_codecs)
             return downlink
         except Exception as e:
-            logging.error("Unhandled command exception")
+            logging.error(f"Unhandled exception running command {self.id}")
             logging.error(e, exc_info=True)
             raise CommandException

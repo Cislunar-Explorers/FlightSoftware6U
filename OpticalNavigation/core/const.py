@@ -1,8 +1,10 @@
 # import utils.parameters as params
 
 import numpy as np
-from enum import Enum
+from enum import unique, IntEnum, Enum
 import math
+import re
+from typing import Optional
 
 # The system will wait for the expected time elapsed
 # for the spacecraft to face the angle that is 45 degrees
@@ -202,6 +204,29 @@ class OPNAV_EXIT_STATUS(Enum):
     NO_EPHEMERIS_ENTRY_FOUND = 6
 
 
+class Vector3:
+    def __str__(self):
+        return str(self.data)
+
+    def __init__(self, x: float, y: float, z: float):
+        self.data = np.array([x, y, z], dtype=float)
+        self.x = x
+        self.y = y
+        self.z = z
+
+
+class Vector6:
+    def __init__(
+        self, x1: float, x2: float, x3: float, x4: float, x5: float, x6: float
+    ):
+        self.data = np.array([x1, x2, x3, x4, x5, x6], dtype=float)
+
+
+class Vector4:
+    def __init__(self, x1: float, x2: float, x3: float, x4: float):
+        self.data = np.array([x1, x2, x3, x4], dtype=float)
+
+
 class ImageDetectionCircles:
     """
     Stores circle center of detected Sun, Moon and Earth in spherical coordinates
@@ -209,9 +234,9 @@ class ImageDetectionCircles:
     """
 
     def __init__(self) -> None:
-        self.__earth_detection = None
-        self.__moon_detection = None
-        self.__sun_detection = None
+        self.__earth_detection: Optional[np.ndarray] = None
+        self.__moon_detection: Optional[np.ndarray] = None
+        self.__sun_detection: Optional[np.ndarray] = None
 
     def set_earth_detection(
         self,
@@ -246,31 +271,45 @@ class ImageDetectionCircles:
             [spherical_x, spherical_y, spherical_z, angular_diameter], dtype=float
         )
 
-    def get_earth_detection(self) -> np.ndarray:
+    def get_earth_detection(self) -> Optional[np.ndarray]:
         return self.__earth_detection
 
-    def get_moon_detection(self) -> np.ndarray:
+    def get_moon_detection(self) -> Optional[np.ndarray]:
         return self.__moon_detection
 
-    def get_sun_detection(self) -> np.ndarray:
+    def get_sun_detection(self) -> Optional[np.ndarray]:
         return self.__sun_detection
 
 
-class Vector3:
-    def __init__(self, x: float, y: float, z: float):
-        self.data = np.array([x, y, z], dtype=float)
+@unique
+class BodyEnum(IntEnum):
+    def __str__(self):
+        return str(self.name)
+
+    Earth = 0
+    Moon = 1
+    Sun = 2
 
 
-class Vector6:
+class FileData:
+    def __init__(self, filename: str) -> None:
+        self.filename: str = filename
+        self.cam_num: int = int(re.search(r"[cam](\d+)", filename).group(1))
+        self.exposure: str = str(re.search(r"[exp](High|Low)", filename).group(1))
+        self.frame_num: int = int(re.search(r"[f](\d+)", filename).group(1))
+        self.timestamp: int = int(
+            re.search(r"[t](\d+)", filename).group(1)
+        ) * 1000  # 1000 factor only for case1c
+
+
+class DetectionData:
     def __init__(
-        self, x1: float, x2: float, x3: float, x4: float, x5: float, x6: float
-    ):
-        self.data = np.array([x1, x2, x3, x4, x5, x6], dtype=float)
-
-
-class Vector4:
-    def __init__(self, x1: float, x2: float, x3: float, x4: float):
-        self.data = np.array([x1, x2, x3, x4], dtype=float)
+        self, filedata: FileData, vector: Vector3, ang_diam: float, detection: BodyEnum
+    ) -> None:
+        self.filedata: FileData = filedata
+        self.vector: Vector3 = vector
+        self.ang_diam: float = ang_diam
+        self.detection: BodyEnum = detection
 
 
 """
@@ -480,40 +519,75 @@ class Matrix6x6:
     Contains 6x6 matrix, stores in a numpy matrix
     """
 
-    def __init__(
-        self,
-        r1: Vector6,
-        r2: Vector6,
-        r3: Vector6,
-        r4: Vector6,
-        r5: Vector6,
-        r6: Vector6,
-    ) -> None:
-        """
-        Matrix6x6 Constructor
-        [r1]: Vector6 row 1
-        [r2]: Vector6 row 2
-        [r3]: Vector6 row 3
-        [r4]: Vector6 row 4
-        [r5]: Vector6 row 5
-        [r6]: Vector6 row 6
-        """
-        self.data = np.array(
-            [
-                r1.data.reshape(6),
-                r2.data.reshape(6),
-                r3.data.reshape(6),
-                r4.data.reshape(6),
-                r5.data.reshape(6),
-                r6.data.reshape(6),
-            ],
-            dtype=float,
-        )
-        self.data = self.data.reshape(6, 6)
+    def __init__(self, *args) -> None:
+        print(type(args[0]))
+        if len(args) == 1 and type(args[0]) == np.ndarray:
+            # if sending in numpy matrix
+            matrix = args[0]
+            assert matrix.shape[0] == matrix.shape[1] == 6
+            self.data = matrix
+        elif len(args) == 6 and type(args[0]) == Vector6:
+            """
+            Matrix6x6 Constructor
+            [r1]: Vector6 row 1
+            [r2]: Vector6 row 2
+            [r3]: Vector6 row 3
+            [r4]: Vector6 row 4
+            [r5]: Vector6 row 5
+            [r6]: Vector6 row 6
+            """
+            r1, r2, r3, r4, r5, r6 = args
+            self.data = np.array(
+                [
+                    r1.data.reshape(6),
+                    r2.data.reshape(6),
+                    r3.data.reshape(6),
+                    r4.data.reshape(6),
+                    r5.data.reshape(6),
+                    r6.data.reshape(6),
+                ],
+                dtype=float,
+            )
+            self.data = self.data.reshape(6, 6)
+        else:
+            raise Exception("Incorrect input to Matrix6x6")
 
-    def __init__(self, matrix: np.ndarray) -> None:
-        assert matrix.shape[0] == matrix.shape[1] == 6
-        self.data = matrix
+    # Keeping below code commented out because above implementation that conforms to pyright has not been tested
+
+    # def __init__(
+    #     self,
+    #     r1: Vector6,
+    #     r2: Vector6,
+    #     r3: Vector6,
+    #     r4: Vector6,
+    #     r5: Vector6,
+    #     r6: Vector6,
+    # ) -> None:
+    #     """
+    #     Matrix6x6 Constructor
+    #     [r1]: Vector6 row 1
+    #     [r2]: Vector6 row 2
+    #     [r3]: Vector6 row 3
+    #     [r4]: Vector6 row 4
+    #     [r5]: Vector6 row 5
+    #     [r6]: Vector6 row 6
+    #     """
+    #     self.data = np.array(
+    #         [
+    #             r1.data.reshape(6),
+    #             r2.data.reshape(6),
+    #             r3.data.reshape(6),
+    #             r4.data.reshape(6),
+    #             r5.data.reshape(6),
+    #             r6.data.reshape(6),
+    #         ],
+    #         dtype=float,
+    #     )
+    #     self.data = self.data.reshape(6, 6)
+
+    # def __init__(self, matrix: np.ndarray) -> None:
+    #     assert matrix.shape[0] == matrix.shape[1] == 6
+    #     self.data = matrix
 
 
 class CovarianceMatrix(Matrix6x6):

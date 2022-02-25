@@ -1,18 +1,14 @@
-from OpticalNavigation.core.find_with_contours import *
+from core.find_algos.find_with_contours import find
 from utils.constants import FLIGHT_SOFTWARE_PATH, SURRENDER_LOCAL_DIR
 import numpy as np
 import unittest
 import glob
 import os
 
-# Change these two paths for your own testing
-repoPath = FLIGHT_SOFTWARE_PATH
-surrenderBase = SURRENDER_LOCAL_DIR
-
 truthValueFile = os.path.join(
-    repoPath, "OpticalNavigation/tests/truth_detections_case1c.csv"
+    FLIGHT_SOFTWARE_PATH, "OpticalNavigation/tests/truth_detections_case1c.csv"
 )
-surrenderPath = os.path.join(surrenderBase, "cislunar_case1c/*.jpg")
+surrenderPath = os.path.join(SURRENDER_LOCAL_DIR, "cislunar_case1c/*.jpg")
 
 
 class Detections(unittest.TestCase):

@@ -21,7 +21,7 @@ import numpy as np
 import math
 import time
 import logging
-from Typing import Tuple
+from typing import Tuple
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 

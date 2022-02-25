@@ -6,7 +6,7 @@ import re
 
 
 from core.const import CisLunarCameraParameters
-from core.opnav import _tZeroRotMatrix
+from core.observe_functions import tZeroRotMatrix
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
@@ -31,7 +31,7 @@ class BodyMeas(unittest.TestCase):
 
     def body2T0(self, bodyVec, gyroY, timeElapsed) -> np.ndarray:
         bodyRotation = gyroY * timeElapsed
-        T0RotMatrix = _tZeroRotMatrix(bodyRotation)
+        T0RotMatrix = tZeroRotMatrix(bodyRotation)
         bodyT0 = np.dot(T0RotMatrix, bodyVec)
         return bodyT0
 

@@ -5,8 +5,8 @@ import json
 import re
 
 
-from core.const import CisLunarCameraParameters
-from core.observe_functions import tZeroRotMatrix
+from core.const import FileData, DetectionData, Vector3
+from core.observe_functions import cam_to_body, body_to_T0
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
@@ -17,24 +17,6 @@ class BodyMeas(unittest.TestCase):
         # Added a negative sign to z value below
         return 4 * x / norm, 4 * y / norm, -(norm - 8) / norm
 
-    def cam2body(self, camVec, camNum) -> np.ndarray:
-        cam_params = CisLunarCameraParameters
-        if camNum == 1:
-            return cam_params.cam1Rotation.dot(camVec)
-        elif camNum == 2:
-            return cam_params.cam2Rotation.dot(camVec)
-        elif camNum == 3:
-            return cam_params.cam3Rotation.dot(camVec)
-        else:
-            print("Error")
-            return np.array([0, 0, 0])
-
-    def body2T0(self, bodyVec, gyroY, timeElapsed) -> np.ndarray:
-        bodyRotation = gyroY * timeElapsed
-        T0RotMatrix = tZeroRotMatrix(bodyRotation)
-        bodyT0 = np.dot(T0RotMatrix, bodyVec)
-        return bodyT0
-
     def get_traj_case_1c_data(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
@@ -42,19 +24,20 @@ class BodyMeas(unittest.TestCase):
         )
         data = open(path)
         obs = json.load(data)
-        frames = obs["observations"][0]["frames"]  # Need to iterate over all frames
-        camNum = []
+        frames = obs["observations"][0]["frames"]
+        fileInfo = []
         centerSt = []
         dt = []
         truthT0Vec = []
         for frame in frames:
-            cam = frame["camera"]
-            cam = 1 if cam == "A" else 2 if cam == "B" else 3
-            camNum.append(cam)
 
             centerSt.append(frame["detections"][0]["center_st"])
 
             imgName = frame["image_gnomonic"]
+            fileInfo.append(FileData(imgName))
+
+            # Can't use timestamp in fileInfo b/c that gets incorrectly parsed with file name
+            # convention of opnav sim (timestamps have a decimal point)
             dtFrame = float(re.search(r"[dt](\d*\.?\d+)", imgName).group(1))
             dt.append(dtFrame)
 
@@ -62,36 +45,43 @@ class BodyMeas(unittest.TestCase):
             bodyNum = 0 if body == "Earth" else 1 if body == "Moon" else 2
             truthT0Vec.append(
                 obs["observations"][0]["observed_bodies"][bodyNum]["direction_body"]
-            )  # Depends on body
+            )
 
         gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
 
         data.close()
-        return camNum, centerSt, dt, truthT0Vec, gyroY
+        return fileInfo, centerSt, dt, truthT0Vec, gyroY
 
     def test_body_meas(self):
-        camNum, centerSt, dt, truthT0Vec, gyroY = self.get_traj_case_1c_data()
-        print("Camera Numbers: ", camNum)
+        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_traj_case_1c_data()
 
-        for i in range(len(camNum)):
-            print("CamNun: ", camNum[i])
+        for i in range(len(fileInfo)):
+            camNum = fileInfo[i].cam_num
+            print("CamNum: ", camNum)
             print(i)
             print("center_st: ", centerSt[i])
             camVec = self.st_to_sph(centerSt[i][0], centerSt[i][1])
             print("Cam Vec: ", camVec)
 
+            detection = DetectionData(
+                filedata=fileInfo[i],
+                vector=Vector3(camVec[0], camVec[1], camVec[2]),
+                ang_diam=None,
+                detection=None,
+            )
+
             # Camera frame to satellite body frame
-            bodyVec = self.cam2body(camVec, camNum[i])
-            print("Satellite Frame Vector: ", bodyVec)
+            bodyDet = cam_to_body(detection)
+            print("Satellite Frame Vector: ", bodyDet.vector)
 
             # Satellite body frame to T0 frame
             print("dt: ", dt[i])
-            finalT0Vec = self.body2T0(bodyVec, gyroY, dt[i])
-            print("Observe Start Vector: ", finalT0Vec)
+            finalT0Det = body_to_T0(bodyDet, dt[i], gyroY)
+            print("Observe Start Vector: ", finalT0Det.vector)
 
             print("Actual Vector: ", truthT0Vec[i])
 
-            vecDist = np.linalg.norm(finalT0Vec - truthT0Vec[i])
+            vecDist = np.linalg.norm(finalT0Det.vector.data - truthT0Vec[i])
             print("Vect Dist: ", vecDist)
             self.assertLessEqual(
                 vecDist,
@@ -103,5 +93,3 @@ class BodyMeas(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    # a = BodyMeas()
-    # a.get_traj_case_1c_data()

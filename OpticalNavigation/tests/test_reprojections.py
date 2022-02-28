@@ -83,7 +83,7 @@ class TestReprojections(unittest.TestCase):
 
         # Glob gnomonic images as filenames ending in "_gn.png"
         gnomonicList = sorted(
-            glob.glob(DATA_DIR + "traj-case1c_sim_no_outline/*_gn.png")
+            glob.glob(DATA_DIR + "traj-case1c_sim_no_outline/images/*_gn.png")
         )
 
         # For each gnomonic image
@@ -93,7 +93,7 @@ class TestReprojections(unittest.TestCase):
             src = cv2.imread(gnName)
             tgt = cv2.imread(gnName.replace("_gn", "_st"))
 
-            # gnName = gnName.split("images/")[1]
+            gnName = gnName.split("images/")[1]
 
             cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
 

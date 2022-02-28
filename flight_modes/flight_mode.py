@@ -136,6 +136,7 @@ class FlightMode:
                 self._parent.commands_to_execute.remove(finished_command)
 
     def poll_inputs(self):
+        # TODO: Comment on what polling inputs means and how they differ across flight modes
         if self._parent.gom is not None:
             self._parent.gom.tick_wdt()  # FIXME; we don't want this for flight
             # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug

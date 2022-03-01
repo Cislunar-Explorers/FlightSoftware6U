@@ -147,3 +147,5 @@ cislunar.log*
 # Opnav test results
 *.csv
 *.png
+*.xml
+*.iml

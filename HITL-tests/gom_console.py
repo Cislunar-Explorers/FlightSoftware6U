@@ -3,8 +3,6 @@ import drivers.power.power_structs as ps
 from time import sleep
 import logging
 
-from utils.constants import GomOutputs
-
 
 gom = Gomspace()
 
@@ -36,54 +34,67 @@ try:
             duration = int(input("Duration (integer seconds):\n"))
             assert 0 < duration <= 30
             if choice == 1:
-                gom.lna(True)
+                gom.lna.set(True)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.lna(False)
+                gom.lna.set(False)
 
             if choice == 4:
-                gom.burnwire1(duration)
+                gom.burnwire.pulse(duration)
 
             if choice == 6:
-                gom.set_electrolysis(True)
+                gom.electrolyzers.set(True)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.set_electrolysis(False)
+                gom.electrolyzers.set(False)
 
             if choice == 7:
-                gom.set_pa(True)
+                gom.power_amplifier.set(True)
                 sleep(duration / 2)
                 ps.displayHk2(gom.get_health_data(level="eps"))
                 sleep(duration / 2)
-                gom.set_pa(False)
+                gom.power_amplifier.set(False)
 
             if choice == 8:
-                gom.pc.set_single_output(GomOutputs.solenoid, 1, 0)
-                sleep(duration / 2)
-                ps.displayHk2(gom.get_health_data(level="eps"))
-                sleep(duration / 2)
-                gom.pc.set_single_output(GomOutputs.solenoid, 0, 0)
+                print(
+                    "Are you sure that the solenoid valve is completely DISCONNECTED from the Gomspace P31u (yes/no)"
+                )
+                response = input("If you are unsure, simply say 'no'")
+                if response == "yes":
+                    logging.info("Turning on solenoid loadswitch")
+                    gom.solenoid._set(True)
+                    sleep(duration / 2)
+                    ps.displayHk2(gom.get_health_data(level="eps"))
+                    sleep(duration / 2)
+                    gom.solenoid._set(False)
+                else:
+                    logging.error(
+                        "Solenoid is still connected, not actuating loadswitch"
+                    )
 
         if choice in [2, 3, 5]:
-            duration = int(input("Duration (integer milliseconds):\n"))
+            duration = int(
+                input(
+                    "Duration (float seconds, less than 2.0 seconds with a solenoid valve connected):\n"
+                )
+            )
             if choice == 2:
-                gom.pc.set_single_output(GomOutputs.glowplug_2, 1, 0)
+                gom.glowplug_2.set(True)
                 ps.displayHk2(gom.get_health_data(level="eps"))
-                sleep(1e-3 * duration)
-                gom.pc.set_single_output(GomOutputs.glowplug_2, 0, 0)
+                sleep(duration)
+                gom.glowplug_2.set(False)
 
             if choice == 3:
-                gom.pc.set_single_output(GomOutputs.glowplug_1, 1, 0)
+                gom.glowplug_1.set(True)
                 ps.displayHk2(gom.get_health_data(level="eps"))
-                sleep(1e-3 * duration)
-                gom.pc.set_single_output(GomOutputs.glowplug_1, 0, 0)
+                sleep(duration)
+                gom.glowplug_1.set(False)
 
             if choice == 5:
-                assert 0 < duration < 400
                 logging.info("Pulsing Solenoid")
-                gom.solenoid(1e-3 * duration)
+                gom.solenoid.pulse(duration)
 
 finally:
     gom.all_off()

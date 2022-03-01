@@ -98,7 +98,7 @@ class separation_test(Command):
     downlink_codecs = []
 
     def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.gom.burnwire1(consts.SPLIT_BURNWIRE_DURATION)
+        parent.gom.burnwire.pulse(consts.SPLIT_BURNWIRE_DURATION, asynchronous=True)
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
         for _ in range(1000):
@@ -444,7 +444,7 @@ class reboot_gom(Command):
     downlink_codecs = []
 
     def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.gom.pc.reboot()
+        parent.gom.driver.reboot()
 
 
 class power_cycle(Command):
@@ -475,7 +475,7 @@ class gom_outputs(Command):
         # if 'delay' is not found in kwargs, assume we want it immediately
         delay = kwargs.get(ck.DELAY, 0)
 
-        parent.gom.set_output(output_channel, int(state), delay=delay)
+        parent.gom.set_single_output(output_channel, int(state), delay=delay)
 
 
 class pi_shutdown(Command):
@@ -872,8 +872,8 @@ class set_gom_conf1(Command):
 
         if parent.gom is not None:
             try:
-                parent.gom.pc.config_set(new_config)
-                updated_config: ps.eps_config_t = parent.gom.pc.config_get()
+                parent.gom.driver.config_set(new_config)
+                updated_config: ps.eps_config_t = parent.gom.driver.config_get()
                 new_config_dict = gom_util.dict_from_eps_config(updated_config)
                 return new_config_dict
 
@@ -921,10 +921,10 @@ class set_gom_conf2(Command):
     ) -> Optional[Dict[str, int]]:
         if parent.gom is not None:
             new_conf2 = gom_util.eps_config2_from_dict(kwargs)
-            parent.gom.pc.config2_set(new_conf2)
-            parent.gom.pc.config2_cmd(2)
+            parent.gom.driver.config2_set(new_conf2)
+            parent.gom.driver.config2_cmd(2)
 
-            return gom_util.dict_from_eps_config2(parent.gom.pc.config2_get())
+            return gom_util.dict_from_eps_config2(parent.gom.driver.config2_get())
         else:
             logging.warning("Can't talk to Gom P31u")
 

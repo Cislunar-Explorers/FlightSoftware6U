@@ -44,13 +44,18 @@ class ManeuverMode(PauseBackgroundMode):
             # TODO what if SCHEDULED_BURN_TIME is too far into the future
             self.task_completed = False
             # sleeping for 5 fewer seconds than the delay for safety
-            sleep(max(0, (params.SCHEDULED_BURN_TIME - time()) - 5))
+            sleep(
+                max(
+                    0, (params.SCHEDULED_BURN_TIME - time()) - params.TIME_TO_COMBUSTION
+                )
+            )
             logging.info("Heating up glowplug to execute a maneuver...")
 
             prior_pressure = self.get_pressure()
-            print(prior_pressure)
+            logging.info(f"Pressure before firing: {prior_pressure} psi")
             if params.GLOWPLUG1_VALID:
-                self._parent.gom.glowplug(params.GLOWPLUG_DURATION)
+                logging.info("Trying glowplug 1")
+                self._parent.gom.glowplug_1.pulse(params.GLOWPLUG_DURATION)
                 sleep(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(
@@ -58,7 +63,8 @@ class ManeuverMode(PauseBackgroundMode):
                 )
                 set_parameter("GLOWPLUG1_VALID", self.task_completed, consts.FOR_FLIGHT)
             if not params.GLOWPLUG1_VALID and params.GLOWPLUG2_VALID:
-                self._parent.gom.glowplug2(params.GLOWPLUG_DURATION)
+                logging.info("Trying glowplug 2")
+                self._parent.gom.glowplug_2.pulse(params.GLOWPLUG_DURATION)
                 sleep(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(
@@ -67,7 +73,7 @@ class ManeuverMode(PauseBackgroundMode):
                 set_parameter("GLOWPLUG2_VALID", self.task_completed, consts.FOR_FLIGHT)
             if not params.GLOWPLUG1_VALID and not params.GLOWPLUG2_VALID:
                 # TODO ground msg?... do a final check?
-                logging.info("All glowplugs failed.")
+                logging.error("All glowplugs failed.")
                 self.task_completed = True
 
         # prepare next maneuver

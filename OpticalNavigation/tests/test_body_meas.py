@@ -3,20 +3,15 @@ import unittest
 import os
 import json
 import re
+import logging
 
-
+from core.find_algos.tiled_remap import st_to_sph
 from core.const import FileData, DetectionData, Vector3
 from core.observe_functions import cam_to_body, body_to_T0
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
 class BodyMeas(unittest.TestCase):
-    def st_to_sph(self, x, y):
-        """Convert stereographic coordinates to spherical coordinates."""
-        norm = x ** 2 + y ** 2 + 4
-        # Added a negative sign to z value below
-        return 4 * x / norm, 4 * y / norm, -(norm - 8) / norm
-
     def get_data(self, path):
         data = open(path)
         obs = json.load(data)
@@ -51,13 +46,13 @@ class BodyMeas(unittest.TestCase):
     def body_meas(self, path):
         fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
 
-        print(f"\n{path}")
+        logging.debug(f"{path}")
         for i in range(len(fileInfo)):
             camNum = fileInfo[i].cam_num
-            print("CamNum: ", camNum)
-            print("center_st: ", centerSt[i])
-            camVec = self.st_to_sph(centerSt[i][0], centerSt[i][1])
-            print("Cam Vec: ", camVec)
+            logging.debug(f"CamNum: {camNum}")
+            logging.debug(f"Center_st: {centerSt[i]}")
+            camVec = st_to_sph(centerSt[i][0], centerSt[i][1])
+            logging.debug(f"Cam Vec: {camVec}")
 
             detection = DetectionData(
                 filedata=fileInfo[i],
@@ -68,22 +63,22 @@ class BodyMeas(unittest.TestCase):
 
             # Camera frame to satellite body frame
             bodyDet = cam_to_body(detection)
-            print("Satellite Frame Vector: ", bodyDet.vector)
+            logging.debug(f"Satellite Frame Vector: {bodyDet.vector}")
 
             # Satellite body frame to T0 frame
             finalT0Det = body_to_T0(bodyDet, dt[i], gyroY)
-            print("Observe Start Vector: ", finalT0Det.vector)
+            logging.debug(f"Observe Start Vector: {finalT0Det.vector}")
 
-            print("Actual Vector: ", truthT0Vec[i])
+            logging.debug(f"Actual Vector: {truthT0Vec[i]}")
 
             vecDist = np.linalg.norm(finalT0Det.vector.data - truthT0Vec[i])
-            print("Vect Dist: ", vecDist)
+            logging.debug(f"Vect Dist: {vecDist}")
             self.assertLessEqual(
                 vecDist,
                 0.05,
                 "Body transformations do not match within margin of error!",
             )
-            print()
+            logging.debug("\n")
 
     def test_traj_case1c(self):
         path = os.path.join(

@@ -1,6 +1,6 @@
 __pycache__
 .DS_STORE
-node_modules/
 tests/*.csv
 tests/*.png
 !tests/truth_detections_case1c.csv
+tests/tests/

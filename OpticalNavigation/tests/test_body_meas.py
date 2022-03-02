@@ -17,11 +17,7 @@ class BodyMeas(unittest.TestCase):
         # Added a negative sign to z value below
         return 4 * x / norm, 4 * y / norm, -(norm - 8) / norm
 
-    def get_traj_case_1c_data(self):
-        path = os.path.join(
-            FLIGHT_SOFTWARE_PATH,
-            "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
-        )
+    def get_data(self, path):
         data = open(path)
         obs = json.load(data)
         frames = obs["observations"][0]["frames"]
@@ -52,13 +48,13 @@ class BodyMeas(unittest.TestCase):
         data.close()
         return fileInfo, centerSt, dt, truthT0Vec, gyroY
 
-    def test_body_meas(self):
-        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_traj_case_1c_data()
+    def body_meas(self, path):
+        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
 
+        print(f"\n{path}")
         for i in range(len(fileInfo)):
             camNum = fileInfo[i].cam_num
             print("CamNum: ", camNum)
-            print(i)
             print("center_st: ", centerSt[i])
             camVec = self.st_to_sph(centerSt[i][0], centerSt[i][1])
             print("Cam Vec: ", camVec)
@@ -75,7 +71,6 @@ class BodyMeas(unittest.TestCase):
             print("Satellite Frame Vector: ", bodyDet.vector)
 
             # Satellite body frame to T0 frame
-            print("dt: ", dt[i])
             finalT0Det = body_to_T0(bodyDet, dt[i], gyroY)
             print("Observe Start Vector: ", finalT0Det.vector)
 
@@ -89,6 +84,20 @@ class BodyMeas(unittest.TestCase):
                 "Body transformations do not match within margin of error!",
             )
             print()
+
+    def test_traj_case1c(self):
+        path = os.path.join(
+            FLIGHT_SOFTWARE_PATH,
+            "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
+        )
+        self.body_meas(path)
+
+    def test_traj_trajectory(self):
+        path = os.path.join(
+            FLIGHT_SOFTWARE_PATH,
+            "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
+        )
+        self.body_meas(path)
 
 
 if __name__ == "__main__":

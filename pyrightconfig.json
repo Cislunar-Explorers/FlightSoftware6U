@@ -29,6 +29,7 @@
   "reportImportCycles": "none",
   "reportUnusedImport": "warning",
   "reportUnusedVariable": "warning",
+  "reportWildcardImportFromLibrary": "error",
   "reportOptionalMemberAccess": "none",
   "reportDuplicateImport": "error"
 }

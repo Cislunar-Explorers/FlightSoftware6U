@@ -19,6 +19,7 @@
     "communications/downlink.py",
   ],
   "include": [
+    ".",
     "OpticalNavigation/tests/test_body_meas.py",
     "OpticalNavigation/tests/test_center_finding.py",
     "OpticalNavigation/tests/test_reprojections.py",

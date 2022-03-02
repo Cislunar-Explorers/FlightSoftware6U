@@ -98,6 +98,7 @@ class MainSatelliteThread(Thread):
         self.comms.listen()
 
     def init_sensors(self) -> int:
+        # TODO: add documentation (purpose of method?)
         try:
             self.gom = Gomspace()
         except Exception as e:
@@ -212,6 +213,7 @@ class MainSatelliteThread(Thread):
         return int(sensor_bitmask, 2)
 
     def handle_sigint(self, signal, frame):
+        # TODO: add documentation (purpose of method?)
         self.shutdown()
         sys.exit(0)
 

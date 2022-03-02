@@ -34,6 +34,8 @@ PRESSURE_THRESHOLD = 1000  # TODO ???
 PRESSURE_DELTA = -1  # ???
 GLOWPLUG1_VALID = True
 GLOWPLUG2_VALID = True
+# seconds between glowplug turning on and the propellant in the combustion chamber combusting
+TIME_TO_COMBUSTION = 1
 
 
 SCHEDULED_BURN_TIME = -1  # seconds, (unix epoch time)

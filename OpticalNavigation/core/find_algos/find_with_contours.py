@@ -5,7 +5,8 @@ import numpy as np
 from math import radians, tan, floor, ceil
 import argparse
 import re
-import logging
+
+# import logging
 
 
 class Camera:
@@ -364,7 +365,7 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) == 0:
-        logging.info("[OPNAV]: No countours found")
+        # logging.info("[OPNAV]: No countours found")
         return result
 
     areas = [cv2.contourArea(c) for c in contours]

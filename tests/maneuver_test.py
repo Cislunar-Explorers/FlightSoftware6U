@@ -1,4 +1,3 @@
-import logging
 import time
 from queue import PriorityQueue
 
@@ -8,6 +7,8 @@ import utils.parameters as params
 from flight_modes.maneuver_flightmode import ManeuverMode
 from main import MainSatelliteThread
 from drivers.gom import Gomspace
+from drivers.power.loadswitch import mockGPIOLoadSwitch, mockP31uLoadSwitch
+import logging
 
 # to speed testing
 params.GLOW_WAIT_TIME = 0.01
@@ -19,14 +20,15 @@ params.GLOW_WAIT_TIME = 0.01
 class FakeGOM(Gomspace):
     def __init__(self):
         self.pc = None
+        self.glowplug_1 = mockP31uLoadSwitch()
+        self.glowplug_2 = mockP31uLoadSwitch()
+        self.electrolyzers = mockP31uLoadSwitch()
+        self.burnwire = mockP31uLoadSwitch()
+        self.lna = mockP31uLoadSwitch(current_draw=145, variability=5)
 
-    def glowplug(self, duration, delay=0):
-        logging.info("Firing glowplug 1")
-        return None
-
-    def glowplug2(self, duration, delay=0):
-        logging.info("Firing glowplug 2")
-        return None
+        self.pa = mockGPIOLoadSwitch()
+        self.rf_rx = mockGPIOLoadSwitch()
+        self.rf_tx = mockGPIOLoadSwitch()
 
 
 @pytest.fixture
@@ -38,6 +40,11 @@ def m(mocker):
 
 
 def test_maneuver_selection(m: MainSatelliteThread, mocker):
+
+    # override these parameters so that pytest runs quicker
+    params.GLOWPLUG_DURATION = 0.01
+    params.GLOW_WAIT_TIME = 0.01
+
     mocker.patch(
         "flight_modes.maneuver_flightmode.ManeuverMode.get_pressure",
         side_effect=[100, 90, 80, 70],
@@ -51,18 +58,26 @@ def test_maneuver_selection(m: MainSatelliteThread, mocker):
     m.command_handler.run_command(
         maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 6}
     )
+
     m.command_handler.run_command(
         maneuver_command, {consts.CommandKwargs.MANEUVER_TIME: cur_time + 2}
     )
 
-    # m.command_definitions.schedule_maneuver(time=cur_time + 1000)
-    # m.command_definitions.schedule_maneuver(time=cur_time + 100)
     assert len(m.maneuver_queue.queue) == 1
     assert params.SCHEDULED_BURN_TIME == cur_time + 2
     m.flight_mode.run_mode()
+    logging.debug("After first run_mode")
+    logging.debug(m.maneuver_queue)
+    logging.debug(params.SCHEDULED_BURN_TIME)
+
     assert m.maneuver_queue.empty()
     assert params.SCHEDULED_BURN_TIME == cur_time + 6
     m.flight_mode.run_mode()
+
+    logging.debug("After second run_mode")
+    logging.debug(m.maneuver_queue)
+    logging.debug(params.SCHEDULED_BURN_TIME)
+
     assert m.maneuver_queue.empty()
     assert params.SCHEDULED_BURN_TIME == -1
 

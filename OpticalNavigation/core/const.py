@@ -1,8 +1,9 @@
 # import utils.parameters as params
 
 import numpy as np
-from enum import Enum
+from enum import unique, IntEnum, Enum
 import math
+import re
 from typing import Optional
 
 # The system will wait for the expected time elapsed
@@ -203,6 +204,29 @@ class OPNAV_EXIT_STATUS(Enum):
     NO_EPHEMERIS_ENTRY_FOUND = 6
 
 
+class Vector3:
+    def __str__(self):
+        return str(self.data)
+
+    def __init__(self, x: float, y: float, z: float):
+        self.data = np.array([x, y, z], dtype=float)
+        self.x = x
+        self.y = y
+        self.z = z
+
+
+class Vector6:
+    def __init__(
+        self, x1: float, x2: float, x3: float, x4: float, x5: float, x6: float
+    ):
+        self.data = np.array([x1, x2, x3, x4, x5, x6], dtype=float)
+
+
+class Vector4:
+    def __init__(self, x1: float, x2: float, x3: float, x4: float):
+        self.data = np.array([x1, x2, x3, x4], dtype=float)
+
+
 class ImageDetectionCircles:
     """
     Stores circle center of detected Sun, Moon and Earth in spherical coordinates
@@ -257,21 +281,35 @@ class ImageDetectionCircles:
         return self.__sun_detection
 
 
-class Vector3:
-    def __init__(self, x: float, y: float, z: float):
-        self.data = np.array([x, y, z], dtype=float)
+@unique
+class BodyEnum(IntEnum):
+    def __str__(self):
+        return str(self.name)
+
+    Earth = 0
+    Moon = 1
+    Sun = 2
 
 
-class Vector6:
+class FileData:
+    def __init__(self, filename: str) -> None:
+        self.filename: str = filename
+        self.cam_num: int = int(re.search(r"[cam](\d+)", filename).group(1))
+        self.exposure: str = str(re.search(r"[exp](High|Low)", filename).group(1))
+        self.frame_num: int = int(re.search(r"[f](\d+)", filename).group(1))
+        self.timestamp: int = int(
+            re.search(r"[t](\d+)", filename).group(1)
+        ) * 1000  # 1000 factor only for case1c
+
+
+class DetectionData:
     def __init__(
-        self, x1: float, x2: float, x3: float, x4: float, x5: float, x6: float
-    ):
-        self.data = np.array([x1, x2, x3, x4, x5, x6], dtype=float)
-
-
-class Vector4:
-    def __init__(self, x1: float, x2: float, x3: float, x4: float):
-        self.data = np.array([x1, x2, x3, x4], dtype=float)
+        self, filedata: FileData, vector: Vector3, ang_diam: float, detection: BodyEnum
+    ) -> None:
+        self.filedata: FileData = filedata
+        self.vector: Vector3 = vector
+        self.ang_diam: float = ang_diam
+        self.detection: BodyEnum = detection
 
 
 """

@@ -1,5 +1,3 @@
-# import numpy as np
-# import time
 from core.camera import PiCam, CameraMux
 
 
@@ -10,7 +8,6 @@ def select_camera(id):
     """
     mux = CameraMux()
     mux.selectCamera(id)
-    # pass
 
 
 def record_video(filename, framerate, recTime, exposure):

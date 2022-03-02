@@ -4,6 +4,8 @@
     "OpticalNavigation/tests",
     "OpticalNavigation/simulations",
     "OpticalNavigation/experiments",
+    "OpticalNavigation/core/ukf.py",
+    "OpticalNavigation/core/opnav.py",
     "communications/ax5043_manager",
     "communications/comms_driver.py",
     "HITL-tests/comms_hardware_transmit.py",
@@ -15,8 +17,6 @@
     "HITL-tests/signal_test_satellite.py",
     "flight_modes/opnav_flightmode.py",
     "communications/downlink.py",
-    "OpticalNavigation/core/ukf.py",
-    "OpticalNavigation/core/opnav.py"
   ],
   "extraPaths": [
     "OpticalNavigation/"
@@ -29,7 +29,7 @@
   "reportImportCycles": "none",
   "reportUnusedImport": "warning",
   "reportUnusedVariable": "warning",
-  "reportOptionalMemberAccess": "warning",
-  "reportDuplicateImport": "error",
-  "reportWildcardImportFromLibrary": "error"
+  "reportWildcardImportFromLibrary": "error",
+  "reportOptionalMemberAccess": "none",
+  "reportDuplicateImport": "error"
 }

@@ -13,34 +13,33 @@ from utils.constants import FLIGHT_SOFTWARE_PATH
 
 class BodyMeas(unittest.TestCase):
     def get_data(self, path):
-        data = open(path)
-        obs = json.load(data)
-        frames = obs["observations"][0]["frames"]
-        fileInfo = []
-        centerSt = []
-        dt = []
-        truthT0Vec = []
-        for frame in frames:
+        with open(path, "r") as data:
+            data = open(path)
+            obs = json.load(data)
+            frames = obs["observations"][0]["frames"]
+            fileInfo = []
+            centerSt = []
+            dt = []
+            truthT0Vec = []
+            for frame in frames:
 
-            centerSt.append(frame["detections"][0]["center_st"])
+                centerSt.append(frame["detections"][0]["center_st"])
 
-            imgName = frame["image_gnomonic"]
-            fileInfo.append(FileData(imgName))
+                imgName = frame["image_gnomonic"]
+                fileInfo.append(FileData(imgName))
 
-            # Can't use timestamp in fileInfo b/c that gets incorrectly parsed with file name
-            # convention of opnav sim (timestamps have a decimal point)
-            dtFrame = float(re.search(r"[dt](\d*\.?\d+)", imgName).group(1))
-            dt.append(dtFrame)
+                # Can't use timestamp in fileInfo b/c that gets incorrectly parsed with file name
+                # convention of opnav sim (timestamps have a decimal point)
+                dtFrame = float(re.search(r"[dt](\d*\.?\d+)", imgName).group(1))
+                dt.append(dtFrame)
 
-            body = frame["detections"][0]["body"]
-            bodyNum = 0 if body == "Earth" else 1 if body == "Moon" else 2
-            truthT0Vec.append(
-                obs["observations"][0]["observed_bodies"][bodyNum]["direction_body"]
-            )
+                body = frame["detections"][0]["body"]
+                bodyNum = 0 if body == "Earth" else 1 if body == "Moon" else 2
+                truthT0Vec.append(
+                    obs["observations"][0]["observed_bodies"][bodyNum]["direction_body"]
+                )
 
-        gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
-
-        data.close()
+            gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
         return fileInfo, centerSt, dt, truthT0Vec, gyroY
 
     def body_meas(self, path):

@@ -12,9 +12,16 @@ from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
 class BodyMeas(unittest.TestCase):
+    """
+    Tests the correctness of the tranformations used in taking a sterographic coordinate in the camera frame to a
+    3D xyz unit vector in the satellite's body frame at the start of acquisition. This test achieves this by using the
+    truth data in the opnav sim's observations.json files as reference. The stereographic coordinate is taken as input
+    from the json and is taken through the sequence of transformations. The final result is compared with the final
+    truth value from the json.
+    """
+
     def get_data(self, path):
         with open(path, "r") as data:
-            data = open(path)
             obs = json.load(data)
             frames = obs["observations"][0]["frames"]
             fileInfo = []

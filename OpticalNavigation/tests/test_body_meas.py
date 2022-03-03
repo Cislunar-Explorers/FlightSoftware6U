@@ -53,9 +53,9 @@ class BodyMeas(unittest.TestCase):
         fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
 
         logging.debug(f"{path}")
-        # print(list(zip(fileInfo, centerSt, dt, truthT0Vec)))
-        for i, (fileInf, stCenter, deltaT, truth) in enumerate(
-            zip(fileInfo, centerSt, dt, truthT0Vec)
+
+        for (fileInf, stCenter, deltaT, truth) in zip(
+            fileInfo, centerSt, dt, truthT0Vec
         ):
             camNum = fileInf.cam_num
             logging.debug(f"CamNum: {camNum}")
@@ -80,6 +80,7 @@ class BodyMeas(unittest.TestCase):
 
             logging.debug(f"Actual Vector: {truth}")
 
+            # We are comparing unit vectors here
             vecDist = np.linalg.norm(finalT0Det.vector.data - truth)
             logging.debug(f"Vect Dist: {vecDist}")
             self.assertLessEqual(

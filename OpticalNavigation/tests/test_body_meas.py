@@ -53,15 +53,18 @@ class BodyMeas(unittest.TestCase):
         fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
 
         logging.debug(f"{path}")
-        for i in range(len(fileInfo)):
-            camNum = fileInfo[i].cam_num
+        # print(list(zip(fileInfo, centerSt, dt, truthT0Vec)))
+        for i, (fileInf, stCenter, deltaT, truth) in enumerate(
+            zip(fileInfo, centerSt, dt, truthT0Vec)
+        ):
+            camNum = fileInf.cam_num
             logging.debug(f"CamNum: {camNum}")
-            logging.debug(f"Center_st: {centerSt[i]}")
-            camVec = st_to_sph(centerSt[i][0], centerSt[i][1])
+            logging.debug(f"Center_st: {stCenter}")
+            camVec = st_to_sph(stCenter[0], stCenter[1])
             logging.debug(f"Cam Vec: {camVec}")
 
             detection = DetectionData(
-                filedata=fileInfo[i],
+                filedata=fileInf,
                 vector=Vector3(camVec[0], camVec[1], camVec[2]),
                 ang_diam=None,
                 detection=None,
@@ -72,12 +75,12 @@ class BodyMeas(unittest.TestCase):
             logging.debug(f"Satellite Frame Vector: {bodyDet.vector}")
 
             # Satellite body frame to T0 frame
-            finalT0Det = body_to_T0(bodyDet, dt[i], gyroY)
+            finalT0Det = body_to_T0(bodyDet, deltaT, gyroY)
             logging.debug(f"Observe Start Vector: {finalT0Det.vector}")
 
-            logging.debug(f"Actual Vector: {truthT0Vec[i]}")
+            logging.debug(f"Actual Vector: {truth}")
 
-            vecDist = np.linalg.norm(finalT0Det.vector.data - truthT0Vec[i])
+            vecDist = np.linalg.norm(finalT0Det.vector.data - truth)
             logging.debug(f"Vect Dist: {vecDist}")
             self.assertLessEqual(
                 vecDist,

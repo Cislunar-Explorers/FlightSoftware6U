@@ -35,8 +35,8 @@ def C3(theta):
     cost = cos(theta)
 
     return np.array([[cost, sint, 0],
-                     [-sint, cost, 0],
-                     [0, 0, 1]])
+                    [-sint, cost, 0],
+                    [0, 0, 1]])
 """
 
 
@@ -49,8 +49,9 @@ class AAMode(PauseBackgroundMode):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Since we can't control the magnitude of our spin vector, we only car about the two angles (in spherical
-        # coordinates) that define the direction of our spin vector, which saves us some up/downlink space.
+        # Since we can't control the magnitude of our spin vector, we only car about the two
+        # angles (in spherical coordinates) that define the direction of our spin vector, which
+        # saves us some up/downlink space.
         # data for if we want to do autonomous attitude adjustment
         # self.current_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
         # self.target_spin_vec: Tuple[float, float, float] = (0.0, 0.0, 0.0)
@@ -115,12 +116,18 @@ class AAMode(PauseBackgroundMode):
         self.completed_task()
 
     def missed_timing(self, missed_pulse_timing):
+        # TODO: add missed pulse timing to comms queue
+        # Question: Do we need to do anything else?
         logging.error(f"Missed attitude adjustment maneuver at {missed_pulse_timing}")
         # self._parent.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
 
-    # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and
-    # it does all the math. However, due to our development timeline, we will have to fall back on calculating exact
-    # timings on the ground, and then the satellite blindly follows these timings
+    # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a
+    # new spin vector and it does all the math. However, due to our development timeline, we
+    # will have to fall back on calculating exact timings on the ground, and then the satellite
+    # blindly follows these timings
+
+    # Question: Is this still the case?
+
     """
     def get_data(self):
         # get latest opnav location and gyro data
@@ -150,7 +157,7 @@ class AAMode(PauseBackgroundMode):
         # warning: will be inaccurate
         # TODO: look into efficacy of using an EKF to fuse accelerometer and gyro data into angular position estimate
         t, R = integrate_angular_velocity((gyro_times, (gyroxs, gyroys, gyrozs) * DEG2RAD),
-                                          self.latest_opnav_time, time(), R0=self.latest_opnav_quat)
+                                            self.latest_opnav_time, time(), R0=self.latest_opnav_quat)
 
         latest_orientation_estimate = (t[-1], R[-1])
         latest_gyro_data = (gyroxs[-1], gyroys[-1], gyrozs[-1])

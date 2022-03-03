@@ -415,7 +415,8 @@ class Power:
 
     # Experimental implementation of above functionality
     def solenoid_single_wave(self, hold: float):
-        # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)  # consider replacing with set_output CMD
+        # self._pi.i2c_write_device(self._dev, SOLENOID_ON_COMMAND)
+        # consider replacing with set_output CMD
         pigpio._pigpio_command_ext(self._pi.sl, 57, self._dev, 0, 5, SOLENOID_ON_LIST)
         # enables vboost - async
         self._pi.wave_send_once(self.solenoid_wave_id)

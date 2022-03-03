@@ -21,7 +21,7 @@ import numpy as np
 import math
 import time
 import logging
-from Typing import Tuple
+from typing import Tuple, Optional
 from astropy.time import Time
 from astropy.coordinates import get_sun, get_moon, CartesianRepresentation
 
@@ -123,7 +123,7 @@ def get_detections(frames: "list[str]") -> "list[DetectionData]":
 
 def get_best_detection(
     detections: "list[DetectionData]"
-) -> Tuple[DetectionData, DetectionData, DetectionData]:
+) -> Tuple[Optional[DetectionData], Optional[DetectionData], Optional[DetectionData]]:
     # (distance to center, DetectionData object)
     closest_e = (np.inf, None)
     closest_m = (np.inf, None)
@@ -190,7 +190,6 @@ def get_elapsed_time(
 def body_to_T0(
     detection: DetectionData, timeElapsed: float, avgGyroY: float
 ) -> DetectionData:
-    logging.info(f"[OPNAV]: {detection.detection} Time Elapsed= {timeElapsed}")
     rotation = avgGyroY * timeElapsed
     tZeroRotation = tZeroRotMatrix(rotation)
     res = (tZeroRotation).dot(detection.vector.data)

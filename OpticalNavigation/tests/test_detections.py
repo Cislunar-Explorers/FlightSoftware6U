@@ -61,7 +61,7 @@ class Detections(unittest.TestCase):
             list(zip(filenames[1:], [0 if i == "" else 1 for i in sunDetect[1:]]))
         )
 
-        frames = glob.glob(surrenderPath)
+        frames = sorted(glob.glob(surrenderPath))
 
         earthExp, moonExp, sunExp = self.get_detections(frames)
         frames = [os.path.basename(path) for path in frames]
@@ -145,7 +145,7 @@ class Detections(unittest.TestCase):
         )
 
         self.assertGreaterEqual(
-            total_accuracy, 0.90, "Find algorithm is not 100% accurate!"
+            total_accuracy, 0.90, "Find algorithm is < 90% accurate!"
         )
 
 

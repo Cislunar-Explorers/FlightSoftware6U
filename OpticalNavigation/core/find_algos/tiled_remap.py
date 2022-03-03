@@ -74,7 +74,8 @@ def sph_to_st(s):
 def st_to_sph(x, y):
     """Convert stereographic coordinates to spherical coordinates."""
     norm = x ** 2 + y ** 2 + 4
-    return -4 * x / norm, -4 * y / norm, (norm - 8) / norm
+    # Completely inverted compared to what Muhlberger gave us because of different 3d camera frame definitions
+    return 4 * x / norm, 4 * y / norm, -(norm - 8) / norm
 
 
 @dataclass

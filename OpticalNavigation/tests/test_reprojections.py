@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from numpy import radians
 import glob
+import os
 from OpticalNavigation.core.find_algos import tiled_remap
 import unittest
 from utils.constants import FLIGHT_SOFTWARE_PATH
@@ -71,47 +72,67 @@ class TestReprojections(unittest.TestCase):
         )
 
         composite = cv2.hconcat([outc, tgtc, cmp])
-        outputString = gnName.replace("_gn.png", "_compare")
+        outputString = gnName.replace("_gn.png", "_compare.png")
 
         cv2.imwrite("comp/%s_%s_%s.png" % (outputString, i, j), composite)
 
-    def reproj(self, write_remapped: bool, write_composite: bool):
+    def reproj(self, src, gnName):
+        """Reprojects the gnomonic image to stereographic."""
+
+        cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
+
+        # Determine which camera is used based on whether filename contains
+        # "camA", "camB", or "camC"
+        u_cam = self.get_ucam(gnName)
+
+        dt = 18.904e-6
+        omega = 5
+        rot = tiled_remap.CameraRotation(u_cam, -omega * dt)
+
+        bbgn = tiled_remap.BoundingBox(0, 0, cam.w, cam.h)
+
+        out, bbst = tiled_remap.remap_roi(src, bbgn, cam, rot)
+
+        return out, bbst
+
+    def get_images(self):
+        """Returns lists of gnomonic image names and stereographic image names."""
+
+        # Get the file path
+        gn_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images/*_gn.png")
+
+        # Glob gnomonic images as filenames ending in "_gn.png"
+        gnomonicList = sorted(glob.glob(gn_path))
+
+        # Get corresponding stereographic images
+        stereographicList = [img.replace("_gn.png", "_st.png") for img in gnomonicList]
+
+        return gnomonicList, stereographicList
+
+    def reproj_test(self, write_remapped: bool, write_composite: bool):
         """Main reprojection function. Asserts that difference values between
         corresponding contours is less than 0.15."""
 
-        print(DATA_DIR + "traj-case1c_sim_no_outline/images/*_gn.png")
-
-        # Glob gnomonic images as filenames ending in "_gn.png"
-        gnomonicList = sorted(
-            glob.glob(DATA_DIR + "traj-case1c_sim_no_outline/images/*_gn.png")
-        )
+        # Get stareographic and gnomonic images
+        gnomonicList, stereographicList = self.get_images()
 
         # For each gnomonic image
-        for gnName in gnomonicList:
+        for idx, gnName in enumerate(gnomonicList):
 
             # Load the images
-            src = cv2.imread(gnName)
-            tgt = cv2.imread(gnName.replace("_gn", "_st"))
+            src = cv2.imread(gnomonicList[idx])
+            tgt = cv2.imread(stereographicList[idx])
 
             gnName = gnName.split("images/")[1]
 
-            cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
-
-            # Determine which camera is used based on whether filename contains
-            # "camA", "camB", or "camC"
-            u_cam = self.get_ucam(gnName)
-
-            dt = 18.904e-6
-            omega = 5
-            rot = tiled_remap.CameraRotation(u_cam, -omega * dt)
-
-            bbgn = tiled_remap.BoundingBox(0, 0, cam.w, cam.h)
-            out, bbst = tiled_remap.remap_roi(src, bbgn, cam, rot)
+            # Reproject the gnomonic image to stereographic
+            out, bbst = self.reproj(src, gnName)
 
             # Save the remapped image with filename "remapped_" + gnName to folder "out"
             # if write_remapped is True.
             if write_remapped:
-                cv2.imwrite("out/remapped_" + gnName, out)
+                out_path = os.path.join("out/remapped_%s" % gnName)
+                cv2.imwrite(out_path, out)
 
             # Two largest contours from the remapped image
             grayOut = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
@@ -226,8 +247,8 @@ class TestReprojections(unittest.TestCase):
 
     # Test reprojections
     def test_reprojection(self):
-        print("here")
-        self.reproj(False, False)
+        print("\nTesting reprojections:")
+        self.reproj_test(True, True)
 
     # Test reprojectons with image output
     # def test_reprojection_with_image_output(self):

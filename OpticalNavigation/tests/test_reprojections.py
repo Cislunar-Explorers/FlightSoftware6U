@@ -16,7 +16,7 @@ class TestReprojections(unittest.TestCase):
     sim, reprojects the former, finds contours, scales them to be the same size, and
     calculates pixel difference."""
 
-    def get_ucam(self, name):
+    def get_ucam(self, name: str) -> np.array:
         """Returns u_cam from filename."""
         cam_dict = {
             "camA": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
@@ -35,7 +35,16 @@ class TestReprojections(unittest.TestCase):
         else:
             raise ValueError("Invalid camera name")
 
-    def write_composite_image(self, outc, tgtc, cmp, gnName, i, j, diff):
+    def write_composite_image(
+        self,
+        outc: np.ndarray,
+        tgtc: np.ndarray,
+        cmp: np.ndarray,
+        gnName: str,
+        i: int,
+        j: int,
+        diff: float,
+    ) -> None:
         """Writes the composite image for visual comparison between the two contours."""
         font = cv2.FONT_HERSHEY_SIMPLEX
         bottomLeftCornerOfText = (0, 12)
@@ -76,7 +85,9 @@ class TestReprojections(unittest.TestCase):
 
         cv2.imwrite("comp/%s_%s_%s.png" % (outputString, i, j), composite)
 
-    def reproj(self, src, gnName):
+    def reproj(
+        self, src: np.ndarray, gnName: str
+    ) -> tuple([np.ndarray, tiled_remap.BoundingBox]):
         """Reprojects the gnomonic image to stereographic."""
 
         cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
@@ -95,7 +106,7 @@ class TestReprojections(unittest.TestCase):
 
         return out, bbst
 
-    def get_images(self):
+    def get_images(self) -> tuple([list, list]):
         """Returns lists of gnomonic image names and stereographic image names."""
 
         # Get the file path
@@ -109,7 +120,7 @@ class TestReprojections(unittest.TestCase):
 
         return gnomonicList, stereographicList
 
-    def reproj_test(self, write_remapped: bool, write_composite: bool):
+    def reproj_test(self, write_remapped: bool, write_composite: bool) -> None:
         """Main reprojection function. Asserts that difference values between
         corresponding contours is less than 0.15."""
 
@@ -248,7 +259,7 @@ class TestReprojections(unittest.TestCase):
     # Test reprojections
     def test_reprojection(self):
         print("\nTesting reprojections:")
-        self.reproj_test(True, True)
+        self.reproj_test(False, False)
 
     # Test reprojectons with image output
     # def test_reprojection_with_image_output(self):

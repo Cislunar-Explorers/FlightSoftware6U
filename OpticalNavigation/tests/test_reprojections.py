@@ -10,30 +10,68 @@ from utils.constants import FLIGHT_SOFTWARE_PATH
 DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/OpticalNavigation/simulations/sim/data/"
 
 
+def get_ucam(name: str) -> np.array:
+    """Returns u_cam from filename."""
+    cam_dict = {
+        "camA": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
+        "camB": np.array([-5.00000000e-01, 0, -8.66025404e-01], dtype=np.float32),
+        "camC": np.array(
+            [-3.9931775502364646, -3.0090751157602416, 0.0], dtype=np.float32
+        )
+        / 5,
+    }
+    if "camA" in name:
+        return cam_dict["camA"]
+    elif "camB" in name:
+        return cam_dict["camB"]
+    elif "camC" in name:
+        return cam_dict["camC"]
+    else:
+        raise ValueError("Invalid camera name")
+
+
+def reproj(
+    src: np.ndarray, gnName: str
+) -> tuple([np.ndarray, tiled_remap.BoundingBox]):
+    """Reprojects the gnomonic image to stereographic."""
+
+    cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
+
+    # Determine which camera is used based on whether filename contains
+    # "camA", "camB", or "camC"
+    u_cam = get_ucam(gnName)
+
+    dt = 18.904e-6
+    omega = 5
+    rot = tiled_remap.CameraRotation(u_cam, -omega * dt)
+
+    bbgn = tiled_remap.BoundingBox(0, 0, cam.w, cam.h)
+
+    out, bbst = tiled_remap.remap_roi(src, bbgn, cam, rot)
+
+    return out, bbst
+
+
+def get_images() -> tuple([list, list]):
+    """Returns lists of gnomonic image names and stereographic image names."""
+
+    # Get the file path
+    gn_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images/*_gn.png")
+
+    # Glob gnomonic images as filenames ending in "_gn.png"
+    gnomonicList = sorted(glob.glob(gn_path))
+
+    # Get corresponding stereographic images
+    stereographicList = [img.replace("_gn.png", "_st.png") for img in gnomonicList]
+
+    return gnomonicList, stereographicList
+
+
 class TestReprojections(unittest.TestCase):
     """Test is designed to verify the accuracy of image reprojection from gnomonic to
     stereographic. Takes in the gnomonic image as well as the ideal stereographic from
     sim, reprojects the former, finds contours, scales them to be the same size, and
     calculates pixel difference."""
-
-    def get_ucam(self, name: str) -> np.array:
-        """Returns u_cam from filename."""
-        cam_dict = {
-            "camA": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
-            "camB": np.array([-5.00000000e-01, 0, -8.66025404e-01], dtype=np.float32),
-            "camC": np.array(
-                [-3.9931775502364646, -3.0090751157602416, 0.0], dtype=np.float32
-            )
-            / 5,
-        }
-        if "camA" in name:
-            return cam_dict["camA"]
-        elif "camB" in name:
-            return cam_dict["camB"]
-        elif "camC" in name:
-            return cam_dict["camC"]
-        else:
-            raise ValueError("Invalid camera name")
 
     def write_composite_image(
         self,
@@ -85,47 +123,12 @@ class TestReprojections(unittest.TestCase):
 
         cv2.imwrite("comp/%s_%s_%s.png" % (outputString, i, j), composite)
 
-    def reproj(
-        self, src: np.ndarray, gnName: str
-    ) -> tuple([np.ndarray, tiled_remap.BoundingBox]):
-        """Reprojects the gnomonic image to stereographic."""
-
-        cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
-
-        # Determine which camera is used based on whether filename contains
-        # "camA", "camB", or "camC"
-        u_cam = self.get_ucam(gnName)
-
-        dt = 18.904e-6
-        omega = 5
-        rot = tiled_remap.CameraRotation(u_cam, -omega * dt)
-
-        bbgn = tiled_remap.BoundingBox(0, 0, cam.w, cam.h)
-
-        out, bbst = tiled_remap.remap_roi(src, bbgn, cam, rot)
-
-        return out, bbst
-
-    def get_images(self) -> tuple([list, list]):
-        """Returns lists of gnomonic image names and stereographic image names."""
-
-        # Get the file path
-        gn_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images/*_gn.png")
-
-        # Glob gnomonic images as filenames ending in "_gn.png"
-        gnomonicList = sorted(glob.glob(gn_path))
-
-        # Get corresponding stereographic images
-        stereographicList = [img.replace("_gn.png", "_st.png") for img in gnomonicList]
-
-        return gnomonicList, stereographicList
-
     def reproj_test(self, write_remapped: bool, write_composite: bool) -> None:
         """Main reprojection function. Asserts that difference values between
         corresponding contours is less than 0.15."""
 
         # Get stareographic and gnomonic images
-        gnomonicList, stereographicList = self.get_images()
+        gnomonicList, stereographicList = get_images()
 
         # For each gnomonic image
         for idx, gnName in enumerate(gnomonicList):
@@ -137,7 +140,7 @@ class TestReprojections(unittest.TestCase):
             gnName = gnName.split("images/")[1]
 
             # Reproject the gnomonic image to stereographic
-            out, bbst = self.reproj(src, gnName)
+            out, bbst = reproj(src, gnName)
 
             # Save the remapped image with filename "remapped_" + gnName to folder "out"
             # if write_remapped is True.

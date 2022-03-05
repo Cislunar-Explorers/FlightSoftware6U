@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from main import MainSatelliteThread
 # for an explanation of the above 4 lines of code, see
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-# It lets your IDE know what type(self._parent) is, without causing any circular imports at runtime.
+# It lets your IDE know what type(self._main) is, without causing any circular imports at runtime.
 
 from threading import Thread
 from time import time
@@ -22,10 +22,10 @@ from time import time
 class SynchronousSensor:
 
     # Initialize sensor
-    def __init__(self, parent: MainSatelliteThread):
-        # TODO: instead of initializing with parent, only use parent's driver object for each sensor.
+    def __init__(self, main: MainSatelliteThread):
+        # TODO: instead of initializing with main, only use main's driver object for each sensor.
         #  i.e. __init__(self, sensor: GyroSensor); self.sensor = sensor
-        self._parent = parent
+        self._main = main
         self.poll_time = -1.0
         # self.result = None
 

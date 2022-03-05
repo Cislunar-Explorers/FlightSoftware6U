@@ -15,9 +15,8 @@ pulse_max = 1
 a = pulse_max
 s = pulse_dt / 6
 
+
 # Constructing the gaussian:
-
-
 def pulse(t):
     return a * np.exp(-(((t) ** 2) / (2 * (s ** 2))))
 
@@ -29,6 +28,12 @@ print(J)
 ix, iy, iz = 0, 0, 0
 fx, fy, fz = 0, 0, 0
 
-vec_i = np.array([ix, iy, iz])
-vec_f = np.array([fx, fy, fz])
-i_cross_f = np.cross(vec_i, vec_f)
+# vec_i = np.array([ix, iy, iz])
+# vec_f = np.array([fx, fy, fz])
+# i_cross_f = np.cross(vec_i, vec_f)
+
+
+def calc_dir(qi, vf):
+    vi = np.array(qi.vec)
+    ideal_dir = np.cross(vi, vf)
+    print(ideal_dir)

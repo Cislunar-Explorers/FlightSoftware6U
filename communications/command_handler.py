@@ -52,11 +52,11 @@ class CommandHandler:
     downlink_counter: int  # how many times we've downlinked something
     # flag to do bit inflation; must be True for flight (if not done in Radio), can be False for testing
     inflation: bool
-    _parent: Optional[MainSatelliteThread] = None
+    _main: Optional[MainSatelliteThread] = None
 
-    def __init__(self, parent: Optional[MainSatelliteThread], inflation=False) -> None:
+    def __init__(self, main: Optional[MainSatelliteThread], inflation=False) -> None:
         self.inflation = inflation
-        self._parent = parent
+        self._main = main
         self.uplink_counter = params.UPLINK_COUNTER
         self.downlink_counter = params.DOWNLINK_COUNTER
 
@@ -179,7 +179,7 @@ class CommandHandler:
         return downlink
 
     def run_command(self, command: Command, kwargs: Dict[str, Union[int, float, str]]):
-        return command.run(parent=self._parent, **kwargs)
+        return command.run(main=self._main, **kwargs)
 
     def pack_telemetry(self, id, kwargs) -> bytes:
         telemetry_bytes = self.pack_link(False, self.downlink_counter, id, kwargs)

@@ -1,6 +1,12 @@
 import cv2
+
+# import os
 import unittest
+import logging
 from OpticalNavigation.tests import test_reprojections
+from OpticalNavigation.tests import test_body_meas
+
+# from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
 class TestEndToEnd(unittest.TestCase):
@@ -20,7 +26,38 @@ class TestEndToEnd(unittest.TestCase):
         return gn_imgs, st_imgs, re_imgs
 
     def test_end_to_end(self):
+
+        # TODO I think we should organize is similar to my test_body_meas, where our "test_" functions call this
+        # function, except with a different path. This would mean you would have to make your get_images function take
+        # in a path a path as an input, but it will allow for us to be more flexible in our testing
+
+        # We are testing three things here
+        # 1. Taking a gn sim image through reproj->center->body
+        # 2. Taking a st sim image through center->body
+        # 3. Angular size
+        # Then we are comparing the result with the thruth values in the sim logs
+
+        # First step: run reprojection test on gnomonic image, output stereographic image from reproection as well as
+        #             from sim
+
         gn_imgs, st_imgs, re_imgs = self.get_images_and_reproject()
+        logging.debug(gn_imgs)
+
+        # Second step: run center finding test on stereographic image from reprojection test, as well as on
+        #              stereographic sim image
+
+        # Third step: run body_meas test on the two image centers to output body detection vectors
+        body_test = test_body_meas.BodyMeas()
+        fileInfo, centerSt, dt, truthT0Vec, gyroY = body_test.get_data("path")
+        calc_vecs, ref_vecs, error = body_test.body_meas(
+            fileInfo, centerSt, dt, truthT0Vec, gyroY
+        )
+
+        # Fourth step: compare difference/error between the actual and test results. How does the error build in each
+        #              of the three test?
+        #              Outputs of interest: error in pixel centers from sim and reproj images, error in detection
+        #              vectors from sim and reproj
+
         pass
 
 

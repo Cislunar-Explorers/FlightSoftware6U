@@ -49,11 +49,10 @@ class BodyMeas(unittest.TestCase):
             gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
         return fileInfo, centerSt, dt, truthT0Vec, gyroY
 
-    def body_meas(self, path):
-        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
-
-        logging.debug(f"{path}")
-
+    def body_meas(self, fileInfo, centerSt, dt, truthT0Vec, gyroY):
+        calc_vecs = []
+        truth_vecs = []
+        errors = []
         for (fileInf, stCenter, deltaT, truth) in zip(
             fileInfo, centerSt, dt, truthT0Vec
         ):
@@ -89,20 +88,26 @@ class BodyMeas(unittest.TestCase):
                 "Body transformations do not match within margin of error!",
             )
             logging.debug("\n")
+            calc_vecs.append(finalT0Det.vector.data)
+            truth_vecs.append(truth)
+            errors.append(vecDist)
+        return calc_vecs, truth_vecs, errors
 
     def test_traj_case1c(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
             "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
         )
-        self.body_meas(path)
+        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
+        _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
 
     def test_traj_trajectory(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
             "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
         )
-        self.body_meas(path)
+        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
+        _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
 
 
 if __name__ == "__main__":

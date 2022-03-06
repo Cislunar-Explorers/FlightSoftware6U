@@ -1,4 +1,4 @@
-import time
+from utils.timing import wait
 from datetime import datetime
 from utils.db import create_sensor_tables_from_path, RebootsModel
 from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
@@ -23,7 +23,7 @@ class BootUpMode(FlightMode):
 
     def run_mode(self):
         logging.info("Boot up beginning...")
-        time.sleep(BOOTUP_SEPARATION_DELAY)
+        wait(BOOTUP_SEPARATION_DELAY)
 
         create_session = create_sensor_tables_from_path(DB_FILE)
         self.session = create_session()

@@ -1,5 +1,4 @@
 from os import popen
-from time import time, sleep
 from typing import Dict, Union, NamedTuple, Tuple
 import logging
 
@@ -11,6 +10,7 @@ from uptime import uptime
 from drivers.power.power_structs import eps_hk_t, hkparam_t
 from telemetry.sensor import SynchronousSensor
 from utils.constants import DB_FILE, MAX_GYRO_RATE, GomOutputs, DownlinkKwargs as dk
+from utils.timing import get_time, wait
 
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
@@ -86,7 +86,7 @@ class GyroSensor(SynchronousSensor):
         data = []
         for _ in range(n_data):
             data.append(self._parent.gyro.get_gyro_corrected())
-            sleep(1.0 / freq)
+            wait(1.0 / freq)
 
         data = np.asarray(data).T
 
@@ -229,7 +229,7 @@ class Telemetry(SynchronousSensor):
         """Makes sure that the values returned by the sensors are reasonable"""
 
         # if data is over an hour old, poll new data
-        if (time() - self.poll_time) > 3600:
+        if (get_time() - self.poll_time) > 3600:
             self.poll()
 
         if any([abs(i) > MAX_GYRO_RATE for i in self.gyr.rot]):
@@ -256,7 +256,7 @@ class Telemetry(SynchronousSensor):
 
     def standard_packet(self):
         if (
-            time() - self.poll_time
+            get_time() - self.poll_time
         ) > 60 * 60:  # if the latest data is over an hour old, poll new data
             self.poll()
 
@@ -400,7 +400,7 @@ class Telemetry(SynchronousSensor):
 
     def write_telem(self):
         try:
-            time_polled = time()
+            time_polled = get_time()
             gx, gy, gz = self.gyr.get_rot()  # rot
             ax, ay, az = self.gyr.get_acc()  # acc
             bx, by, bz = self.gyr.get_mag()  # mag

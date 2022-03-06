@@ -1,14 +1,15 @@
 # from quaternion.numpy_quaternion import quaternion
 # import numpy as np
 # from typing import Tuple
-from time import sleep, time
-from utils.constants import FMEnum, GOM_TIMING_FUDGE_FACTOR
+from utils.constants import FMEnum
 import utils.parameters as params
 from flight_modes.flight_mode import PauseBackgroundMode
 import logging
 
 # from math import sin, cos
 import gc
+
+from utils.timing import get_time, wait_until
 
 """
 def quat_to_rotvec(q: Tuple[float, float, float, float]) -> Tuple[float, float, float]:
@@ -94,19 +95,19 @@ class AAMode(PauseBackgroundMode):
             gc.collect()
             logging.debug("Done garbage collecting")
 
-            if pulse_start - time() < 0.125:
+            if pulse_start - get_time() < 0.125:
                 # we missed the timing of the maneuver. Make a note and add relevant stuff to comms queue
                 self.missed_timing(pulse_start)
             else:
-                logging.debug(f"Sleeping {pulse_start - time()}s")
+                logging.debug(f"Sleeping {pulse_start - get_time()}s")
                 self._parent.gom.driver.calculate_solenoid_wave()
-                sleep(max([(pulse_start - time()) - 2, 0]))
+                wait_until(pulse_start - 2)
                 logging.info(
                     f"Experimental solenoid function. spike={params.ACS_SPIKE_DURATION}, hold={pulse_duration}"
                 )
                 # pulse ACS according to timings
                 for pulse_time in absolute_pulse_times:
-                    sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
+                    wait_until(pulse_time)
                     self._parent.gom.driver.solenoid_single_wave(pulse_duration)
             self._parent.reorientation_list.pop(0)
         else:

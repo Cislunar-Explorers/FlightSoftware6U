@@ -1,13 +1,12 @@
 from multiprocessing import Process
 from queue import Queue, PriorityQueue
 from threading import Thread
-from time import sleep, time
+from utils.timing import wait, get_time
 from typing import Optional, List
 import os
 import signal
 from flight_modes.flight_mode import FlightMode, TestMode
 import logging
-from time import sleep
 import sys
 import utils.constants as consts
 
@@ -51,7 +50,9 @@ class MainSatelliteThread(Thread):
         self.command_handler = CommandHandler(self)
         self.command_counter = 0
         self.downlink_counter = 0
-        self.last_opnav_run = time()  # Figure out what to set to for first opnav run
+        self.last_opnav_run = (
+            get_time()
+        )  # Figure out what to set to for first opnav run
         self.log_dir = consts.LOG_DIR
         self.attach_sigint_handler()  # FIXME
         self.file_block_bank = {}
@@ -176,7 +177,7 @@ class MainSatelliteThread(Thread):
                     try:
                         self.mux.selectCamera(i)
                         f, t = self.camera.rawObservation(
-                            f"initialization-{i}-{int(time())}"
+                            f"initialization-{i}-{int(get_time())}"
                         )
                     except Exception as e:
                         logging.error(e)
@@ -291,7 +292,7 @@ class MainSatelliteThread(Thread):
         self.init_sensors()
         try:
             while True:
-                sleep(2)  # TODO remove when flight modes execute real tasks
+                wait(2)  # TODO remove when flight modes execute real tasks
 
                 self.poll_inputs()
                 self.update_state()

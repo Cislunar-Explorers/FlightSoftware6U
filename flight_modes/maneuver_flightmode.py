@@ -1,5 +1,4 @@
-from time import sleep, time
-
+from utils.timing import wait, wait_until, get_time
 from .flight_mode import PauseBackgroundMode
 import logging
 from utils.parameter_utils import set_parameter
@@ -38,17 +37,14 @@ class ManeuverMode(PauseBackgroundMode):
     def run_mode(self):
         """Activate glowplugs until one works."""
         # TODO send info to ground??
-        if params.SCHEDULED_BURN_TIME < time():
+        if params.SCHEDULED_BURN_TIME < get_time():
             logging.info("Maneuver time passed. Skipped.")
         else:
             # TODO what if SCHEDULED_BURN_TIME is too far into the future
             self.task_completed = False
             # sleeping for 5 fewer seconds than the delay for safety
-            sleep(
-                max(
-                    0, (params.SCHEDULED_BURN_TIME - time()) - params.TIME_TO_COMBUSTION
-                )
-            )
+            wait_until(params.SCHEDULED_BURN_TIME - params.TIME_TO_COMBUSTION)
+
             logging.info("Heating up glowplug to execute a maneuver...")
 
             prior_pressure = self.get_pressure()
@@ -56,7 +52,7 @@ class ManeuverMode(PauseBackgroundMode):
             if params.GLOWPLUG1_VALID:
                 logging.info("Trying glowplug 1")
                 self._parent.gom.glowplug_1.pulse(params.GLOWPLUG_DURATION)
-                sleep(params.GLOW_WAIT_TIME)
+                wait(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(
                     current_pressure, prior_pressure
@@ -65,7 +61,7 @@ class ManeuverMode(PauseBackgroundMode):
             if not params.GLOWPLUG1_VALID and params.GLOWPLUG2_VALID:
                 logging.info("Trying glowplug 2")
                 self._parent.gom.glowplug_2.pulse(params.GLOWPLUG_DURATION)
-                sleep(params.GLOW_WAIT_TIME)
+                wait(params.GLOW_WAIT_TIME)
                 current_pressure = self.get_pressure()
                 self.task_completed = self.valid_glowplug(
                     current_pressure, prior_pressure
@@ -80,7 +76,7 @@ class ManeuverMode(PauseBackgroundMode):
         smallest_time_burn = -1
         while not self._parent.maneuver_queue.empty():
             smallest_time_burn = self._parent.maneuver_queue.get()
-            if smallest_time_burn < time():
+            if smallest_time_burn < get_time():
                 # TODO send info to ground / store skipped in database
                 smallest_time_burn = -1
                 logging.info("Maneuver time passed. Skipped.")

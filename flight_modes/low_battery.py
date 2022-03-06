@@ -1,6 +1,5 @@
 import logging
-from time import sleep, time
-
+from utils.timing import get_time, wait
 from flight_modes.flight_mode import FlightMode
 from utils import parameters as params
 from utils.constants import *
@@ -23,7 +22,7 @@ class LowBatterySafetyMode(FlightMode):
 
     def run_mode(self):
         if self.task_completed:
-            sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
+            wait(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
             # TODO: not clear what this line is doing...
         else:
             if self._parent.gom is not None:
@@ -54,11 +53,11 @@ class LowBatterySafetyMode(FlightMode):
             return FMEnum.Normal.value
 
         time_for_opnav = (
-            time() - self._parent.last_opnav_run
+            get_time() - self._parent.last_opnav_run
         ) // 60 < params.LB_OPNAV_INTERVAL
 
         time_for_telem = (
-            time() - self._parent.radio.last_transmit_time
+            get_time() - self._parent.radio.last_transmit_time
         ) // 60 < params.LB_TLM_INTERVAL
 
         if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._parent.FMQueue:

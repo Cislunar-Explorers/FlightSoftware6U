@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     # It lets your IDE know what type(self._parent) is, without causing any circular imports at runtime.
 
 import gc
-from time import sleep, time
+from utils.timing import get_time, wait
 from multiprocessing import Process
 import subprocess
 from queue import Empty
@@ -66,8 +66,10 @@ class FlightMode:
 
         # go to maneuver mode if there is something in the maneuver queue
         if not self._parent.maneuver_queue.empty() or params.SCHEDULED_BURN_TIME:
-            if params.SCHEDULED_BURN_TIME > time():
-                if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
+            if params.SCHEDULED_BURN_TIME > get_time():
+                if params.SCHEDULED_BURN_TIME - get_time() < (
+                    60.0 * consts.BURN_WAIT_TIME
+                ):
                     return consts.FMEnum.Maneuver.value
             else:
                 logging.info(
@@ -283,7 +285,7 @@ class CommsMode(FlightMode):
             self._parent.radio.transmit(self._parent.downlink_queue.get())
             self._parent.downlink_counter += 1
             # TODO: revisit and see if we actually need this
-            sleep(params.DOWNLINK_BUFFER_TIME)
+            wait(params.DOWNLINK_BUFFER_TIME)
 
     def update_state(self) -> int:
         super_fm = super().update_state()
@@ -314,7 +316,7 @@ class OpNavMode(FlightMode):
         # TODO: overhaul so opnav calculation only occur while in opnav mode
         if not self._parent.opnav_process.is_alive():
             logging.info("[OPNAV]: Able to run next opnav")
-            self._parent.last_opnav_run = time()
+            self._parent.last_opnav_run = get_time()
             logging.info("[OPNAV]: Starting opnav subprocess")
             self._parent.opnav_process = Process(
                 target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,)
@@ -397,11 +399,11 @@ class NormalMode(FlightMode):
             return self._parent.FMQueue.get()
 
         time_for_opnav: bool = (
-            time() - self._parent.last_opnav_run
+            get_time() - self._parent.last_opnav_run
         ) // 60 > params.OPNAV_INTERVAL
 
         time_for_telem: bool = (
-            time() - self._parent.radio.last_transmit_time
+            get_time() - self._parent.radio.last_transmit_time
         ) // 60 > params.TELEM_INTERVAL
 
         need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE

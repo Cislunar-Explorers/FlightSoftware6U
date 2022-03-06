@@ -2,7 +2,7 @@ import logging
 from typing import Union
 from drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
 from abc import ABC, abstractmethod
-import time
+from utils.timing import wait
 from dataclasses import dataclass
 
 from utils.constants import GomOutputs
@@ -53,9 +53,9 @@ class LoadSwitch(ABC):
         ...
 
     def pulse(self, duration: Union[float, int], delay: Union[float, int] = 0):
-        time.sleep(delay)
+        wait(delay)
         self.set(True)
-        time.sleep(duration)
+        wait(duration)
         self.set(False)
 
 
@@ -114,7 +114,7 @@ class mockP31uLoadSwitch(P31uLoadSwitch):
         self.latchups: int = 0
 
     def _set(self, state: bool, delay: int = 0):
-        time.sleep(delay)
+        wait(delay)
         self._state = state
 
     def get_new_telem(self) -> P31uLoadSwitchTelem:
@@ -221,7 +221,7 @@ class mockGPIOLoadSwitch(GPIOLoadSwitch):
         self._state = False
 
     def _set(self, state: bool, delay: int = 0):
-        time.sleep(delay)
+        wait(delay)
         self._state = state
 
     def get_new_telem(self) -> LoadSwitchTelem:

@@ -405,4 +405,5 @@ class CommandEnum(IntEnum):
     LongString = 56
 
     IgnoreLowBatt = 60
+    SetEMSThresh = 61
     CeaseComms = 170

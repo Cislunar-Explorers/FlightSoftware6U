@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
+
 from communications.codec import Codec
 from communications.commands import Command
 from communications import codecs
@@ -354,6 +355,22 @@ class ignore_low_batt(Command):
         parameter_utils.set_parameter(
             "IGNORE_LOW_BATTERY", bool(ignore), hard_set=False
         )
+
+
+class reduce_ems_percentage_thresh(Command):
+    """ Reduces Earth, Sun, Moon Percentage threshold by factor of 2.
+        Useful for testing purposes when needing to reduce the confidence of
+        the body in find_with_hough_transform_and_contours.findBody()"""
+
+    id = CommandEnum.SetEMSThresh
+    uplink_codecs = [Codec(ck.ignore, "float")]
+    downlink_codecs = []
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        # Use of kwargs?
+        parameter_utils.set_parameter("EARTH_PERCENTAGE_THRESH", 0.07, hard_set=False)
+        parameter_utils.set_parameter("MOON_PERCENTAGE_THRESH", 0.02, hard_set=False)
+        parameter_utils.set_parameter("SUN_PERCENTAGE_THRESH", 0.06, hard_set=False)
 
 
 class schedule_maneuver(Command):
@@ -963,6 +980,7 @@ COMMAND_LIST: List[Command] = [
     detailed_telem(),
     electrolysis(),
     ignore_low_batt(),
+    reduce_ems_percentage_thresh(),
     schedule_maneuver(),
     reboot(),
     cease_comms(),

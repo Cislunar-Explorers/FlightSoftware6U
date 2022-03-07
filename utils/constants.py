@@ -251,6 +251,7 @@ SPLIT_BURNWIRE_DURATION = 1.5  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 BURN_WAIT_TIME = 1  # minutes changed to glow wait time in params
 
+GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 MAX_GYRO_RATE = 250  # degrees/sec # TODO
 

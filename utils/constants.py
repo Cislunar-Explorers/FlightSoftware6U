@@ -137,6 +137,10 @@ class CommandKwargs(StringEnum):
     IGNORE = "ignore"
     PASSWORD = "password"
 
+    EARTH_THRESH = "earth threshold"
+    MOON_THRESH = "moon threshold"
+    SUN_THRESH = "sun threshold"
+
     OUTPUT_CHANNEL = "output_channel"
 
 

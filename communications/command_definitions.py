@@ -357,20 +357,42 @@ class ignore_low_batt(Command):
         )
 
 
-class reduce_ems_percentage_thresh(Command):
-    """ Reduces Earth, Sun, Moon Percentage threshold by factor of 2.
-        Useful for testing purposes when needing to reduce the confidence of
+class change_ems_percentage_thresh(Command):
+    """ Changes Earth, Sun, Moon Percentage threshold.
+        Useful for testing purposes when needing to reduce/increase the confidence of
         the body in find_with_hough_transform_and_contours.findBody()"""
 
     id = CommandEnum.SetEMSThresh
-    uplink_codecs = [Codec(ck.ignore, "float")]
-    downlink_codecs = []
+    uplink_codecs = [
+        Codec(ck.EARTH_THRESH, "float"),
+        Codec(ck.MOON_THRESH, "float"),
+        Codec(ck.SUN_THRESH, "float"),
+    ]
+    downlink_codecs = [
+        Codec(ck.EARTH_THRESH, "float"),
+        Codec(ck.MOON_THRESH, "float"),
+        Codec(ck.SUN_THRESH, "float"),
+    ]
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
-        # Use of kwargs?
-        parameter_utils.set_parameter("EARTH_PERCENTAGE_THRESH", 0.07, hard_set=False)
-        parameter_utils.set_parameter("MOON_PERCENTAGE_THRESH", 0.02, hard_set=False)
-        parameter_utils.set_parameter("SUN_PERCENTAGE_THRESH", 0.06, hard_set=False)
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs):
+        new_earth_thresh = kwargs[ck.EARTH_THRESH]
+        new_moon_thresh = kwargs[ck.MOON_THRESH]
+        new_sun_thresh = kwargs[ck.SUN_THRESH]
+        parameter_utils.set_parameter(
+            "EARTH_PERCENTAGE_THRESH", new_earth_thresh, hard_set=False
+        )
+        parameter_utils.set_parameter(
+            "MOON_PERCENTAGE_THRESH", new_moon_thresh, hard_set=False
+        )
+        parameter_utils.set_parameter(
+            "SUN_PERCENTAGE_THRESH", new_sun_thresh, hard_set=False
+        )
+
+        return {
+            ck.EARTH_THRESH: new_earth_thresh,
+            ck.MOON_THRESH: new_moon_thresh,
+            ck.SUN_THRESH: new_sun_thresh,
+        }
 
 
 class schedule_maneuver(Command):
@@ -980,7 +1002,7 @@ COMMAND_LIST: List[Command] = [
     detailed_telem(),
     electrolysis(),
     ignore_low_batt(),
-    reduce_ems_percentage_thresh(),
+    change_ems_percentage_thresh(),
     schedule_maneuver(),
     reboot(),
     cease_comms(),

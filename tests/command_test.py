@@ -70,12 +70,12 @@ class CommandTest(unittest.TestCase):
         self.assertAlmostEqual(params.SUN_PERCENTAGE_THRESH, new_sun_thresh, 2)
 
         # Checking downlink
-        # downlink = self.sat.downlink_queue.get()
-        # downlink_command, downlink_args = self.ground_station.unpack_telemetry(downlink)
-        # self.assertEqual(downlink_command.id, CommandEnum.SetEMSThresh)
-        # self.assertEqual(downlink_args[ck.EARTH_THRESH], new_earth_thresh)
-        # self.assertEqual(downlink_args[ck.MOON_THRESH], new_moon_thresh)
-        # self.assertEqual(downlink_args[ck.SUN_THRESH], new_sun_thresh)
+        downlink = self.sat.downlink_queue.get()
+        downlink_command, downlink_args = self.ground_station.unpack_telemetry(downlink)
+        self.assertEqual(downlink_command.id, CommandEnum.SetEMSThresh)
+        self.assertAlmostEqual(downlink_args[ck.EARTH_THRESH], new_earth_thresh)
+        self.assertAlmostEqual(downlink_args[ck.MOON_THRESH], new_moon_thresh)
+        self.assertAlmostEqual(downlink_args[ck.SUN_THRESH], new_sun_thresh)
 
     def test_manual_fm_commands(self):
         """Commands the spacecraft to go into every flight mode """

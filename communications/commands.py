@@ -17,7 +17,7 @@ class Command(ABC):
     If you want to implement a new command, go to command_definitions.py and add your command there.
     All you need to do if you want to implement a new command is to:
         1. Go to command_definitions.py and make a class inheriting from this class
-        2. Override the `self._method` method which can only take in a kwarg dictionary: no args other than `parent`
+        2. Override the `self._method` method which can only take in a kwarg dictionary: no args other than `main`
         3. Add the relevant codec for every variable that you want to be able to uplink and downlink in the class's
             `uplink_codecs` and `downlink_codecs` lists. Each codec is defined of the name of the variable you want to
             send, and the data type of that variable. (If you don't have any data to up or downlink, don't worry about
@@ -58,7 +58,7 @@ class Command(ABC):
 
     @abstractmethod
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Optional[Dict[str, Union[float, int]]]:
         ...
 
@@ -118,9 +118,9 @@ class Command(ABC):
             )
             raise CommandException
 
-    def run(self, parent: Optional[MainSatelliteThread] = None, **kwargs):
+    def run(self, main: Optional[MainSatelliteThread] = None, **kwargs):
         try:
-            downlink = self._method(parent=parent, **kwargs)
+            downlink = self._method(main=main, **kwargs)
             self.packing_check(downlink, self.downlink_codecs)
             return downlink
         except Exception as e:

@@ -24,7 +24,7 @@ class Command(ABC):
             this step.)
         3a. Make sure that every value you define in the uplink_codecs list get unpacked from the `kwargs` dict in the
             `_method`
-        3b. Make syre that every value you define in the downlink_codecs list get returned in a dict by the `_method`.
+        3b. Make sure that every value you define in the downlink_codecs list get returned in a dict by the `_method`.
         4. Specify the command's `id`. You'll need to add the id to the `CommandEnum` in utils.constants
         5. Add your new command class to the `COMMAND_LIST` defined at the bottom of command_definitions.py
         6. Make a unit test for your command and add it to tests/commands_test.py

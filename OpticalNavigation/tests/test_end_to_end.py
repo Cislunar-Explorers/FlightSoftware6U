@@ -6,6 +6,7 @@ import logging
 from OpticalNavigation.tests import test_reprojections
 from OpticalNavigation.tests import test_body_meas
 
+
 # from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
@@ -25,7 +26,17 @@ class TestEndToEnd(unittest.TestCase):
 
         return gn_imgs, st_imgs, re_imgs
 
-    def test_end_to_end(self):
+    def run_body_meas_sim(self, path, centersReproj):
+        """Takes in a path and reprojected centers (from center_finding) and outputs the transformed vectors, as well
+        as the truth vectors and the corresponding error"""
+        bodyTest = test_body_meas.BodyMeas()
+        fileInfo, _, dt, truthT0Vec, gyroY = bodyTest.get_data(path)
+        calcVecs, refVecs, errors = bodyTest.body_meas(
+            fileInfo, centersReproj, dt, truthT0Vec, gyroY
+        )
+        return calcVecs, refVecs, errors
+
+    def test_end_to_end(self, path):
 
         # TODO I think we should organize is similar to my test_body_meas, where our "test_" functions call this
         # function, except with a different path. This would mean you would have to make your get_images function take
@@ -47,11 +58,7 @@ class TestEndToEnd(unittest.TestCase):
         #              stereographic sim image
 
         # Third step: run body_meas test on the two image centers to output body detection vectors
-        body_test = test_body_meas.BodyMeas()
-        fileInfo, centerSt, dt, truthT0Vec, gyroY = body_test.get_data("path")
-        calc_vecs, ref_vecs, error = body_test.body_meas(
-            fileInfo, centerSt, dt, truthT0Vec, gyroY
-        )
+        reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas(path)
 
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         #              of the three test?

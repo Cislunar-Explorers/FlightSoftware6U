@@ -262,7 +262,7 @@ class TestReprojections(unittest.TestCase):
     # Test reprojections
     def test_reprojection(self):
         print("\nTesting reprojections:")
-        self.reproj_test(False, False)
+        self.reproj_test(True, True)
 
     # Test reprojectons with image output
     # def test_reprojection_with_image_output(self):

@@ -91,6 +91,10 @@ class BodyMeas(unittest.TestCase):
             calc_vecs.append(finalT0Det.vector.data)
             truth_vecs.append(truth)
             errors.append(vecDist)
+        calc_vecs = zip(calc_vecs, fileInfo)
+        truth_vecs = zip(truth_vecs, fileInfo)
+        errors = zip(errors, fileInfo)
+
         return calc_vecs, truth_vecs, errors
 
     def test_traj_case1c(self):

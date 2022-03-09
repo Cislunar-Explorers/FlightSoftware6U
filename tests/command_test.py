@@ -49,6 +49,8 @@ class CommandTest(unittest.TestCase):
         self.assertEqual(downlink_args[ck.VALUE], new_value)
 
     def test_setEMSThresh(self):
+        """Tests whether we can succesfully change the threshold percentage values for the Earth,Sun,Moon """
+
         new_earth_thresh = 0.07
         new_moon_thresh = 0.025
         new_sun_thresh = 0.06

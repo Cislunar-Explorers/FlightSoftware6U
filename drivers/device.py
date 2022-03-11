@@ -42,7 +42,7 @@ class Device(ABC):
                 f"Not connected to device {self.name}, unable to collect telemetry"
             )
 
-            raise RuntimeError(f"Device {self.name} not connected")
+            # raise RuntimeError(f"Device {self.name} not connected")
 
     def _self_test(self):
         return self._collect_telem()

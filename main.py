@@ -149,7 +149,7 @@ class MainSatelliteThread(Thread):
         sensors = [self.mux, self.camera]
         sensor_functioning_list = [int(bool(sensor)) for sensor in sensors]
         sensor_functioning_list.extend(cameras_list)
-        sensor_functioning_list.extend(connected_devices.values())
+        sensor_functioning_list.extend(map(int, connected_devices.values()))
         sensor_bitmask = "".join(map(str, sensor_functioning_list))
         logging.debug(f"Sensors: {sensor_bitmask}")
         return int(sensor_bitmask, 2)

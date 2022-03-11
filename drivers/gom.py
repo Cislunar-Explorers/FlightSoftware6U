@@ -66,7 +66,10 @@ class Gomspace(Device):
 
     def tick_wdt(self):
         """Resets dedicated WDT"""
-        return self.driver.reset_wdt()
+        if self.connected:
+            return self.driver.reset_wdt()
+        else:
+            logging.warning("Can't pet watchdog - Not connected to gom hardware")
 
     def all_off(self):
         """Turns off all controllable outputs on the Gomspace"""

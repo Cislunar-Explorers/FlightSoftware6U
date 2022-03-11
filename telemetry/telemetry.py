@@ -62,7 +62,8 @@ class GomSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.hk = self._parent.devices.gom.collect_telem()
+        if self._parent.devices.gom.connected:
+            self.hk = self._parent.devices.gom.collect_telem()
 
 
 class GyroSensor(SynchronousSensor):
@@ -75,8 +76,10 @@ class GyroSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.rot, self.tmp = self._parent.devices.gyro.collect_telem()
-        self.mag, self.acc = self._parent.devices.magacc.collect_telem()
+        if self._parent.devices.gyro.connected:
+            self.rot, self.tmp = self._parent.devices.gyro.collect_telem()
+        if self._parent.devices.magacc.connected:
+            self.mag, self.acc = self._parent.devices.magacc.collect_telem()
 
         # self.result = ImuResult(*self.rot, *self.mag, *self.acc)
 
@@ -130,7 +133,7 @@ class PressureSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self._parent.devices.adc is not None:
+        if self._parent.devices.adc.connected:
             self.pressure = self._parent.devices.adc.read_pressure()
 
 
@@ -141,7 +144,7 @@ class ThermocoupleSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self._parent.devices.adc is not None:
+        if self._parent.devices.adc.connected:
             self.tmp = self._parent.devices.adc.read_temperature()
 
 
@@ -184,7 +187,8 @@ class RtcSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        self.rtc_time, self.rtc_temp = self._parent.devices.rtc.collect_telem()
+        if self._parent.devices.rtc.connected:
+            self.rtc_time, self.rtc_temp = self._parent.devices.rtc.collect_telem()
 
 
 class OpNavSensor(SynchronousSensor):

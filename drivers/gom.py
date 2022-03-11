@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 from drivers.device import Device
 import drivers.power.loadswitch as ls
 
@@ -29,9 +30,9 @@ class Gomspace(Device):
     glowplug_2: ls.P31uLoadSwitch
     solenoid: ls.solenoid
     electrolyzers: ls.P31uLoadSwitch
-    pa: ls.power_amplifier
-    rf_tx: ls.rf_switch_tx
-    rf_rx: ls.rf_switch_rx
+    pa: ls.GPIOLoadSwitch
+    rf_tx: ls.GPIOLoadSwitch
+    rf_rx: ls.GPIOLoadSwitch
 
     def __init__(self) -> None:
         super().__init__("GOM")
@@ -60,7 +61,7 @@ class Gomspace(Device):
     def _collect_telem(self) -> eps_hk_t:
         return self.driver.get_hk_2()
 
-    def collect_telem(self) -> eps_hk_t:
+    def collect_telem(self) -> Optional[eps_hk_t]:
         return super().collect_telem()
 
     def tick_wdt(self):

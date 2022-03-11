@@ -279,7 +279,7 @@ class CommsMode(FlightMode):
 
     def execute_downlinks(self):
         while not self._main.downlink_queue.empty():
-            self._main.radio.transmit(self._main.downlink_queue.get())
+            self._main.devices.radio.transmit(self._main.downlink_queue.get())
             self._main.downlink_counter += 1
             # TODO: revisit and see if we actually need this
             sleep(params.DOWNLINK_BUFFER_TIME)

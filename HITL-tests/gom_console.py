@@ -71,7 +71,7 @@ try:
                     logging.info("Turning on solenoid loadswitch")
                     gom.solenoid._set(True)
                     sleep(duration / 2)
-                    ps.displayHk2(gom.get_health_data(level="eps"))
+                    ps.displayHk2(gom.collect_telem())
                     sleep(duration / 2)
                     gom.solenoid._set(False)
                 else:

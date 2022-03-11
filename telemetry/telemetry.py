@@ -1,6 +1,6 @@
 from os import popen
 from time import time, sleep
-from typing import Dict, Union, NamedTuple, Tuple
+from typing import Dict, List, Union, NamedTuple, Tuple
 import logging
 
 import numpy as np
@@ -60,17 +60,23 @@ class GomSensor(SynchronousSensor):
 class GyroSensor(SynchronousSensor):
     def __init__(self, main):
         super().__init__(main)
-        self.rot: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # rad/s
-        self.mag: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # microTesla
-        self.acc: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # m/s^2
+        self.rot: List[float] = [0.0, 0.0, 0.0]  # rad/s
+        self.mag: List[float] = [0.0, 0.0, 0.0]  # microTesla
+        self.acc: List[float] = [0.0, 0.0, 0.0]  # m/s^2
         self.tmp: int = int()  # deg C
 
     def poll(self):
         super().poll()
         if self._main.devices.gyro.connected:
-            self.rot, self.tmp = self._main.devices.gyro.collect_telem()
+            angular_speed, temperature = self._main.devices.gyro._collect_telem()
+            self.rot = angular_speed
+            self.tmp = temperature
         if self._main.devices.magacc.connected:
-            self.mag, self.acc = self._main.devices.magacc.collect_telem()
+            magnetometer_reading, accelerometer_reading = (
+                self._main.devices.magacc._collect_telem()
+            )
+            self.mag = magnetometer_reading
+            self.acc = accelerometer_reading
 
         # self.result = ImuResult(*self.rot, *self.mag, *self.acc)
 
@@ -80,7 +86,7 @@ class GyroSensor(SynchronousSensor):
         n_data = freq * duration
         data = []
         for _ in range(n_data):
-            data.append(self._main.gyro.get_gyro_corrected())
+            data.append(self._main.devices.gyro._collect_gyro(corrected=True))
             sleep(1.0 / freq)
 
         data = np.asarray(data).T
@@ -179,7 +185,7 @@ class RtcSensor(SynchronousSensor):
     def poll(self):
         super().poll()
         if self._main.devices.rtc.connected:
-            self.rtc_time, self.rtc_temp = self._main.devices.rtc.collect_telem()
+            self.rtc_time, self.rtc_temp = self._main.devices.rtc._collect_telem()
 
 
 class OpNavSensor(SynchronousSensor):

@@ -104,10 +104,10 @@ class separation_test(Command):
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
         for _ in range(1000):
-            gyro_reading = main.devices.gyro.collect_telem()
+            gyro_reading = main.devices.gyro._collect_telem()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
-            gyro_list.append(gyro_time)
+            gyro_list.append([gyro_time])
             gyro_data.append(gyro_list)
 
         # writes gyro data to gyro_data.txt. Caution, this file will be overwritten with every successive test

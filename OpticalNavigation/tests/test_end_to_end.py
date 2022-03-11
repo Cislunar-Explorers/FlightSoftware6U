@@ -13,13 +13,15 @@ from OpticalNavigation.tests import test_body_meas
 class TestEndToEnd(unittest.TestCase):
     def get_images_and_reproject(self):
 
-        gn_list, st_list = test_reprojections.get_images()
+        repr = test_reprojections.TestReprojections()
+
+        gn_list, st_list = repr.get_images()
         gn_imgs, st_imgs, re_imgs = [], [], []
 
         for idx, gnName in enumerate(gn_list):
             src = cv2.imread(gn_list[idx])
             tgt = cv2.imread(st_list[idx])
-            re_img, _ = test_reprojections.reproj(src, gnName)
+            re_img, _ = repr.reproj(src, gnName)
             gn_imgs.append(src)
             st_imgs.append(tgt)
             re_imgs.append(re_img)
@@ -58,7 +60,7 @@ class TestEndToEnd(unittest.TestCase):
         #              stereographic sim image
 
         # Third step: run body_meas test on the two image centers to output body detection vectors
-        reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas(path)
+        reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas_sim(path)
 
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         #              of the three test?

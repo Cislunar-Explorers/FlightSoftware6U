@@ -1,4 +1,4 @@
-from constants import NUM_BLOCKS, team_identifier, a, b, M
+from constants import team_identifier, a, b, M, CommandKwargs as ck
 import time
 from typing import cast
 
@@ -7,22 +7,21 @@ def verification(**kwargs):
     """CQC Comms Verification
     For more info see https://cornell.app.box.com/file/766365097328
     Assuming a data rate of 31 bits/second, 30 minutes of data transmission gives 48 data blocks"""
-    num_blocks: int = cast('int', kwargs.get(NUM_BLOCKS))
+    num_blocks: int = cast("int", kwargs.get(ck.NUM_BLOCKS))
 
     data_block_sequence_num = 0
-    team_bytes = team_identifier.to_bytes(4, 'big')
+    team_bytes = team_identifier.to_bytes(4, "big")
     data_transmission_sequence = bytes()
 
     for _ in range(num_blocks):
         # header calculation:
-        sequence_bytes = data_block_sequence_num.to_bytes(4, 'big')
+        sequence_bytes = data_block_sequence_num.to_bytes(4, "big")
         # get current time
         timestamp = time.time()  # each block has its own timestamp
         # extract seconds and milliseconds from timestamp:
         seconds_int = int(timestamp)
-        seconds_bytes = seconds_int.to_bytes(4, 'big')
-        ms_bytes = int((timestamp - seconds_int) *
-                       (10 ** 6)).to_bytes(4, 'big')
+        seconds_bytes = seconds_int.to_bytes(4, "big")
+        ms_bytes = int((timestamp - seconds_int) * (10 ** 6)).to_bytes(4, "big")
 
         # concatenate header
         header = team_bytes + sequence_bytes + seconds_bytes + ms_bytes
@@ -49,7 +48,7 @@ def verification(**kwargs):
         data_field = bytes()
         for j in prn:
             # concatenate prn data into bytes
-            data_field += j.to_bytes(4, 'big')
+            data_field += j.to_bytes(4, "big")
 
         data_block = header + data_field
 

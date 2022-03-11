@@ -9,11 +9,17 @@ from matplotlib.ticker import MaxNLocator
 import numpy as np
 import math
 import unittest
+import time
+from utils.constants import FLIGHT_SOFTWARE_PATH
 
 # import argparse
 
 
 class CenterDetections(unittest.TestCase):
+    now = int(time.time())
+    print(FLIGHT_SOFTWARE_PATH)
+    cwd = f"{FLIGHT_SOFTWARE_PATH}/OpticalNavigation"
+
     def __get_difference(self, body, truths, body_vals):
         """
         Gets the absolute differences between the truth values and the returned body values. Returns perf (performance)
@@ -51,6 +57,8 @@ class CenterDetections(unittest.TestCase):
         c = open(os.path.join(dir, "cameras.json"))
         observations = json.load(o)
         cameras = json.load(c)
+        o.close()
+        c.close()
         if pixel:
             st_scale = cameras["cameras"][0]["stereographic_scale"]
         else:
@@ -95,7 +103,15 @@ class CenterDetections(unittest.TestCase):
                 results.append(perf_values)
 
         # Writing performance values to csv file
-        with open(results_file, "w", newline="") as csvfile:
+        os.makedirs(
+            f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}",
+            exist_ok=True,
+        )
+        with open(
+            f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}/results_file",
+            "w",
+            newline="",
+        ) as csvfile:
             writer = csv.writer(
                 csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
             )
@@ -110,6 +126,8 @@ class CenterDetections(unittest.TestCase):
                     writer.writerow(["Earth"] + earth)
                 if moon is not None:
                     writer.writerow(["Moon"] + moon)
+
+        csvfile.close()
         return results
 
     def __diff_histogram(self, results, center, filename, show, name, st_gn):
@@ -141,7 +159,9 @@ class CenterDetections(unittest.TestCase):
         ax.title.set_text(title)
         plt.xlabel("Pixel Distance (px)")
         plt.ylabel("Number of Results")
-        fig.savefig(filename)
+        fig.savefig(
+            f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}/{filename}"
+        )
         if show:
             plt.show()
         return data

@@ -46,10 +46,9 @@ class Gomspace(Device):
         self.glowplug_2 = ls.glowplug_2(self.driver)
         self.solenoid = ls.solenoid(self.driver)
         self.electrolyzers = ls.electrolyzers(self.driver)
-        self.pa = ls.power_amplifier(self.driver)
+        self.power_amplifier = ls.power_amplifier(self.driver)
         self.rf_tx = ls.rf_switch_tx(self.driver)
         self.rf_rx = ls.rf_switch_rx(self.driver)
-
         # self.heater = ls.heater(self.driver)
 
         # cleaner implementation of the above, but no autocomplete
@@ -74,7 +73,7 @@ class Gomspace(Device):
     def all_off(self):
         """Turns off all controllable outputs on the Gomspace"""
         logging.debug("Turning off all controllable outputs")
-        self.pa.set(False)
+        self.power_amplifier.set(False)
         self.driver.set_output(0)
 
     def hard_reset(self, passcode):

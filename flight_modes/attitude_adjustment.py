@@ -47,8 +47,8 @@ class AAMode(PauseBackgroundMode):
     command_codecs = {}
     command_arg_unpackers = {}
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         # Since we can't control the magnitude of our spin vector, we only car about the two angles (in spherical
         # coordinates) that define the direction of our spin vector, which saves us some up/downlink space.
         # data for if we want to do autonomous attitude adjustment
@@ -63,14 +63,11 @@ class AAMode(PauseBackgroundMode):
     # check if exit condition has completed
     def run_mode(self):
         # double check to make sure that we actually have the info we need to reorient:
-        if (
-            not self._parent.reorientation_queue.empty()
-            or self._parent.reorientation_list
-        ):
+        if not self._main.reorientation_queue.empty() or self._main.reorientation_list:
             # get relevant info from attitude adjustment queue
-            while not self._parent.reorientation_queue.empty():
-                self._parent.reorientation_list.append(
-                    self._parent.reorientation_queue.get()
+            while not self._main.reorientation_queue.empty():
+                self._main.reorientation_list.append(
+                    self._main.reorientation_queue.get()
                 )
 
             (
@@ -78,7 +75,7 @@ class AAMode(PauseBackgroundMode):
                 pulse_duration,
                 pulse_num,
                 pulse_dt,
-            ) = self._parent.reorientation_list[0]
+            ) = self._main.reorientation_list[0]
             logging.debug(
                 f"ACS start:{pulse_start}, duration:{pulse_duration}, num:{pulse_num}, dt:{pulse_dt}"
             )
@@ -99,7 +96,7 @@ class AAMode(PauseBackgroundMode):
                 self.missed_timing(pulse_start)
             else:
                 logging.debug(f"Sleeping {pulse_start - time()}s")
-                self._parent.devices.gom.driver.calculate_solenoid_wave()
+                self._main.devices.gom.driver.calculate_solenoid_wave()
                 sleep(max([(pulse_start - time()) - 2, 0]))
                 logging.info(
                     f"Experimental solenoid function. spike={params.ACS_SPIKE_DURATION}, hold={pulse_duration}"
@@ -107,8 +104,8 @@ class AAMode(PauseBackgroundMode):
                 # pulse ACS according to timings
                 for pulse_time in absolute_pulse_times:
                     sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
-                    self._parent.devices.gom.driver.solenoid_single_wave(pulse_duration)
-            self._parent.reorientation_list.pop(0)
+                    self._main.devices.gom.driver.solenoid_single_wave(pulse_duration)
+            self._main.reorientation_list.pop(0)
         else:
             logging.warning("No data for reorientation pulses found")
 
@@ -116,7 +113,7 @@ class AAMode(PauseBackgroundMode):
 
     def missed_timing(self, missed_pulse_timing):
         logging.error(f"Missed attitude adjustment maneuver at {missed_pulse_timing}")
-        # self._parent.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
+        # self._main.communications_queue.put((ErrorCodeEnum.MissedPulse.value, missed_pulse_timing))
 
     # the methods defined below are for autonomous reorientation (i.e. we send the spacecraft a new spin vector and
     # it does all the math. However, due to our development timeline, we will have to fall back on calculating exact
@@ -124,18 +121,18 @@ class AAMode(PauseBackgroundMode):
     """
     def get_data(self):
         # get latest opnav location and gyro data
-        self._parent.tlm.opn.poll()
-        self.latest_opnav_quat = self._parent.tlm.opn.quat
-        self.latest_opnav_time = self._parent.tlm.opn.acq_time
+        self._main.tlm.opn.poll()
+        self.latest_opnav_quat = self._main.tlm.opn.quat
+        self.latest_opnav_time = self._main.tlm.opn.acq_time
         self.current_spin_vec = quat_to_rotvec(self.latest_opnav_quat)
-        self._parent.tlm.gyr.poll()
-        self._parent.tlm.gyr.write()
+        self._main.tlm.gyr.poll()
+        self._main.tlm.gyr.write()
 
-        while not self._parent.reorientation_queue.empty():
-            self._parent.reorientation_list.append(self._parent.reorientation_queue.get())
+        while not self._main.reorientation_queue.empty():
+            self._main.reorientation_list.append(self._main.reorientation_queue.get())
 
-        if self._parent.reorientation_list:
-            self.target_spin_vec = spherical_to_cartesian(*self._parent.reorientation_list[0])
+        if self._main.reorientation_list:
+            self.target_spin_vec = spherical_to_cartesian(*self._main.reorientation_list[0])
 
     def dead_reckoning(self) -> Tuple[Tuple[float, quaternion], Tuple[float, float, float]]:
         # Attempts to determine the current attitude of the spacecraft by integrating the gyros (prone to error) from
@@ -166,7 +163,7 @@ class AAMode(PauseBackgroundMode):
         cur_spin_vector = cur_quat.vec
         firing_vector_ECI = np.cross(cur_spin_vector, desired_spin_vector)
 
-        gyroz = self._parent.tlm.gyr.rot(2)
+        gyroz = self._main.tlm.gyr.rot(2)
 
         firing_vector_ECI *= gyroz / abs(gyroz)  # multiply by sign of z rotation rate to avoid sign error
         # firing_vector_ECI is the vector along which the vector from the CoM of the spacecraft to the ACS nozzle
@@ -183,12 +180,12 @@ class AAMode(PauseBackgroundMode):
 # If we want to do reorientations autonomously, the following would be an approach.
 # However, we are probably not doing this
 #
-outdated_opnav = (time() - self._parent.tlm.opn.acq_time) // 60 >= 15  # if opnav was run >15 minutes ago, rerun
-unfinished_opnav = not self._parent.tlm.opn.currently_running()
+outdated_opnav = (time() - self._main.tlm.opn.acq_time) // 60 >= 15  # if opnav was run >15 minutes ago, rerun
+unfinished_opnav = not self._main.tlm.opn.currently_running()
 
 if outdated_opnav or unfinished_opnav:
-    self._parent.FMQueue.put(FMEnum.OpNav.value)
-    self._parent.FMQueue.put(FMEnum.AttitudeAdjustment.value)
+    self._main.FMQueue.put(FMEnum.OpNav.value)
+    self._main.FMQueue.put(FMEnum.AttitudeAdjustment.value)
 else:
     # check if current orientation is within 10 degrees of desired orientation
     self.get_data()

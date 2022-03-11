@@ -11,11 +11,11 @@ from .flight_mode import PauseBackgroundMode
 
 
 class OpNavMode(PauseBackgroundMode):
-
+    # FIXME: There is another class in flight mode with the same name that is in-use. This class is unused.
     flight_mode_id = FMEnum.OpNav.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         self.dummy_opnav_result = ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
 
     def set_return_val(self, returnval):
@@ -35,7 +35,7 @@ class OpNavMode(PauseBackgroundMode):
             self.most_recent_result, position_acquired_at
         )
         try:
-            session = self._parent.create_session()
+            session = self._main.create_session()
             session.add(opnav_model)
             session.commit()
         finally:
@@ -46,7 +46,7 @@ class OpNavMode(PauseBackgroundMode):
             return self.most_recent_result
         else:
             try:
-                session = self._parent.create_session()
+                session = self._main.create_session()
                 last_measurement = (
                     session.query(OpNavCoordinatesModel)
                     .order_by(OpNavCoordinatesModel.measurement_taken)
@@ -62,7 +62,7 @@ class OpNavMode(PauseBackgroundMode):
     def run_mode(self):
         if not self.opnav_process.is_alive():
             logging.info("[OPNAV]: Able to run next opnav")
-            self._parent.last_opnav_run = datetime.now()
+            self._main.last_opnav_run = datetime.now()
             logging.info("[OPNAV]: Starting opnav subprocess")
             self.opnav_process = Process(target=self.opnav_subprocess, args=())
             self.opnav_process.start()

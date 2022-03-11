@@ -33,6 +33,7 @@ class MainSatelliteThread(Thread):
     def __init__(self):
         super().__init__()
         logging.info("Initializing...")
+        init_parameters()
         self.command_queue: Queue[bytes] = Queue()
         self.downlink_queue: Queue[bytes] = Queue()
         self.FMQueue: Queue[int] = Queue()
@@ -155,6 +156,7 @@ class MainSatelliteThread(Thread):
         return int(sensor_bitmask, 2)
 
     def handle_sigint(self, signal, frame):
+        # TODO: add documentation (purpose of method?)
         self.shutdown()
         sys.exit(0)
 
@@ -229,7 +231,6 @@ class MainSatelliteThread(Thread):
     # Wrap in try finally block to ensure it stays live
     def run(self):
         """This is the main loop of the Cislunar Explorers FSW and runs constantly during flight."""
-        init_parameters()
         self.init_sensors()
         try:
             while True:

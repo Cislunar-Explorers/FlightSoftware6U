@@ -12,10 +12,14 @@ import utils.parameters as params
 class BootUpMode(FlightMode):
     """FMID 0"""
 
+    # TODO: Add description of this FlightMode,
+    # similar to the comment in low_battery.py.
+    # May be beneficial to use the descirption of
+    # this flight mode as stated in the documentation
     flight_mode_id = FMEnum.Boot.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def run_mode(self):
         logging.info("Boot up beginning...")
@@ -29,9 +33,9 @@ class BootUpMode(FlightMode):
         # deploy antennae
         # FIXME: differentiate between Hydrogen and Oxygen. Each satellite now has different required Bootup behaviors
         logging.info("Antennae deploy...")
-        self._parent.devices.gom.burnwire.pulse(params.ANTENNAE_BURNWIRE_DURATION)
+        self._main.devices.gom.burnwire.pulse(params.ANTENNAE_BURNWIRE_DURATION)
 
-        if self._parent.need_to_reboot:
+        if self._main.need_to_reboot:
             # TODO: double check the boot db history to make sure we aren't going into a boot loop
             # TODO: downlink something to let ground station know we're alive
             logging.critical("Rebooting to init cameras")
@@ -53,8 +57,8 @@ class RestartMode(FlightMode):
 
     flight_mode_id = FMEnum.Restart.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
         logging.info("Restarting...")
         create_session = create_sensor_tables_from_path(DB_FILE)
@@ -71,7 +75,7 @@ class RestartMode(FlightMode):
 
     # TODO implement error handling for if camera not detected
     def run_mode(self):
-        if self._parent.need_to_reboot:
+        if self._main.need_to_reboot:
             # TODO double check the boot db history to make sure we aren't going into a boot loop
             # TODO: downlink something to let ground station know we're alive and going to reboot
             logging.critical("Rebooting to init cameras")

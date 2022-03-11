@@ -1,5 +1,5 @@
 import os
-from enum import IntEnum, unique
+from enum import Enum, IntEnum, unique
 from pathlib import Path
 from typing import cast
 
@@ -59,155 +59,185 @@ DATA_OFFSET = DATA_LEN_SIZE + DATA_LEN_OFFSET
 PARAMETERS_JSON_PATH = os.path.join(FLIGHT_SOFTWARE_PATH, "utils/parameters.json")
 OPNAV_MEDIA_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/opnav_media/")
 
+
+class StringEnum(str, Enum):
+    """Similar to the built-in IntEnum, but with strings!
+    See https://docs.python.org/3/library/enum.html#others for inspiration."""
+
+    pass
+
+
 # Keyword Argument Definitions for Commands
-POS_X = "position_x"
-POS_Y = "position_y"
-POS_Z = "position_z"
+@unique
+class CommandKwargs(StringEnum):
+    """Enum of all the keyword argument names that are used in commands"""
 
-ACCELERATE = "accelerate"
+    NAME = "name"
+    VALUE = "value"
 
-NAME = "name"
-VALUE = "value"
+    AZIMUTH = "theta"
+    ELEVATION = "phi"
 
-AZIMUTH = "theta"
-ELEVATION = "phi"
+    STATE = "state"
+    INTERVAL = "interval"
+    DELAY = "delay"
 
-STATE = "state"
-INTERVAL = "interval"
-DELAY = "delay"
+    START = "pulse_start"
+    PULSE_DURATION = "pulse_duration"
+    PULSE_NUM = "pulse_num"
+    PULSE_DT = "pulse_dt"
 
-START = "pulse_start"
-PULSE_DURATION = "pulse_duration"
-PULSE_NUM = "pulse_num"
-PULSE_DT = "pulse_dt"
+    NUM_BLOCKS = "num_blocks"
 
-NUM_BLOCKS = "num_blocks"
+    # TIME = "time"
+    SYS_TIME = "sys_time"
+    MANEUVER_TIME = "maneuver_time"
 
-TIME = "time"
-SYS_TIME = "sys_time"
-MANEUVER_TIME = "maneuver_time"
+    HARD_SET = "hard_set"
 
-HARD_SET = "hard_set"
+    GOM_PIN_STATE = "gom_pin_state"
+    GOM_PIN_DELAY = "gom_pin_delay"
 
-GOM_PIN_STATE = "gom_pin_state"
-GOM_PIN_DELAY = "gom_pin_delay"
+    FILE_PATH = "file_path"
+    BLOCK_NUMBER = "block_number"
+    BLOCK_TEXT = "block_text"
+    TOTAL_BLOCKS = "total_blocks"
+    REG_ADDRESS = "reg_address"
+    REG_VALUE = "reg_value"
+    REG_SIZE = "reg_size"
 
-FILE_PATH = "file_path"
-BLOCK_NUMBER = "block_number"
-BLOCK_TEXT = "block_text"
-TOTAL_BLOCKS = "total_blocks"
-REG_ADDRESS = "reg_address"
-REG_VALUE = "reg_value"
-REG_SIZE = "reg_size"
+    DET_ENABLE_UINT8 = "det_enable_uint8"
+    DET0_BIAS_UINT8 = "det0_bias_uint8"
+    DET1_BIAS_UINT8 = "det1_bias_uint8"
+    DET0_THRESHOLD_UINT8 = "det0_threshold_uint8"
+    DET1_THRESHOLD_UINT8 = "det1_threshold_uint8"
+    RATE_WIDTH_MIN = "rate_width_min"
+    RATE_WIDTH_MAX = "rate_width_max"
+    BIN_WIDTH = "bin_width"
+    BIN_0_MIN_WIDTH = "bin_0_min_width"
+    RATE_INTERVAL = "rate_interval"
+    VETO_THRESHOLD_MIN = "veto_threshold_min"
+    VETO_THRESHOLD_MAX = "veto_threshold_max"
+    CONFIG_WRITE_PERIOD = "config_write_period"
+    CONFIG_ROTATE_PERIOD = "config_rotate_period"
+    DATE_WRITE_PERIOD = "data_write_period"
+    RATE_DATA_ROTATE_PERIOD = "rate_data_rotate_period"
+    HISTOGRAM_ROTATE_PERIOD = "histogram_rotate_period"
 
-DET_ENABLE_UINT8 = "det_enable_uint8"
-DET0_BIAS_UINT8 = "det0_bias_uint8"
-DET1_BIAS_UINT8 = "det1_bias_uint8"
-DET0_THRESHOLD_UINT8 = "det0_threshold_uint8"
-DET1_THRESHOLD_UINT8 = "det1_threshold_uint8"
-RATE_WIDTH_MIN = "rate_width_min"
-RATE_WIDTH_MAX = "rate_width_max"
-BIN_WIDTH = "bin_width"
-BIN_0_MIN_WIDTH = "bin_0_min_width"
-RATE_INTERVAL = "rate_interval"
-VETO_THRESHOLD_MIN = "veto_threshold_min"
-VETO_THRESHOLD_MAX = "veto_threshold_max"
-CONFIG_WRITE_PERIOD = "config_write_period"
-CONFIG_ROTATE_PERIOD = "config_rotate_period"
-DATE_WRITE_PERIOD = "data_write_period"
-RATE_DATA_ROTATE_PERIOD = "rate_data_rotate_period"
-HISTOGRAM_ROTATE_PERIOD = "histogram_rotate_period"
+    T_START = "t_start"
+    T_STOP = "t_stop"
 
-T_START = "t_start"
-T_STOP = "t_stop"
+    DECIMATION_FACTOR = "decimation_factor"
 
-DECIMATION_FACTOR = "decimation_factor"
+    INDEX = "index"
+    VBATT = "vbatt"
 
-INDEX = "index"
-VBATT = "vbatt"
+    CMD = "cmd"
+    FNAME = "filename"
+    IGNORE = "ignore"
+    PASSWORD = "password"
 
-# Keyword argument definitions for downlink
-RTC_TIME = "rtc_time"
+    OUTPUT_CHANNEL = "output_channel"
 
-ATT_1 = "attitude_1"
-ATT_2 = "attitude_2"
-ATT_3 = "attitude_3"
-ATT_4 = "attitude_4"
 
-HK_TEMP_1 = "hk_temp_1"  # Gomspace temperatures, deg C
-HK_TEMP_2 = "hk_temp_2"
-HK_TEMP_3 = "hk_temp_3"
-HK_TEMP_4 = "hk_temp_4"
+# Keyword argument definitions for downlinks
+@unique
+class DownlinkKwargs(StringEnum):
+    """Enum of all the keyword argument names used for downlinking."""
 
-GYRO_TEMP = "gyro_temp"  # temperature on the IMU, integer deg C
+    VALUE = "value"
 
-THERMOCOUPLE_TEMP = "thermo_temp"
+    RTC_TIME = "rtc_time"
+    TIME = "time"
 
-CURRENT_IN_1 = "curin_1"  # current coming into the solar converters (mA)
-CURRENT_IN_2 = "curin_2"
-CURRENT_IN_3 = "curin_3"
+    # Components of the attitude quaternion result from opnav
+    ATT_1 = "attitude_1"
+    ATT_2 = "attitude_2"
+    ATT_3 = "attitude_3"
+    ATT_4 = "attitude_4"
 
-VBOOST_1 = "vboost_1"  # voltage of the solar converters (mV)
-VBOOST_2 = "vboost_2"
-VBOOST_3 = "vboost_3"
+    # Components of the position results from opnav
+    POS_X = "position_x"
+    POS_Y = "position_y"
+    POS_Z = "position_z"
 
-SYSTEM_CURRENT = "cursys"  # current that being used by the whole system (mA)
-CURSUN = "sun_current"  # current coming into the system (mA)
-BATTERY_VOLTAGE = "vbatt"  # battery voltage (mV)
-RESERVED1 = "reserved1"  # unknown
-CUROUT1 = "curout1"  # current flowing through the controllable output (mA)
-CUROUT2 = "curout2"
-CUROUT3 = "curout3"
-CUROUT4 = "curout4"
-CUROUT5 = "curout5"
-CUROUT6 = "curout6"
-OUTPUTS = "outputs"  # bitmask of the state of the outputs
-LATCHUPS1 = "latchup1"  # number of latchup events on each controllable outputs
-LATCHUPS2 = "latchup2"
-LATCHUPS3 = "latchup3"
-LATCHUPS4 = "latchup4"
-LATCHUPS5 = "latchup5"
-LATCHUPS6 = "latchup6"
-# seconds (?) left on the I2C watchdog timer
-WDT_TIME_LEFT_I2C = "wdt_time_i2c"
-# seconds (?) left on the dedicated watchdog timer
-WDT_TIME_LEFT_GND = "wdt_time_gnd"
-GOM_BOOTS = "gom_boots"  # number of gomspace reboots
-WDT_COUNTS_I2C = "wdt_counts_i2c"  # number of I2C watchdog boots
-WDT_COUNTS_GND = "wdt_counts_gnd"  # number of dedicated watchdog boots
-GOM_BOOTCAUSE = "bootcause"  # number of gomspace reboots
-GOM_BATTMODE = "battmode"  # state machine of the gom. See the manual for more info
-# power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
-GOM_PPT_MODE = "ppt_mode"
-RESERVED2 = "reserved2"  # unknown
+    HK_TEMP_1 = "hk_temp_1"  # Gomspace temperatures, deg C
+    HK_TEMP_2 = "hk_temp_2"
+    HK_TEMP_3 = "hk_temp_3"
+    HK_TEMP_4 = "hk_temp_4"
 
-RPI_CPU = "rpi_cpu"  # percent utilization of the RPi CPU
-RPI_RAM = "rpi_ram"  # percent utilization of the RPi RAM
-RPI_DSK = "rpi_disk"  # percent utilization of the RPi's microSD card (Disk)
-RPI_TEMP = "rpi_temp"  # temperature on the RPi
-RPI_BOOT = "rpi_boot"  # time at which the Pi booted (seconds: unix epoch time)
-RPI_UPTIME = "rpi_uptime"  # how many seconds the pi has been up
+    GYRO_TEMP = "gyro_temp"  # temperature on the IMU, integer deg C
 
-SUN_CURRENT = "cursun"
-BATT_MODE = "batt_mode"
+    THERMOCOUPLE_TEMP = "thermo_temp"
 
-GYROX = "gyro_x"  # gyro rates, degrees/s
-GYROY = "gyro_y"
-GYROZ = "gyro_z"
-MAGX = "mag_x"  # magnetometer readings, microTesla
-MAGY = "mag_y"
-MAGZ = "mag_z"
-ACCX = "acc_x"  # accelerometer readings, m/s^2
-ACCY = "acc_y"
-ACCZ = "acc_z"
+    CURRENT_IN_1 = "curin_1"  # current coming into the solar converters (mA)
+    CURRENT_IN_2 = "curin_2"
+    CURRENT_IN_3 = "curin_3"
 
-PROP_TANK_PRESSURE = "prs_pressure"  # pressure in the propellant tank
+    VBOOST_1 = "vboost_1"  # voltage of the solar converters (mV)
+    VBOOST_2 = "vboost_2"
+    VBOOST_3 = "vboost_3"
 
-SUCCESSFUL = "successful"
+    SYSTEM_CURRENT = "cursys"  # current that being used by the whole system (mA)
+    CURSUN = "sun_current"  # current coming into the system (mA)
+    BATTERY_VOLTAGE = "vbatt"  # battery voltage (mV)
+    RESERVED1 = "reserved1"  # unknown
+    CUROUT1 = "curout1"  # current flowing through the controllable output (mA)
+    CUROUT2 = "curout2"
+    CUROUT3 = "curout3"
+    CUROUT4 = "curout4"
+    CUROUT5 = "curout5"
+    CUROUT6 = "curout6"
+    OUTPUTS = "outputs"  # bitmask of the state of the outputs
+    LATCHUPS1 = "latchup1"  # number of latchup events on each controllable outputs
+    LATCHUPS2 = "latchup2"
+    LATCHUPS3 = "latchup3"
+    LATCHUPS4 = "latchup4"
+    LATCHUPS5 = "latchup5"
+    LATCHUPS6 = "latchup6"
+    # seconds (?) left on the I2C watchdog timer
+    WDT_TIME_LEFT_I2C = "wdt_time_i2c"
+    # seconds (?) left on the dedicated watchdog timer
+    WDT_TIME_LEFT_GND = "wdt_time_gnd"
+    GOM_BOOTS = "gom_boots"  # number of gomspace reboots
+    WDT_COUNTS_I2C = "wdt_counts_i2c"  # number of I2C watchdog boots
+    WDT_COUNTS_GND = "wdt_counts_gnd"  # number of dedicated watchdog boots
+    GOM_BOOTCAUSE = "bootcause"  # number of gomspace reboots
+    GOM_BATTMODE = "battmode"  # state machine of the gom. See the manual for more info
+    # power point tracking mode of the solar converters. [1=MPPT, 2=FIXED voltage]
+    GOM_PPT_MODE = "ppt_mode"
+    RESERVED2 = "reserved2"  # unknown
 
-MISSING_BLOCKS = "missing_blocks"
-CHECKSUM = "checksum"
+    RPI_CPU = "rpi_cpu"  # percent utilization of the RPi CPU
+    RPI_RAM = "rpi_ram"  # percent utilization of the RPi RAM
+    RPI_DSK = "rpi_disk"  # percent utilization of the RPi's microSD card (Disk)
+    RPI_TEMP = "rpi_temp"  # temperature on the RPi
+    RPI_BOOT = "rpi_boot"  # time at which the Pi booted (seconds: unix epoch time)
+    RPI_UPTIME = "rpi_uptime"  # how many seconds the pi has been up
 
+    SUN_CURRENT = "cursun"
+    BATT_MODE = "batt_mode"
+
+    GYROX = "gyro_x"  # gyro rates, degrees/s
+    GYROY = "gyro_y"
+    GYROZ = "gyro_z"
+    MAGX = "mag_x"  # magnetometer readings, microTesla
+    MAGY = "mag_y"
+    MAGZ = "mag_z"
+    ACCX = "acc_x"  # accelerometer readings, m/s^2
+    ACCY = "acc_y"
+    ACCZ = "acc_z"
+
+    PROP_TANK_PRESSURE = "prs_pressure"  # pressure in the propellant tank
+
+    SUCCESSFUL = "successful"
+
+    MISSING_BLOCKS = "missing_blocks"
+    CHECKSUM = "checksum"
+    RETURN_CODE = "return_code"
+
+
+# Constants related to the CQC competition
 a = 1664525
 b = 1013904223
 M = 2 ** 32
@@ -226,49 +256,51 @@ NO_FM_CHANGE = -1
 GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 # Gyro specific constants
-# TODO: make sure that we change this to 500 if need be
 GYRO_RANGE = 500  # degrees per second
 
 # Gom config command args:
-PPT_MODE = "ppt_mode"
-BATTHEATERMODE = "battheater_mode"
-BATTHEATERLOW = "battheater_low"
-BATTHEATERHIGH = "battheater_high"
-OUTPUT_NORMAL1 = "output_normal_value1"
-OUTPUT_NORMAL2 = "output_normal_value2"
-OUTPUT_NORMAL3 = "output_normal_value3"
-OUTPUT_NORMAL4 = "output_normal_value4"
-OUTPUT_NORMAL5 = "output_normal_value5"
-OUTPUT_NORMAL6 = "output_normal_value6"
-OUTPUT_NORMAL7 = "output_normal_value7"
-OUTPUT_NORMAL8 = "output_normal_value8"
-OUTPUT_SAFE1 = "output_safe_value1"
-OUTPUT_SAFE2 = "output_safe_value2"
-OUTPUT_SAFE3 = "output_safe_value3"
-OUTPUT_SAFE4 = "output_safe_value4"
-OUTPUT_SAFE5 = "output_safe_value5"
-OUTPUT_SAFE6 = "output_safe_value6"
-OUTPUT_SAFE7 = "output_safe_value7"
-OUTPUT_SAFE8 = "output_safe_value8"
-OUTPUT_ON_DELAY = "output_initial_on_delay"
-OUTPUT_OFF_DELAY = "output_initial_off_delay"
-VBOOST1 = "vboost1"
-VBOOST2 = "vboost2"
-VBOOST3 = "vboost3"
 
-MAX_VOLTAGE = "max_voltage"
-NORM_VOLTAGE = "norm_voltage"
-SAFE_VOLTAGE = "safe_voltage"
-CRIT_VOLTAGE = "crit_voltage"
-OUTPUT_CHANNEL = "output_channel"
 
-CMD = "cmd"
-RETURN_CODE = "return_code"
+@unique
+class GomConfKwargs(StringEnum):
+    """Enum of all the arguments in the P31u's config"""
 
-FNAME = "filename"
-IGNORE = "ignore"
-PASSWORD = "password"
+    # Conf1:
+    PPT_MODE = "ppt_mode"
+    BATTHEATERMODE = "battheater_mode"
+    BATTHEATERLOW = "battheater_low"
+    BATTHEATERHIGH = "battheater_high"
+    OUTPUT_NORMAL1 = "output_normal_value1"
+    OUTPUT_NORMAL2 = "output_normal_value2"
+    OUTPUT_NORMAL3 = "output_normal_value3"
+    OUTPUT_NORMAL4 = "output_normal_value4"
+    OUTPUT_NORMAL5 = "output_normal_value5"
+    OUTPUT_NORMAL6 = "output_normal_value6"
+    OUTPUT_NORMAL7 = "output_normal_value7"
+    OUTPUT_NORMAL8 = "output_normal_value8"
+    OUTPUT_SAFE1 = "output_safe_value1"
+    OUTPUT_SAFE2 = "output_safe_value2"
+    OUTPUT_SAFE3 = "output_safe_value3"
+    OUTPUT_SAFE4 = "output_safe_value4"
+    OUTPUT_SAFE5 = "output_safe_value5"
+    OUTPUT_SAFE6 = "output_safe_value6"
+    OUTPUT_SAFE7 = "output_safe_value7"
+    OUTPUT_SAFE8 = "output_safe_value8"
+    OUTPUT_ON_DELAY = "output_initial_on_delay"
+    OUTPUT_OFF_DELAY = "output_initial_off_delay"
+    VBOOST1 = "vboost1"
+    VBOOST2 = "vboost2"
+    VBOOST3 = "vboost3"
 
+    # Conf2:
+    MAX_VOLTAGE = "max_voltage"
+    NORM_VOLTAGE = "norm_voltage"
+    SAFE_VOLTAGE = "safe_voltage"
+    CRIT_VOLTAGE = "crit_voltage"
+
+
+# Bit inflation definition
+# TODO: move to parameters
 ZERO_WORD = b"\xcb\x51"
 ONE_WORD = b"\xdc\x2c"
 
@@ -282,15 +314,16 @@ class GomOutputs(IntEnum):
     comms = 0
     burnwire_1 = 1
     glowplug_2 = 2
-    glowplug_1 = (
-        3
-    )  # I know this looks backwards, but this is correct for historical reasons
+    # I know this looks backwards, but this is correct for historical reasons
+    glowplug_1 = 3
     solenoid = 4
     electrolyzer = 5
 
 
 @unique
 class FMEnum(IntEnum):
+    """Enumerations of the flight modes (states) of FSW"""
+
     Boot = 0
     Restart = 1
     Normal = 2
@@ -307,6 +340,8 @@ class FMEnum(IntEnum):
 
 @unique
 class CommandEnum(IntEnum):
+    """Enum of every command that we can execute"""
+
     Boot = 0
     Restart = 1
     Normal = 2

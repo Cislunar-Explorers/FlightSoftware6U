@@ -12,11 +12,18 @@ if TYPE_CHECKING:
     from main import MainSatelliteThread
 # for an explanation of the above 4 lines of code, see
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-# It lets your IDE know what type(parent) is, without causing any circular imports at runtime.
+# It lets your IDE know what type(main) is, without causing any circular imports at runtime.
 
 import drivers.power.power_structs as ps
 import time
 import hashlib
+from utils.constants import (
+    FMEnum,
+    CommandEnum,
+    CommandKwargs as ck,
+    DownlinkKwargs as dk,
+    GomConfKwargs,
+)
 import utils.constants as consts
 from utils.exceptions import CommandArgException
 import subprocess
@@ -32,72 +39,72 @@ class FM_Switch(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         logging.critical(f"Manual FM change commanded: {self.id}")
-        parent.replace_flight_mode_by_id(self.id)
+        main.replace_flight_mode_by_id(self.id)
 
 
 class BootSwitch(FM_Switch):
-    id = consts.CommandEnum.Boot
+    id = CommandEnum.Boot
 
 
 class RestartSwitch(FM_Switch):
-    id = consts.CommandEnum.Restart
+    id = CommandEnum.Restart
 
 
 class NormalSwitch(FM_Switch):
-    id = consts.CommandEnum.Normal
+    id = CommandEnum.Normal
 
 
 class SafetySwitch(FM_Switch):
-    id = consts.CommandEnum.Safety
+    id = CommandEnum.Safety
 
 
 class LowBatterySwitch(FM_Switch):
-    id = consts.CommandEnum.LowBatterySafety
+    id = CommandEnum.LowBatterySafety
 
 
 class OpnavSwitch(FM_Switch):
-    id = consts.CommandEnum.OpNav
+    id = CommandEnum.OpNav
 
 
 class ManeuverSwitch(FM_Switch):
-    id = consts.CommandEnum.Maneuver
+    id = CommandEnum.Maneuver
 
 
 class SensorSwitch(FM_Switch):
-    id = consts.CommandEnum.SensorMode
+    id = CommandEnum.SensorMode
 
 
 class TestSwitch(FM_Switch):
-    id = consts.CommandEnum.TestMode
+    id = CommandEnum.TestMode
 
 
 class CommsSwitch(FM_Switch):
-    id = consts.CommandEnum.CommsMode
+    id = CommandEnum.CommsMode
 
 
 class CommandSwitch(FM_Switch):
-    id = consts.CommandEnum.CommandMode
+    id = CommandEnum.CommandMode
 
 
 class AttitudeAdjustmentSwitch(FM_Switch):
-    id = consts.CommandEnum.AttitudeAdjustment
+    id = CommandEnum.AttitudeAdjustment
 
 
 class separation_test(Command):
-    id = consts.CommandEnum.SeparationTest
+    id = CommandEnum.SeparationTest
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.devices.gom.burnwire.pulse(
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        main.devices.gom.burnwire.pulse(
             consts.SPLIT_BURNWIRE_DURATION, asynchronous=True
         )
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
         for _ in range(1000):
-            gyro_reading = parent.devices.gyro.collect_telem()
+            gyro_reading = main.devices.gyro.collect_telem()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
             gyro_list.append(gyro_time)
@@ -110,25 +117,25 @@ class separation_test(Command):
 
 
 class run_opnav(Command):
-    id = consts.CommandEnum.ScheduleOpnav
+    id = CommandEnum.ScheduleOpnav
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         """Schedules Opnav mode into the FM queue"""
-        parent.FMQueue.put(consts.FMEnum.OpNav.value)
+        main.FMQueue.put(FMEnum.OpNav)
 
 
 class exit_low_batt_thresh(Command):
     """Does the same thing as set_parameter, but only for the EXIT_LOW_BATTERY_MODE_THRESHOLD parameter. Only
     requires one kwarg and does some basic sanity checks on the passed value"""
 
-    id = consts.CommandEnum.LowBattThresh
-    uplink_codecs = [Codec(consts.VBATT, "ushort")]
+    id = CommandEnum.LowBattThresh
+    uplink_codecs = [Codec(ck.VBATT, "ushort")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
-        value = kwargs[consts.VBATT]
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        value = kwargs[ck.VBATT]
         try:
             assert 6000 < value < 8400 and float(value) is float
             parameter_utils.set_parameter(
@@ -141,14 +148,14 @@ class exit_low_batt_thresh(Command):
 
 
 class set_opnav_interval(Command):
-    id = consts.CommandEnum.SetOpnavInterval
-    uplink_codecs = [Codec(consts.INTERVAL, "ushort")]
+    id = CommandEnum.SetOpnavInterval
+    uplink_codecs = [Codec(ck.INTERVAL, "ushort")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
             requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
-        value = kwargs[consts.INTERVAL]
+        value = kwargs[ck.INTERVAL]
         try:
             assert 1000 > value > 10
             parameter_utils.set_parameter("OPNAV_INTERVAL", value, hard_set=False)
@@ -164,24 +171,24 @@ class set_opnav_interval(Command):
 #     assert 0 <= theta < 6.28318530718
 #     assert 0 <= phi < 3.14159265359
 #
-#     parent.reorientation_queue.put((theta, phi))
+#     main.reorientation_queue.put((theta, phi))
 
 
 class acs_pulse_timing(Command):
-    id = consts.CommandEnum.ACSPulsing
+    id = CommandEnum.ACSPulsing
     uplink_codecs = [
-        Codec(consts.START, "double"),
-        Codec(consts.PULSE_DURATION, "ushort"),
-        Codec(consts.PULSE_NUM, "ushort"),
-        Codec(consts.PULSE_DT, "ushort"),
+        Codec(ck.START, "double"),
+        Codec(ck.PULSE_DURATION, "ushort"),
+        Codec(ck.PULSE_NUM, "ushort"),
+        Codec(ck.PULSE_DT, "ushort"),
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        pulse_start_time = kwargs[consts.START]  # double, seconds
-        pulse_duration = kwargs[consts.PULSE_DURATION]  # ushort, milliseconds
-        pulse_num = kwargs[consts.PULSE_NUM]  # ushort, number
-        pulse_dt = kwargs[consts.PULSE_DT]  # ushort, milliseconds
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        pulse_start_time = kwargs[ck.START]  # double, seconds
+        pulse_duration = kwargs[ck.PULSE_DURATION]  # ushort, milliseconds
+        pulse_num = kwargs[ck.PULSE_NUM]  # ushort, number
+        pulse_dt = kwargs[ck.PULSE_DT]  # ushort, milliseconds
 
         try:
             assert pulse_start_time > time.time()
@@ -191,13 +198,13 @@ class acs_pulse_timing(Command):
         except AssertionError:
             raise CommandArgException
 
-        parent.reorientation_queue.put(
+        main.reorientation_queue.put(
             (pulse_start_time, pulse_duration, pulse_num, pulse_dt)
         )
 
 
 class critical_telem(Command):
-    id = consts.CommandEnum.CritTelem
+    id = CommandEnum.CritTelem
     uplink_codecs = []
     downlink_codecs = [
         codecs.VBATT_codec,
@@ -207,16 +214,14 @@ class critical_telem(Command):
         codecs.GOM_PPT_MODE_codec,
     ]
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Dict[str, Union[float, int]]:
+    def _method(self, main: MainSatelliteThread, **kwargs):
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
         # downlinking them (think about a low-power scenario where the most important thing is our power in and out)
-        return parent.telemetry.minimal_packet()
+        return main.telemetry.minimal_packet()
 
 
 class basic_telem(Command):
-    id = consts.CommandEnum.BasicTelem
+    id = CommandEnum.BasicTelem
     uplink_codecs = []
     downlink_codecs = [
         codecs.RTC_TIME_codec,
@@ -245,14 +250,14 @@ class basic_telem(Command):
     ]
 
     def _method(
-        self, parent: MainSatelliteThread, **kwargs
+        self, main: MainSatelliteThread, **kwargs
     ) -> Dict[str, Union[float, int]]:
         # what's defined in section 3.6.1 of https://cornell.app.box.com/file/629596158344 would be a good packet
-        return parent.telemetry.standard_packet_dict()
+        return main.telemetry.standard_packet_dict()
 
 
 class detailed_telem(Command):
-    id = consts.CommandEnum.DetailedTelem
+    id = CommandEnum.DetailedTelem
     uplink_codecs = []
     downlink_codecs = [
         codecs.TIME_codec,
@@ -321,18 +326,18 @@ class detailed_telem(Command):
     ]
     # Needs validation
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> Dict[str, int | float]:
-        return parent.telemetry.detailed_packet_dict()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Dict[dk, int | float]:
+        return main.telemetry.detailed_packet_dict()
 
 
 class electrolysis(Command):
-    id = consts.CommandEnum.SetElectrolysis
-    uplink_codecs = [Codec(consts.STATE, "bool")]
+    id = CommandEnum.SetElectrolysis
+    uplink_codecs = [Codec(ck.STATE, "bool")]
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
-        state = kwargs[consts.STATE]
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        state = kwargs[ck.STATE]
         parameter_utils.set_parameter(
             "WANT_TO_ELECTROLYZE", bool(state), hard_set=False
         )
@@ -341,32 +346,32 @@ class electrolysis(Command):
 class ignore_low_batt(Command):
     """This is obviously a very dangerous command. It's mainly meant for testing on the ground"""
 
-    id = consts.CommandEnum.IgnoreLowBatt
-    uplink_codecs = [Codec(consts.IGNORE, "bool")]
+    id = CommandEnum.IgnoreLowBatt
+    uplink_codecs = [Codec(ck.IGNORE, "bool")]
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
-        ignore = kwargs[consts.IGNORE]
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        ignore = kwargs[ck.IGNORE]
         parameter_utils.set_parameter(
             "IGNORE_LOW_BATTERY", bool(ignore), hard_set=False
         )
 
 
 class schedule_maneuver(Command):
-    id = consts.CommandEnum.ScheduleManeuver
-    uplink_codecs = [Codec(consts.MANEUVER_TIME, "double")]
+    id = CommandEnum.ScheduleManeuver
+    uplink_codecs = [Codec(ck.MANEUVER_TIME, "double")]
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        time_burn = kwargs[consts.MANEUVER_TIME]
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        time_burn = kwargs[ck.MANEUVER_TIME]
         logging.info("Scheduling a maneuver at: " + str(float(time_burn)))
         if params.SCHEDULED_BURN_TIME > 0:
-            parent.maneuver_queue.put(params.SCHEDULED_BURN_TIME)
-        parent.maneuver_queue.put(float(time_burn))
+            main.maneuver_queue.put(params.SCHEDULED_BURN_TIME)
+        main.maneuver_queue.put(float(time_burn))
 
-        smallest_time_burn = parent.maneuver_queue.get()
+        smallest_time_burn = main.maneuver_queue.get()
         parameter_utils.set_parameter(
             name="SCHEDULED_BURN_TIME",
             value=smallest_time_burn,
@@ -375,12 +380,12 @@ class schedule_maneuver(Command):
 
 
 class reboot(Command):
-    id = consts.CommandEnum.RebootPi
+    id = CommandEnum.RebootPi
     uplink_codecs = []
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         # TODO: make rebooting less janky
         os.system("sudo reboot")
         # add something here that adds to the restarts db that this restart was commanded
@@ -390,13 +395,13 @@ class cease_comms(Command):
     """This is an FCC requirement.
     We need to be able to command our spacecraft to stop transmitting if we become a nuisance to other radio stuff"""
 
-    id = consts.CommandEnum.CeaseComms
-    uplink_codecs = [Codec(consts.PASSWORD, "string")]
+    id = CommandEnum.CeaseComms
+    uplink_codecs = [Codec(ck.PASSWORD, "string")]
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
-        pword = kwargs[consts.PASSWORD]
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        pword = kwargs[ck.PASSWORD]
         if pword == 123:  # TODO, change
             logging.critical("Ceasing all communications")
             # definitely should implement some sort of verification to prevent accidental triggering
@@ -404,85 +409,85 @@ class cease_comms(Command):
 
 
 class set_system_time(Command):
-    id = consts.CommandEnum.SetSystemTime
-    uplink_codecs = [Codec(consts.SYS_TIME, "double")]
-    downlink_codecs = [Codec(consts.SYS_TIME, "double")]
+    id = CommandEnum.SetSystemTime
+    uplink_codecs = [Codec(ck.SYS_TIME, "double")]
+    downlink_codecs = [Codec(dk.TIME, "double")]
 
     # Needs validation
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, float]:
         # need to validate this works, and need to integrate updating RTC
-        unix_epoch = kwargs[consts.SYS_TIME]
+        unix_epoch = kwargs[ck.SYS_TIME]
         clk_id = time.CLOCK_REALTIME
         time.clock_settime(clk_id, float(unix_epoch))
-        return {consts.SYS_TIME: time.time()}
+        return {dk.TIME: time.time()}
 
 
 class get_param(Command):
     """Gets the value of an int or float parameter, logs it, and downlinks it as a (double) float"""
 
-    id = consts.CommandEnum.GetParam
-    uplink_codecs = [Codec(consts.NAME, "string")]
-    downlink_codecs = [Codec(consts.VALUE, "double")]
+    id = CommandEnum.GetParam
+    uplink_codecs = [Codec(ck.NAME, "string")]
+    downlink_codecs = [Codec(dk.VALUE, "double")]
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, float]:
-        name = kwargs[consts.NAME]
+        name = kwargs[ck.NAME]
         value = getattr(params, name)
         logging.info(f"{name}: {value}")
-        return {consts.VALUE: value}
+        return {dk.VALUE: value}
 
 
 class reboot_gom(Command):
-    id = consts.CommandEnum.RebootGom
+    id = CommandEnum.RebootGom
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.devices.gom.driver.reboot()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        main.devices.gom.driver.reboot()
 
 
 class power_cycle(Command):
     """Powers off the entire spacecraft for 400ms"""
 
-    id = consts.CommandEnum.PowerCycle
+    id = CommandEnum.PowerCycle
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         # TODO: safe shutdown RPi before hard reset
-        parent.devices.gom.hard_reset(True)
+        main.devices.gom.hard_reset(True)
 
 
 class gom_outputs(Command):
-    id = consts.CommandEnum.GomPin
+    id = CommandEnum.GomPin
     uplink_codecs = [
-        Codec(consts.OUTPUT_CHANNEL, "uint8"),
-        Codec(consts.STATE, "bool"),
-        Codec(consts.DELAY, "ushort"),
+        Codec(ck.OUTPUT_CHANNEL, "uint8"),
+        Codec(ck.STATE, "bool"),
+        Codec(ck.DELAY, "ushort"),
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        output_channel = kwargs[consts.OUTPUT_CHANNEL]
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        output_channel = kwargs[ck.OUTPUT_CHANNEL]
         # if 'state' is not found in kwargs, assume we want it to turn off
-        state = kwargs.get(consts.STATE, 0)
+        state = kwargs.get(ck.STATE, 0)
         # if 'delay' is not found in kwargs, assume we want it immediately
-        delay = kwargs.get(consts.DELAY, 0)
+        delay = kwargs.get(ck.DELAY, 0)
 
-        parent.devices.gom.driver.set_single_output(
+        main.devices.gom.driver.set_single_output(
             output_channel, int(state), delay=delay
         )
 
 
 class pi_shutdown(Command):
-    id = consts.CommandEnum.PiShutdown
+    id = CommandEnum.PiShutdown
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         # TODO: do this more gracefully
         os.system("sudo poweroff")
 
@@ -490,28 +495,28 @@ class pi_shutdown(Command):
 class set_file_to_update(Command):
     """Downlink checksum of file blocks and any missing block numbers"""
 
-    id = consts.CommandEnum.SetUpdatePath
-    uplink_codecs = [Codec(consts.FILE_PATH, "long_string")]
+    id = CommandEnum.SetUpdatePath
+    uplink_codecs = [Codec(ck.FILE_PATH, "long_string")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
-        file_path = kwargs["file_path"]
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        file_path = kwargs[ck.FILE_PATH]
         parameter_utils.set_parameter("FILE_UPDATE_PATH", file_path, False)
 
 
 class add_file_block(Command):
-    id = consts.CommandEnum.AddFileBlock
+    id = CommandEnum.AddFileBlock
     uplink_codecs = [
-        Codec(consts.BLOCK_NUMBER, "ushort"),
-        Codec(consts.BLOCK_TEXT, "long_string"),
+        Codec(ck.BLOCK_NUMBER, "ushort"),
+        Codec(ck.BLOCK_TEXT, "long_string"),
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        block_number = kwargs[consts.BLOCK_NUMBER]
-        block_text = kwargs[consts.BLOCK_TEXT]
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        block_number = kwargs[ck.BLOCK_NUMBER]
+        block_text = kwargs[ck.BLOCK_TEXT]
 
-        parent.file_block_bank[block_number] = block_text
+        main.file_block_bank[block_number] = block_text
 
         # TODO: Downlink acknowledgment with block number, or downlink block numbers on request
 
@@ -519,24 +524,21 @@ class add_file_block(Command):
 class get_file_blocks_info(Command):
     """Downlink checksum of file blocks and any missing block numbers"""
 
-    id = consts.CommandEnum.GetFileBlocksInfo
-    uplink_codecs = [Codec(consts.TOTAL_BLOCKS, "ushort")]
-    downlink_codecs = [
-        Codec(consts.CHECKSUM, "string"),
-        Codec(consts.MISSING_BLOCKS, "string"),
-    ]
+    id = CommandEnum.GetFileBlocksInfo
+    uplink_codecs = [Codec(ck.TOTAL_BLOCKS, "ushort")]
+    downlink_codecs = [Codec(dk.CHECKSUM, "string"), Codec(dk.MISSING_BLOCKS, "string")]
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> Dict[str, str]:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Dict[str, str]:
         time.sleep(15)  # For testing only
 
-        total_blocks = kwargs[consts.TOTAL_BLOCKS]
+        total_blocks = kwargs[ck.TOTAL_BLOCKS]
         full_file_text = ""
         missing_blocks = ""
 
         for i in range(total_blocks):
 
             try:
-                block = parent.file_block_bank[i]
+                block = main.file_block_bank[i]
                 full_file_text += block
 
             except KeyError:
@@ -544,25 +546,25 @@ class get_file_blocks_info(Command):
 
         checksum = hashlib.md5(full_file_text.encode("utf-8")).hexdigest()
 
-        return {consts.CHECKSUM: checksum, consts.MISSING_BLOCKS: missing_blocks}
+        return {dk.CHECKSUM: checksum, dk.MISSING_BLOCKS: missing_blocks}
 
 
 class activate_file(Command):
-    id = consts.CommandEnum.ActivateFile
-    uplink_codecs = [Codec(consts.TOTAL_BLOCKS, "ushort")]
+    id = CommandEnum.ActivateFile
+    uplink_codecs = [Codec(ck.TOTAL_BLOCKS, "ushort")]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         file_path = params.FILE_UPDATE_PATH
-        total_blocks = kwargs[consts.TOTAL_BLOCKS]
+        total_blocks = kwargs[ck.TOTAL_BLOCKS]
 
-        assert total_blocks == len(parent.file_block_bank)
+        assert total_blocks == len(main.file_block_bank)
 
         full_file_text = ""
 
         # Assemble file from blocks
         for i in range(total_blocks):
-            full_file_text += parent.file_block_bank[i]
+            full_file_text += main.file_block_bank[i]
 
         # Create backup with the original if the file already exists
         if os.path.exists(file_path):
@@ -579,15 +581,15 @@ class activate_file(Command):
         original_file.seek(0)
         original_file.write(full_file_text)
 
-        parent.file_block_bank = {}
+        main.file_block_bank = {}
 
 
 class print_some_string(Command):
-    id = consts.CommandEnum.LongString
+    id = CommandEnum.LongString
     uplink_codecs = [Codec("some_number", "float"), Codec("long_string", "string")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         number = kwargs["some_number"]
         string = kwargs["long_string"]
 
@@ -596,19 +598,16 @@ class print_some_string(Command):
 
 
 class nemo_write_register(Command):
-    id = consts.CommandEnum.NemoWriteRegister
-    uplink_codecs = [
-        Codec(consts.REG_ADDRESS, "uint8"),
-        Codec(consts.REG_VALUE, "uint8"),
-    ]
+    id = CommandEnum.NemoWriteRegister
+    uplink_codecs = [Codec(ck.REG_ADDRESS, "uint8"), Codec(ck.REG_VALUE, "uint8")]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            reg_address = kwargs[consts.REG_ADDRESS]
-            values = [kwargs[consts.REG_VALUE]]
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            reg_address = kwargs[ck.REG_ADDRESS]
+            values = [kwargs[ck.REG_VALUE]]
 
-            parent.nemo_manager.write_register(reg_address, values)
+            main.nemo_manager.write_register(reg_address, values)
 
         else:
             logging.error(
@@ -617,18 +616,15 @@ class nemo_write_register(Command):
 
 
 class nemo_read_register(Command):
-    id = consts.CommandEnum.NemoReadRegister
-    uplink_codecs = [
-        Codec(consts.REG_ADDRESS, "uint8"),
-        Codec(consts.REG_SIZE, "uint8"),
-    ]
+    id = CommandEnum.NemoReadRegister
+    uplink_codecs = [Codec(ck.REG_ADDRESS, "uint8"), Codec(ck.REG_SIZE, "uint8")]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            reg_address = kwargs[consts.REG_ADDRESS]
-            size = kwargs[consts.REG_SIZE]
-            parent.nemo_manager.read_register(reg_address, size)
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            reg_address = kwargs[ck.REG_ADDRESS]
+            size = kwargs[ck.REG_SIZE]
+            main.nemo_manager.read_register(reg_address, size)
 
         else:
             logging.error(
@@ -637,88 +633,88 @@ class nemo_read_register(Command):
 
 
 class nemo_set_config(Command):
-    id = consts.CommandEnum.NemoSetConfig
+    id = CommandEnum.NemoSetConfig
     uplink_codecs = [
-        Codec(consts.DET_ENABLE_UINT8, "uint8"),
-        Codec(consts.DET0_BIAS_UINT8, "uint8"),
-        Codec(consts.DET1_BIAS_UINT8, "uint8"),
-        Codec(consts.DET0_THRESHOLD_UINT8, "uint8"),
-        Codec(consts.DET1_THRESHOLD_UINT8, "uint8"),
-        Codec(consts.RATE_WIDTH_MIN, "uint8"),
-        Codec(consts.RATE_WIDTH_MAX, "uint8"),
-        Codec(consts.BIN_WIDTH, "uint8"),
-        Codec(consts.BIN_0_MIN_WIDTH, "uint8"),
-        Codec(consts.RATE_INTERVAL, "uint8"),
-        Codec(consts.VETO_THRESHOLD_MIN, "uint8"),
-        Codec(consts.VETO_THRESHOLD_MAX, "uint8"),
-        Codec(consts.CONFIG_WRITE_PERIOD, "uint8"),
-        Codec(consts.CONFIG_ROTATE_PERIOD, "uint8"),
-        Codec(consts.DATE_WRITE_PERIOD, "uint8"),
-        Codec(consts.RATE_DATA_ROTATE_PERIOD, "int"),
-        Codec(consts.HISTOGRAM_ROTATE_PERIOD, "int"),
+        Codec(ck.DET_ENABLE_UINT8, "uint8"),
+        Codec(ck.DET0_BIAS_UINT8, "uint8"),
+        Codec(ck.DET1_BIAS_UINT8, "uint8"),
+        Codec(ck.DET0_THRESHOLD_UINT8, "uint8"),
+        Codec(ck.DET1_THRESHOLD_UINT8, "uint8"),
+        Codec(ck.RATE_WIDTH_MIN, "uint8"),
+        Codec(ck.RATE_WIDTH_MAX, "uint8"),
+        Codec(ck.BIN_WIDTH, "uint8"),
+        Codec(ck.BIN_0_MIN_WIDTH, "uint8"),
+        Codec(ck.RATE_INTERVAL, "uint8"),
+        Codec(ck.VETO_THRESHOLD_MIN, "uint8"),
+        Codec(ck.VETO_THRESHOLD_MAX, "uint8"),
+        Codec(ck.CONFIG_WRITE_PERIOD, "uint8"),
+        Codec(ck.CONFIG_ROTATE_PERIOD, "uint8"),
+        Codec(ck.DATE_WRITE_PERIOD, "uint8"),
+        Codec(ck.RATE_DATA_ROTATE_PERIOD, "int"),
+        Codec(ck.HISTOGRAM_ROTATE_PERIOD, "int"),
     ]
 
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.set_config(**kwargs)
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.set_config(**kwargs)
 
         else:
             logging.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
 
 
 class nemo_power_off(Command):
-    id = consts.CommandEnum.NemoPowerOff
+    id = CommandEnum.NemoPowerOff
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.power_off()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.power_off()
         else:
             logging.error("CMD: nemo_power_off() failed, nemo_manager not initialized")
 
 
 class nemo_power_on(Command):
-    id = consts.CommandEnum.NemoPowerOn
+    id = CommandEnum.NemoPowerOn
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.power_on()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.power_on()
 
         else:
             logging.error("CMD: nemo_power_on() failed, nemo_manager not initialized")
 
 
 class nemo_reboot(Command):
-    id = consts.CommandEnum.NemoReboot
+    id = CommandEnum.NemoReboot
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.reboot()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.reboot()
 
         else:
             logging.error("CMD: nemo_reboot() failed, nemo_manager not initialized")
 
 
 class nemo_process_rate_data(Command):
-    id = consts.CommandEnum.NemoProcessRateData
+    id = CommandEnum.NemoProcessRateData
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
 
-        if parent.nemo_manager is not None:
-            t_start = kwargs[consts.T_START]
-            t_stop = kwargs[consts.T_STOP]
-            decimation_factor = kwargs[consts.DECIMATION_FACTOR]
+        if main.nemo_manager is not None:
+            t_start = kwargs[ck.T_START]
+            t_stop = kwargs[ck.T_STOP]
+            decimation_factor = kwargs[ck.DECIMATION_FACTOR]
 
-            parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+            main.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
 
         else:
             logging.error(
@@ -727,21 +723,21 @@ class nemo_process_rate_data(Command):
 
 
 class nemo_process_histograms(Command):
-    id = consts.CommandEnum.NemoProcessHistograms
+    id = CommandEnum.NemoProcessHistograms
     uplink_codecs = [
-        Codec(consts.T_START, "int"),
-        Codec(consts.T_STOP, "int"),
-        Codec(consts.DECIMATION_FACTOR, "uint8"),
+        Codec(ck.T_START, "int"),
+        Codec(ck.T_STOP, "int"),
+        Codec(ck.DECIMATION_FACTOR, "uint8"),
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            t_start = kwargs[consts.T_START]
-            t_stop = kwargs[consts.T_STOP]
-            decimation_factor = kwargs[consts.DECIMATION_FACTOR]
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            t_start = kwargs[ck.T_START]
+            t_stop = kwargs[ck.T_STOP]
+            decimation_factor = kwargs[ck.DECIMATION_FACTOR]
 
-            parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
+            main.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
 
         else:
             logging.error(
@@ -750,139 +746,136 @@ class nemo_process_histograms(Command):
 
 
 def run_shell_command(cmd: str) -> int:
-    logging.info(cmd)
+    logging.info(f"Running {cmd}")
     output = subprocess.run(cmd, shell=True)
     return output.returncode
 
 
-SHELL_CODEC = [Codec(consts.CMD, "string")]
-RETURN_CODEC = [Codec(consts.RETURN_CODE, "uint8")]
+SHELL_CODEC = [Codec(ck.CMD, "string")]
+RETURN_CODEC = [Codec(dk.RETURN_CODE, "uint8")]
 
 
 class shellCommand(Command):
-    id = consts.CommandEnum.ShellCommand
+    id = CommandEnum.ShellCommand
     uplink_codecs = SHELL_CODEC
     downlink_codecs = RETURN_CODEC
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, Union[float, int]]:
-        cmd: str = cast("str", kwargs.get(consts.CMD))
+        cmd: str = cast("str", kwargs.get(ck.CMD))
         return_code = run_shell_command(cmd)
-        return {consts.RETURN_CODE: return_code}
+        return {dk.RETURN_CODE: return_code}
 
 
 class sudoCommand(Command):
     """Same as shell_command, but prepends 'sudo ' to the command"""
 
-    id = consts.CommandEnum.SudoCommand
+    id = CommandEnum.SudoCommand
     uplink_codecs = SHELL_CODEC
     downlink_codecs = RETURN_CODEC
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, Union[float, int]]:
-        cmd: str = cast("str", kwargs.get(consts.CMD))
+        cmd: str = cast("str", kwargs.get(ck.CMD))
         command = "sudo " + cmd
         return_code = run_shell_command(command)
-        return {consts.RETURN_CODE: return_code}
+        return {dk.RETURN_CODE: return_code}
 
 
 class picberry(Command):
-    id = consts.CommandEnum.Picberry
+    id = CommandEnum.Picberry
     uplink_codecs = SHELL_CODEC
     downlink_codecs = RETURN_CODEC
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, Union[float, int]]:
-        cmd: str = cast("str", kwargs.get(consts.CMD))
+        cmd: str = cast("str", kwargs.get(ck.CMD))
         base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
         return_code = run_shell_command(base_command + cmd)
 
-        return {consts.RETURN_CODE: return_code}
+        return {dk.RETURN_CODE: return_code}
 
 
 class exec_py_file(Command):
-    id = consts.CommandEnum.ExecPyFile
-    uplink_codecs = [Codec(consts.FNAME, "string")]
+    id = CommandEnum.ExecPyFile
+    uplink_codecs = [Codec(ck.FNAME, "string")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
-        filename: str = cast("str", kwargs[consts.FNAME])
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+        filename: str = cast("str", kwargs[ck.FNAME])
         filename += ".py"
         logging.debug(f"CWD: {os.getcwd()}")
         exec(open(filename).read())
 
 
 class set_param(Command):
-    id = consts.CommandEnum.SetParam
+    id = CommandEnum.SetParam
     uplink_codecs = [
-        Codec(consts.NAME, "string"),
-        Codec(consts.VALUE, "double"),
-        Codec(consts.HARD_SET, "bool"),
+        Codec(ck.NAME, "string"),
+        Codec(ck.VALUE, "double"),
+        Codec(ck.HARD_SET, "bool"),
     ]
 
-    downlink_codecs = [Codec(consts.VALUE, "double"), Codec(consts.HARD_SET, "bool")]
+    downlink_codecs = [Codec(dk.VALUE, "double")]
 
-    def _method(self, parent: MainSatelliteThread, **kwargs):
+    def _method(self, main: MainSatelliteThread, **kwargs):
         """Changes the values of a parameter in utils/parameters.py or .json if hard_set"""
-        name = kwargs[consts.NAME]
-        value = kwargs[consts.VALUE]
-        hard_set = kwargs[consts.HARD_SET]
+        name = kwargs[ck.NAME]
+        value = kwargs[ck.VALUE]
+        hard_set = kwargs[ck.HARD_SET]
         initial_value = parameter_utils.set_parameter(name, value, hard_set)
 
         logging.info(f"Changed constant {name} from {initial_value} to {value}")
 
-        return {consts.VALUE: value, consts.HARD_SET: hard_set}
+        return {dk.VALUE: value}
 
 
 GomConf1Codecs = [
-    Codec(consts.PPT_MODE, "uint8"),
-    Codec(consts.BATTHEATERMODE, "bool"),
-    Codec(consts.BATTHEATERLOW, "uint8"),
-    Codec(consts.BATTHEATERHIGH, "uint8"),
-    Codec(consts.OUTPUT_NORMAL1, "bool"),
-    Codec(consts.OUTPUT_NORMAL2, "bool"),
-    Codec(consts.OUTPUT_NORMAL3, "bool"),
-    Codec(consts.OUTPUT_NORMAL4, "bool"),
-    Codec(consts.OUTPUT_NORMAL5, "bool"),
-    Codec(consts.OUTPUT_NORMAL6, "bool"),
-    Codec(consts.OUTPUT_NORMAL7, "bool"),
-    Codec(consts.OUTPUT_NORMAL8, "bool"),
-    Codec(consts.OUTPUT_SAFE1, "bool"),
-    Codec(consts.OUTPUT_SAFE2, "bool"),
-    Codec(consts.OUTPUT_SAFE3, "bool"),
-    Codec(consts.OUTPUT_SAFE4, "bool"),
-    Codec(consts.OUTPUT_SAFE5, "bool"),
-    Codec(consts.OUTPUT_SAFE6, "bool"),
-    Codec(consts.OUTPUT_SAFE7, "bool"),
-    Codec(consts.OUTPUT_SAFE8, "bool"),
-    Codec(consts.OUTPUT_ON_DELAY, "ushort"),
-    Codec(consts.OUTPUT_OFF_DELAY, "ushort"),
-    Codec(consts.VBOOST1, "ushort"),
-    Codec(consts.VBOOST2, "ushort"),
-    Codec(consts.VBOOST3, "ushort"),
+    Codec(GomConfKwargs.PPT_MODE, "uint8"),
+    Codec(GomConfKwargs.BATTHEATERMODE, "bool"),
+    Codec(GomConfKwargs.BATTHEATERLOW, "uint8"),
+    Codec(GomConfKwargs.BATTHEATERHIGH, "uint8"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL1, "bool"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL2, "bool"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL3, "bool"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL4, "bool"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL5, "bool"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL6, "bool"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL7, "bool"),
+    Codec(GomConfKwargs.OUTPUT_NORMAL8, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE1, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE2, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE3, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE4, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE5, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE6, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE7, "bool"),
+    Codec(GomConfKwargs.OUTPUT_SAFE8, "bool"),
+    Codec(GomConfKwargs.OUTPUT_ON_DELAY, "ushort"),
+    Codec(GomConfKwargs.OUTPUT_OFF_DELAY, "ushort"),
+    Codec(GomConfKwargs.VBOOST1, "ushort"),
+    Codec(GomConfKwargs.VBOOST2, "ushort"),
+    Codec(GomConfKwargs.VBOOST3, "ushort"),
 ]
 
 
 class set_gom_conf1(Command):
-
-    id = consts.CommandEnum.GomConf1Set
+    id = CommandEnum.GomConf1Set
     uplink_codecs = GomConf1Codecs
     downlink_codecs = GomConf1Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
         new_config = gom_util.eps_config_from_dict(**kwargs)
         logging.info("New config to be set:")
         ps.displayConfig(new_config)
 
-        if parent.devices.gom is not None:
+        if main.devices.gom.connected:
             try:
-                parent.devices.gom.driver.config_set(new_config)
-                updated_config: ps.eps_config_t = parent.devices.gom.driver.config_get()
+                main.devices.gom.driver.config_set(new_config)
+                updated_config: ps.eps_config_t = main.devices.gom.driver.config_get()
                 new_config_dict = gom_util.dict_from_eps_config(updated_config)
                 return new_config_dict
 
@@ -894,16 +887,14 @@ class set_gom_conf1(Command):
 
 
 class get_gom_conf1(Command):
-    id = consts.CommandEnum.GomConf1Get
+    id = CommandEnum.GomConf1Get
     uplink_codecs = []
     downlink_codecs = GomConf1Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
-        if parent.devices.gom is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
+        if main.devices.gom is not None:
             current_config: ps.eps_config_t = cast(
-                "ps.eps_config_t", parent.devices.gom.driver.config_get()
+                "ps.eps_config_t", main.devices.gom.driver.config_get()
             )
             ps.displayConfig(current_config)
             current_config_dict = gom_util.dict_from_eps_config(current_config)
@@ -913,44 +904,38 @@ class get_gom_conf1(Command):
 
 
 GomConf2Codecs = [
-    Codec(consts.MAX_VOLTAGE, "ushort"),
-    Codec(consts.NORM_VOLTAGE, "ushort"),
-    Codec(consts.SAFE_VOLTAGE, "ushort"),
-    Codec(consts.CRIT_VOLTAGE, "ushort"),
+    Codec(GomConfKwargs.MAX_VOLTAGE, "ushort"),
+    Codec(GomConfKwargs.NORM_VOLTAGE, "ushort"),
+    Codec(GomConfKwargs.SAFE_VOLTAGE, "ushort"),
+    Codec(GomConfKwargs.CRIT_VOLTAGE, "ushort"),
 ]
 
 
 class set_gom_conf2(Command):
-    id = consts.CommandEnum.GomConf2Set
+    id = CommandEnum.GomConf2Set
     uplink_codecs = GomConf2Codecs
     downlink_codecs = GomConf2Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
-        if parent.devices.gom is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
+        if main.devices.gom.connected:
             new_conf2 = gom_util.eps_config2_from_dict(kwargs)
-            parent.devices.gom.driver.config2_set(new_conf2)
-            parent.devices.gom.driver.config2_cmd(2)
+            main.devices.gom.driver.config2_set(new_conf2)
+            main.devices.gom.driver.config2_cmd(2)
 
-            return gom_util.dict_from_eps_config2(
-                parent.devices.gom.driver.config2_get()
-            )
+            return gom_util.dict_from_eps_config2(main.devices.gom.driver.config2_get())
         else:
             logging.warning("Can't talk to Gom P31u")
 
 
 class get_gom_conf2(Command):
-    id = consts.CommandEnum.GomConf2Get
+    id = CommandEnum.GomConf2Get
     uplink_codecs = []
     downlink_codecs = GomConf2Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
-        if parent.devices.gom is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
+        if main.devices.gom.connected:
             current_conf2 = cast(
-                "ps.eps_config2_t", parent.devices.gom.driver.config2_get()
+                "ps.eps_config2_t", main.devices.gom.driver.config2_get()
             )
             ps.displayConfig2(current_conf2)
             current_config2_dict = gom_util.dict_from_eps_config2(current_conf2)
@@ -1015,6 +1000,8 @@ COMMAND_LIST: List[Command] = [
     run_opnav(),
 ]
 
+COMMAND_DICT: Dict[int, Command] = {command.id: command for command in COMMAND_LIST}
+
 
 # DEPRECATED Commands: OLD CODE, UNUSED, MAYBE WORTH BRINGING BACK?
 
@@ -1038,12 +1025,12 @@ COMMAND_LIST: List[Command] = [
 #         original_file.writelines(new_file_lines)
 
 # class insert_line_in_file(Command):
-#     id = consts.CommandEnum.Insert
+#     id = CommandEnum.Insert
 #     uplink_codecs = [Codec(TOTAL_BLOCKS, "ushort")]
 #     downlink_codecs = [Codec(CHECKSUM, "string"),
 #                      Codec(MISSING_BLOCKS, "string")]
 
-#     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+#     def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
 #         line_number = kwargs['line_number']
 #         new_line = kwargs['new_line']
 #         file_path = params.FILE_UPDATE_PATH
@@ -1066,44 +1053,44 @@ COMMAND_LIST: List[Command] = [
 #         # tests integration of ADC into the rest of the FSW
 #         logging.info(
 #             "Cold junction temperature for gyro sensor in Celsius:")
-#         logging.info(parent.devices.adc.get_gyro_temp())
+#         logging.info(main.devices.adc.get_gyro_temp())
 
 #         logging.info(
-#             f"Pressure: {parent.devices.adc.read_pressure()} psi")
+#             f"Pressure: {main.devices.adc.read_pressure()} psi")
 #         logging.info(
-#             f"Temperature: {parent.devices.adc.read_temperature()} deg C")
+#             f"Temperature: {main.devices.adc.read_temperature()} deg C")
 
 #         logging.info("Conversion sanity check: 25.6 degrees")
-#         logging.info(parent.devices.adc.convert_volt_to_temp(
-#             parent.devices.adc.convert_temp_to_volt(25.6)))
+#         logging.info(main.devices.adc.convert_volt_to_temp(
+#             main.devices.adc.convert_temp_to_volt(25.6)))
 #         logging.info("Conversion sanity check: 2.023 mV")
-#         logging.info(parent.devices.adc.convert_temp_to_volt(
-#             parent.devices.adc.convert_volt_to_temp(2.023)))
+#         logging.info(main.devices.adc.convert_temp_to_volt(
+#             main.devices.adc.convert_volt_to_temp(2.023)))
 
 #     def rtc_test(self):
 #         logging.info(
-#             f"Oscillator Disabled: {parent.devices.rtc.driver.disable_oscillator}")
-#         logging.info(f"RTC Temp: {parent.devices.rtc.get_temp()}")
-#         logging.info(f"RTC Time: {parent.devices.rtc.get_time()}")
+#             f"Oscillator Disabled: {main.devices.rtc.driver.disable_oscillator}")
+#         logging.info(f"RTC Temp: {main.devices.rtc.get_temp()}")
+#         logging.info(f"RTC Time: {main.devices.rtc.get_time()}")
 #         # time.sleep(1)
 #         logging.info("Setting RTC time to 1e9")
-#         parent.devices.rtc.set_time(int(1e9))
-#         logging.info("New RTC Time: {parent.devices.rtc.get_time()}")
+#         main.devices.rtc.set_time(int(1e9))
+#         logging.info("New RTC Time: {main.devices.rtc.get_time()}")
 #         # time.sleep(1)
 #         logging.info("Incrementing RTC Time by 5555 seconds")
-#         parent.devices.rtc.increment_rtc(5555)
+#         main.devices.rtc.increment_rtc(5555)
 #         logging.info(
-#             f"New RTC Time: {parent.devices.rtc.get_time()}")
+#             f"New RTC Time: {main.devices.rtc.get_time()}")
 #         logging.info("Disabling Oscillator, waiting 10 seconds")
-#         # parent.devices.rtc.disable_oscillator()
+#         # main.devices.rtc.disable_oscillator()
 #         time.sleep(10)
 #         logging.info(
-#             f"RTC Time after disabling oscillator: {parent.devices.rtc.get_time()}")
+#             f"RTC Time after disabling oscillator: {main.devices.rtc.get_time()}")
 #         logging.info("Enabling Oscillator, waiting 10 seconds")
-#         # parent.devices.rtc.enable_oscillator()
+#         # main.devices.rtc.enable_oscillator()
 #         time.sleep(10)
 #         logging.info(
-#             f"RTC Time after re-enabling oscillator: {parent.devices.rtc.get_time()}")
+#             f"RTC Time after re-enabling oscillator: {main.devices.rtc.get_time()}")
 #         logging.info("Disabling Oscillator")
-#         # parent.devices.rtc.disable_oscillator()
-#         parent.handle_sigint(None, None)
+#         # main.devices.rtc.disable_oscillator()
+#         main.handle_sigint(None, None)

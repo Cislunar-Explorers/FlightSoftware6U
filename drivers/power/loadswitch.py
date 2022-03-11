@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 from drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
 from abc import ABC, abstractmethod
@@ -39,13 +40,6 @@ class LoadSwitch(ABC):
         self._set(on)
         self.get_new_telem()
 
-    def bounce(self, downtime=0.1):
-        """If the loadswitch is on, flips the loadswitch off and back on"""
-        if self.telem.state:
-            self.set(False)
-            time.sleep(downtime)
-            self.set(True)
-
     def get_telem(self) -> LoadSwitchTelem:
         """Returns the latest queued telemetry."""
         try:
@@ -82,12 +76,15 @@ class P31uLoadSwitch(LoadSwitch):
         duration: Union[float, int],
         delay: Union[float, int] = 0,
         asynchronous: bool = False,
+        on: bool = True,
     ):
         if asynchronous:
+            # I think the gomspace p31u can only turn outputs on/off with second-level precision
+            # so cast all floats to ints. Above assumption may not be true, but isn't that critical
             delay = int(delay)
             duration = int(duration)
-            self.set(True, delay=delay)
-            self.set(False, delay=delay + duration)
+            self.set(on, delay=delay)
+            self.set(on, delay=delay + duration)
         else:
             super().pulse(duration)
 
@@ -106,8 +103,12 @@ class P31uLoadSwitch(LoadSwitch):
 
 
 class mockP31uLoadSwitch(P31uLoadSwitch):
+    """Mocked loadswitch class. This loadswitch simulates the behavior of a real, hardware-connected
+    loadswitch but purely in software. Useful for unit testing
+    """
+
     def __init__(self, current_draw: int = 1800, variability: int = 100) -> None:
-        self._state = False
+        self._state = False  # whether the loadswitch is on or off
         self.current_draw = current_draw  # mA
         self.variability = variability  # mA
         self.latchups: int = 0
@@ -117,10 +118,14 @@ class mockP31uLoadSwitch(P31uLoadSwitch):
         self._state = state
 
     def get_new_telem(self) -> P31uLoadSwitchTelem:
+        """Since we have no hardware to get telemetry from, we generate some based off the loadswitch's state"""
+        # adding in some variability to the measurement to be more realistic
         current_draw = self._state * int(
             self.current_draw + self.variability * random.uniform(-1, 1)
         )
-        self.latchups += random.random() < 0.01
+        self.latchups += (
+            random.random() < 0.01
+        )  # latchups are single events effects that are (hopefully) quite rare
         return P31uLoadSwitchTelem(self._state, current_draw, 0, 0, self.latchups)
 
 
@@ -153,14 +158,38 @@ class solenoid(P31uLoadSwitch):
     This loadswitch is significantly different from the other loadswitches
     because of the unique pulse characteristics required by the solenoid valve.
     Thus, when using with a real solenoid in the loop, use the `pulse` method rather than the `set` method.
-    The `set` method will still work, but should not be used to properly actuate the solenoid valve."""
+    The `_set` method will still work, but should not be used to properly actuate the solenoid valve.
+    LEAVING THIS ON FOR MORE THAN A FEW SECONDS WHILE A PHYSICAL SOLENOID VALVE IS CONNECTED WILL BREAK THE VALVE.
+    DO NOT PLAN ON BREAKING A VALVE. THEY ARE LITERALLY IRREPLACEABLE (no longer manufactured and we have no spares)"""
 
     p31u_output_id = GomOutputs.solenoid
 
-    def pulse(self):
-        """The implementation of this will likely change soon
+    def set(self, on: bool, delay: int = 0):
+        msg = (
+            "The solenoid valve cannot be actuated correctly using the set method."
+            "If you want to actuate a physical solenoid valve, use the `pulse` method."
+            "If you want to turn on the pin on the P31u without a solenoid in the loop, use the `_set` method"
+        )
+
+        if on:
+            # If you try to turn on this load switch, error. Turns off just fine though.
+            logging.critical(msg)
+        else:
+            self._set(on, delay=delay)
+
+        self.get_new_telem()
+
+    def pulse(self, duration: float):
+        """Pulses the solenoid and holds it open for `duration` seconds
+        The implementation of this will likely change soon
         because the solenoid driver circuit is probably changing."""
-        self.driver.solenoid_single_wave(0.1)
+
+        if 0 < duration <= 3:
+            self.driver.solenoid_single_wave(duration)
+        else:
+            logging.warning(
+                "Invalid or unsafe solenoid valve pulse duration. You should NOT pulse the valve for more than 3 sec"
+            )
 
 
 class electrolyzers(P31uLoadSwitch):
@@ -172,7 +201,7 @@ class electrolyzers(P31uLoadSwitch):
 class GPIOLoadSwitch(LoadSwitch):
     """Base loadswitch class for devices actuated solely by the GPIO pins on the RPi"""
 
-    gpio_pin: int
+    gpio_pin: int  # the pin number on the Raspberry pi, must be between 1-40
 
     def _set(self, state: bool):
         self.driver.set_gpio(self.gpio_pin, state)
@@ -181,6 +210,22 @@ class GPIOLoadSwitch(LoadSwitch):
         state = self.driver.get_gpio(self.gpio_pin)
         self.telem = LoadSwitchTelem(state)
         return self.telem
+
+
+class mockGPIOLoadSwitch(GPIOLoadSwitch):
+    """Mocked loadswitch class. This loadswitch simulates the behavior of a real, hardware-connected
+    GPIO loadswitch but purely in software. Useful for unit testing
+    """
+
+    def __init__(self):
+        self._state = False
+
+    def _set(self, state: bool, delay: int = 0):
+        time.sleep(delay)
+        self._state = state
+
+    def get_new_telem(self) -> LoadSwitchTelem:
+        return LoadSwitchTelem(self._state)
 
 
 class power_amplifier(GPIOLoadSwitch):

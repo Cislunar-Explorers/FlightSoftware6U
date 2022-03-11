@@ -17,7 +17,7 @@ class Command(ABC):
     If you want to implement a new command, go to command_definitions.py and add your command there.
     All you need to do if you want to implement a new command is to:
         1. Go to command_definitions.py and make a class inheriting from this class
-        2. Override the `self._method` method which can only take in a kwarg dictionary: no args other than `parent`
+        2. Override the `self._method` method which can only take in a kwarg dictionary: no args other than `main`
         3. Add the relevant Codecs - make sure you're unpacking and packing the dict correctly in self._method
         4. Specify the command's `id`. You'll need to add the id to the CommandEnum in utils.constants
         5. Add your new command class to the `COMMAND_LIST` defined at the bottom of command_definitions.py
@@ -38,47 +38,55 @@ class Command(ABC):
         self.downlink_buffer_size = sum(
             [codec.num_bytes for codec in self.downlink_codecs]
         )
+        self.uplink_codecs_dict = {codec.name: codec for codec in self.uplink_codecs}
+        self.downlink_codecs_dict = {
+            codec.name: codec for codec in self.downlink_codecs
+        }
 
     @abstractmethod
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Optional[Dict[str, Union[float, int]]]:
         ...
 
     @staticmethod
-    def _unpack(data: bytes, codec_list: List[Codec]) -> Dict[str, Any]:
+    def _unpack(data: bytes, codec_dict: Dict[str, Codec]) -> Dict[str, Any]:
         offset = 0
         kwargs = {}
-        for point in codec_list:
-            kwarg = point.unpack(data[offset : offset + point.num_bytes])
+        for codec in codec_dict.values():
+            kwarg = codec.unpack(data[offset : offset + codec.num_bytes])
             kwargs.update(kwarg)
-            offset += point.num_bytes
+            offset += codec.num_bytes
 
         return kwargs
 
     @staticmethod
-    def _pack(kwargs: Dict[str, Any], codecs: List[Codec], buffer_size: int) -> bytes:
+    def _pack(
+        kwargs: Dict[str, Any], codecs_dict: Dict[str, Codec], buffer_size: int
+    ) -> bytes:
         buffer = bytearray(buffer_size)
         offset = 0
 
         for name, value in kwargs.items():
-            codec = [p for p in codecs if p.name == name][0]
+            codec = codecs_dict[name]
             buffer[offset : offset + codec.num_bytes] = codec.pack(value)
             offset += codec.num_bytes
 
         return bytes(buffer)
 
     def unpack_args(self, arg_data: bytes) -> Dict[str, Any]:
-        return self._unpack(arg_data, self.uplink_codecs)
+        return self._unpack(arg_data, self.uplink_codecs_dict)
 
-    def pack_args(self, **kwargs) -> bytes:
-        return self._pack(kwargs, self.uplink_codecs, self.uplink_buffer_size)
+    def pack_args(self, arg_dict) -> bytes:
+        return self._pack(arg_dict, self.uplink_codecs_dict, self.uplink_buffer_size)
 
     def unpack_telem(self, arg_data: bytes) -> Dict[str, Any]:
-        return self._unpack(arg_data, self.downlink_codecs)
+        return self._unpack(arg_data, self.downlink_codecs_dict)
 
-    def pack_telem(self, **kwargs) -> bytes:
-        return self._pack(kwargs, self.downlink_codecs, self.downlink_buffer_size)
+    def pack_telem(self, telem_dict) -> bytes:
+        return self._pack(
+            telem_dict, self.downlink_codecs_dict, self.downlink_buffer_size
+        )
 
     def packing_check(self, telem: Optional[Dict], codec_list: List[Codec]):
         error = False
@@ -97,12 +105,12 @@ class Command(ABC):
             )
             raise CommandException
 
-    def run(self, parent: Optional[MainSatelliteThread] = None, **kwargs):
+    def run(self, main: Optional[MainSatelliteThread] = None, **kwargs):
         try:
-            downlink = self._method(parent=parent, **kwargs)
+            downlink = self._method(main=main, **kwargs)
             self.packing_check(downlink, self.downlink_codecs)
             return downlink
         except Exception as e:
-            logging.error("Unhandled command exception")
+            logging.error(f"Unhandled exception running command {self.id}")
             logging.error(e, exc_info=True)
             raise CommandException

@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
     # for an explanation of the above 4 lines of code, see
     # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-    # It lets your IDE know what type(self._parent) is, without causing any circular imports at runtime.
+    # It lets your IDE know what type(self._main) is, without causing any circular imports at runtime.
 
 import gc
 from time import sleep, time
@@ -36,8 +36,8 @@ NO_ARGS = ([], 0)
 class FlightMode:
     flight_mode_id = -1  # Value overridden in FM's implementation
 
-    def __init__(self, parent: MainSatelliteThread):
-        self._parent = parent
+    def __init__(self, main: MainSatelliteThread):
+        self._main = main
         self.task_completed = False
 
     def update_state(self) -> int:
@@ -46,14 +46,14 @@ class FlightMode:
         this serves as a basis for which most other flight modes can build off of."""
 
         # I am not sure this will properly work, but shuld have little impact for software demo
-        if self._parent.opnav_process.is_alive():
+        if self._main.opnav_process.is_alive():
             try:
-                self._parent.opnav_process.join(timeout=1)
-                result = self._parent.opnav_proc_queue.get(timeout=1)
+                self._main.opnav_process.join(timeout=1)
+                result = self._main.opnav_proc_queue.get(timeout=1)
                 logging.info("[OPNAV]: ", result)
             except Empty:
-                if not self._parent.opnav_process.is_alive():
-                    self._parent.opnav_process.terminate()
+                if not self._main.opnav_process.is_alive():
+                    self._main.opnav_process.terminate()
                     logging.info("[OPNAV]: Process Terminated")
 
         flight_mode_id = self.flight_mode_id
@@ -65,7 +65,7 @@ class FlightMode:
             return flight_mode_id
 
         # go to maneuver mode if there is something in the maneuver queue
-        if not self._parent.maneuver_queue.empty() or params.SCHEDULED_BURN_TIME:
+        if not self._main.maneuver_queue.empty() or params.SCHEDULED_BURN_TIME:
             if params.SCHEDULED_BURN_TIME > time():
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
                     return consts.FMEnum.Maneuver.value
@@ -76,17 +76,17 @@ class FlightMode:
 
         # go to reorientation mode if there is something in the reorientation queue
         if (
-            not self._parent.reorientation_queue.empty()
-        ) or self._parent.reorientation_list:
+            not self._main.reorientation_queue.empty()
+        ) or self._main.reorientation_list:
             return consts.FMEnum.AttitudeAdjustment.value
 
         # go to comms mode if there is something in the comms queue to downlink
 
-        if not self._parent.downlink_queue.empty():
+        if not self._main.downlink_queue.empty():
             return consts.FMEnum.CommsMode.value
 
         # if battery is low, go to low battery mode
-        batt_voltage = self._parent.telemetry.gom.hk.vbatt
+        batt_voltage = self._main.telemetry.gom.hk.vbatt
         if (
             batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD
         ) and not params.IGNORE_LOW_BATTERY:
@@ -94,17 +94,17 @@ class FlightMode:
 
         # if there is no current coming into the batteries, go to low battery mode
         if (
-            sum(self._parent.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT
+            sum(self._main.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT
             and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD
             and not params.IGNORE_LOW_BATTERY
         ):
             return consts.FMEnum.LowBatterySafety.value
 
         if self.task_completed:
-            if self._parent.FMQueue.empty():
+            if self._main.FMQueue.empty():
                 return consts.FMEnum.Normal.value
             else:
-                return self._parent.FMQueue.get()
+                return self._main.FMQueue.get()
 
         # returns -1 if the logic here does not make any FM changes
         return consts.NO_FM_CHANGE
@@ -113,16 +113,16 @@ class FlightMode:
         raise NotImplementedError("Only implemented in specific flight mode subclasses")
 
     def execute_commands(self):
-        if len(self._parent.commands_to_execute) == 0:
+        if len(self._main.commands_to_execute) == 0:
             pass  # If I have no commands to execute do nothing
         else:
             # loop through commands in commands_to_execute list
             finished_commands = []
 
-            for command in self._parent.commands_to_execute:
-                downlink = self._parent.command_handler.execute_command(command)
+            for command in self._main.commands_to_execute:
+                downlink = self._main.command_handler.execute_command(command)
                 if downlink is not None:
-                    self._parent.downlink_queue.put(downlink)
+                    self._main.downlink_queue.put(downlink)
 
                 finished_commands.append(command)
 
@@ -133,14 +133,14 @@ class FlightMode:
             # TODO: Add try/except/finally statement above so that the for loop below always runs, even if an
             #  exception occurs in the above for loop
             for finished_command in finished_commands:
-                self._parent.commands_to_execute.remove(finished_command)
+                self._main.commands_to_execute.remove(finished_command)
 
     def poll_inputs(self):
-        if self._parent.devices.gom is not None:
-            self._parent.devices.gom.tick_wdt()  # FIXME; we don't want this for flight
-            # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
-            # An idea is to only pet the watchdog every time we recieve a command from the ground
-        self._parent.telemetry.poll()
+        # TODO: Comment on what polling inputs means and how they differ across flight modes
+        self._main.devices.gom.tick_wdt()  # FIXME; we don't want this for flight
+        # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
+        # An idea is to only pet the watchdog every time we recieve a command from the ground
+        self._main.telemetry.poll()
 
     def completed_task(self):
         self.task_completed = True
@@ -190,21 +190,21 @@ class PauseBackgroundMode(FlightMode):
     def run_mode(self):
         super().run_mode()
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def __enter__(self):
         super().__enter__()
-        if self._parent.nemo_manager is not None:
-            self._parent.nemo_manager.pause()
+        if self._main.nemo_manager is not None:
+            self._main.nemo_manager.pause()
         # TODO: Pause Opnav process if running
         gc.disable()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         gc.collect()
         gc.enable()
-        if self._parent.nemo_manager is not None:
-            self._parent.nemo_manager.resume()
+        if self._main.nemo_manager is not None:
+            self._main.nemo_manager.resume()
         # TODO: Resume Opnav process if previously running
         super().__exit__(exc_type, exc_val, exc_tb)
 
@@ -215,8 +215,8 @@ class TestMode(PauseBackgroundMode):
 
     flight_mode_id = consts.FMEnum.TestMode.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def update_state(self) -> int:
         # this is intentional - we don't want the FM to update if we are testing something
@@ -234,53 +234,53 @@ class CommsMode(FlightMode):
 
     flight_mode_id = consts.FMEnum.CommsMode.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         self.electrolyzing = False
 
     def enter_transmit_safe_mode(self):
 
         # Stop electrolyzing
-        if self._parent.devices.gom.is_electrolyzing():
+        if self._main.devices.gom.is_electrolyzing():
             self.electrolyzing = True
-            self._parent.devices.gom.electrolyzers.set(False)
+            self._main.devices.gom.electrolyzers.set(False)
 
         # Set RF receiving side to low
-        self._parent.devices.gom.rf_rx.set(False)
+        self._main.devices.gom.rf_rx.set(False)
 
         # Turn off LNA
-        self._parent.devices.gom.lna.set(False)
+        self._main.devices.gom.lna.set(False)
 
         # Set RF transmitting side to high
-        self._parent.devices.gom.rf_tx.set(True)
+        self._main.devices.gom.rf_tx.set(True)
 
         # Turn on power amplifier
-        self._parent.devices.gom.pa.set(True)
+        self._main.devices.gom.pa.set(True)
 
     def exit_transmit_safe_mode(self):
 
         # Turn off power amplifier
-        self._parent.devices.gom.pa.set(False)
+        self._main.devices.gom.pa.set(False)
 
         # Set RF transmitting side to low
-        self._parent.devices.gom.rf_tx.set(False)
+        self._main.devices.gom.rf_tx.set(False)
 
         # Turn on LNA
-        self._parent.devices.gom.lna.set(True)
+        self._main.devices.gom.lna.set(True)
 
         # Set RF receiving side to high
-        self._parent.devices.gom.rf_rx.set(True)
+        self._main.devices.gom.rf_rx.set(True)
 
         # Resume electrolysis if we paused it to transmit
         if self.electrolyzing:
-            self._parent.devices.gom.electrolyzers.set(
+            self._main.devices.gom.electrolyzers.set(
                 True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
             )
 
     def execute_downlinks(self):
-        while not self._parent.downlink_queue.empty():
-            self._parent.devices.radio.transmit(self._parent.downlink_queue.get())
-            self._parent.downlink_counter += 1
+        while not self._main.downlink_queue.empty():
+            self._main.radio.transmit(self._main.downlink_queue.get())
+            self._main.downlink_counter += 1
             # TODO: revisit and see if we actually need this
             sleep(params.DOWNLINK_BUFFER_TIME)
 
@@ -291,7 +291,7 @@ class CommsMode(FlightMode):
         return consts.NO_FM_CHANGE
 
     def run_mode(self):
-        if not self._parent.downlink_queue.empty():
+        if not self._main.downlink_queue.empty():
             self.enter_transmit_safe_mode()
             self.execute_downlinks()
             self.exit_transmit_safe_mode()
@@ -306,19 +306,19 @@ class OpNavMode(FlightMode):
     # TODO: Flight Software/Opnav interface
     flight_mode_id = consts.FMEnum.OpNav.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def run_mode(self):
         # TODO: overhaul so opnav calculation only occur while in opnav mode
-        if not self._parent.opnav_process.is_alive():
+        if not self._main.opnav_process.is_alive():
             logging.info("[OPNAV]: Able to run next opnav")
-            self._parent.last_opnav_run = time()
+            self._main.last_opnav_run = time()
             logging.info("[OPNAV]: Starting opnav subprocess")
-            self._parent.opnav_process = Process(
-                target=self.opnav_subprocess, args=(self._parent.opnav_proc_queue,)
+            self._main.opnav_process = Process(
+                target=self.opnav_subprocess, args=(self._main.opnav_proc_queue,)
             )
-            self._parent.opnav_process.start()
+            self._main.opnav_process.start()
         self.completed_task()
 
     def update_state(self) -> int:
@@ -350,8 +350,8 @@ class SensorMode(FlightMode):
 
     flight_mode_id = consts.FMEnum.SensorMode.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def update_state(self) -> int:
         return (
@@ -369,8 +369,8 @@ class SafeMode(FlightMode):
 
     flight_mode_id = consts.FMEnum.Safety.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def run_mode(self):
         # TODO
@@ -380,8 +380,8 @@ class SafeMode(FlightMode):
 class NormalMode(FlightMode):
     flight_mode_id = consts.FMEnum.Normal.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def poll_inputs(self):
         super().poll_inputs()
@@ -392,20 +392,20 @@ class NormalMode(FlightMode):
             return super_fm
 
         # since Normal mode never completes its task, we need to check the queue here instead of in super.update_state
-        if not self._parent.FMQueue.empty():
-            return self._parent.FMQueue.get()
+        if not self._main.FMQueue.empty():
+            return self._main.FMQueue.get()
 
         time_for_opnav: bool = (
-            time() - self._parent.last_opnav_run
+            time() - self._main.last_opnav_run
         ) // 60 > params.OPNAV_INTERVAL
 
         time_for_telem: bool = (
-            time() - self._parent.devices.radio.last_transmit_time
+            time() - self._main.devices.radio.last_transmit_time
         ) // 60 > params.TELEM_INTERVAL
 
-        need_to_electrolyze: bool = self._parent.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
+        need_to_electrolyze: bool = self._main.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
 
-        currently_electrolyzing = self._parent.devices.gom.is_electrolyzing()
+        currently_electrolyzing = self._main.devices.gom.is_electrolyzing()
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
@@ -416,7 +416,7 @@ class NormalMode(FlightMode):
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
             logging.info("No need to electrolyze, turning OFF electrolyzers")
-            self._parent.devices.gom.electrolyzers.set(False)
+            self._main.devices.gom.electrolyzers.set(False)
 
         if currently_electrolyzing and need_to_electrolyze:
             logging.debug("Already electrolyzing")
@@ -425,7 +425,7 @@ class NormalMode(FlightMode):
         # if below pressure and not electrolyzing, start electrolyzing
         if not currently_electrolyzing and need_to_electrolyze:
             logging.info("Not electrolyzing, turning ON electrolyzers")
-            self._parent.devices.gom.electrolyzers.set(True)
+            self._main.devices.gom.electrolyzers.set(True)
 
         if not currently_electrolyzing and not need_to_electrolyze:
             logging.debug("Electrolyzers already OFF")
@@ -435,15 +435,15 @@ class NormalMode(FlightMode):
 
         if time_for_opnav:
             logging.info("Time to run opnav")
-            self._parent.FMQueue.put(consts.FMEnum.OpNav.value)
+            self._main.FMQueue.put(consts.FMEnum.OpNav.value)
 
         if time_for_telem:
             # Add a standard packet to the downlink queue for our period telemetry beacon
-            telem = self._parent.telemetry.standard_packet_dict()
-            downlink = self._parent.command_handler.pack_telemetry(
-                consts.CommandEnum.BasicTelem, **telem
+            telem = self._main.telemetry.standard_packet_dict()
+            downlink = self._main.command_handler.pack_telemetry(
+                consts.CommandEnum.BasicTelem, telem
             )
-            self._parent.downlink_queue.put(downlink)
+            self._main.downlink_queue.put(downlink)
             logging.info("Added a standard telemetry packet to the downlink queue")
 
         return consts.NO_FM_CHANGE
@@ -457,8 +457,8 @@ class CommandMode(PauseBackgroundMode):
 
     flight_mode_id = consts.FMEnum.Command.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def update_state(self) -> int:
         # DO NOT TICK THE WDT

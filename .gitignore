@@ -26,6 +26,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+node_modules/
 
 # VS Code
 .vscode/*
@@ -146,3 +147,5 @@ cislunar.log*
 # Opnav test results
 *.csv
 *.png
+*.xml
+*.iml

@@ -56,11 +56,11 @@ try:
                 gom.electrolyzers.set(False)
 
             if choice == 7:
-                gom.power_amplifier.set(True)
+                gom.pa.set(True)
                 sleep(duration / 2)
                 ps.displayHk2(gom.collect_telem())
                 sleep(duration / 2)
-                gom.power_amplifier.set(False)
+                gom.pa.set(False)
 
             if choice == 8:
                 print(

@@ -47,7 +47,7 @@ class Gomspace(Device):
         self.glowplug_2 = ls.glowplug_2(self.driver)
         self.solenoid = ls.solenoid(self.driver)
         self.electrolyzers = ls.electrolyzers(self.driver)
-        self.power_amplifier = ls.power_amplifier(self.driver)
+        self.pa = ls.power_amplifier(self.driver)
         self.rf_tx = ls.rf_switch_tx(self.driver)
         self.rf_rx = ls.rf_switch_rx(self.driver)
         # self.heater = ls.heater(self.driver)

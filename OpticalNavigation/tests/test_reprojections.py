@@ -37,7 +37,7 @@ class TestReprojections(unittest.TestCase):
 
     def reproj(
         self, src: np.ndarray, gnName: str
-    ) -> tuple([np.ndarray, tiled_remap.BoundingBox]):
+    ) -> tuple([np.ndarray, tiled_remap.BoundingBox, str]):
         """Reprojects the gnomonic image to stereographic."""
 
         cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)

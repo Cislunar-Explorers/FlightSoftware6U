@@ -35,6 +35,14 @@ class CenterDetections(unittest.TestCase):
         perf_values[body] = perf
         return perf_values
 
+    def calc_centers_and_radii(self, img_lst):
+        cr_dict = {}
+        for name in img_lst.keys():
+            img = img_lst[name]
+            _, body_vals = find(img, st=True, pixel=True)
+            cr_dict[img] = body_vals
+        return cr_dict
+
     # TODO: Allow a different find algorithm to be tested easily
     def get_results(self, dir, results_file, st_gn, pixel=True):
         """

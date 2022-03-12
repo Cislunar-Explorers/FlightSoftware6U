@@ -11,11 +11,11 @@ from OpticalNavigation.tests import test_body_meas
 
 
 class TestEndToEnd(unittest.TestCase):
-    def get_images_and_reproject(self):
+    def get_images_and_reproject(self, path):
 
         repr = test_reprojections.TestReprojections()
 
-        gn_list, st_list = repr.get_images()
+        gn_list, st_list = repr.get_images(path)
         gn_imgs, st_imgs, re_imgs = [], [], []
 
         for idx, gnName in enumerate(gn_list):
@@ -40,20 +40,16 @@ class TestEndToEnd(unittest.TestCase):
 
     def test_end_to_end(self, path):
 
-        # TODO I think we should organize is similar to my test_body_meas, where our "test_" functions call this
-        # function, except with a different path. This would mean you would have to make your get_images function take
-        # in a path a path as an input, but it will allow for us to be more flexible in our testing
-
         # We are testing three things here
         # 1. Taking a gn sim image through reproj->center->body
         # 2. Taking a st sim image through center->body
         # 3. Angular size
         # Then we are comparing the result with the thruth values in the sim logs
 
-        # First step: run reprojection test on gnomonic image, output stereographic image from reproection as well as
+        # First step: run reprojection test on gnomonic image, output stereographic image from reprojection as well as
         #             from sim
 
-        gn_imgs, st_imgs, re_imgs = self.get_images_and_reproject()
+        gn_imgs, st_imgs, re_imgs = self.get_images_and_reproject(path)
         logging.debug(gn_imgs)
 
         # Second step: run center finding test on stereographic image from reprojection test, as well as on

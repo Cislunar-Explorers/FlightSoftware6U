@@ -56,11 +56,15 @@ class TestReprojections(unittest.TestCase):
 
         return out, bbst
 
-    def get_images(self) -> tuple([list, list]):
+    def get_images(self, path=None) -> tuple([list, list]):
         """Returns lists of gnomonic image names and stereographic image names."""
 
         # Get the file path
-        gn_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images/*_gn.png")
+        gn_path = (
+            os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images/*_gn.png")
+            if path is None
+            else path
+        )
 
         # Glob gnomonic images as filenames ending in "_gn.png"
         gnomonicList = sorted(glob.glob(gn_path))

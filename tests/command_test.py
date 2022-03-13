@@ -48,6 +48,37 @@ class CommandTest(unittest.TestCase):
         self.assertEqual(downlink_command.id, CommandEnum.SetParam)
         self.assertEqual(downlink_args[ck.VALUE], new_value)
 
+    def test_setEMSThresh(self):
+        """Tests whether we can succesfully change the threshold percentage values for the Earth,Sun,Moon """
+
+        new_earth_thresh = 0.07
+        new_moon_thresh = 0.025
+        new_sun_thresh = 0.06
+
+        cmd = self.ground_station.pack_command(
+            CommandEnum.SetEMSThresh,
+            {
+                ck.EARTH_THRESH: new_earth_thresh,
+                ck.MOON_THRESH: new_moon_thresh,
+                ck.SUN_THRESH: new_sun_thresh,
+            },
+        )
+
+        # Checking uplink
+        self.sat.command_queue.put(cmd)
+        self.sat.execute_commands()
+        self.assertAlmostEqual(params.EARTH_PERCENTAGE_THRESH, new_earth_thresh, 3)
+        self.assertAlmostEqual(params.MOON_PERCENTAGE_THRESH, new_moon_thresh, 3)
+        self.assertAlmostEqual(params.SUN_PERCENTAGE_THRESH, new_sun_thresh, 2)
+
+        # Checking downlink
+        downlink = self.sat.downlink_queue.get()
+        downlink_command, downlink_args = self.ground_station.unpack_telemetry(downlink)
+        self.assertEqual(downlink_command.id, CommandEnum.SetEMSThresh)
+        self.assertAlmostEqual(downlink_args[ck.EARTH_THRESH], new_earth_thresh)
+        self.assertAlmostEqual(downlink_args[ck.MOON_THRESH], new_moon_thresh)
+        self.assertAlmostEqual(downlink_args[ck.SUN_THRESH], new_sun_thresh)
+
     def test_manual_fm_commands(self):
         """Commands the spacecraft to go into every flight mode """
         for mode in FMEnum:

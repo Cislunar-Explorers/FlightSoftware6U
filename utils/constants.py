@@ -137,6 +137,10 @@ class CommandKwargs(StringEnum):
     IGNORE = "ignore"
     PASSWORD = "password"
 
+    EARTH_THRESH = "earth_threshold"
+    MOON_THRESH = "moon_threshold"
+    SUN_THRESH = "sun_threshold"
+
     OUTPUT_CHANNEL = "output_channel"
 
 
@@ -405,4 +409,5 @@ class CommandEnum(IntEnum):
     LongString = 56
 
     IgnoreLowBatt = 60
+    SetEMSThresh = 61
     CeaseComms = 170

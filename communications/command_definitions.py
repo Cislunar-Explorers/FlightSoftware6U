@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
+
 from communications.codec import Codec
 from communications.commands import Command
 from communications import codecs
@@ -354,6 +355,48 @@ class ignore_low_batt(Command):
         parameter_utils.set_parameter(
             "IGNORE_LOW_BATTERY", bool(ignore), hard_set=False
         )
+
+
+class change_ems_percentage_thresh(Command):
+    """ Changes Earth, Sun, Moon Percentage threshold.
+        Useful for testing purposes when needing to reduce/increase the confidence of
+        the body in find_with_hough_transform_and_contours.findBody()
+        Requires: Threshhold values must be between 0...1"""
+
+    id = CommandEnum.SetEMSThresh
+    uplink_codecs = [
+        Codec(ck.EARTH_THRESH, "float"),
+        Codec(ck.MOON_THRESH, "float"),
+        Codec(ck.SUN_THRESH, "float"),
+    ]
+    downlink_codecs = [
+        Codec(ck.EARTH_THRESH, "float"),
+        Codec(ck.MOON_THRESH, "float"),
+        Codec(ck.SUN_THRESH, "float"),
+    ]
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs):
+        new_earth_thresh = kwargs[ck.EARTH_THRESH]
+        new_moon_thresh = kwargs[ck.MOON_THRESH]
+        new_sun_thresh = kwargs[ck.SUN_THRESH]
+        assert new_earth_thresh <= 1 and new_earth_thresh >= 0
+        assert new_moon_thresh <= 1 and new_moon_thresh >= 0
+        assert new_sun_thresh <= 1 and new_sun_thresh >= 0
+        parameter_utils.set_parameter(
+            "EARTH_PERCENTAGE_THRESH", new_earth_thresh, hard_set=False
+        )
+        parameter_utils.set_parameter(
+            "MOON_PERCENTAGE_THRESH", new_moon_thresh, hard_set=False
+        )
+        parameter_utils.set_parameter(
+            "SUN_PERCENTAGE_THRESH", new_sun_thresh, hard_set=False
+        )
+
+        return {
+            ck.EARTH_THRESH: new_earth_thresh,
+            ck.MOON_THRESH: new_moon_thresh,
+            ck.SUN_THRESH: new_sun_thresh,
+        }
 
 
 class schedule_maneuver(Command):
@@ -955,6 +998,7 @@ COMMAND_LIST: List[Command] = [
     detailed_telem(),
     electrolysis(),
     ignore_low_batt(),
+    change_ems_percentage_thresh(),
     schedule_maneuver(),
     reboot(),
     cease_comms(),

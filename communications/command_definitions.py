@@ -360,7 +360,8 @@ class ignore_low_batt(Command):
 class change_ems_percentage_thresh(Command):
     """ Changes Earth, Sun, Moon Percentage threshold.
         Useful for testing purposes when needing to reduce/increase the confidence of
-        the body in find_with_hough_transform_and_contours.findBody()"""
+        the body in find_with_hough_transform_and_contours.findBody()
+        Requires: Threshhold values must be between 0...1"""
 
     id = CommandEnum.SetEMSThresh
     uplink_codecs = [
@@ -378,6 +379,9 @@ class change_ems_percentage_thresh(Command):
         new_earth_thresh = kwargs[ck.EARTH_THRESH]
         new_moon_thresh = kwargs[ck.MOON_THRESH]
         new_sun_thresh = kwargs[ck.SUN_THRESH]
+        assert new_earth_thresh <= 1 and new_earth_thresh >= 0
+        assert new_moon_thresh <= 1 and new_moon_thresh >= 0
+        assert new_sun_thresh <= 1 and new_sun_thresh >= 0
         parameter_utils.set_parameter(
             "EARTH_PERCENTAGE_THRESH", new_earth_thresh, hard_set=False
         )

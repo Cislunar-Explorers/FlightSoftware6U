@@ -1,9 +1,6 @@
 import json
 import csv
 import os
-from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
-    find,
-)
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -11,6 +8,9 @@ import math
 import unittest
 import time
 from utils.constants import FLIGHT_SOFTWARE_PATH
+from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
+    find,
+)
 
 # import argparse
 
@@ -35,13 +35,21 @@ class CenterDetections(unittest.TestCase):
         perf_values[body] = perf
         return perf_values
 
+    # New function
     def calc_centers_and_radii(self, img_lst):
         cr_dict = {}
-        for name in img_lst.keys():
-            img = img_lst[name]
-            _, body_vals = find(img, st=True, pixel=True)
+        img_det_dict = {}
+        for name in img_lst:
+            img = name
+            img_det, body_vals = find(img, st=True, pixel=False)
             cr_dict[img] = body_vals
-        return cr_dict
+            img_det_dict[img] = [
+                img_det.get_earth_detection(),
+                img_det.get_moon_detection(),
+                img_det.get_sun_detection(),
+            ]
+
+        return cr_dict, img_det_dict
 
     # TODO: Allow a different find algorithm to be tested easily
     def get_results(self, dir, results_file, st_gn, pixel=True):
@@ -215,25 +223,41 @@ class CenterDetections(unittest.TestCase):
             "Center find algorithm is not at least 70% accurate!",
         )
 
-    def test_traj_case_1c(self):
-        dirname = os.path.dirname(__file__)
-        filename = os.path.join(dirname, "../simulations/sim/data/traj-case1c_sim")
-        return self.center_finding_results(
-            filename,
-            "center_finding_results_traj_case_1c_sim.csv",
-            "center_histogram_traj_case1c.png",
-            "radius_histogram_traj_case1c.png",
-        )
+    # def test_traj_case_1c(self):
+    # dirname = os.path.dirname(__file__)
+    # filename = os.path.join(dirname, "../simulations/sim/data/traj-case1c_sim")
+    # return self.center_finding_results(
+    # filename,
+    # "center_finding_results_traj_case_1c_sim.csv",
+    # "center_histogram_traj_case1c.png",
+    # "radius_histogram_traj_case1c.png",
+    # )
 
-    def test_trajectory(self):
-        dirname = os.path.dirname(__file__)
-        filename = os.path.join(dirname, "../simulations/sim/data/trajectory_sim")
-        return self.center_finding_results(
-            filename,
-            "center_finding_results_trajectory_sim.csv",
-            "center_histogram_trajectory.png",
-            "radius_histogram_trajectory.png",
-        )
+    # def test_trajectory(self):
+    # dirname = os.path.dirname(__file__)
+    # filename = os.path.join(dirname, "../simulations/sim/data/trajectory_sim")
+    # return self.center_finding_results(
+    # filename,
+    # "center_finding_results_trajectory_sim.csv",
+    # "center_histogram_trajectory.png",
+    # "radius_histogram_trajectory.png",
+    # )
+
+    def test_center_radii(self):
+        paths = [
+            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png",
+            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f1_dt8.44305_st.png",
+            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f2_dt8.50850_st.png",
+            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f19_dt9.62115_st.png",
+            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f0_dt10.47200_st.png",
+            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f1_dt10.53745_st.png",
+            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f17_dt11.58465_st.png",
+            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png",
+        ]
+        "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f19_dt11.71555_st.png",
+        cr_dict, img_det_dict = self.calc_centers_and_radii(paths)
+        print(cr_dict)
+        print(img_det_dict)
 
 
 if __name__ == "__main__":

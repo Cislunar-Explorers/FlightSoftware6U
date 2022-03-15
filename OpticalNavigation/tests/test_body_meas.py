@@ -104,14 +104,16 @@ class BodyMeas(unittest.TestCase):
         )
         fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
         _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
+        for i in fileInfo:
+            print(i)
 
-    def test_traj_trajectory(self):
-        path = os.path.join(
-            FLIGHT_SOFTWARE_PATH,
-            "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
-        )
-        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
-        _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
+    # def test_traj_trajectory(self):
+    # path = os.path.join(
+    # FLIGHT_SOFTWARE_PATH,
+    # "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
+    # )
+    # fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
+    # _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
 
 
 if __name__ == "__main__":

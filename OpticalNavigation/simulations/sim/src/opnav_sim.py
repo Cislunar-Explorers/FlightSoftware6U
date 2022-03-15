@@ -1,15 +1,26 @@
 import json
 import math
 import os.path
+import numpy as np
 from numpy import linspace, radians, zeros
 from pyquaternion import Quaternion
 import cv2
-from libopnav import *
+from OpticalNavigation.simulations.sim.src.libopnav import (
+    sin2_vangle,
+    gnomonic_inv,
+    stereographic_inv,
+    stereographic,
+    st_circle,
+    is_illuminated,
+)
+from utils.constants import FLIGHT_SOFTWARE_PATH
 
 # Limitations:
 # * No BRDF, PSF
 # * Assumes point illumination (no penumbra)
 # * No motion blur
+
+SIM_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim")
 
 
 def main():
@@ -44,7 +55,8 @@ def main():
 
     # Absolute time corresponding to t0 (from OreKit simulation that produced traj2.csv)
     epoch = "2020-06-27T21:08:03.0212 TDB"
-    with open("trajectory_sim_easy/cameras.json", "w") as f:
+
+    with open(os.path.join(SIM_DIR, "data/trajectory_sim_easy/cameras.json"), "w") as f:
         json.dump(
             {"epoch": epoch, "cameras": [c.as_dict() for c in cameras.values()]},
             f,
@@ -70,7 +82,7 @@ def main():
     # exhausted.  Note: this will leave a trailing comma, which is not allowed by JSON.
     # Note: This is also not inside the object enclosing 'cameras' when it should be.
     observations = []
-    with open("trajectory.csv") as f:
+    with open(os.path.join(SIM_DIR, "src/trajectory.csv")) as f:
         for line in f:
             if line[0] == "t":
                 continue  # Skip header
@@ -85,7 +97,9 @@ def main():
                     "frames": frames,
                 }
             )
-    with open("trajectory_sim_easy/observations.json", "w") as f:
+    with open(
+        os.path.join(SIM_DIR, "data/trajectory_sim_easy/observations.json"), "w"
+    ) as f:
         json.dump({"observations": observations}, f, indent=4)
 
 
@@ -107,8 +121,8 @@ class Camera:
         # Gnomonic coordinates of pixel columns and rows
         # Average horizontal and vertical scaling to ensure square pixels
         self.gnomonic_scale = (
-            ((self.width - 1) / 2) / tan(fov_h / 2)
-            + ((self.height - 1) / 2) / tan(fov_v / 2)
+            ((self.width - 1) / 2) / np.tan(fov_h / 2)
+            + ((self.height - 1) / 2) / np.tan(fov_v / 2)
         ) / 2
         xlim_gn = ((self.width - 1) / 2) / self.gnomonic_scale
         ylim_gn = ((self.height - 1) / 2) / self.gnomonic_scale
@@ -118,8 +132,8 @@ class Camera:
         # Stereographic coordinates of pixel columns and rows
         # Average horizontal and vertical scaling to ensure square pixels
         self.stereographic_scale = (
-            ((self.width - 1) / 2) / (2 * tan(fov_h / 4))
-            + ((self.height - 1) / 2) / (2 * tan(fov_v / 4))
+            ((self.width - 1) / 2) / (2 * np.tan(fov_h / 4))
+            + ((self.height - 1) / 2) / (2 * np.tan(fov_v / 4))
         ) / 2
         xlim_st = ((self.width - 1) / 2) / self.stereographic_scale
         ylim_st = ((self.height - 1) / 2) / self.stereographic_scale
@@ -181,8 +195,8 @@ class Spacecraft:
     def advance(self, dt):
         # Compute world2cam transformation at start of frame
         q_body_t02tf = (
-            Quaternion(axis=self.omega_body, angle=dt * norm(self.omega_body))
-            if norm(self.omega_body) > 0
+            Quaternion(axis=self.omega_body, angle=dt * np.linalg.norm(self.omega_body))
+            if np.linalg.norm(self.omega_body) > 0
             else Quaternion()
         )
         # Only advance attitude, not position
@@ -211,7 +225,7 @@ class ObservedBody:
         self.body = body
         # Camera-centered, world-aligned frame
         self.relpos_world = body.position_world - spacecraft.position_world
-        self.distance = norm(self.relpos_world)
+        self.distance = np.linalg.norm(self.relpos_world)
         self.direction_world = self.relpos_world / self.distance
 
         self.direction_body = spacecraft.q_world2body.conjugate.rotate(
@@ -240,7 +254,7 @@ class Detection:
         self.direction_st = np.array(stereographic(self.direction_cam))
         # Center and radius of image circle in stereographic coordinates
         # (Center does NOT correspond to direction vector)
-        rho = norm(self.direction_st)
+        rho = np.linalg.norm(self.direction_st)
         self.rho_center, self.radius_st = st_circle(rho, self.obs_body.angular_radius)
         self.center_st = (
             (self.rho_center / rho) * self.direction_st
@@ -289,7 +303,7 @@ def parse_line(line, q_world2spin, omega_body):
     bodies = [earth, moon, sun]
 
     # Assumes constant spin rate
-    q_spin2body_t0 = Quaternion(axis=omega_body, angle=t0 * norm(omega_body))
+    q_spin2body_t0 = Quaternion(axis=omega_body, angle=t0 * np.linalg.norm(omega_body))
     q_world2body_t0 = q_world2spin * q_spin2body_t0
     spacecraft = Spacecraft(camera_pos, camera_vel, q_world2body_t0, omega_body)
 
@@ -357,7 +371,10 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr):
                     delta_t,
                 )
                 cv2.imwrite(
-                    os.path.join("trajectory_sim_easy/images", filename_gn), img
+                    os.path.join(
+                        SIM_DIR, "data/trajectory_sim_easy/images", filename_gn
+                    ),
+                    img,
                 )
 
                 # Render ideal stereographic frame
@@ -370,7 +387,10 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr):
                     delta_t,
                 )
                 cv2.imwrite(
-                    os.path.join("trajectory_sim_easy/images", filename_st), img
+                    os.path.join(
+                        SIM_DIR, "data/trajectory_sim_easy/images", filename_st
+                    ),
+                    img,
                 )
 
                 frame_dict = {
@@ -422,7 +442,7 @@ def render_bodies(camera, spacecraft, obs_bodies, colors_bgr, illuminator):
                 # d = vangle(sc, direction_cam)
                 # img[row,...] += colors_bgr[b]*(d < obs_bodies[b].angular_radius)[...,newaxis]
                 d = sin2_vangle(sc, direction_cam.astype(sc.dtype))
-                img[row, ...] += colors_bgr[b] * (d < bsins[b])[..., newaxis]
+                img[row, ...] += colors_bgr[b] * (d < bsins[b])[..., np.newaxis]
             else:
                 sun_pos_cam = q_world2cam.conjugate.rotate(
                     illuminator.relpos_world
@@ -434,7 +454,7 @@ def render_bodies(camera, spacecraft, obs_bodies, colors_bgr, illuminator):
                 img[row, ...] += (
                     colors_bgr[b]
                     * is_illuminated(sun_pos_cam, body_pos_cam, radius, sc)[
-                        ..., newaxis
+                        ..., np.newaxis
                     ]
                 )
     return img
@@ -443,7 +463,7 @@ def render_bodies(camera, spacecraft, obs_bodies, colors_bgr, illuminator):
 def render_stereographic(camera, obs_bodies, colors_bgr, illuminator):
     # 3D coordinates of pixel rays in camera frame
     xx = np.broadcast_to(camera.x_st, (camera.height, camera.width))
-    yy = np.broadcast_to(camera.y_st[..., newaxis], (camera.height, camera.width))
+    yy = np.broadcast_to(camera.y_st[..., np.newaxis], (camera.height, camera.width))
     sc = stereographic_inv(xx, yy)
 
     img = zeros((camera.height, camera.width, 3), dtype=np.ubyte)
@@ -460,7 +480,7 @@ def render_stereographic(camera, obs_bodies, colors_bgr, illuminator):
                     < np.asarray(
                         math.sin(obs_bodies[b].angular_radius) ** 2, dtype=d.dtype
                     )
-                )[..., newaxis]
+                )[..., np.newaxis]
             )
         else:
             sun_pos_cam = camera.q_body2cam.conjugate.rotate(
@@ -472,7 +492,7 @@ def render_stereographic(camera, obs_bodies, colors_bgr, illuminator):
             radius = np.asarray(obs_bodies[b].body.radius, dtype=sc.dtype)
             img += (
                 colors_bgr[b]
-                * is_illuminated(sun_pos_cam, body_pos_cam, radius, sc)[..., newaxis]
+                * is_illuminated(sun_pos_cam, body_pos_cam, radius, sc)[..., np.newaxis]
             )
     return img
 

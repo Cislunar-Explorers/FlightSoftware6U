@@ -25,6 +25,7 @@
     "OpticalNavigation/tests/test_reprojections.py",
     "OpticalNavigation/tests/test_detections.py",
     "OpticalNavigation/tests/test_pipeline.py",
+    "OpticalNavigation/simulations/sim/src/opnav_sim.py",
   ],
   "extraPaths": [
     "OpticalNavigation/"

@@ -19,21 +19,18 @@ class TestReprojections(unittest.TestCase):
     def get_ucam(self, name: str) -> np.array:
         """Returns u_cam from filename."""
         cam_dict = {
-            "camA": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
-            "camB": np.array([-5.00000000e-01, 0, -8.66025404e-01], dtype=np.float32),
-            "camC": np.array(
+            "cam1": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
+            "cam2": np.array([-5.00000000e-01, 0, -8.66025404e-01], dtype=np.float32),
+            "cam3": np.array(
                 [-3.9931775502364646, -3.0090751157602416, 0.0], dtype=np.float32
             )
             / 5,
         }
-        if "camA" in name:
-            return cam_dict["camA"]
-        elif "camB" in name:
-            return cam_dict["camB"]
-        elif "camC" in name:
-            return cam_dict["camC"]
-        else:
-            raise ValueError("Invalid camera name")
+        for key in cam_dict.keys():
+            if key in name:
+                return cam_dict[key]
+
+        raise ValueError("Invalid camera name")
 
     def reproj(
         self, src: np.ndarray, gnName: str
@@ -58,8 +55,6 @@ class TestReprojections(unittest.TestCase):
 
     def get_images(self, path=None) -> tuple([list, list]):
         """Returns lists of gnomonic image names and stereographic image names."""
-
-        print(path)
 
         # Get the file path
         gn_path = os.path.join(
@@ -149,8 +144,6 @@ class TestReprojections(unittest.TestCase):
     ) -> None:
         """Main reprojection function. Asserts that difference values between
         corresponding contours is less than 0.15."""
-
-        print(path)
 
         # Get stareographic and gnomonic images
         gnomonicList, stereographicList = self.get_images(path)

@@ -1,8 +1,4 @@
-from core.const import (
-    ImageDetectionCircles,
-    CameraParameters,
-    CisLunarCameraParameters,
-)
+from core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
 from utils.parameters import (
     EARTH_B_LOW,
     EARTH_G_LOW,
@@ -34,7 +30,6 @@ import re
 import logging
 
 import argparse
-
 
 
 def drawContourCircle(img, xy, r, contours):
@@ -262,19 +257,21 @@ def find(
             sun = measureSun(f, w, h)
             if sun is not None:
                 (sX, sY), sR = sun
+                sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
+                sRho2 = sXst ** 2 + sYst ** 2
+                # TODO figure out if below line (and corresponding ones) is diameter in stereographic or spherical
+                sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
+                sSx, sSy, sSz = st_to_sph(sXst, sYst)
+                result.set_sun_detection(sSx, sSy, sSz, sDia)
+                # Andrew
                 if pixel:
                     body_values["Sun"] = [x + sX - 1640, y + sY - 1232, sR]
                 else:
                     body_values["Sun"] = [
                         cam.normalize_st(x + sX, y + sY)[0],
                         cam.normalize_st(x + sX, y + sY)[1],
-                        sR,
+                        sDia / 2,
                     ]
-                sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
-                sRho2 = sXst ** 2 + sYst ** 2
-                sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
-                sSx, sSy, sSz = st_to_sph(sXst, sYst)
-                result.set_sun_detection(sSx, sSy, sSz, sDia)
 
     else:
         earth = None
@@ -288,31 +285,24 @@ def find(
                 earth = measureEarth(f, w, h)
             if earth is not None:
                 (eX, eY), eR = earth
+                eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
+                eRho2 = eXst ** 2 + eYst ** 2
+                eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
+                eSx, eSy, eSz = st_to_sph(eXst, eYst)
+                result.set_earth_detection(eSx, eSy, eSz, eDia)
+                # Andrew
                 if pixel:
                     body_values["Earth"] = [x + eX - 1640, y + eY - 1232, eR]
                 else:
                     body_values["Earth"] = [
                         cam.normalize_st(x + eX, y + eY)[0],
                         cam.normalize_st(x + eX, y + eY)[1],
-                        eR,
+                        eDia / 2,
                     ]
-                eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
-                eRho2 = eXst ** 2 + eYst ** 2
-                eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
-                eSx, eSy, eSz = st_to_sph(eXst, eYst)
-                result.set_earth_detection(eSx, eSy, eSz, eDia)
             elif earth is None:  # TODO: Placeholder
                 moon = measureMoon(f, w, h)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    if pixel:
-                        body_values["Moon"] = [x + mX - 1640, y + mY - 1232, mR]
-                    else:
-                        body_values["Moon"] = [
-                            cam.normalize_st(x + mX, y + mY)[0],
-                            cam.normalize_st(x + mX, y + mY)[1],
-                            mR,
-                        ]
                     mXst, mYst = None, None
                     # Checks whether moon contour is first or second contour
                     if index == 0:
@@ -325,6 +315,23 @@ def find(
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
+                    # Andrew
+                    if pixel:
+                        body_values["Moon"] = [x + mX - 1640, y + mY - 1232, mR]
+                    else:  # Checks whether moon contour is first or second contour
+                        if index == 1:
+                            body_values["Moon"] = [
+                                cam.normalize_st(x + mX, y + mY)[0],
+                                cam.normalize_st(x + mX, y + mY)[1],
+                                mDia / 2,
+                            ]
+                        else:
+                            body_values["Moon"] = [
+                                cam.normalize_st(x2 + mX, y2 + mY)[0],
+                                cam.normalize_st(x2 + mX, y2 + mY)[1],
+                                mDia / 2,
+                            ]
+
             index += 1
     return result, body_values
 

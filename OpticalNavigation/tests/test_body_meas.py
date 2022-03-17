@@ -8,6 +8,7 @@ import logging
 from core.find_algos.tiled_remap import st_to_sph
 from core.const import FileData, DetectionData, Vector3
 from core.observe_functions import cam_to_body, body_to_T0
+from tests.ang_size_testing import st_circle_inv
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
@@ -26,14 +27,17 @@ class BodyMeas(unittest.TestCase):
             frames = obs["observations"][0]["frames"]
             fileInfo = []
             centerSt = []
+            radiusSt = []
             dt = []
             truthT0Vec = []
+            truthT0Size = []
             for frame in frames:
+                imgName = frame["image_gnomonic"]
+                fileInfo.append(FileData(imgName))
 
                 centerSt.append(frame["detections"][0]["center_st"])
 
-                imgName = frame["image_gnomonic"]
-                fileInfo.append(FileData(imgName))
+                radiusSt.append(frame["detections"][0]["radius_st"])
 
                 # Can't use timestamp in fileInfo b/c that gets incorrectly parsed with file name
                 # convention of opnav sim (timestamps have a decimal point)
@@ -45,19 +49,35 @@ class BodyMeas(unittest.TestCase):
                 truthT0Vec.append(
                     obs["observations"][0]["observed_bodies"][bodyNum]["direction_body"]
                 )
+                truthT0Size.append(
+                    obs["observations"][0]["observed_bodies"][bodyNum]["angular_size"]
+                )
 
             gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
-        return fileInfo, centerSt, dt, truthT0Vec, gyroY
+        return fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY
 
-    def body_meas(self, fileInfo, centerSt, dt, truthT0Vec, gyroY):
+    def body_meas(
+        self, fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY
+    ):
         calc_vecs = []
         truth_vecs = []
         errors = []
-        for (fileInf, stCenter, deltaT, truth) in zip(
-            fileInfo, centerSt, dt, truthT0Vec
+        for (fileInf, stCenter, radSt, deltaT, truthVec, truthSize) in zip(
+            fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size
         ):
+            logging.debug(f"Filename: {fileInf.filename}")
             camNum = fileInf.cam_num
             logging.debug(f"CamNum: {camNum}")
+
+            logging.debug(f"radius_st: {radSt}")
+            rho_c = np.sqrt(stCenter[0] ** 2 + stCenter[1] ** 2)
+            _, arad = st_circle_inv(rho_c, radSt)
+            aDiam = 2 * arad
+            logging.debug(f"Ang Diam: {aDiam}")
+            logging.debug(f"Ang Diam truth: {truthSize}")
+            sizeDiff = np.abs(aDiam - truthSize)
+            logging.debug(f"Size Diff: {sizeDiff}")
+
             logging.debug(f"Center_st: {stCenter}")
             camVec = st_to_sph(stCenter[0], stCenter[1])
             logging.debug(f"Cam Vec: {camVec}")
@@ -77,10 +97,10 @@ class BodyMeas(unittest.TestCase):
             finalT0Det = body_to_T0(bodyDet, deltaT, gyroY)
             logging.debug(f"Observe Start Vector: {finalT0Det.vector}")
 
-            logging.debug(f"Actual Vector: {truth}")
+            logging.debug(f"Actual Vector: {truthVec}")
 
             # We are comparing unit vectors here
-            vecDist = np.linalg.norm(finalT0Det.vector.data - truth)
+            vecDist = np.linalg.norm(finalT0Det.vector.data - truthVec)
             logging.debug(f"Vect Dist: {vecDist}")
             self.assertLessEqual(
                 vecDist,
@@ -89,7 +109,7 @@ class BodyMeas(unittest.TestCase):
             )
             logging.debug("\n")
             calc_vecs.append(finalT0Det.vector.data)
-            truth_vecs.append(truth)
+            truth_vecs.append(truthVec)
             errors.append(vecDist)
         calc_vecs = zip(calc_vecs, fileInfo)
         truth_vecs = zip(truth_vecs, fileInfo)
@@ -102,8 +122,12 @@ class BodyMeas(unittest.TestCase):
             FLIGHT_SOFTWARE_PATH,
             "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
         )
-        fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
-        _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
+        fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY = self.get_data(
+            path
+        )
+        _, _, _ = self.body_meas(
+            fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY
+        )
         for i in fileInfo:
             print(i)
 
@@ -112,8 +136,8 @@ class BodyMeas(unittest.TestCase):
     # FLIGHT_SOFTWARE_PATH,
     # "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
     # )
-    # fileInfo, centerSt, dt, truthT0Vec, gyroY = self.get_data(path)
-    # _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
+    # fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY = self.get_data(path)
+    # _, _, _ = self.body_meas(fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY)
 
 
 if __name__ == "__main__":

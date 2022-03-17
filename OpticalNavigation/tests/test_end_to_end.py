@@ -38,17 +38,17 @@ class TestEndToEnd(unittest.TestCase):
     def get_center_radius(self, img_lst):
         center_find = test_center_finding.CenterDetections()
 
-        cr_dict, _ = center_find.calc_centers_and_radii(img_lst)
+        cr_dict = center_find.calc_centers_and_radii(img_lst)
 
         return cr_dict
 
-    def run_body_meas_sim(self, path, centersReproj):
+    def run_body_meas_sim(self, path, centersReproj, radiiSt):
         """Takes in a path and reprojected centers (from center_finding) and outputs the transformed vectors, as well
         as the truth vectors and the corresponding error"""
         bodyTest = test_body_meas.BodyMeas()
-        fileInfo, _, dt, truthT0Vec, gyroY = bodyTest.get_data(path)
+        fileInfo, _, _, dt, truthT0Vec, truthT0Size, gyroY = bodyTest.get_data(path)
         calcVecs, refVecs, errors = bodyTest.body_meas(
-            fileInfo, centersReproj, dt, truthT0Vec, gyroY
+            fileInfo, centersReproj, radiiSt, dt, truthT0Vec, truthT0Size, gyroY
         )
         return calcVecs, refVecs, errors
 
@@ -89,16 +89,19 @@ class TestEndToEnd(unittest.TestCase):
         cr_dict = self.get_center_radius(re_imgs)
         print(cr_dict)
         centers_st = []
+        radii_st = []
         for i in cr_dict.keys():
             key = list(cr_dict[i].keys())[0]
             # print(cr_dict[i])
             # print(key)
             centers_st.append([cr_dict[i][key][0], cr_dict[i][key][1]])
-        print(centers_st)
+            radii_st.append(cr_dict[i][key][2])
+        print(f"centers_st:\n{centers_st}")
+        print(f"radii_st\n{radii_st}")
 
         # Third step: run body_meas test on the two image centers to output body detection vectors
         reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas_sim(
-            obs_path, centers_st
+            obs_path, centers_st, radii_st
         )
 
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each

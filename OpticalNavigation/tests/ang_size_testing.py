@@ -50,13 +50,14 @@ def get_radius_center_st():
 
 # rad, cen = get_radius_center_st()
 
-print("../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png")
-rad = 0.00878911 / 2  # from initial implementaiton
-cen = [0.19693145516536165, -0.21108428542264437]  # from Andrew's
+# print("../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png")
+# rad = 0.00878911 / 2  # from initial implementaiton
+# cen = [0.19693145516536165, -0.21108428542264437]  # from Andrew's
 
 print(
     "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png"
 )
+print("Earth")
 rad = 0.06147455 / 2  # from initial implementaiton
 cen = [0.22730826157123687, 0.18692091669069819]  # from Andrew's
 

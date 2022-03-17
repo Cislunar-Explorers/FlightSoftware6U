@@ -38,18 +38,19 @@ class CenterDetections(unittest.TestCase):
     # New function
     def calc_centers_and_radii(self, img_lst):
         cr_dict = {}
-        img_det_dict = {}
+        # img_det_dict = {}
         for name in img_lst:
             img = name
             img_det, body_vals = find(img, st=True, pixel=False)
             cr_dict[img] = body_vals
-            img_det_dict[img] = [
-                img_det.get_earth_detection(),
-                img_det.get_moon_detection(),
-                img_det.get_sun_detection(),
-            ]
+            # img_det_dict[img] = [
+            # img_det.get_earth_detection(),
+            # img_det.get_moon_detection(),
+            # img_det.get_sun_detection(),
+            # ]
 
-        return cr_dict, img_det_dict
+        # return cr_dict, img_det_dict
+        return cr_dict
 
     # TODO: Allow a different find algorithm to be tested easily
     def get_results(self, dir, results_file, st_gn, pixel=True):
@@ -244,44 +245,24 @@ class CenterDetections(unittest.TestCase):
     # )
 
     def test_center_radii(self):
-        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations")
+        path = os.path.join(
+            FLIGHT_SOFTWARE_PATH,
+            "OpticalNavigation/simulations/sim/data/traj-case1c_sim/images",
+        )
         paths = [
-            os.path.join(
-                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png"
-            ),
-            os.path.join(
-                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f1_dt8.44305_st.png"
-            ),
-            os.path.join(
-                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f2_dt8.50850_st.png"
-            ),
-            os.path.join(
-                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f19_dt9.62115_st.png"
-            ),
-            os.path.join(
-                path,
-                "sim/data/traj-case1c_sim/images/cam3_expHigh_f0_dt10.47200_st.png",
-            ),
-            os.path.join(
-                path,
-                "sim/data/traj-case1c_sim/images/cam3_expHigh_f1_dt10.53745_st.png",
-            ),
-            os.path.join(
-                path,
-                "sim/data/traj-case1c_sim/images/cam3_expHigh_f17_dt11.58465_st.png",
-            ),
-            os.path.join(
-                path,
-                "sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png",
-            ),
-            os.path.join(
-                path,
-                "sim/data/traj-case1c_sim/images/cam3_expHigh_f19_dt11.71555_st.png",
-            ),
+            os.path.join(path, "cam2_expLow_f0_dt8.37760_st.png"),
+            os.path.join(path, "cam2_expLow_f1_dt8.44305_st.png"),
+            os.path.join(path, "cam2_expLow_f2_dt8.50850_st.png"),
+            os.path.join(path, "cam2_expLow_f19_dt9.62115_st.png"),
+            os.path.join(path, "cam3_expHigh_f0_dt10.47200_st.png"),
+            os.path.join(path, "cam3_expHigh_f1_dt10.53745_st.png"),
+            os.path.join(path, "cam3_expHigh_f17_dt11.58465_st.png"),
+            os.path.join(path, "cam3_expHigh_f18_dt11.65010_st.png"),
+            os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
         ]
         cr_dict, img_det_dict = self.calc_centers_and_radii(paths)
-        print(cr_dict)
-        print(img_det_dict)
+        print(f"cr_dict:\n{cr_dict}\n")
+        print(f"img_det_dict:\n{img_det_dict}")
 
 
 if __name__ == "__main__":

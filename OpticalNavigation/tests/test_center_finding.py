@@ -244,17 +244,41 @@ class CenterDetections(unittest.TestCase):
     # )
 
     def test_center_radii(self):
+        path = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations")
         paths = [
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f1_dt8.44305_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f2_dt8.50850_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f19_dt9.62115_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f0_dt10.47200_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f1_dt10.53745_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f17_dt11.58465_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png",
+            os.path.join(
+                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png"
+            ),
+            os.path.join(
+                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f1_dt8.44305_st.png"
+            ),
+            os.path.join(
+                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f2_dt8.50850_st.png"
+            ),
+            os.path.join(
+                path, "sim/data/traj-case1c_sim/images/cam2_expLow_f19_dt9.62115_st.png"
+            ),
+            os.path.join(
+                path,
+                "sim/data/traj-case1c_sim/images/cam3_expHigh_f0_dt10.47200_st.png",
+            ),
+            os.path.join(
+                path,
+                "sim/data/traj-case1c_sim/images/cam3_expHigh_f1_dt10.53745_st.png",
+            ),
+            os.path.join(
+                path,
+                "sim/data/traj-case1c_sim/images/cam3_expHigh_f17_dt11.58465_st.png",
+            ),
+            os.path.join(
+                path,
+                "sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png",
+            ),
+            os.path.join(
+                path,
+                "sim/data/traj-case1c_sim/images/cam3_expHigh_f19_dt11.71555_st.png",
+            ),
         ]
-        "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f19_dt11.71555_st.png",
         cr_dict, img_det_dict = self.calc_centers_and_radii(paths)
         print(cr_dict)
         print(img_det_dict)

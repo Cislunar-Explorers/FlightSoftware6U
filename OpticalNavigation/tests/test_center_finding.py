@@ -260,9 +260,9 @@ class CenterDetections(unittest.TestCase):
             os.path.join(path, "cam3_expHigh_f18_dt11.65010_st.png"),
             os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
         ]
-        cr_dict, img_det_dict = self.calc_centers_and_radii(paths)
+        cr_dict = self.calc_centers_and_radii(paths)
         print(f"cr_dict:\n{cr_dict}\n")
-        print(f"img_det_dict:\n{img_det_dict}")
+        # print(f"img_det_dict:\n{img_det_dict}")
 
 
 if __name__ == "__main__":

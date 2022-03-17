@@ -23,25 +23,14 @@ class TestEndToEnd(unittest.TestCase):
             print("Not enough reprojected images. Running test again.")
             repr.reproj_test(True, False, path)
 
-        # for idx, gnName in enumerate(gn_list):
-        #     print(gnName)
-        #     src = cv2.imread(gn_list[idx])
-        #     tgt = cv2.imread(st_list[idx])
-        #     re_img, _ = repr.reproj(src, gnName)
-        #     gn_imgs[gnName] = src
-        #     st_imgs[gnName.replace("_gn.png", "_st.png")] = tgt
-        #     re_imgs[gnName.replace("_gn.png", "_re.png")] = re_img
-
-        # return gn_imgs, st_imgs, re_imgs
-
         return gn_list, st_list, re_list
 
     def get_center_radius(self, img_lst):
         center_find = test_center_finding.CenterDetections()
 
-        cr_dict = center_find.calc_centers_and_radii(img_lst)
+        cr_dict_st = center_find.calc_centers_and_radii(img_lst)
 
-        return cr_dict
+        return cr_dict_st
 
     def run_body_meas_sim(self, path, centersReproj, radiiSt):
         """Takes in a path and reprojected centers (from center_finding) and outputs the transformed vectors, as well
@@ -62,47 +51,44 @@ class TestEndToEnd(unittest.TestCase):
         # Then we are comparing the result with the thruth values in the sim logs
 
         # First step: run reprojection test on gnomonic image, output stereographic image from reprojection as well as
-        #             from sim
+        # from sim.
 
         imgs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
         gn_list, st_list, re_list = self.reproject_images(imgs_path)
         print(gn_list, st_list, re_list)
 
-        # print(imgs_path)
         obs_path = os.path.join(DATA_DIR, "traj-case1c_sim/observations.json")
 
-        # gn_imgs, st_imgs, re_imgs = self.get_images_and_reproject(imgs_path)
-        # logging.debug(re_imgs)
+        # Second step: run center finding test on sim stereographic images, as well as on
+        # reprojected stereographic images.
 
-        # Second step: run center finding test on stereographic image from reprojection test, as well as on
-        #              stereographic sim image
-
-        # These are the st image names from the traj-case1c_sim. I think this input type(list) would be consistent
-        # with what we would ouput from your part?
-        # TODO: Replace this with my part's output.
-        re_imgs = [
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f1_dt8.44305_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f2_dt8.50850_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f19_dt9.62115_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f0_dt10.47200_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f1_dt10.53745_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f17_dt11.58465_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png",
-            "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f19_dt11.71555_st.png",
-        ]
-        cr_dict = self.get_center_radius(re_imgs)
-        print(cr_dict)
+        # Get the centers and radii of sim stereo images
+        cr_dict_st = self.get_center_radius(st_list)
+        print(cr_dict_st)
         centers_st = []
         radii_st = []
-        for i in cr_dict.keys():
-            key = list(cr_dict[i].keys())[0]
-            # print(cr_dict[i])
+        for i in cr_dict_st.keys():
+            key = list(cr_dict_st[i].keys())[0]
+            # print(cr_dict_st[i])
             # print(key)
-            centers_st.append([cr_dict[i][key][0], cr_dict[i][key][1]])
-            radii_st.append(cr_dict[i][key][2])
+            centers_st.append([cr_dict_st[i][key][0], cr_dict_st[i][key][1]])
+            radii_st.append(cr_dict_st[i][key][2])
         print(f"centers_st:\n{centers_st}")
         print(f"radii_st\n{radii_st}")
+
+        # Get the centers and radii of reprojected stereo images
+        cr_dict_re = self.get_center_radius(re_list)
+        print(cr_dict_re)
+        centers_re = []
+        radii_re = []
+        for i in cr_dict_re.keys():
+            key = list(cr_dict_re[i].keys())[0]
+            # print(cr_dict_re[i])
+            # print(key)
+            centers_re.append([cr_dict_re[i][key][0], cr_dict_re[i][key][1]])
+            radii_re.append(cr_dict_re[i][key][2])
+        print(f"centers_re:\n{centers_re}")
+        print(f"radii_re\n{radii_re}")
 
         # Third step: run body_meas test on the two image centers to output body detection vectors
         reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas_sim(
@@ -110,9 +96,9 @@ class TestEndToEnd(unittest.TestCase):
         )
 
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
-        #              of the three test?
-        #              Outputs of interest: error in pixel centers from sim and reproj images, error in detection
-        #              vectors from sim and reproj
+        # of the three test?
+        # Outputs of interest: error in pixel centers from sim and reproj images, error in detection vectors from sim
+        # and reproj
 
         pass
 

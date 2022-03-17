@@ -55,7 +55,6 @@ class TestEndToEnd(unittest.TestCase):
 
         imgs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
         gn_list, st_list, re_list = self.reproject_images(imgs_path)
-        print(gn_list, st_list, re_list)
 
         obs_path = os.path.join(DATA_DIR, "traj-case1c_sim/observations.json")
 
@@ -95,12 +94,16 @@ class TestEndToEnd(unittest.TestCase):
             obs_path, centers_st, radii_st
         )
 
+        st_calc_vecs, st_ref_vecs, st_errors = self.run_body_meas_sim(
+            obs_path, centers_re, radii_re
+        )
+
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         # of the three test?
         # Outputs of interest: error in pixel centers from sim and reproj images, error in detection vectors from sim
         # and reproj
 
-        pass
+        print("TODO")
 
 
 if __name__ == "__main__":

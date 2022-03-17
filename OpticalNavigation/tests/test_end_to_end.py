@@ -22,6 +22,7 @@ class TestEndToEnd(unittest.TestCase):
         if len(re_list) < len(gn_list):
             print("Not enough reprojected images. Running test again.")
             repr.reproj_test(True, False, path)
+            re_list = sorted(glob.glob(re_path))
 
         return gn_list, st_list, re_list
 
@@ -56,7 +57,9 @@ class TestEndToEnd(unittest.TestCase):
         imgs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
         gn_list, st_list, re_list = self.reproject_images(imgs_path)
 
-        obs_path = os.path.join(DATA_DIR, "traj-case1c_sim/observations.json")
+        obs_path = os.path.join(
+            DATA_DIR, "traj-case1c_sim_no_outline/observations.json"
+        )
 
         # Second step: run center finding test on sim stereographic images, as well as on
         # reprojected stereographic images.

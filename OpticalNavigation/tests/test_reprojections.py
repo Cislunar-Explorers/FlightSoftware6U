@@ -59,11 +59,16 @@ class TestReprojections(unittest.TestCase):
     def get_images(self, path=None) -> tuple([list, list]):
         """Returns lists of gnomonic image names and stereographic image names."""
 
+        print(path)
+
         # Get the file path
-        gn_path = (
-            os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images/*_gn.png")
-            if path is None
-            else path
+        gn_path = os.path.join(
+            (
+                os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images")
+                if path is None
+                else path
+            ),
+            "*_gn.png",
         )
 
         # Glob gnomonic images as filenames ending in "_gn.png"
@@ -73,6 +78,21 @@ class TestReprojections(unittest.TestCase):
         stereographicList = [img.replace("_gn.png", "_st.png") for img in gnomonicList]
 
         return gnomonicList, stereographicList
+
+    def write_remapped_image(self, gnName, out, path=None):
+        out_path = (
+            os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/out")
+            if path is None
+            else path
+        )
+
+        if not os.path.exists(out_path):
+            os.mkdir(out_path)
+
+        out_img_path = os.path.join(
+            out_path + "/" + gnName.replace("_gn.png", "_re.png")
+        )
+        cv2.imwrite(out_img_path, out)
 
     def write_composite_image(
         self,
@@ -124,12 +144,16 @@ class TestReprojections(unittest.TestCase):
 
         cv2.imwrite("comp/%s_%s_%s.png" % (outputString, i, j), composite)
 
-    def reproj_test(self, write_remapped: bool, write_composite: bool) -> None:
+    def reproj_test(
+        self, write_remapped: bool, write_composite: bool, path=None
+    ) -> None:
         """Main reprojection function. Asserts that difference values between
         corresponding contours is less than 0.15."""
 
+        print(path)
+
         # Get stareographic and gnomonic images
-        gnomonicList, stereographicList = self.get_images()
+        gnomonicList, stereographicList = self.get_images(path)
 
         # For each gnomonic image
         for idx, gnName in enumerate(gnomonicList):
@@ -146,8 +170,7 @@ class TestReprojections(unittest.TestCase):
             # Save the remapped image with filename "remapped_" + gnName to folder "out"
             # if write_remapped is True.
             if write_remapped:
-                out_path = os.path.join("out/remapped_%s" % gnName)
-                cv2.imwrite(out_path, out)
+                self.write_remapped_image(gnName, out, path)
 
             # Two largest contours from the remapped image
             grayOut = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)

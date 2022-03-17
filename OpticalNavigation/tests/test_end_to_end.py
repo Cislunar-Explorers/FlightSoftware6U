@@ -1,8 +1,6 @@
-import cv2
-
-# import os
 import unittest
 import os
+import glob
 from OpticalNavigation.tests import (
     test_center_finding,
     test_reprojections,
@@ -10,30 +8,33 @@ from OpticalNavigation.tests import (
 )
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
-DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/OpticalNavigation/simulations/sim/data/"
-
-
-# from utils.constants import FLIGHT_SOFTWARE_PATH
+DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/OpticalNavigation/simulations/sim/data"
 
 
 class TestEndToEnd(unittest.TestCase):
-    def get_images_and_reproject(self, path):
-
+    def reproject_images(self, path):
         repr = test_reprojections.TestReprojections()
 
-        gn_list, st_list = repr.get_images(path)
-        gn_imgs, st_imgs, re_imgs = {}, {}, {}
+        gn_list, st_list = repr.get_images(os.path.join(path, "images"))
+        re_path = os.path.join(path, "out/*_re.png")
 
-        for idx, gnName in enumerate(gn_list):
-            print(gnName)
-            src = cv2.imread(gn_list[idx])
-            tgt = cv2.imread(st_list[idx])
-            re_img, _ = repr.reproj(src, gnName)
-            gn_imgs[gnName] = src
-            st_imgs[gnName.replace("_gn.png", "_st.png")] = tgt
-            re_imgs[gnName.replace("_gn.png", "_re.png")] = re_img
+        re_list = sorted(glob.glob(re_path))
+        if len(re_list) < len(gn_list):
+            print("Not enough reprojected images. Running test again.")
+            repr.reproj_test(True, False, path)
 
-        return gn_imgs, st_imgs, re_imgs
+        # for idx, gnName in enumerate(gn_list):
+        #     print(gnName)
+        #     src = cv2.imread(gn_list[idx])
+        #     tgt = cv2.imread(st_list[idx])
+        #     re_img, _ = repr.reproj(src, gnName)
+        #     gn_imgs[gnName] = src
+        #     st_imgs[gnName.replace("_gn.png", "_st.png")] = tgt
+        #     re_imgs[gnName.replace("_gn.png", "_re.png")] = re_img
+
+        # return gn_imgs, st_imgs, re_imgs
+
+        return gn_list, st_list, re_list
 
     def get_center_radius(self, img_lst):
         center_find = test_center_finding.CenterDetections()
@@ -63,8 +64,11 @@ class TestEndToEnd(unittest.TestCase):
         # First step: run reprojection test on gnomonic image, output stereographic image from reprojection as well as
         #             from sim
 
-        imgs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images/*_gn.png")
-        print(imgs_path)
+        imgs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
+        gn_list, st_list, re_list = self.reproject_images(imgs_path)
+        print(gn_list, st_list, re_list)
+
+        # print(imgs_path)
         obs_path = os.path.join(DATA_DIR, "traj-case1c_sim/observations.json")
 
         # gn_imgs, st_imgs, re_imgs = self.get_images_and_reproject(imgs_path)
@@ -75,6 +79,7 @@ class TestEndToEnd(unittest.TestCase):
 
         # These are the st image names from the traj-case1c_sim. I think this input type(list) would be consistent
         # with what we would ouput from your part?
+        # TODO: Replace this with my part's output.
         re_imgs = [
             "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f0_dt8.37760_st.png",
             "../simulations/sim/data/traj-case1c_sim/images/cam2_expLow_f1_dt8.44305_st.png",

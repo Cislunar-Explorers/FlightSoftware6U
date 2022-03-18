@@ -1,6 +1,6 @@
 from os import popen
 from time import time, sleep
-from typing import Dict, Union, NamedTuple, Tuple
+from typing import Dict, List, Union, NamedTuple, Tuple
 import logging
 
 import numpy as np
@@ -8,9 +8,9 @@ import psutil
 from adafruit_blinka.agnostic import board_id
 from uptime import uptime
 
-from drivers.power.power_structs import eps_hk_t, hkparam_t
+from drivers.power.power_structs import eps_hk_t
 from telemetry.sensor import SynchronousSensor
-from utils.constants import DB_FILE, MAX_GYRO_RATE, GomOutputs, DownlinkKwargs as dk
+from utils.constants import DB_FILE, MAX_GYRO_RATE, DownlinkKwargs as dk
 
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
@@ -50,32 +50,33 @@ class GomSensor(SynchronousSensor):
     def __init__(self, main):
         super().__init__(main)
         self.hk = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
-        self.hkparam = hkparam_t()  # hkparam_t struct
-        self.is_electrolyzing = bool()
 
     def poll(self):
         super().poll()
-        if self._main.gom is not None:
-            self.hk = self._main.gom.get_health_data(level="eps")
-            self.hkparam = self._main.gom.get_health_data()
-            self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
+        if self._main.devices.gom.connected:
+            self.hk = self._main.devices.gom.collect_telem()
 
 
 class GyroSensor(SynchronousSensor):
     def __init__(self, main):
         super().__init__(main)
-        self.rot: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # rad/s
-        self.mag: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # microTesla
-        self.acc: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # m/s^2
+        self.rot: List[float] = [0.0, 0.0, 0.0]  # rad/s
+        self.mag: List[float] = [0.0, 0.0, 0.0]  # microTesla
+        self.acc: List[float] = [0.0, 0.0, 0.0]  # m/s^2
         self.tmp: int = int()  # deg C
 
     def poll(self):
         super().poll()
-        if self._main.gyro is not None:
-            self.rot = self._main.gyro.get_gyro_corrected()
-            self.mag = self._main.gyro.get_mag()
-            self.acc = self._main.gyro.get_acceleration()
-            self.tmp = self._main.gyro.get_temp()
+        if self._main.devices.gyro.connected:
+            angular_speed, temperature = self._main.devices.gyro._collect_telem()
+            self.rot = angular_speed
+            self.tmp = temperature
+        if self._main.devices.magacc.connected:
+            magnetometer_reading, accelerometer_reading = (
+                self._main.devices.magacc._collect_telem()
+            )
+            self.mag = magnetometer_reading
+            self.acc = accelerometer_reading
 
         # self.result = ImuResult(*self.rot, *self.mag, *self.acc)
 
@@ -85,7 +86,7 @@ class GyroSensor(SynchronousSensor):
         n_data = freq * duration
         data = []
         for _ in range(n_data):
-            data.append(self._main.gyro.get_gyro_corrected())
+            data.append(self._main.devices.gyro._collect_gyro(corrected=True))
             sleep(1.0 / freq)
 
         data = np.asarray(data).T
@@ -129,8 +130,8 @@ class PressureSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self._main.adc is not None:
-            self.pressure = self._main.adc.read_pressure()
+        if self._main.devices.adc.connected:
+            self.pressure = self._main.devices.adc.read_pressure()
 
 
 class ThermocoupleSensor(SynchronousSensor):
@@ -140,16 +141,16 @@ class ThermocoupleSensor(SynchronousSensor):
 
     def poll(self):
         super().poll()
-        if self._main.adc is not None:
-            self.tmp = self._main.adc.read_temperature()
+        if self._main.devices.adc.connected:
+            self.tmp = self._main.devices.adc.read_temperature()
 
 
 class PiSensor(SynchronousSensor):
-    def __init__(self, main):
-        super().__init__(main)
-        self.cpu: int = int()  # can be packed as short
-        self.ram: int = int()  # can be packed as short
-        self.disk: int = int()  # can be packed as short
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.cpu: int = int()  # can be packed as uint8
+        self.ram: int = int()  # can be packed as uint8
+        self.disk: int = int()  # can be packed as uint8
         self.boot_time: float = float()
         self.up_time: int = int()
         self.tmp: float = float()  # can be packed as a short
@@ -179,11 +180,12 @@ class RtcSensor(SynchronousSensor):
     def __init__(self, main):
         super().__init__(main)
         self.rtc_time = int()
+        self.rtc_temp = int()
 
     def poll(self):
         super().poll()
-        if self._main.rtc is not None:
-            self.rtc_time = self._main.rtc.get_time()
+        if self._main.devices.rtc.connected:
+            self.rtc_time, self.rtc_temp = self._main.devices.rtc._collect_telem()
 
 
 class OpNavSensor(SynchronousSensor):

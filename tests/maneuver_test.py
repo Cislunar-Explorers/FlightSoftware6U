@@ -35,7 +35,7 @@ class FakeGOM(Gomspace):
 def m(mocker):
     m = MainSatelliteThread()
     m.replace_flight_mode_by_id(consts.FMEnum.Maneuver)
-    m.gom = FakeGOM()
+    m.devices.gom = FakeGOM()
     return m
 
 

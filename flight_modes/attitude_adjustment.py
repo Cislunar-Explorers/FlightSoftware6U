@@ -96,7 +96,7 @@ class AAMode(PauseBackgroundMode):
                 self.missed_timing(pulse_start)
             else:
                 logging.debug(f"Sleeping {pulse_start - time()}s")
-                self._main.gom.driver.calculate_solenoid_wave()
+                self._main.devices.gom.driver.calculate_solenoid_wave()
                 sleep(max([(pulse_start - time()) - 2, 0]))
                 logging.info(
                     f"Experimental solenoid function. spike={params.ACS_SPIKE_DURATION}, hold={pulse_duration}"
@@ -104,7 +104,7 @@ class AAMode(PauseBackgroundMode):
                 # pulse ACS according to timings
                 for pulse_time in absolute_pulse_times:
                     sleep((pulse_time - time()) - (GOM_TIMING_FUDGE_FACTOR * 1e-3))
-                    self._main.gom.driver.solenoid_single_wave(pulse_duration)
+                    self._main.devices.gom.driver.solenoid_single_wave(pulse_duration)
             self._main.reorientation_list.pop(0)
         else:
             logging.warning("No data for reorientation pulses found")

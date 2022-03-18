@@ -26,17 +26,17 @@ class LowBatterySafetyMode(FlightMode):
             sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
             # TODO: not clear what this line is doing...
         else:
-            if self._main.gom is not None:
+            if self._main.devices.gom is not None:
                 # turn off all devices except for LNA. Most of this stuff is redundant, but better safe than sorry
-                self._main.gom.power_amplifier.set(False)  # turn off PA loadswitch
-                self._main.gom.rf_tx.set(False)  # Switch RF switch to RX
-                self._main.gom.rf_rx.set(True)  # Switch RF switch to RX
+                self._main.devices.gom.pa.set(False)  # turn off PA loadswitch
+                self._main.devices.gom.rf_tx.set(False)  # Switch RF switch to RX
+                self._main.devices.gom.rf_rx.set(True)  # Switch RF switch to RX
 
-                self._main.gom.electrolyzers.set(False)  # stop electrolysis
-                self._main.gom.burnwire.set(False)
-                self._main.gom.glowplug_1.set(False)
-                self._main.gom.glowplug_2.set(False)
-                self._main.gom.solenoid.set(False)
+                self._main.devices.gom.electrolyzers.set(False)  # stop electrolysis
+                self._main.devices.gom.burnwire.set(False)
+                self._main.devices.gom.glowplug_1.set(False)
+                self._main.devices.gom.glowplug_2.set(False)
+                self._main.devices.gom.solenoid.set(False)
 
             self.completed_task()
 
@@ -58,7 +58,7 @@ class LowBatterySafetyMode(FlightMode):
         ) // 60 < params.LB_OPNAV_INTERVAL
 
         time_for_telem = (
-            time() - self._main.radio.last_transmit_time
+            time() - self._main.devices.radio.last_transmit_time
         ) // 60 < params.LB_TLM_INTERVAL
 
         if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._main.FMQueue:

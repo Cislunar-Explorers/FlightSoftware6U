@@ -1,8 +1,11 @@
 import logging
+from typing import Any
 
 from adafruit_blinka.agnostic import board_id
 
 from utils.constants import ZERO_WORD, ONE_WORD
+
+from drivers.device import Device, DeviceEnum
 
 if board_id and board_id != "GENERIC_LINUX_PC":
     import board
@@ -16,14 +19,23 @@ from bitstring import BitArray
 from time import time, sleep
 
 
-class Radio:
-    def __init__(self):
+class Radio(Device):
+    driver: Ax5043
+    mgr: Manager
 
+    def __init__(self):
+        super().__init__(DeviceEnum.radio)
+        self.last_transmit_time = time()
+
+    def _connect_to_hardware(self):
         self.driver = Ax5043(
             SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO))
         )
         self.mgr = Manager(self.driver)
-        self.last_transmit_time = time()
+
+    def _collect_telem(self) -> Any:
+        state = self.mgr.state
+        return state
 
     # Monitor radio health, request reset if faulted
     def monitorHealth(self):

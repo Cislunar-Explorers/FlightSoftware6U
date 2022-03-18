@@ -137,10 +137,9 @@ class FlightMode:
 
     def poll_inputs(self):
         # TODO: Comment on what polling inputs means and how they differ across flight modes
-        if self._main.gom is not None:
-            self._main.gom.tick_wdt()  # FIXME; we don't want this for flight
-            # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
-            # An idea is to only pet the watchdog every time we recieve a command from the ground
+        self._main.devices.gom.tick_wdt()  # FIXME; we don't want this for flight
+        # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
+        # An idea is to only pet the watchdog every time we recieve a command from the ground
         self._main.telemetry.poll()
 
     def completed_task(self):
@@ -242,45 +241,45 @@ class CommsMode(FlightMode):
     def enter_transmit_safe_mode(self):
 
         # Stop electrolyzing
-        if self._main.gom.is_electrolyzing():
+        if self._main.devices.gom.is_electrolyzing():
             self.electrolyzing = True
-            self._main.gom.electrolyzers.set(False)
+            self._main.devices.gom.electrolyzers.set(False)
 
         # Set RF receiving side to low
-        self._main.gom.rf_rx.set(False)
+        self._main.devices.gom.rf_rx.set(False)
 
         # Turn off LNA
-        self._main.gom.lna.set(False)
+        self._main.devices.gom.lna.set(False)
 
         # Set RF transmitting side to high
-        self._main.gom.rf_tx.set(True)
+        self._main.devices.gom.rf_tx.set(True)
 
         # Turn on power amplifier
-        self._main.gom.power_amplifier.set(True)
+        self._main.devices.gom.pa.set(True)
 
     def exit_transmit_safe_mode(self):
 
         # Turn off power amplifier
-        self._main.gom.power_amplifier.set(False)
+        self._main.devices.gom.pa.set(False)
 
         # Set RF transmitting side to low
-        self._main.gom.rf_tx.set(False)
+        self._main.devices.gom.rf_tx.set(False)
 
         # Turn on LNA
-        self._main.gom.lna.set(True)
+        self._main.devices.gom.lna.set(True)
 
         # Set RF receiving side to high
-        self._main.gom.rf_rx.set(True)
+        self._main.devices.gom.rf_rx.set(True)
 
         # Resume electrolysis if we paused it to transmit
         if self.electrolyzing:
-            self._main.gom.electrolyzers.set(
+            self._main.devices.gom.electrolyzers.set(
                 True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
             )
 
     def execute_downlinks(self):
         while not self._main.downlink_queue.empty():
-            self._main.radio.transmit(self._main.downlink_queue.get())
+            self._main.devices.radio.transmit(self._main.downlink_queue.get())
             self._main.downlink_counter += 1
             # TODO: revisit and see if we actually need this
             sleep(params.DOWNLINK_BUFFER_TIME)
@@ -401,12 +400,12 @@ class NormalMode(FlightMode):
         ) // 60 > params.OPNAV_INTERVAL
 
         time_for_telem: bool = (
-            time() - self._main.radio.last_transmit_time
+            time() - self._main.devices.radio.last_transmit_time
         ) // 60 > params.TELEM_INTERVAL
 
         need_to_electrolyze: bool = self._main.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
 
-        currently_electrolyzing = self._main.telemetry.gom.is_electrolyzing
+        currently_electrolyzing = self._main.devices.gom.is_electrolyzing()
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
@@ -417,7 +416,7 @@ class NormalMode(FlightMode):
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
             logging.info("No need to electrolyze, turning OFF electrolyzers")
-            self._main.gom.electrolyzers.set(False)
+            self._main.devices.gom.electrolyzers.set(False)
 
         if currently_electrolyzing and need_to_electrolyze:
             logging.debug("Already electrolyzing")
@@ -426,7 +425,7 @@ class NormalMode(FlightMode):
         # if below pressure and not electrolyzing, start electrolyzing
         if not currently_electrolyzing and need_to_electrolyze:
             logging.info("Not electrolyzing, turning ON electrolyzers")
-            self._main.gom.electrolyzers.set(True)
+            self._main.devices.gom.electrolyzers.set(True)
 
         if not currently_electrolyzing and not need_to_electrolyze:
             logging.debug("Electrolyzers already OFF")

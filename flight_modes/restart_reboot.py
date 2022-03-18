@@ -33,7 +33,7 @@ class BootUpMode(FlightMode):
         # deploy antennae
         # FIXME: differentiate between Hydrogen and Oxygen. Each satellite now has different required Bootup behaviors
         logging.info("Antennae deploy...")
-        self._main.gom.burnwire.pulse(params.ANTENNAE_BURNWIRE_DURATION)
+        self._main.devices.gom.burnwire.pulse(params.ANTENNAE_BURNWIRE_DURATION)
 
         if self._main.need_to_reboot:
             # TODO: double check the boot db history to make sure we aren't going into a boot loop

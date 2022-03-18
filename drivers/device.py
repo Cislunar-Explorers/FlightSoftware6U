@@ -1,13 +1,28 @@
 from abc import ABC, abstractmethod
 import logging
 from typing import Any
+from utils.constants import StringEnum
+
+
+class DeviceEnum(StringEnum):
+    adc = "ADC"
+    rtc = "RTC"
+    magacc = "Magnet/Acceler-ometer"
+    gyro = "Gyro"
+    gom = "Gomspace P31u"
+    radio = "AX5043 Radio"
+
+    # TODO: implement device classes for the following:
+
+    cam = "Camera"
+    mux = "Camera Multiplexor"
+    rpi = "Raspberry Pi"
 
 
 class Device(ABC):
-    driver: Any
-
-    def __init__(self, name: str) -> None:
-        self.name: str = name
+    def __init__(self, name: DeviceEnum) -> None:
+        self.driver: Any  # define the `driver` attribute, but don't assign anything
+        self.name = name
         self.connected: bool = False
 
     def connect(self):

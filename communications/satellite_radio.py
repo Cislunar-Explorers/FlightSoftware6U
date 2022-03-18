@@ -5,7 +5,7 @@ from adafruit_blinka.agnostic import board_id
 
 from utils.constants import ZERO_WORD, ONE_WORD
 
-from drivers.device import Device
+from drivers.device import Device, DeviceEnum
 
 if board_id and board_id != "GENERIC_LINUX_PC":
     import board
@@ -24,7 +24,7 @@ class Radio(Device):
     mgr: Manager
 
     def __init__(self):
-        super().__init__("Radio")
+        super().__init__(DeviceEnum.radio)
         self.last_transmit_time = time()
 
     def _connect_to_hardware(self):

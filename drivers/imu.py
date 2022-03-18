@@ -7,7 +7,7 @@ import adafruit_fxos8700
 import adafruit_fxas21002c
 from utils.constants import GYRO_RANGE
 import utils.parameters as params
-from drivers.device import Device
+from drivers.device import Device, DeviceEnum
 
 gyro_biases = (params.GYRO_BIAS_X, params.GYRO_BIAS_Y, params.GYRO_BIAS_Z)
 gyro_biases_temperature_dependence = (
@@ -21,7 +21,7 @@ class Gyro(Device):
     driver: adafruit_fxas21002c.FXAS21002C
 
     def __init__(self) -> None:
-        super().__init__("GYRO")
+        super().__init__(DeviceEnum.gyro)
 
     def _connect_to_hardware(self):
         i2c = busio.I2C(board.SCL, board.SDA)
@@ -56,7 +56,7 @@ class MagnetAccelerometer(Device):
     driver: adafruit_fxos8700.FXOS8700
 
     def __init__(self) -> None:
-        super().__init__("MAG/ACC")
+        super().__init__(DeviceEnum.magacc)
 
     def _connect_to_hardware(self):
         i2c = busio.I2C(board.SCL, board.SDA)

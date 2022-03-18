@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Optional
-from drivers.device import Device
+from drivers.device import Device, DeviceEnum
 import drivers.power.loadswitch as ls
 
 import drivers.power.power_controller as power_controller
@@ -35,7 +35,7 @@ class Gomspace(Device):
     rf_rx: ls.GPIOLoadSwitch
 
     def __init__(self) -> None:
-        super().__init__("GOM")
+        super().__init__(DeviceEnum.gom)
 
     def _connect_to_hardware(self):
         self.driver = power_controller.Power()

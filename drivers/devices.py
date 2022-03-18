@@ -2,7 +2,7 @@ import logging
 from typing import Dict
 from drivers import adc, gom, imu, rtc
 from communications.satellite_radio import Radio
-from drivers.device import Device
+from drivers.device import Device, DeviceEnum
 
 
 class DeviceContainer:
@@ -18,16 +18,18 @@ class DeviceContainer:
         self.adc = adc.ADC(self.gyro)
         self.rtc = rtc.RTC()
 
-    def connect(self):
-        result: Dict[str, bool] = {}
-        for name, device in self.__dict__.items():
+    def connect(self) -> Dict[DeviceEnum, bool]:
+        """Tries connecting to all hardware devices and return a dict of the device name, and a bool of whether the
+         RPi is able to talk with the device"""
+        result: Dict[DeviceEnum, bool] = {}
+        for device in self.__dict__.values():
             device.connect()
-            result.update({name: device.connected})
+            result.update({device.name: device.connected})
 
-        if all(result):
+        if all(result.values()):
             logging.info("All devices succefully connected!")
         else:
             logging.error(
-                f"Devices not connected: {[name for name, connected in result if connected is False]}"
+                f"Devices not connected: {[name.value for name, connected in result.items() if connected is False]}"
             )
         return result

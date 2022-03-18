@@ -1,4 +1,4 @@
-from drivers.device import Device
+from drivers.device import Device, DeviceEnum
 from adafruit_blinka.agnostic import board_id
 
 if board_id and board_id != "GENERIC_LINUX_PC":
@@ -16,7 +16,7 @@ class RTC(Device):
     driver: adafruit_ds3231.DS3231
 
     def __init__(self) -> None:
-        super().__init__("RTC")
+        super().__init__(DeviceEnum.rtc)
 
     def _connect_to_hardware(self):
         i2c = busio.I2C(board.SCL, board.SDA)

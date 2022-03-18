@@ -12,7 +12,7 @@
 # look at the accompanying End of Semester Report found here:
 # https://cornell.app.box.com/file/664230352636
 
-from drivers.device import Device
+from drivers.device import Device, DeviceEnum
 from drivers.imu import Gyro
 
 import ADS1115
@@ -51,7 +51,10 @@ class ADC(Device):
     driver: ADS1115.ADS1115  # noqa
 
     def __init__(self, gyro: Gyro):
-        super().__init__("ADC")
+        """The ADC needs to be able to access the gyro because the thermocouple (which is connected to a port on the
+         ADC) needs a junction temperature (i.e. a temperature at the 'base' of the thermocouple) for calibration.
+         The gyro, which sits right next to the ADC, has a built-in temperature sensor which is used here"""
+        super().__init__(DeviceEnum.gyro)
         self.gyro = gyro
 
     def _connect_to_hardware(self):

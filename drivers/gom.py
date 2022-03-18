@@ -74,7 +74,7 @@ class Gomspace(Device):
     def all_off(self):
         """Turns off all controllable outputs on the Gomspace"""
         logging.debug("Turning off all controllable outputs")
-        self.power_amplifier.set(False)
+        self.pa.set(False)
         self.driver.set_output(0)
 
     def hard_reset(self, passcode):

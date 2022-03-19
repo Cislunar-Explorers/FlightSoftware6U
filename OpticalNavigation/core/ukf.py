@@ -296,8 +296,8 @@ def __newEstimate(
     pNew = Pxx - K.dot(R.dot(K.T))
     return TrajectoryEstimateOutput(
         new_state=TrajectoryStateVector.from_numpy_array(state=xNew),
-        new_P=CovarianceMatrix(matrix=pNew),
-        K=Matrix6x6(matrix=K),
+        new_P=CovarianceMatrix(pNew),
+        K=Matrix6x6(K),
     )
 
 
@@ -306,7 +306,7 @@ def runTrajUKF(
     sunEph: EphemerisVector,
     measurements: CameraMeasurementVector,
     initState: TrajectoryStateVector,
-    dt: float,
+    dt: np.float,
     P: CovarianceMatrix,
     cameraParams: CameraParameters,
     main_thrust_info: MainThrustInfo = None,

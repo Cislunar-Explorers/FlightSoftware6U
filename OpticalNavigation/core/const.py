@@ -552,6 +552,9 @@ class Matrix6x6:
         else:
             raise Exception("Incorrect input to Matrix6x6")
 
+    def __str__(self) -> str:
+        return str(self.data)
+
     # Keeping below code commented out because above implementation that conforms to pyright has not been tested
 
     # def __init__(

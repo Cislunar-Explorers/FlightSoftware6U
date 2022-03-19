@@ -61,11 +61,16 @@ class TestEndToEnd(unittest.TestCase):
             DATA_DIR, "traj-case1c_sim_no_outline/observations.json"
         )
 
+        print("\n\nST\n", st_list, "\nST\n\n")
+        print("\n\nRE\n", re_list, "\nRE\n\n")
+
         # Second step: run center finding test on sim stereographic images, as well as on
         # reprojected stereographic images.
 
         # Get the centers and radii of sim stereo images
         cr_dict_st = self.get_center_radius(st_list)
+
+        print("\n\nST_DICT\n", cr_dict_st, "\nST_DICT\n\n")
         # print(cr_dict_st)
         centers_st = []
         radii_st = []
@@ -95,9 +100,9 @@ class TestEndToEnd(unittest.TestCase):
         print(f"radii_re\n{radii_re}")
 
         # Third step: run body_meas test on the two image centers to output body detection vectors
-        reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas_sim(
-            obs_path, centers_st, radii_st
-        )
+        # reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas_sim(
+        #     obs_path, centers_st, radii_st
+        # )
 
         st_calc_vecs, st_ref_vecs, st_errors = self.run_body_meas_sim(
             obs_path, centers_re, radii_re

@@ -59,11 +59,11 @@ class TestReprojections(unittest.TestCase):
         # Get the file path
         gn_path = os.path.join(
             (
-                os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/images")
+                os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
                 if path is None
                 else path
             ),
-            "*_gn.png",
+            "images/*_gn.png",
         )
 
         # Glob gnomonic images as filenames ending in "_gn.png"
@@ -75,18 +75,19 @@ class TestReprojections(unittest.TestCase):
         return gnomonicList, stereographicList
 
     def write_remapped_image(self, gnName, out, path=None):
-        out_path = (
-            os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/out")
-            if path is None
-            else path
+        out_path = os.path.join(
+            (
+                os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
+                if path is None
+                else path
+            ),
+            "out/",
         )
 
         if not os.path.exists(out_path):
             os.mkdir(out_path)
 
-        out_img_path = os.path.join(
-            out_path + "/" + gnName.replace("_gn.png", "_re.png")
-        )
+        out_img_path = os.path.join(out_path + gnName.replace("_gn.png", "_re.png"))
         cv2.imwrite(out_img_path, out)
 
     def write_composite_image(
@@ -280,6 +281,7 @@ class TestReprojections(unittest.TestCase):
     def test_reprojection(self):
         print("\nTesting reprojections:")
         self.reproj_test(True, True)
+        # self.reproj_test(True, True, os.path.join(DATA_DIR, "traj-case1c_sim_testing_remap"))
 
     # Test reprojectons with image output
     # def test_reprojection_with_image_output(self):

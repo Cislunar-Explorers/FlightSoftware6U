@@ -15,7 +15,7 @@ class TestEndToEnd(unittest.TestCase):
     def reproject_images(self, path):
         repr = test_reprojections.TestReprojections()
 
-        gn_list, st_list = repr.get_images(os.path.join(path, "images"))
+        gn_list, st_list = repr.get_images(path)
         re_path = os.path.join(path, "out/*_re.png")
 
         re_list = sorted(glob.glob(re_path))
@@ -100,11 +100,11 @@ class TestEndToEnd(unittest.TestCase):
         print(f"radii_re\n{radii_re}")
 
         # Third step: run body_meas test on the two image centers to output body detection vectors
-        # reproj_calc_vecs, reproj_ref_vecs, reproj_errors = self.run_body_meas_sim(
+        # st_calc_vecs, st_ref_vecs, st_errors = self.run_body_meas_sim(
         #     obs_path, centers_st, radii_st
         # )
 
-        st_calc_vecs, st_ref_vecs, st_errors = self.run_body_meas_sim(
+        re_calc_vecs, re_ref_vecs, re_errors = self.run_body_meas_sim(
             obs_path, centers_re, radii_re
         )
 

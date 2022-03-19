@@ -31,7 +31,7 @@ class BodyMeas(unittest.TestCase):
             dt = []
             truthT0Vec = []
             truthT0Size = []
-            for frame in frames:
+            for frame in sorted(frames, key=lambda f: f["image_gnomonic"]):
                 imgName = frame["image_gnomonic"]
                 fileInfo.append(FileData(imgName))
 

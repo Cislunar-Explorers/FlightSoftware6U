@@ -559,17 +559,11 @@ def test_main():
         detections = [Detection(ot, camera) for ot in obs]
         img_gn = render_bodies(camera, spacecraft, obs, colors_bgr, illuminator)
         filename_gn = "gn_%s.png" % camera.name
-        cv2.imwrite(
-            os.path.join("../../../../../opnav_sim copy/old_runs/out", filename_gn),
-            img_gn,
-        )
+        cv2.imwrite(os.path.join(SIM_DIR, "src/out", filename_gn), img_gn)
         img_st = render_stereographic(camera, obs, colors_bgr, illuminator)
         draw_stereographic_detections(detections, img_st)
         filename_st = "st_%s.png" % camera.name
-        cv2.imwrite(
-            os.path.join("../../../../../opnav_sim copy/old_runs/out", filename_st),
-            img_st,
-        )
+        cv2.imwrite(os.path.join(SIM_DIR, "src/out", filename_st), img_st)
 
         tf = ord(camera.name) - ord("A")
         q_world2cam = spacecraft.q_world2body * camera.q_body2cam

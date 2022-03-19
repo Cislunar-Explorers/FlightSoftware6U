@@ -66,7 +66,7 @@ class TestEndToEnd(unittest.TestCase):
 
         # Get the centers and radii of sim stereo images
         cr_dict_st = self.get_center_radius(st_list)
-        print(cr_dict_st)
+        # print(cr_dict_st)
         centers_st = []
         radii_st = []
         for i in cr_dict_st.keys():
@@ -80,15 +80,17 @@ class TestEndToEnd(unittest.TestCase):
 
         # Get the centers and radii of reprojected stereo images
         cr_dict_re = self.get_center_radius(re_list)
-        print(cr_dict_re)
+        # print(cr_dict_re)
         centers_re = []
         radii_re = []
         for i in cr_dict_re.keys():
-            key = list(cr_dict_re[i].keys())[0]
-            # print(cr_dict_re[i])
-            # print(key)
-            centers_re.append([cr_dict_re[i][key][0], cr_dict_re[i][key][1]])
-            radii_re.append(cr_dict_re[i][key][2])
+            # Check if cr_dict_re[i].keys() isn't empty; i.e., no detections
+            if len(cr_dict_re[i].keys()) != 0:
+                key = list(cr_dict_re[i].keys())[0]
+                # print(cr_dict_re[i])
+                # print(key)
+                centers_re.append([cr_dict_re[i][key][0], cr_dict_re[i][key][1]])
+                radii_re.append(cr_dict_re[i][key][2])
         print(f"centers_re:\n{centers_re}")
         print(f"radii_re\n{radii_re}")
 

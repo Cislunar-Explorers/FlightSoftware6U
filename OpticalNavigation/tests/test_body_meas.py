@@ -100,7 +100,9 @@ class BodyMeas(unittest.TestCase):
             logging.debug(f"Actual Vector: {truthVec}")
 
             # We are comparing unit vectors here
-            vecDist = np.linalg.norm(finalT0Det.vector.data - truthVec)
+            diffVec = finalT0Det.vector.data - truthVec
+            logging.debug(f"Difference Vector: {diffVec}")
+            vecDist = np.linalg.norm(diffVec)
             logging.debug(f"Vect Dist: {vecDist}")
             # self.assertLessEqual(
             #     vecDist,
@@ -113,7 +115,7 @@ class BodyMeas(unittest.TestCase):
             calcNorm = np.linalg.norm(finalT0Det.vector.data)
             vAngle = np.arccos(dot / (truthNorm * calcNorm))
 
-            logging.debug(f"Vect Angle: {vAngle} (rad) = {vAngle * 180 / np.pi} (deg)")
+            logging.debug(f"Angle Dist: {vAngle} (rad) = {vAngle * 180 / np.pi} (deg)")
             logging.debug(f"Radial Dist: {truthNorm - calcNorm}")
             logging.debug("\n")
             calc_vecs.append(finalT0Det.vector.data)

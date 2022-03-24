@@ -1,6 +1,6 @@
 ### Summary
 <!-- What changes were made? What features were added? What bugs were fixed? -->
-This PR addresses Jira ticket [CISLUNAR-XX](https://cislunarsoftware.atlassian.net/browse/CISLUNAR-XX)     <!-- Replace XX with JIRA ticket number -->
+This PR addresses Jira ticket [CISLUNAR-XXX](https://jira.cornell.edu/browse/CISLUNAR-XXX)     <!-- Replace XXX with JIRA ticket number -->
 
 
 
@@ -14,4 +14,3 @@ This PR addresses Jira ticket [CISLUNAR-XX](https://cislunarsoftware.atlassian.n
 
 ### Comments
 - [ ] Add an x between the brackets if you commented your code well!
-

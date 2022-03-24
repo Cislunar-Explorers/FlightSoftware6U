@@ -107,6 +107,14 @@ class BodyMeas(unittest.TestCase):
             #     0.05,
             #     "Body transformations do not match within margin of error!",
             # )
+
+            dot = np.dot(finalT0Det.vector.data, truthVec)
+            truthNorm = np.linalg.norm(truthVec)
+            calcNorm = np.linalg.norm(finalT0Det.vector.data)
+            vAngle = np.arccos(dot / (truthNorm * calcNorm))
+
+            logging.debug(f"Vect Angle: {vAngle} (rad) = {vAngle * 180 / np.pi} (deg)")
+            logging.debug(f"Radial Dist: {truthNorm - calcNorm}")
             logging.debug("\n")
             calc_vecs.append(finalT0Det.vector.data)
             truth_vecs.append(truthVec)

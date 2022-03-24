@@ -1,6 +1,6 @@
 from drivers.gom import Gomspace
 import logging
-from drivers.gyro import GyroSensor
+from drivers.imu import Gyro
 from time import sleep, time
 import threading
 
@@ -12,9 +12,8 @@ def gyro_thread(gyro_freq: int):
     gyro_data = []
     logging.info("Reading Gyro data (rad/s)")
     for _ in range(2000):
-        gyro_reading = gyro.get_gyro()
+        gyro_list = gyro._collect_gyro()
         gyro_time = time()
-        gyro_list = list(gyro_reading)
         gyro_list.append(gyro_time)
         gyro_data.append(gyro_list)
         sleep(1.0 / gyro_freq)
@@ -27,7 +26,8 @@ def gyro_thread(gyro_freq: int):
 
 if __name__ == "__main__":
 
-    gyro = GyroSensor()
+    gyro = Gyro()
+    gyro.connect()
     gom_controller = Gomspace()
 
     # start new thread to log gyro data

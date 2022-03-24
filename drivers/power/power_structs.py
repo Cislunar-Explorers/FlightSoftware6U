@@ -260,6 +260,7 @@ def isCByteArray(arr):
 # takes a string [s] and returns the appropriate struct;
 # returns TestingStruct if string does not match any struct
 # raises: AssertionError if s is not a string
+# TODO: make this work with type hinting
 def structMaker(s):
     assert type(s) is str
 

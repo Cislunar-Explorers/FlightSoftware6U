@@ -1,3 +1,31 @@
+"""If you've just implemented a command and want to test it, add a method titled `test_<your_command>
+under the CommandTest class below.
+For a command test you will have access to `self.sat` and `self.ground_station`, which can be used
+to orchestrate your test.
+
+To emulate sending a command to the spacecraft, first package the command into bytes using
+`command_bytes = self.ground_station.pack_command(CommandEnum.<command name>, {command argument dict})`
+then emulate the spacecraft recieving that signal by putting the bytes into the satellite's command_queue
+`self.sat.command_queue.put(command_bytes)`
+Then execute the command like the spacecraft would:
+`self.sat.execute_commands()`
+
+And now check whether the command did what you wanted it to do using some of `unittest`'s builtin
+methods such as self.assertEquals, self.assertEmpty, etc.
+
+A more end-to-end test would involve emulating the downlinking of telemetry data, which can be done by:
+After running execute_commands(), telemetry data will be added to the `downlink_queue`
+To emulate downlinking this data, add the following lines to your test:
+
+`downlink = self.sat.downlink_queue.get()
+downlink_command, downlink_args = self.ground_station.unpack_telemetry(downlink)`
+
+And then the command and it's arguments can be verified the same way as above
+
+Happy testing!
+"""
+
+
 import logging
 import unittest
 from utils.constants import CommandEnum, FMEnum, CommandKwargs as ck
@@ -47,6 +75,37 @@ class CommandTest(unittest.TestCase):
         # print(downlink_args)
         self.assertEqual(downlink_command.id, CommandEnum.SetParam)
         self.assertEqual(downlink_args[ck.VALUE], new_value)
+
+    def test_setEMSThresh(self):
+        """Tests whether we can succesfully change the threshold percentage values for the Earth,Sun,Moon """
+
+        new_earth_thresh = 0.07
+        new_moon_thresh = 0.025
+        new_sun_thresh = 0.06
+
+        cmd = self.ground_station.pack_command(
+            CommandEnum.SetEMSThresh,
+            {
+                ck.EARTH_THRESH: new_earth_thresh,
+                ck.MOON_THRESH: new_moon_thresh,
+                ck.SUN_THRESH: new_sun_thresh,
+            },
+        )
+
+        # Checking uplink
+        self.sat.command_queue.put(cmd)
+        self.sat.execute_commands()
+        self.assertAlmostEqual(params.EARTH_PERCENTAGE_THRESH, new_earth_thresh, 3)
+        self.assertAlmostEqual(params.MOON_PERCENTAGE_THRESH, new_moon_thresh, 3)
+        self.assertAlmostEqual(params.SUN_PERCENTAGE_THRESH, new_sun_thresh, 2)
+
+        # Checking downlink
+        downlink = self.sat.downlink_queue.get()
+        downlink_command, downlink_args = self.ground_station.unpack_telemetry(downlink)
+        self.assertEqual(downlink_command.id, CommandEnum.SetEMSThresh)
+        self.assertAlmostEqual(downlink_args[ck.EARTH_THRESH], new_earth_thresh)
+        self.assertAlmostEqual(downlink_args[ck.MOON_THRESH], new_moon_thresh)
+        self.assertAlmostEqual(downlink_args[ck.SUN_THRESH], new_sun_thresh)
 
     def test_manual_fm_commands(self):
         """Commands the spacecraft to go into every flight mode """

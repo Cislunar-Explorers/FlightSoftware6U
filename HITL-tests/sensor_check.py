@@ -1,7 +1,7 @@
 from drivers.gom import Gomspace
 from drivers.rtc import RTC
-from drivers.gyro import GyroSensor
-from drivers.ADCDriver import ADC
+from drivers.imu import Gyro, MagnetAccelerometer
+from drivers.adc import ADC
 from communications.satellite_radio import Radio
 from core.camera import PiCam
 from core.camera import CameraMux
@@ -9,72 +9,32 @@ from drivers.nemo.nemo import Nemo
 import logging
 from time import time
 
+gom = Gomspace()
+gyro = Gyro()
+magacc = MagnetAccelerometer()
+adc = ADC(gyro)
+rtc = RTC()
+radio = Radio()
+
 
 def check_gom():
-    try:
-        gom = Gomspace()
-        hk = gom.get_health_data(level="eps")
-    except Exception as e:
-        logging.error(e, exc_info=True)
-        logging.error(
-            "GOM init failed. Is it charged above 7.0V? Check SDA/SCL (with an oscilloscope if need be)"
-        )
-    else:
-        logging.info(f"GOM initialization successful. Battery voltage: {hk.vbatt}")
+    gom.connect()
 
 
 def check_sensor_board():
-    try:
-        gyro = GyroSensor()
-        gyro_data = gyro.get_gyro()
-    except Exception as e:
-        logging.error(e, exc_info=True)
-        gyro = None
-        logging.error(
-            "GYRO init failed. Check power, gnd, and SDA/SCL connections to sensor board"
-        )
-    else:
-        logging.info(f"Gyro initialization successful. Gyro rates: {gyro_data}")
+    gyro.connect()
+    magacc.connect()
 
-    if gyro:
-        try:
-            adc = ADC(gyro)
-            temp = adc.read_temperature()
-            pressure = adc.read_pressure()
-        except Exception as e:
-            logging.error(e, exc_info=True)
-            logging.error(
-                "ADC init failed. Check power, gnd, and SDA/SCL connections to sensor board"
-            )
-        else:
-            logging.info(
-                f"ADC initialization successful. Pressure:{pressure}, Thermocouple:{temp}"
-            )
+    if gyro.connected:
+        adc.connect()
     else:
         logging.warning("Not initializing ADC because Gyro failed")
 
-    try:
-        rtc = RTC()
-        rtc_time = rtc.get_time()
-    except Exception as e:
-        logging.error(e, exc_info=True)
-        logging.error(
-            "RTC init failed. Check power, gnd, and SDA/SCL connections to sensor board"
-        )
-    else:
-        logging.info(f"RTC initialization successful. RTC time: {rtc_time}")
+    rtc.connect()
 
 
 def check_radio():
-    try:
-        Radio()
-    except Exception as e:
-        logging.error(e, exc_info=True)
-        logging.error(
-            "RADIO init Failed. Make sure radio/comms board connectors are correct"
-        )
-    else:
-        logging.info("RADIO initialization successful")
+    radio.connect()
 
 
 def check_nemo():

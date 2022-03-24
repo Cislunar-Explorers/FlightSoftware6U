@@ -18,25 +18,25 @@ class LowBatterySafetyMode(FlightMode):
 
     flight_mode_id = FMEnum.LowBatterySafety.value
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
 
     def run_mode(self):
         if self.task_completed:
             sleep(params.LOW_BATT_MODE_SLEEP)  # saves battery, maybe?
             # TODO: not clear what this line is doing...
         else:
-            if self._parent.gom is not None:
+            if self._main.devices.gom is not None:
                 # turn off all devices except for LNA. Most of this stuff is redundant, but better safe than sorry
-                self._parent.gom.power_amplifier.set(False)  # turn off PA loadswitch
-                self._parent.gom.rf_tx.set(False)  # Switch RF switch to RX
-                self._parent.gom.rf_rx.set(True)  # Switch RF switch to RX
+                self._main.devices.gom.pa.set(False)  # turn off PA loadswitch
+                self._main.devices.gom.rf_tx.set(False)  # Switch RF switch to RX
+                self._main.devices.gom.rf_rx.set(True)  # Switch RF switch to RX
 
-                self._parent.gom.electrolyzers.set(False)  # stop electrolysis
-                self._parent.gom.burnwire.set(False)
-                self._parent.gom.glowplug_1.set(False)
-                self._parent.gom.glowplug_2.set(False)
-                self._parent.gom.solenoid.set(False)
+                self._main.devices.gom.electrolyzers.set(False)  # stop electrolysis
+                self._main.devices.gom.burnwire.set(False)
+                self._main.devices.gom.glowplug_1.set(False)
+                self._main.devices.gom.glowplug_2.set(False)
+                self._main.devices.gom.solenoid.set(False)
 
             self.completed_task()
 
@@ -50,27 +50,27 @@ class LowBatterySafetyMode(FlightMode):
             return super_fm
 
         # check power supply to see if I can transition back to NormalMode
-        if self._parent.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
+        if self._main.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
         time_for_opnav = (
-            time() - self._parent.last_opnav_run
+            time() - self._main.last_opnav_run
         ) // 60 < params.LB_OPNAV_INTERVAL
 
         time_for_telem = (
-            time() - self._parent.radio.last_transmit_time
+            time() - self._main.devices.radio.last_transmit_time
         ) // 60 < params.LB_TLM_INTERVAL
 
-        if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._parent.FMQueue:
-            self._parent.FMQueue.put(FMEnum.OpNav.value)
+        if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._main.FMQueue:
+            self._main.FMQueue.put(FMEnum.OpNav.value)
 
         if time_for_telem:
             # Add a minimal data packet to our periodic downlink beacon
-            telem = self._parent.telemetry.minimal_packet()
-            downlink = self._parent.command_handler.pack_telemetry(
+            telem = self._main.telemetry.minimal_packet()
+            downlink = self._main.command_handler.pack_telemetry(
                 CommandEnum.CritTelem, telem
             )
-            self._parent.downlink_queue.put(downlink)
+            self._main.downlink_queue.put(downlink)
             logging.info("Added a minimal data packet to our downlink")
 
         return NO_FM_CHANGE

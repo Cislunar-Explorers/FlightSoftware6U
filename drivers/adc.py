@@ -12,16 +12,15 @@
 # look at the accompanying End of Semester Report found here:
 # https://cornell.app.box.com/file/664230352636
 
-from adafruit_blinka.agnostic import board_id
-from typing import Optional
+from drivers.device import Device, DeviceEnum
+from drivers.imu import Gyro
 
-if board_id and board_id != 'GENERIC_LINUX_PC':
-    import ADS1115
-from drivers.gyro import GyroSensor
+import ADS1115
 
 
-class ADC:
+class ADC(Device):
     """Analog to digital converter"""
+
     # Polynomial approximation constants for the thermocouple conversion from voltage to temperature.
     T0 = -8.7935962e0
 
@@ -49,20 +48,31 @@ class ADC:
     Q1T = -1.3948675e-3
     Q2T = -6.7976627e-5
 
-    def __init__(self, gyro: Optional[GyroSensor]):
-        self.ads = ADS1115.ADS1115()
+    driver: ADS1115.ADS1115  # noqa
+
+    def __init__(self, gyro: Gyro):
+        """The ADC needs to be able to access the gyro because the thermocouple (which is connected to a port on the
+         ADC) needs a junction temperature (i.e. a temperature at the 'base' of the thermocouple) for calibration.
+         The gyro, which sits right next to the ADC, has a built-in temperature sensor which is used here"""
+        super().__init__(DeviceEnum.gyro)
         self.gyro = gyro
+
+    def _connect_to_hardware(self):
+        self.driver = ADS1115.ADS1115()
+
+    def _collect_telem(self):
+        return self.read_pressure(), self.read_temperature()
 
     # Read the fuel tank pressure from the pressure transducer at channel 0 on the ADS1115
     def read_pressure(self):  # psi
-        milVolts = self.ads.readADCSingleEnded(channel=0, pga=6144, sps=64)
+        milVolts = self.driver.readADCSingleEnded(channel=0, pga=6144, sps=64)
         pressure = round(milVolts / 5000 * 300, 3)
         return pressure
 
     # Read the fuel tank temperature from thermocouple at channels 2 and 3 on the ADS1115
     # Requires a cold junction temperature taken from the Adafruit BNO055 gyroscopic sensor
     def read_temperature(self):
-        hot_junc_volt = self.ads.readADCSingleEnded(channel=1, pga=256, sps=64)
+        hot_junc_volt = self.driver.readADCSingleEnded(channel=1, pga=256, sps=64)
         cold_junc_temp = self.get_gyro_temp()
         # Need cold junction voltage converted from temperature
         cold_junc_volt = self.convert_temp_to_volt(cold_junc_temp)
@@ -72,8 +82,7 @@ class ADC:
         return temperature
 
     def get_gyro_temp(self):
-        if self.gyro is not None:
-            return self.gyro.get_temp()
+        return self.gyro._collect_telem()[1]
 
     def convert_temp_to_volt(self, temp):
         dif = temp - self.T0T

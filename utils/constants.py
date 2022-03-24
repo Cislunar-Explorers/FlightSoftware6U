@@ -47,6 +47,9 @@ COUNTER_SIZE = 3
 DATA_LEN_SIZE = 1
 MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + ID_SIZE + DATA_LEN_SIZE
 
+MAX_COMMAND_SIZE = 200  # Maximum command size based on the radio board's buffer size.
+# TODO: figure out what this number _actually_ is
+
 # Serializations Offsets
 MAC_OFFSET = 0
 COUNTER_OFFSET = MAC_OFFSET + MAC_LENGTH
@@ -136,6 +139,10 @@ class CommandKwargs(StringEnum):
     FNAME = "filename"
     IGNORE = "ignore"
     PASSWORD = "password"
+
+    EARTH_THRESH = "earth_threshold"
+    MOON_THRESH = "moon_threshold"
+    SUN_THRESH = "sun_threshold"
 
     OUTPUT_CHANNEL = "output_channel"
 
@@ -248,12 +255,11 @@ SPLIT_BURNWIRE_DURATION = 1.5  # second
 ANTENNAE_BURNWIRE_DURATION = 1  # second
 BURN_WAIT_TIME = 1  # minutes changed to glow wait time in params
 
+GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 MAX_GYRO_RATE = 250  # degrees/sec # TODO
 
 NO_FM_CHANGE = -1
-
-GOM_TIMING_FUDGE_FACTOR = 3  # milliseconds
 
 # Gyro specific constants
 GYRO_RANGE = 500  # degrees per second
@@ -405,4 +411,5 @@ class CommandEnum(IntEnum):
     LongString = 56
 
     IgnoreLowBatt = 60
+    SetEMSThresh = 61
     CeaseComms = 170

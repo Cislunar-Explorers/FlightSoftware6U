@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
+
 from communications.codec import Codec
 from communications.commands import Command
 from communications import codecs
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from main import MainSatelliteThread
 # for an explanation of the above 4 lines of code, see
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-# It lets your IDE know what type(parent) is, without causing any circular imports at runtime.
+# It lets your IDE know what type(main) is, without causing any circular imports at runtime.
 
 import drivers.power.power_structs as ps
 import time
@@ -39,9 +40,9 @@ class FM_Switch(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         logging.critical(f"Manual FM change commanded: {self.id}")
-        parent.replace_flight_mode_by_id(self.id)
+        main.replace_flight_mode_by_id(self.id)
 
 
 class BootSwitch(FM_Switch):
@@ -97,15 +98,17 @@ class separation_test(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.gom.burnwire.pulse(consts.SPLIT_BURNWIRE_DURATION, asynchronous=True)
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        main.devices.gom.burnwire.pulse(
+            consts.SPLIT_BURNWIRE_DURATION, asynchronous=True
+        )
         gyro_data = []
         logging.info("Reading Gyro data (rad/s)")
         for _ in range(1000):
-            gyro_reading = parent.gyro.get_gyro()
+            gyro_reading = main.devices.gyro._collect_telem()
             gyro_time = time.time()
             gyro_list = list(gyro_reading)
-            gyro_list.append(gyro_time)
+            gyro_list.append([gyro_time])
             gyro_data.append(gyro_list)
 
         # writes gyro data to gyro_data.txt. Caution, this file will be overwritten with every successive test
@@ -119,9 +122,9 @@ class run_opnav(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         """Schedules Opnav mode into the FM queue"""
-        parent.FMQueue.put(FMEnum.OpNav)
+        main.FMQueue.put(FMEnum.OpNav)
 
 
 class exit_low_batt_thresh(Command):
@@ -132,7 +135,7 @@ class exit_low_batt_thresh(Command):
     uplink_codecs = [Codec(ck.VBATT, "ushort")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         value = kwargs[ck.VBATT]
         try:
             assert 6000 < value < 8400 and float(value) is float
@@ -150,7 +153,7 @@ class set_opnav_interval(Command):
     uplink_codecs = [Codec(ck.INTERVAL, "ushort")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         """Does the same thing as set_parameter, but only for the OPNAV_INTERVAL parameter. Only
             requires one kwarg and does some basic sanity checks on the passed value. Value is in minutes"""
         value = kwargs[ck.INTERVAL]
@@ -169,7 +172,7 @@ class set_opnav_interval(Command):
 #     assert 0 <= theta < 6.28318530718
 #     assert 0 <= phi < 3.14159265359
 #
-#     parent.reorientation_queue.put((theta, phi))
+#     main.reorientation_queue.put((theta, phi))
 
 
 class acs_pulse_timing(Command):
@@ -182,7 +185,7 @@ class acs_pulse_timing(Command):
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         pulse_start_time = kwargs[ck.START]  # double, seconds
         pulse_duration = kwargs[ck.PULSE_DURATION]  # ushort, milliseconds
         pulse_num = kwargs[ck.PULSE_NUM]  # ushort, number
@@ -196,7 +199,7 @@ class acs_pulse_timing(Command):
         except AssertionError:
             raise CommandArgException
 
-        parent.reorientation_queue.put(
+        main.reorientation_queue.put(
             (pulse_start_time, pulse_duration, pulse_num, pulse_dt)
         )
 
@@ -212,10 +215,10 @@ class critical_telem(Command):
         codecs.GOM_PPT_MODE_codec,
     ]
 
-    def _method(self, parent: MainSatelliteThread, **kwargs):
+    def _method(self, main: MainSatelliteThread, **kwargs):
         # here we want to only gather the most critical telemetry values so that we spend the least electricity
         # downlinking them (think about a low-power scenario where the most important thing is our power in and out)
-        return parent.telemetry.minimal_packet()
+        return main.telemetry.minimal_packet()
 
 
 class basic_telem(Command):
@@ -248,10 +251,10 @@ class basic_telem(Command):
     ]
 
     def _method(
-        self, parent: MainSatelliteThread, **kwargs
+        self, main: MainSatelliteThread, **kwargs
     ) -> Dict[str, Union[float, int]]:
         # what's defined in section 3.6.1 of https://cornell.app.box.com/file/629596158344 would be a good packet
-        return parent.telemetry.standard_packet_dict()
+        return main.telemetry.standard_packet_dict()
 
 
 class detailed_telem(Command):
@@ -324,8 +327,8 @@ class detailed_telem(Command):
     ]
     # Needs validation
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> Dict[dk, int | float]:
-        return parent.telemetry.detailed_packet_dict()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Dict[dk, int | float]:
+        return main.telemetry.detailed_packet_dict()
 
 
 class electrolysis(Command):
@@ -334,7 +337,7 @@ class electrolysis(Command):
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         state = kwargs[ck.STATE]
         parameter_utils.set_parameter(
             "WANT_TO_ELECTROLYZE", bool(state), hard_set=False
@@ -349,11 +352,53 @@ class ignore_low_batt(Command):
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         ignore = kwargs[ck.IGNORE]
         parameter_utils.set_parameter(
             "IGNORE_LOW_BATTERY", bool(ignore), hard_set=False
         )
+
+
+class change_ems_percentage_thresh(Command):
+    """ Changes Earth, Sun, Moon Percentage threshold.
+        Useful for testing purposes when needing to reduce/increase the confidence of
+        the body in find_with_hough_transform_and_contours.findBody()
+        Requires: Threshhold values must be between 0...1"""
+
+    id = CommandEnum.SetEMSThresh
+    uplink_codecs = [
+        Codec(ck.EARTH_THRESH, "float"),
+        Codec(ck.MOON_THRESH, "float"),
+        Codec(ck.SUN_THRESH, "float"),
+    ]
+    downlink_codecs = [
+        Codec(ck.EARTH_THRESH, "float"),
+        Codec(ck.MOON_THRESH, "float"),
+        Codec(ck.SUN_THRESH, "float"),
+    ]
+
+    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs):
+        new_earth_thresh = kwargs[ck.EARTH_THRESH]
+        new_moon_thresh = kwargs[ck.MOON_THRESH]
+        new_sun_thresh = kwargs[ck.SUN_THRESH]
+        assert new_earth_thresh <= 1 and new_earth_thresh >= 0
+        assert new_moon_thresh <= 1 and new_moon_thresh >= 0
+        assert new_sun_thresh <= 1 and new_sun_thresh >= 0
+        parameter_utils.set_parameter(
+            "EARTH_PERCENTAGE_THRESH", new_earth_thresh, hard_set=False
+        )
+        parameter_utils.set_parameter(
+            "MOON_PERCENTAGE_THRESH", new_moon_thresh, hard_set=False
+        )
+        parameter_utils.set_parameter(
+            "SUN_PERCENTAGE_THRESH", new_sun_thresh, hard_set=False
+        )
+
+        return {
+            ck.EARTH_THRESH: new_earth_thresh,
+            ck.MOON_THRESH: new_moon_thresh,
+            ck.SUN_THRESH: new_sun_thresh,
+        }
 
 
 class schedule_maneuver(Command):
@@ -362,14 +407,14 @@ class schedule_maneuver(Command):
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         time_burn = kwargs[ck.MANEUVER_TIME]
         logging.info("Scheduling a maneuver at: " + str(float(time_burn)))
         if params.SCHEDULED_BURN_TIME > 0:
-            parent.maneuver_queue.put(params.SCHEDULED_BURN_TIME)
-        parent.maneuver_queue.put(float(time_burn))
+            main.maneuver_queue.put(params.SCHEDULED_BURN_TIME)
+        main.maneuver_queue.put(float(time_burn))
 
-        smallest_time_burn = parent.maneuver_queue.get()
+        smallest_time_burn = main.maneuver_queue.get()
         parameter_utils.set_parameter(
             name="SCHEDULED_BURN_TIME",
             value=smallest_time_burn,
@@ -383,7 +428,7 @@ class reboot(Command):
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         # TODO: make rebooting less janky
         os.system("sudo reboot")
         # add something here that adds to the restarts db that this restart was commanded
@@ -398,7 +443,7 @@ class cease_comms(Command):
     downlink_codecs = []
 
     # Needs validation
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         pword = kwargs[ck.PASSWORD]
         if pword == 123:  # TODO, change
             logging.critical("Ceasing all communications")
@@ -413,7 +458,7 @@ class set_system_time(Command):
 
     # Needs validation
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, float]:
         # need to validate this works, and need to integrate updating RTC
         unix_epoch = kwargs[ck.SYS_TIME]
@@ -430,7 +475,7 @@ class get_param(Command):
     downlink_codecs = [Codec(dk.VALUE, "double")]
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, float]:
         name = kwargs[ck.NAME]
         value = getattr(params, name)
@@ -443,8 +488,8 @@ class reboot_gom(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        parent.gom.driver.reboot()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        main.devices.gom.driver.reboot()
 
 
 class power_cycle(Command):
@@ -454,9 +499,9 @@ class power_cycle(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         # TODO: safe shutdown RPi before hard reset
-        parent.gom.hard_reset(True)
+        main.devices.gom.hard_reset(True)
 
 
 class gom_outputs(Command):
@@ -468,14 +513,16 @@ class gom_outputs(Command):
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         output_channel = kwargs[ck.OUTPUT_CHANNEL]
         # if 'state' is not found in kwargs, assume we want it to turn off
         state = kwargs.get(ck.STATE, 0)
         # if 'delay' is not found in kwargs, assume we want it immediately
         delay = kwargs.get(ck.DELAY, 0)
 
-        parent.gom.set_single_output(output_channel, int(state), delay=delay)
+        main.devices.gom.driver.set_single_output(
+            output_channel, int(state), delay=delay
+        )
 
 
 class pi_shutdown(Command):
@@ -483,7 +530,7 @@ class pi_shutdown(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         # TODO: do this more gracefully
         os.system("sudo poweroff")
 
@@ -495,7 +542,7 @@ class set_file_to_update(Command):
     uplink_codecs = [Codec(ck.FILE_PATH, "long_string")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         file_path = kwargs[ck.FILE_PATH]
         parameter_utils.set_parameter("FILE_UPDATE_PATH", file_path, False)
 
@@ -508,11 +555,11 @@ class add_file_block(Command):
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         block_number = kwargs[ck.BLOCK_NUMBER]
         block_text = kwargs[ck.BLOCK_TEXT]
 
-        parent.file_block_bank[block_number] = block_text
+        main.file_block_bank[block_number] = block_text
 
         # TODO: Downlink acknowledgment with block number, or downlink block numbers on request
 
@@ -524,7 +571,7 @@ class get_file_blocks_info(Command):
     uplink_codecs = [Codec(ck.TOTAL_BLOCKS, "ushort")]
     downlink_codecs = [Codec(dk.CHECKSUM, "string"), Codec(dk.MISSING_BLOCKS, "string")]
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> Dict[str, str]:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Dict[str, str]:
         time.sleep(15)  # For testing only
 
         total_blocks = kwargs[ck.TOTAL_BLOCKS]
@@ -534,7 +581,7 @@ class get_file_blocks_info(Command):
         for i in range(total_blocks):
 
             try:
-                block = parent.file_block_bank[i]
+                block = main.file_block_bank[i]
                 full_file_text += block
 
             except KeyError:
@@ -550,17 +597,17 @@ class activate_file(Command):
     uplink_codecs = [Codec(ck.TOTAL_BLOCKS, "ushort")]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
         file_path = params.FILE_UPDATE_PATH
         total_blocks = kwargs[ck.TOTAL_BLOCKS]
 
-        assert total_blocks == len(parent.file_block_bank)
+        assert total_blocks == len(main.file_block_bank)
 
         full_file_text = ""
 
         # Assemble file from blocks
         for i in range(total_blocks):
-            full_file_text += parent.file_block_bank[i]
+            full_file_text += main.file_block_bank[i]
 
         # Create backup with the original if the file already exists
         if os.path.exists(file_path):
@@ -577,7 +624,7 @@ class activate_file(Command):
         original_file.seek(0)
         original_file.write(full_file_text)
 
-        parent.file_block_bank = {}
+        main.file_block_bank = {}
 
 
 class print_some_string(Command):
@@ -585,7 +632,7 @@ class print_some_string(Command):
     uplink_codecs = [Codec("some_number", "float"), Codec("long_string", "string")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         number = kwargs["some_number"]
         string = kwargs["long_string"]
 
@@ -598,12 +645,12 @@ class nemo_write_register(Command):
     uplink_codecs = [Codec(ck.REG_ADDRESS, "uint8"), Codec(ck.REG_VALUE, "uint8")]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
             reg_address = kwargs[ck.REG_ADDRESS]
             values = [kwargs[ck.REG_VALUE]]
 
-            parent.nemo_manager.write_register(reg_address, values)
+            main.nemo_manager.write_register(reg_address, values)
 
         else:
             logging.error(
@@ -616,11 +663,11 @@ class nemo_read_register(Command):
     uplink_codecs = [Codec(ck.REG_ADDRESS, "uint8"), Codec(ck.REG_SIZE, "uint8")]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
             reg_address = kwargs[ck.REG_ADDRESS]
             size = kwargs[ck.REG_SIZE]
-            parent.nemo_manager.read_register(reg_address, size)
+            main.nemo_manager.read_register(reg_address, size)
 
         else:
             logging.error(
@@ -652,9 +699,9 @@ class nemo_set_config(Command):
 
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.set_config(**kwargs)
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.set_config(**kwargs)
 
         else:
             logging.error("CMD: nemo_set_config() failed, nemo_manager not initialized")
@@ -665,9 +712,9 @@ class nemo_power_off(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.power_off()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.power_off()
         else:
             logging.error("CMD: nemo_power_off() failed, nemo_manager not initialized")
 
@@ -677,9 +724,9 @@ class nemo_power_on(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.power_on()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.power_on()
 
         else:
             logging.error("CMD: nemo_power_on() failed, nemo_manager not initialized")
@@ -690,9 +737,9 @@ class nemo_reboot(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
-            parent.nemo_manager.reboot()
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
+            main.nemo_manager.reboot()
 
         else:
             logging.error("CMD: nemo_reboot() failed, nemo_manager not initialized")
@@ -703,14 +750,14 @@ class nemo_process_rate_data(Command):
     uplink_codecs = []
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
 
-        if parent.nemo_manager is not None:
+        if main.nemo_manager is not None:
             t_start = kwargs[ck.T_START]
             t_stop = kwargs[ck.T_STOP]
             decimation_factor = kwargs[ck.DECIMATION_FACTOR]
 
-            parent.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
+            main.nemo_manager.process_rate_data(t_start, t_stop, decimation_factor)
 
         else:
             logging.error(
@@ -727,13 +774,13 @@ class nemo_process_histograms(Command):
     ]
     downlink_codecs = []
 
-    def _method(self, parent: MainSatelliteThread, **kwargs) -> None:
-        if parent.nemo_manager is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> None:
+        if main.nemo_manager is not None:
             t_start = kwargs[ck.T_START]
             t_stop = kwargs[ck.T_STOP]
             decimation_factor = kwargs[ck.DECIMATION_FACTOR]
 
-            parent.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
+            main.nemo_manager.process_histograms(t_start, t_stop, decimation_factor)
 
         else:
             logging.error(
@@ -757,7 +804,7 @@ class shellCommand(Command):
     downlink_codecs = RETURN_CODEC
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, Union[float, int]]:
         cmd: str = cast("str", kwargs.get(ck.CMD))
         return_code = run_shell_command(cmd)
@@ -772,7 +819,7 @@ class sudoCommand(Command):
     downlink_codecs = RETURN_CODEC
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, Union[float, int]]:
         cmd: str = cast("str", kwargs.get(ck.CMD))
         command = "sudo " + cmd
@@ -786,7 +833,7 @@ class picberry(Command):
     downlink_codecs = RETURN_CODEC
 
     def _method(
-        self, parent: Optional[MainSatelliteThread] = None, **kwargs
+        self, main: Optional[MainSatelliteThread] = None, **kwargs
     ) -> Dict[str, Union[float, int]]:
         cmd: str = cast("str", kwargs.get(ck.CMD))
         base_command = "sudo picberry --gpio=20,21,16 --family=pic24fjxxxgb2xx "
@@ -800,7 +847,7 @@ class exec_py_file(Command):
     uplink_codecs = [Codec(ck.FNAME, "string")]
     downlink_codecs = []
 
-    def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> None:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> None:
         filename: str = cast("str", kwargs[ck.FNAME])
         filename += ".py"
         logging.debug(f"CWD: {os.getcwd()}")
@@ -817,7 +864,7 @@ class set_param(Command):
 
     downlink_codecs = [Codec(dk.VALUE, "double")]
 
-    def _method(self, parent: MainSatelliteThread, **kwargs):
+    def _method(self, main: MainSatelliteThread, **kwargs):
         """Changes the values of a parameter in utils/parameters.py or .json if hard_set"""
         name = kwargs[ck.NAME]
         value = kwargs[ck.VALUE]
@@ -863,17 +910,15 @@ class set_gom_conf1(Command):
     uplink_codecs = GomConf1Codecs
     downlink_codecs = GomConf1Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
         new_config = gom_util.eps_config_from_dict(**kwargs)
         logging.info("New config to be set:")
         ps.displayConfig(new_config)
 
-        if parent.gom is not None:
+        if main.devices.gom.connected:
             try:
-                parent.gom.driver.config_set(new_config)
-                updated_config: ps.eps_config_t = parent.gom.driver.config_get()
+                main.devices.gom.driver.config_set(new_config)
+                updated_config: ps.eps_config_t = main.devices.gom.driver.config_get()
                 new_config_dict = gom_util.dict_from_eps_config(updated_config)
                 return new_config_dict
 
@@ -889,12 +934,10 @@ class get_gom_conf1(Command):
     uplink_codecs = []
     downlink_codecs = GomConf1Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
-        if parent.gom is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
+        if main.devices.gom is not None:
             current_config: ps.eps_config_t = cast(
-                "ps.eps_config_t", parent.gom.get_health_data(level="config")
+                "ps.eps_config_t", main.devices.gom.driver.config_get()
             )
             ps.displayConfig(current_config)
             current_config_dict = gom_util.dict_from_eps_config(current_config)
@@ -916,15 +959,13 @@ class set_gom_conf2(Command):
     uplink_codecs = GomConf2Codecs
     downlink_codecs = GomConf2Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
-        if parent.gom is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
+        if main.devices.gom.connected:
             new_conf2 = gom_util.eps_config2_from_dict(kwargs)
-            parent.gom.driver.config2_set(new_conf2)
-            parent.gom.driver.config2_cmd(2)
+            main.devices.gom.driver.config2_set(new_conf2)
+            main.devices.gom.driver.config2_cmd(2)
 
-            return gom_util.dict_from_eps_config2(parent.gom.driver.config2_get())
+            return gom_util.dict_from_eps_config2(main.devices.gom.driver.config2_get())
         else:
             logging.warning("Can't talk to Gom P31u")
 
@@ -934,12 +975,10 @@ class get_gom_conf2(Command):
     uplink_codecs = []
     downlink_codecs = GomConf2Codecs
 
-    def _method(
-        self, parent: MainSatelliteThread, **kwargs
-    ) -> Optional[Dict[str, int]]:
-        if parent.gom is not None:
+    def _method(self, main: MainSatelliteThread, **kwargs) -> Optional[Dict[str, int]]:
+        if main.devices.gom.connected:
             current_conf2 = cast(
-                "ps.eps_config2_t", parent.gom.get_health_data(level="config2")
+                "ps.eps_config2_t", main.devices.gom.driver.config2_get()
             )
             ps.displayConfig2(current_conf2)
             current_config2_dict = gom_util.dict_from_eps_config2(current_conf2)
@@ -963,6 +1002,7 @@ COMMAND_LIST: List[Command] = [
     detailed_telem(),
     electrolysis(),
     ignore_low_batt(),
+    change_ems_percentage_thresh(),
     schedule_maneuver(),
     reboot(),
     cease_comms(),
@@ -1034,7 +1074,7 @@ COMMAND_DICT: Dict[int, Command] = {command.id: command for command in COMMAND_L
 #     downlink_codecs = [Codec(CHECKSUM, "string"),
 #                      Codec(MISSING_BLOCKS, "string")]
 
-#     def _method(self, parent: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
+#     def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> Dict:
 #         line_number = kwargs['line_number']
 #         new_line = kwargs['new_line']
 #         file_path = params.FILE_UPDATE_PATH
@@ -1057,44 +1097,44 @@ COMMAND_DICT: Dict[int, Command] = {command.id: command for command in COMMAND_L
 #         # tests integration of ADC into the rest of the FSW
 #         logging.info(
 #             "Cold junction temperature for gyro sensor in Celsius:")
-#         logging.info(parent.adc.get_gyro_temp())
+#         logging.info(main.devices.adc.get_gyro_temp())
 
 #         logging.info(
-#             f"Pressure: {parent.adc.read_pressure()} psi")
+#             f"Pressure: {main.devices.adc.read_pressure()} psi")
 #         logging.info(
-#             f"Temperature: {parent.adc.read_temperature()} deg C")
+#             f"Temperature: {main.devices.adc.read_temperature()} deg C")
 
 #         logging.info("Conversion sanity check: 25.6 degrees")
-#         logging.info(parent.adc.convert_volt_to_temp(
-#             parent.adc.convert_temp_to_volt(25.6)))
+#         logging.info(main.devices.adc.convert_volt_to_temp(
+#             main.devices.adc.convert_temp_to_volt(25.6)))
 #         logging.info("Conversion sanity check: 2.023 mV")
-#         logging.info(parent.adc.convert_temp_to_volt(
-#             parent.adc.convert_volt_to_temp(2.023)))
+#         logging.info(main.devices.adc.convert_temp_to_volt(
+#             main.devices.adc.convert_volt_to_temp(2.023)))
 
 #     def rtc_test(self):
 #         logging.info(
-#             f"Oscillator Disabled: {parent.rtc.ds3231.disable_oscillator}")
-#         logging.info(f"RTC Temp: {parent.rtc.get_temp()}")
-#         logging.info(f"RTC Time: {parent.rtc.get_time()}")
+#             f"Oscillator Disabled: {main.devices.rtc.driver.disable_oscillator}")
+#         logging.info(f"RTC Temp: {main.devices.rtc.get_temp()}")
+#         logging.info(f"RTC Time: {main.devices.rtc.get_time()}")
 #         # time.sleep(1)
 #         logging.info("Setting RTC time to 1e9")
-#         parent.rtc.set_time(int(1e9))
-#         logging.info("New RTC Time: {parent.rtc.get_time()}")
+#         main.devices.rtc.set_time(int(1e9))
+#         logging.info("New RTC Time: {main.devices.rtc.get_time()}")
 #         # time.sleep(1)
 #         logging.info("Incrementing RTC Time by 5555 seconds")
-#         parent.rtc.increment_rtc(5555)
+#         main.devices.rtc.increment_rtc(5555)
 #         logging.info(
-#             f"New RTC Time: {parent.rtc.get_time()}")
+#             f"New RTC Time: {main.devices.rtc.get_time()}")
 #         logging.info("Disabling Oscillator, waiting 10 seconds")
-#         # parent.rtc.disable_oscillator()
+#         # main.devices.rtc.disable_oscillator()
 #         time.sleep(10)
 #         logging.info(
-#             f"RTC Time after disabling oscillator: {parent.rtc.get_time()}")
+#             f"RTC Time after disabling oscillator: {main.devices.rtc.get_time()}")
 #         logging.info("Enabling Oscillator, waiting 10 seconds")
-#         # parent.rtc.enable_oscillator()
+#         # main.devices.rtc.enable_oscillator()
 #         time.sleep(10)
 #         logging.info(
-#             f"RTC Time after re-enabling oscillator: {parent.rtc.get_time()}")
+#             f"RTC Time after re-enabling oscillator: {main.devices.rtc.get_time()}")
 #         logging.info("Disabling Oscillator")
-#         # parent.rtc.disable_oscillator()
-#         parent.handle_sigint(None, None)
+#         # main.devices.rtc.disable_oscillator()
+#         main.handle_sigint(None, None)

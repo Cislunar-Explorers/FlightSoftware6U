@@ -1,6 +1,6 @@
 from os import popen
 from time import time, sleep
-from typing import Dict, Union, NamedTuple, Tuple
+from typing import Dict, List, Union, NamedTuple, Tuple
 import logging
 
 import numpy as np
@@ -8,9 +8,9 @@ import psutil
 from adafruit_blinka.agnostic import board_id
 from uptime import uptime
 
-from drivers.power.power_structs import eps_hk_t, hkparam_t
+from drivers.power.power_structs import eps_hk_t
 from telemetry.sensor import SynchronousSensor
-from utils.constants import DB_FILE, MAX_GYRO_RATE, GomOutputs, DownlinkKwargs as dk
+from utils.constants import DB_FILE, MAX_GYRO_RATE, DownlinkKwargs as dk
 
 # from utils.db import GyroModel
 from utils.db import TelemetryModel, create_sensor_tables_from_path
@@ -47,35 +47,36 @@ def moving_average(x, w):
 
 
 class GomSensor(SynchronousSensor):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         self.hk = eps_hk_t()  # HouseKeeping data: eps_hk_t struct
-        self.hkparam = hkparam_t()  # hkparam_t struct
-        self.is_electrolyzing = bool()
 
     def poll(self):
         super().poll()
-        if self._parent.gom is not None:
-            self.hk = self._parent.gom.get_health_data(level="eps")
-            self.hkparam = self._parent.gom.get_health_data()
-            self.is_electrolyzing = bool(self.hk.output[GomOutputs.electrolyzer.value])
+        if self._main.devices.gom.connected:
+            self.hk = self._main.devices.gom.collect_telem()
 
 
 class GyroSensor(SynchronousSensor):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.rot: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # rad/s
-        self.mag: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # microTesla
-        self.acc: Tuple[float, float, float] = (0.0, 0.0, 0.0)  # m/s^2
+    def __init__(self, main):
+        super().__init__(main)
+        self.rot: List[float] = [0.0, 0.0, 0.0]  # rad/s
+        self.mag: List[float] = [0.0, 0.0, 0.0]  # microTesla
+        self.acc: List[float] = [0.0, 0.0, 0.0]  # m/s^2
         self.tmp: int = int()  # deg C
 
     def poll(self):
         super().poll()
-        if self._parent.gyro is not None:
-            self.rot = self._parent.gyro.get_gyro_corrected()
-            self.mag = self._parent.gyro.get_mag()
-            self.acc = self._parent.gyro.get_acceleration()
-            self.tmp = self._parent.gyro.get_temp()
+        if self._main.devices.gyro.connected:
+            angular_speed, temperature = self._main.devices.gyro._collect_telem()
+            self.rot = angular_speed
+            self.tmp = temperature
+        if self._main.devices.magacc.connected:
+            magnetometer_reading, accelerometer_reading = (
+                self._main.devices.magacc._collect_telem()
+            )
+            self.mag = magnetometer_reading
+            self.acc = accelerometer_reading
 
         # self.result = ImuResult(*self.rot, *self.mag, *self.acc)
 
@@ -85,7 +86,7 @@ class GyroSensor(SynchronousSensor):
         n_data = freq * duration
         data = []
         for _ in range(n_data):
-            data.append(self._parent.gyro.get_gyro_corrected())
+            data.append(self._main.devices.gyro._collect_gyro(corrected=True))
             sleep(1.0 / freq)
 
         data = np.asarray(data).T
@@ -115,7 +116,7 @@ class GyroSensor(SynchronousSensor):
         # gyro_model = GyroModel.from_tuple(gyro_tuple)
         #
         # try:
-        #     session = self._parent.create_session()
+        #     session = self._main.create_session()
         #     session.add(gyro_model)
         #     session.commit()
         # finally:
@@ -123,33 +124,33 @@ class GyroSensor(SynchronousSensor):
 
 
 class PressureSensor(SynchronousSensor):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         self.pressure = float()  # pressure, psi
 
     def poll(self):
         super().poll()
-        if self._parent.adc is not None:
-            self.pressure = self._parent.adc.read_pressure()
+        if self._main.devices.adc.connected:
+            self.pressure = self._main.devices.adc.read_pressure()
 
 
 class ThermocoupleSensor(SynchronousSensor):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         self.tmp = float()  # Fuel tank temperature, deg C
 
     def poll(self):
         super().poll()
-        if self._parent.adc is not None:
-            self.tmp = self._parent.adc.read_temperature()
+        if self._main.devices.adc.connected:
+            self.tmp = self._main.devices.adc.read_temperature()
 
 
 class PiSensor(SynchronousSensor):
     def __init__(self, parent):
         super().__init__(parent)
-        self.cpu: int = int()  # can be packed as short
-        self.ram: int = int()  # can be packed as short
-        self.disk: int = int()  # can be packed as short
+        self.cpu: int = int()  # can be packed as uint8
+        self.ram: int = int()  # can be packed as uint8
+        self.disk: int = int()  # can be packed as uint8
         self.boot_time: float = float()
         self.up_time: int = int()
         self.tmp: float = float()  # can be packed as a short
@@ -176,19 +177,20 @@ class PiSensor(SynchronousSensor):
 
 
 class RtcSensor(SynchronousSensor):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         self.rtc_time = int()
+        self.rtc_temp = int()
 
     def poll(self):
         super().poll()
-        if self._parent.rtc is not None:
-            self.rtc_time = self._parent.rtc.get_time()
+        if self._main.devices.rtc.connected:
+            self.rtc_time, self.rtc_temp = self._main.devices.rtc._collect_telem()
 
 
 class OpNavSensor(SynchronousSensor):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, main):
+        super().__init__(main)
         self.quat = tuple() * 4
         self.pos = tuple() * 3
         self.acq_time = float()
@@ -198,18 +200,18 @@ class OpNavSensor(SynchronousSensor):
 
 
 class Telemetry(SynchronousSensor):
-    def __init__(self, parent):
-        # The purpose of the parent object is to ensure that only one object is defined for each sensor/component
-        # So almost all calls to sensors will be made through self._parent.<insert sensor stuff here>
-        super().__init__(parent)
+    def __init__(self, main):
+        # The purpose of the main object is to ensure that only one object is defined for each sensor/component
+        # So almost all calls to sensors will be made through self._main.<insert sensor stuff here>
+        super().__init__(main)
 
-        self.gom = GomSensor(parent)
-        self.gyr = GyroSensor(parent)
-        self.prs = PressureSensor(parent)
-        self.thm = ThermocoupleSensor(parent)
-        self.rpi = PiSensor(parent)
-        self.rtc = RtcSensor(parent)
-        self.opn = OpNavSensor(parent)
+        self.gom = GomSensor(main)
+        self.gyr = GyroSensor(main)
+        self.prs = PressureSensor(main)
+        self.thm = ThermocoupleSensor(main)
+        self.rpi = PiSensor(main)
+        self.rtc = RtcSensor(main)
+        self.opn = OpNavSensor(main)
 
         self.sensors = [self.gom, self.gyr, self.prs, self.thm, self.rpi, self.rtc]
 

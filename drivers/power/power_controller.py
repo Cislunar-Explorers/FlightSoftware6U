@@ -165,21 +165,21 @@ class Power:
         logging.debug("Running get_hk_1")
         self.write(CMD_GET_HK, [])
         array = self.read(SIZE_HKPARAM_T)
-        return ps.c_bytesToStruct(array, "hkparam_t")
+        return cast(ps.hkparam_t, ps.c_bytesToStruct(array, "hkparam_t"))
 
     # returns eps_hk_t struct
-    def get_hk_2(self):
+    def get_hk_2(self) -> ps.eps_hk_t:
         logging.debug("Running get_hk_2")
         self.write(CMD_GET_HK, [0x00])
         array = self.read(SIZE_EPS_HK_T)
-        return ps.c_bytesToStruct(array, "eps_hk_t")
+        return cast(ps.eps_hk_t, ps.c_bytesToStruct(array, "eps_hk_t"))
 
     # returns eps_hk_vi_t struct
-    def get_hk_2_vi(self):
+    def get_hk_2_vi(self) -> ps.eps_hk_vi_t:
         logging.debug("Running get_hk_2_vi")
         self.write(CMD_GET_HK, [0x01])
         array = self.read(SIZE_EPS_HK_VI_T)
-        return ps.c_bytesToStruct(array, "eps_hk_vi_t")
+        return cast(ps.eps_hk_vi_t, ps.c_bytesToStruct(array, "eps_hk_vi_t"))
 
     # returns eps_hk_out_t struct
     def get_hk_out(self) -> ps.eps_hk_out_t:
@@ -189,18 +189,18 @@ class Power:
         return cast(ps.eps_hk_out_t, ps.c_bytesToStruct(array, "eps_hk_out_t"))
 
     # returns eps_hk_wdt_t struct
-    def get_hk_wdt(self):
+    def get_hk_wdt(self) -> ps.eps_hk_wdt_t:
         logging.debug("Running get_hk_wdt")
         self.write(CMD_GET_HK, [0x03])
         array = self.read(SIZE_EPS_HK_WDT_T)
-        return ps.c_bytesToStruct(array, "eps_hk_wdt_t")
+        return cast(ps.eps_hk_wdt_t, ps.c_bytesToStruct(array, "eps_hk_wdt_t"))
 
     # returns eps_hk_basic_t struct
-    def get_hk_2_basic(self):
+    def get_hk_2_basic(self) -> ps.eps_hk_basic_t:
         logging.debug("Running get_hk_2_basic")
         self.write(CMD_GET_HK, [0x04])
         array = self.read(SIZE_EPS_HK_BASIC_T)
-        return ps.c_bytesToStruct(array, "eps_hk_basic_t")
+        return cast(ps.eps_hk_basic_t, ps.c_bytesToStruct(array, "eps_hk_basic_t"))
 
     # sets voltage output channels with bit mask:
     # byte [1 byte] -> [NC NC 3.3V3 3.3V2 3.3V1 5V3 5V2 5V1]

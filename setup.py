@@ -31,6 +31,7 @@ INSTALL_REQUIRES = [
     "pigpio",
     "psutil",
     "python-dotenv",
+    "pyquaternion",
     "scipy",
     "sqlalchemy",
     "tqdm",

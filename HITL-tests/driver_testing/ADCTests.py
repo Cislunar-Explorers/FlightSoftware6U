@@ -10,8 +10,8 @@
 # look at the accompanying End of Semester Report found here:
 # https://cornell.app.box.com/file/664230352636
 
-from drivers.ADCDriver import ADC
-from drivers.gyro import GyroSensor
+from drivers.adc import ADC
+from drivers.imu import Gyro
 import time
 import logging
 
@@ -19,20 +19,24 @@ assert sum([1, 2, 3]) == 6, "Should be 6"
 
 
 def test_ADC_initialize():
-    return ADC(GyroSensor())
+    gyro = Gyro()
+    gyro.connect()
+    adc = ADC(gyro)
+    adc.connect()
+    return adc
 
 
-def test_ADC_read_pressure(testADC):
+def test_ADC_read_pressure(testADC: ADC):
     logging.info(testADC.read_pressure())
 
 
-def test_ADC_read_pressure_continuous(testADC):
+def test_ADC_read_pressure_continuous(testADC: ADC):
     while True:
         logging.info(testADC.read_pressure())
         time.sleep(1)
 
 
-def test_ADC_read_pressure_20(testADC):
+def test_ADC_read_pressure_20(testADC: ADC):
     x = 0
     logging.info(
         "These are pressure readings when the analog to digital converter is connected to"
@@ -46,20 +50,20 @@ def test_ADC_read_pressure_20(testADC):
         time.sleep(1)
 
 
-def test_ADC_read_temperature(testADC):
+def test_ADC_read_temperature(testADC: ADC):
     logging.info("--------------------------")
     cel = testADC.read_temperature()
 
     logging.info(f"{cel} degC; {cel * 1.8 + 32} degF ")
 
 
-def test_ADC_read_temperature_continuous(testADC):
+def test_ADC_read_temperature_continuous(testADC: ADC):
     while True:
         test_ADC_read_temperature(testADC)
         time.sleep(1)
 
 
-def test_ADC_read_temperature_20(testADC):
+def test_ADC_read_temperature_20(testADC: ADC):
     x = 0
     while x < 20:
         test_ADC_read_temperature(testADC)
@@ -67,7 +71,7 @@ def test_ADC_read_temperature_20(testADC):
         time.sleep(1)
 
 
-def test_ADC_get_gyro_temp(testADC):
+def test_ADC_get_gyro_temp(testADC: ADC):
     logging.info("Cold junction temperature from gyro sensor in Celsius:")
     logging.info(testADC.get_gyro_temp())
 

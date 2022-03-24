@@ -30,7 +30,7 @@ class trivialTestUKF:
         )
 
         trajStateVector = TrajectoryStateVector(
-            0.1, 0.1, 0.1, 0.1, 0.1, 0.1
+            100000, 10000, 10000, 0.1, 0.1, 0.1
         )  # positions and velocities are all 0
         dt = 0.01  # Step size with respect to time
         P = np.diag(

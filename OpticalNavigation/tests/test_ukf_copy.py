@@ -8,17 +8,21 @@ from core.const import (
 import numpy as np
 from core.ukf import runTrajUKF
 
+# import pandas as pd
+import unittest
 
-"""def runTrajUKF(moonEph: EphemerisVector, sunEph: EphemerisVector, measurements:CameraMeasurementVector,
-            initState:TrajectoryStateVector, dt:np.float, P:CovarianceMatrix, cameraParams:CameraParameters,
-            main_thrust_info:MainThrustInfo=None, dynamicsOnly:bool=False) -> TrajectoryEstimateOutput:"""
+# from tests.const import TEST_CISLUNAR_meas
 
 
-class trivialTestUKF:
+class trivialTestUKF(unittest.TestCase):
+    """
+    Tests accuracy of our trajectory ukf on a trivial case. Test takes data from various constants and low initial
+    velocities and positions to check that we obtained reasonable outputs. The final result is then compared with
+    our expected outputs (using the standard deviations of our covariance matrix).
+    """
 
     # Trivial test for UKF implementation (Velocities and positions are all 0 for easy calculations)
-    def test_trivial_ukf():
-
+    def test_trivial_ukf(self):
         moonEph = get_ephemeris(0, BodyEnum.Moon)  # Moon ephemeris data from astro.py
         moonEph = EphemerisVector(
             moonEph[0], moonEph[1], moonEph[2], moonEph[3], moonEph[4], moonEph[5]
@@ -36,7 +40,14 @@ class trivialTestUKF:
         P = np.diag(
             np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float)
         )  # Initial covariance matrix
-        measurements = None  # If None gets initialized to 1x6 zero tuple
+
+        # TODO fix lines below to properly evaluate measurements
+        # d_camMeas = pd.read_csv(TEST_CISLUNAR_meas).to_dict()
+        measurements = None
+        # CameraMeasurementVector(ang_em=d_camMeas['Z1'][t], ang_es=d_camMeas['Z2'][t],
+        # ang_ms=d_camMeas['Z3'][t], e_dia=d_camMeas['Z4'][t], m_dia=d_camMeas['Z5'][t], s_dia=d_camMeas['Z6'][t])
+        # If None gets initialized to 1x6 zero tuple
+
         cameraParams = None  # Does not get used in code
         trajEstimateOutput = runTrajUKF(
             moonEph,
@@ -77,5 +88,5 @@ class trivialTestUKF:
         print(str(trajEstimateOutput.K))
 
 
-a = trivialTestUKF
-a.test_trivial_ukf()
+if __name__ == "__main__":
+    unittest.main()

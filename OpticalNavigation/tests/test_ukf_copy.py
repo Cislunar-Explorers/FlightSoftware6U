@@ -8,58 +8,50 @@ from core.const import (
 import numpy as np
 from core.ukf import runTrajUKF
 
-# import pandas as pd
-import unittest
-
-# from tests.const import TEST_CISLUNAR_meas
+# import math
 
 
-class trivialTestUKF(unittest.TestCase):
-    """
-    Tests accuracy of our trajectory ukf on a trivial case. Test takes data from various constants and low initial
-    velocities and positions to check that we obtained reasonable outputs. The final result is then compared with
-    our expected outputs (using the standard deviations of our covariance matrix).
-    """
-
+class trivialTestUKF:
     # Trivial test for UKF implementation (Velocities and positions are all 0 for easy calculations)
-    def test_trivial_ukf(self):
+    def test_trivial_ukf():
         moonEph = get_ephemeris(0, BodyEnum.Moon)  # Moon ephemeris data from astro.py
         moonEph = EphemerisVector(
-            moonEph[0], moonEph[1], moonEph[2], moonEph[3], moonEph[4], moonEph[5]
+            1.5363e05, -3.7237e05, 2887.6, 0.90889, 0.34863, -0.088026
         )
-
         sunEph = get_ephemeris(0, BodyEnum.Sun)  # Sun ephemeris data from astro.py
         sunEph = EphemerisVector(
-            sunEph[0], sunEph[1], sunEph[2], sunEph[3], sunEph[4], sunEph[5]
+            -3.0672e07, -1.441e08, 6670.4, 29.633, -6.0859, -0.00088015
         )
-
         trajStateVector = TrajectoryStateVector(
-            100000, 10000, 10000, 0.1, 0.1, 0.1
-        )  # positions and velocities are all 0
-        dt = 0.01  # Step size with respect to time
+            1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+        )  # tested first row of trajectory.csv from c1_discretized.csv (box file)
+        dt = 1  # seconds
         P = np.diag(
             np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float)
         )  # Initial covariance matrix
-
-        # TODO fix lines below to properly evaluate measurements
-        # d_camMeas = pd.read_csv(TEST_CISLUNAR_meas).to_dict()
-        measurements = None
-        # CameraMeasurementVector(ang_em=d_camMeas['Z1'][t], ang_es=d_camMeas['Z2'][t],
-        # ang_ms=d_camMeas['Z3'][t], e_dia=d_camMeas['Z4'][t], m_dia=d_camMeas['Z5'][t], s_dia=d_camMeas['Z6'][t])
-        # If None gets initialized to 1x6 zero tuple
-
+        """
+        measurements = CameraMeasurementVector(883.96,1022.8,909.4,65.646,11.315,28.42)
+        # we're first testing with CameraMeasurement vector = None; this gives us an output
+        # that makes more sense
+        """
         cameraParams = None  # Does not get used in code
         trajEstimateOutput = runTrajUKF(
             moonEph,
             sunEph,
-            measurements,
+            None,  # originally passed in measurements
             trajStateVector,
             dt,
             CovarianceMatrix(P),
             cameraParams,
+            dynamicsOnly=True,
         )
+        """"
+        inputs:
+        dynamicsModelOnly means we don't need the cameraMeasurements and only rely on initial state ?
+        note: need to verify whether the camera measurements' units are still
+        in pixel separation or not; they should have been changed to angular separation
+        """
         # has new_state : TrajectoryStateVector, new_P : CovarianceMatrix, K: Matrix6x6 (K = Kalman Gain)
-
         # expected outputs for state (trajStateVector)
         # one way to test outputs are correct is to separately call functions from ukf.py:
         """expected_xpos = 0
@@ -68,7 +60,6 @@ class trivialTestUKF(unittest.TestCase):
         expected_xvel = 0
         expected_yvel = 0
         expected_zvel = 0"""  # Commented out for commit
-
         pos_array = trajEstimateOutput.new_state.get_position_data()
         vel_array = trajEstimateOutput.new_state.get_velocity_data()
         print("x_pos = " + str(pos_array[0]))
@@ -77,16 +68,14 @@ class trivialTestUKF(unittest.TestCase):
         print("x_vel = " + str(vel_array[0]))
         print("y_vel = " + str(vel_array[1]))
         print("z_vel = " + str(vel_array[2]))
-
         # expected output for covariance matrix
-        """expected_P = None"""  # Commented out for commit
+        """expected_P = None"""
         print("out covariance = ")
         print(str(trajEstimateOutput.new_P))
-        # expected kalman gain
-        """expected_K = None"""  # Commented out for commit
+        # kalman gain is all 0s -->
         print("out kalman = ")
         print(str(trajEstimateOutput.K))
 
 
-if __name__ == "__main__":
-    unittest.main()
+a = trivialTestUKF
+a.test_trivial_ukf()

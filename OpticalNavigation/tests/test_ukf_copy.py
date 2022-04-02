@@ -7,13 +7,17 @@ from core.const import (
 )
 import numpy as np
 from core.ukf import runTrajUKF
+import unittest
 
-# import math
 
+class trivialTestUKF(unittest.TestCase):
+    """
+    Tests accuracy of our trajectory ukf on a trivial case. Test takes data from various constants and low initial
+    velocities and positions to check that we obtained reasonable outputs. The final result is then compared with
+    our expected outputs (using the standard deviations of our covariance matrix).
+    """
 
-class trivialTestUKF:
-    # Trivial test for UKF implementation (Velocities and positions are all 0 for easy calculations)
-    def test_trivial_ukf():
+    def test_trivial_ukf(self):
         moonEph = get_ephemeris(0, BodyEnum.Moon)  # Moon ephemeris data from astro.py
         moonEph = EphemerisVector(
             1.5363e05, -3.7237e05, 2887.6, 0.90889, 0.34863, -0.088026
@@ -54,12 +58,7 @@ class trivialTestUKF:
         # has new_state : TrajectoryStateVector, new_P : CovarianceMatrix, K: Matrix6x6 (K = Kalman Gain)
         # expected outputs for state (trajStateVector)
         # one way to test outputs are correct is to separately call functions from ukf.py:
-        """expected_xpos = 0
-        expected_ypos = 0
-        expected_zpos = 0
-        expected_xvel = 0
-        expected_yvel = 0
-        expected_zvel = 0"""  # Commented out for commit
+
         pos_array = trajEstimateOutput.new_state.get_position_data()
         vel_array = trajEstimateOutput.new_state.get_velocity_data()
         print("x_pos = " + str(pos_array[0]))
@@ -77,5 +76,5 @@ class trivialTestUKF:
         print(str(trajEstimateOutput.K))
 
 
-a = trivialTestUKF
-a.test_trivial_ukf()
+if __name__ == "__main__":
+    unittest.main()

@@ -25,7 +25,7 @@ from utils.parameters import (
 from OpticalNavigation.core.find_algos.tiled_remap import *
 import cv2
 import numpy as np
-from math import radians
+from math import radians, atan
 import re
 import logging
 
@@ -259,10 +259,21 @@ def find(
                 (sX, sY), sR = sun
                 sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
                 sRho2 = sXst ** 2 + sYst ** 2
+                sRho = np.sqrt(sRho2)
                 # TODO figure out if below line (and corresponding ones) is diameter in stereographic or spherical
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
                 sSx, sSy, sSz = st_to_sph(sXst, sYst)
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
+
+                sRadSt = (sR + 0.5) / cam.st_scale
+                sAngDiam = 2 * atan((sRho + sRadSt) / 2) - 2 * atan((sRho - sRadSt) / 2)
+
+                print(f"Sun sX: {sX} sY: {sY} sR: {sR}")
+                print(f"Sun sXst: {sXst} sYst: {sYst}")
+                print(f"st_scale: {cam.st_scale}")
+                print(f"sRadSt: {sRadSt}")
+                print(f"sAngDiam: {sAngDiam}\n")
+
                 # Andrew
                 if pixel:
                     body_values["Sun"] = [x + sX - 1640, y + sY - 1232, sR]
@@ -270,7 +281,7 @@ def find(
                     body_values["Sun"] = [
                         cam.normalize_st(x + sX, y + sY)[0],
                         cam.normalize_st(x + sX, y + sY)[1],
-                        sDia / 2,
+                        sAngDiam,
                     ]
 
     else:
@@ -287,9 +298,20 @@ def find(
                 (eX, eY), eR = earth
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
                 eRho2 = eXst ** 2 + eYst ** 2
+                eRho = np.sqrt(eRho2)
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
+
+                eRadSt = (eR + 0.5) / cam.st_scale
+                eAngDiam = 2 * atan((eRho + eRadSt) / 2) - 2 * atan((eRho - eRadSt) / 2)
+
+                print(f"Earth eX: {eX} eY: {eY} eR: {eR}")
+                print(f"Earth eXst: {eXst} eYst: {eYst}")
+                print(f"st_scale: {cam.st_scale}")
+                print(f"eRadSt: {eRadSt}")
+                print(f"eAngDiam: {eAngDiam}\n")
+
                 # Andrew
                 if pixel:
                     body_values["Earth"] = [x + eX - 1640, y + eY - 1232, eR]
@@ -297,7 +319,7 @@ def find(
                     body_values["Earth"] = [
                         cam.normalize_st(x + eX, y + eY)[0],
                         cam.normalize_st(x + eX, y + eY)[1],
-                        eDia / 2,
+                        eAngDiam,
                     ]
             elif earth is None:  # TODO: Placeholder
                 moon = measureMoon(f, w, h)
@@ -312,9 +334,22 @@ def find(
                     else:
                         mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
                     mRho2 = mXst ** 2 + mYst ** 2
+                    mRho = np.sqrt(mRho2)
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
+
+                    mRadSt = (mR + 0.5) / cam.st_scale
+                    mAngDiam = 2 * atan((mRho + mRadSt) / 2) - 2 * atan(
+                        (mRho - mRadSt) / 2
+                    )
+
+                    print(f"Moon mX: {mX} mY: {mY} mR: {mR}")
+                    print(f"Moon mXst: {mXst} mYst: {mYst}")
+                    print(f"st_scale: {cam.st_scale}")
+                    print(f"mRadSt: {mRadSt}")
+                    print(f"mAngDiam: {mAngDiam}\n")
+
                     # Andrew
                     if pixel:
                         body_values["Moon"] = [x + mX - 1640, y + mY - 1232, mR]
@@ -323,13 +358,13 @@ def find(
                             body_values["Moon"] = [
                                 cam.normalize_st(x + mX, y + mY)[0],
                                 cam.normalize_st(x + mX, y + mY)[1],
-                                mDia / 2,
+                                mAngDiam,
                             ]
                         else:
                             body_values["Moon"] = [
                                 cam.normalize_st(x2 + mX, y2 + mY)[0],
                                 cam.normalize_st(x2 + mX, y2 + mY)[1],
-                                mDia / 2,
+                                mR,
                             ]
 
             index += 1

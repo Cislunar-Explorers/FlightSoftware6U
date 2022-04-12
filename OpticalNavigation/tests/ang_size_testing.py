@@ -1,3 +1,4 @@
+import math
 from numpy import arctan, asarray, newaxis, reciprocal, sqrt, stack
 import numpy as np
 import json
@@ -54,15 +55,40 @@ def get_radius_center_st():
 # rad = 0.00878911 / 2  # from initial implementaiton
 # cen = [0.19693145516536165, -0.21108428542264437]  # from Andrew's
 
-print(
-    "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png"
-)
-print("Earth")
-rad = 0.06147455 / 2  # from initial implementaiton
-cen = [0.22730826157123687, 0.18692091669069819]  # from Andrew's
+# print(
+# "../simulations/sim/data/traj-case1c_sim/images/cam3_expHigh_f18_dt11.65010_st.png"
+# )
+# print("Earth")
+# rad = 0.06147455 / 2  # from initial implementaiton
+# cen = [0.22730826157123687, 0.18692091669069819]  # from Andrew's
+#
+# print(rad)
+# print(cen)
+# rho_c = sqrt(cen[0] ** 2 + cen[1] ** 2)
+# rho, arad = st_circle_inv(rho_c, rad)
+# print(2 * arad)
 
-print(rad)
-print(cen)
-rho_c = sqrt(cen[0] ** 2 + cen[1] ** 2)
-rho, arad = st_circle_inv(rho_c, rad)
-print(2 * arad)
+# body with pixel diameter D at a pixel distance rho
+
+# cam2_expLow_f0_dt8.37760_st.png
+pix_x = 570
+pix_y = -612
+pix_rad = 13
+# Truth
+# xst = 0.19709011246827635
+# yst = -0.2109395731658707
+# radst = 0.0046749541685242365
+# Testing
+xst = 0.19693145516536165
+yst = -0.21108428542264437
+radst = 0.0046600782554467686
+# xst = 0.18450457981750354
+# yst = -0.25457834914014754
+# radst = 0.004397841625815691
+pix_x = xst
+pix_y = yst
+pix_rad = radst
+rho = sqrt((pix_x) ** 2 + (pix_y) ** 2)
+
+ang_diam = 2 * math.atan((rho + pix_rad) / 2) - 2 * math.atan((rho - pix_rad) / 2)
+print(ang_diam)

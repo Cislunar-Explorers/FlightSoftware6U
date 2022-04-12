@@ -247,7 +247,8 @@ class CenterDetections(unittest.TestCase):
     def test_center_radii(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
-            "OpticalNavigation/simulations/sim/data/traj-case1c_sim/images",
+            # "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/out",
+            "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/images",
         )
         paths = [
             os.path.join(path, "cam2_expLow_f0_dt8.37760_st.png"),

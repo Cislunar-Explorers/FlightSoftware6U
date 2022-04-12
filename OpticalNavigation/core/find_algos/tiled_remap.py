@@ -26,11 +26,11 @@ class Camera:
         self.h = h
 
         # Maximum stereographic x coordinate
-        st_scale = (
+        self.st_scale = (
             ((w - 1) / 2) / (2 * tan(hfov / 4)) + ((h - 1) / 2) / (2 * tan(vfov / 4))
         ) / 2
-        self.xmax_st = ((w - 1) / 2) / st_scale
-        self.ymax_st = ((h - 1) / 2) / st_scale
+        self.xmax_st = ((w - 1) / 2) / self.st_scale
+        self.ymax_st = ((h - 1) / 2) / self.st_scale
         # Maximum gnomonic x coordinate
         self.xmax_gn = tan(hfov / 2)
         self.ymax_gn = tan(vfov / 2)

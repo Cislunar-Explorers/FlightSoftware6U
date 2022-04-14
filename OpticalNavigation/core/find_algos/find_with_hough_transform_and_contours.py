@@ -25,7 +25,7 @@ from utils.parameters import (
 from OpticalNavigation.core.find_algos.tiled_remap import *
 import cv2
 import numpy as np
-from math import radians, atan
+from math import radians
 import re
 import logging
 
@@ -265,14 +265,11 @@ def find(
                 sSx, sSy, sSz = st_to_sph(sXst, sYst)
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
-                sRadSt = (sR + 0.5) / cam.st_scale
-                sAngDiam = 2 * atan((sRho + sRadSt) / 2) - 2 * atan((sRho - sRadSt) / 2)
+                sAngDiam = get_angular_size(sRho, sR, cam.st_scale)
 
-                print(f"Sun sX: {sX} sY: {sY} sR: {sR}")
-                print(f"Sun sXst: {sXst} sYst: {sYst}")
-                print(f"st_scale: {cam.st_scale}")
-                print(f"sRadSt: {sRadSt}")
-                print(f"sAngDiam: {sAngDiam}\n")
+                logging.debug(f"Sun sX: {sX} sY: {sY} sR: {sR}")
+                logging.debug(f"Sun sXst: {sXst} sYst: {sYst}")
+                logging.debug(f"sAngDiam: {sAngDiam}\n")
 
                 # Andrew
                 if pixel:
@@ -303,14 +300,11 @@ def find(
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
 
-                eRadSt = (eR + 0.5) / cam.st_scale
-                eAngDiam = 2 * atan((eRho + eRadSt) / 2) - 2 * atan((eRho - eRadSt) / 2)
+                eAngDiam = get_angular_size(eRho, eR, cam.st_scale)
 
-                print(f"Earth eX: {eX} eY: {eY} eR: {eR}")
-                print(f"Earth eXst: {eXst} eYst: {eYst}")
-                print(f"st_scale: {cam.st_scale}")
-                print(f"eRadSt: {eRadSt}")
-                print(f"eAngDiam: {eAngDiam}\n")
+                logging.debug(f"Earth eX: {eX} eY: {eY} eR: {eR}")
+                logging.debug(f"Earth eXst: {eXst} eYst: {eYst}")
+                logging.debug(f"eAngDiam: {eAngDiam}\n")
 
                 # Andrew
                 if pixel:
@@ -339,16 +333,11 @@ def find(
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
 
-                    mRadSt = (mR + 0.5) / cam.st_scale
-                    mAngDiam = 2 * atan((mRho + mRadSt) / 2) - 2 * atan(
-                        (mRho - mRadSt) / 2
-                    )
+                    mAngDiam = get_angular_size(mRho, mR, cam.st_scale)
 
-                    print(f"Moon mX: {mX} mY: {mY} mR: {mR}")
-                    print(f"Moon mXst: {mXst} mYst: {mYst}")
-                    print(f"st_scale: {cam.st_scale}")
-                    print(f"mRadSt: {mRadSt}")
-                    print(f"mAngDiam: {mAngDiam}\n")
+                    logging.debug(f"Moon mX: {mX} mY: {mY} mR: {mR}")
+                    logging.debug(f"Moon mXst: {mXst} mYst: {mYst}")
+                    logging.debug(f"mAngDiam: {mAngDiam}\n")
 
                     # Andrew
                     if pixel:
@@ -364,7 +353,7 @@ def find(
                             body_values["Moon"] = [
                                 cam.normalize_st(x2 + mX, y2 + mY)[0],
                                 cam.normalize_st(x2 + mX, y2 + mY)[1],
-                                mR,
+                                mAngDiam,
                             ]
 
             index += 1

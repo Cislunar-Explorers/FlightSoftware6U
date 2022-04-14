@@ -36,12 +36,12 @@ class CenterDetections(unittest.TestCase):
         return perf_values
 
     # New function
-    def calc_centers_and_radii(self, img_lst):
+    def calc_centers_and_diam(self, img_lst):
         cr_dict = {}
         # img_det_dict = {}
         for name in img_lst:
             img = name
-            img_det, body_vals = find(img, st=True, pixel=False)
+            _, body_vals = find(img, st=True, pixel=False)
             cr_dict[img] = body_vals
             # img_det_dict[img] = [
             # img_det.get_earth_detection(),
@@ -261,7 +261,7 @@ class CenterDetections(unittest.TestCase):
             os.path.join(path, "cam3_expHigh_f18_dt11.65010_st.png"),
             os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
         ]
-        cr_dict = self.calc_centers_and_radii(paths)
+        cr_dict = self.calc_centers_and_diam(paths)
         print(f"cr_dict:\n{cr_dict}\n")
         # print(f"img_det_dict:\n{img_det_dict}")
 

@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from core.const import CisLunarCameraParameters
 import cv2
 import numpy as np
-from math import tan, floor, ceil
+from math import tan, floor, ceil, atan, radians
+from core.const import CisLunarCameraParameters
 
 
 class Camera:
@@ -226,6 +228,20 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
     yl = max(y - b, 0)
     yr = min(y + h + b, hTot)
     return (xl, yl, xr - xl, yr - yl)
+
+
+default_st_scale = Camera(
+    radians(CisLunarCameraParameters.hFov),
+    radians(CisLunarCameraParameters.vFov),
+    CisLunarCameraParameters.hPix,
+    CisLunarCameraParameters.vPix,
+).st_scale
+
+
+def get_angular_size(rho, radius, st_scale=default_st_scale):
+    radSt = (radius + 0.5) / st_scale
+    angDiam = 2 * atan((rho + radSt) / 2) - 2 * atan((rho - radSt) / 2)
+    return angDiam
 
 
 #

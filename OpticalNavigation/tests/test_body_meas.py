@@ -8,7 +8,6 @@ import logging
 from core.find_algos.tiled_remap import st_to_sph
 from core.const import FileData, DetectionData, Vector3
 from core.observe_functions import cam_to_body, body_to_T0
-from tests.ang_size_testing import st_circle_inv
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
@@ -27,7 +26,7 @@ class BodyMeas(unittest.TestCase):
             frames = obs["observations"][0]["frames"]
             fileInfo = []
             centerSt = []
-            radiusSt = []
+            # radiusSt = []
             dt = []
             truthT0Vec = []
             truthT0Size = []
@@ -37,7 +36,7 @@ class BodyMeas(unittest.TestCase):
 
                 centerSt.append(frame["detections"][0]["center_st"])
 
-                radiusSt.append(frame["detections"][0]["radius_st"])
+                # radiusSt.append(frame["detections"][0]["radius_st"])
 
                 # Can't use timestamp in fileInfo b/c that gets incorrectly parsed with file name
                 # convention of opnav sim (timestamps have a decimal point)
@@ -54,29 +53,21 @@ class BodyMeas(unittest.TestCase):
                 )
 
             gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
-        return fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY
+        return fileInfo, centerSt, dt, truthT0Vec, truthT0Size, gyroY
 
-    def body_meas(
-        self, fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY
-    ):
+    def body_meas(self, fileInfo, centerSt, dt, truthT0Vec, gyroY):
         calc_vecs = []
         truth_vecs = []
         errors = []
-        for (fileInf, stCenter, radSt, deltaT, truthVec, truthSize) in zip(
-            fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size
+        for (fileInf, stCenter, deltaT, truthVec) in zip(
+            fileInfo, centerSt, dt, truthT0Vec
         ):
             logging.debug(f"Filename: {fileInf.filename}")
             camNum = fileInf.cam_num
             logging.debug(f"CamNum: {camNum}")
 
-            logging.debug(f"radius_st: {radSt}")
-            rho_c = np.sqrt(stCenter[0] ** 2 + stCenter[1] ** 2)
-            _, arad = st_circle_inv(rho_c, radSt)
-            aDiam = 2 * arad
-            logging.debug(f"Ang Diam: {aDiam}")
-            logging.debug(f"Ang Diam truth: {truthSize}")
-            sizeDiff = np.abs(aDiam - truthSize)
-            logging.debug(f"Size Diff: {sizeDiff}")
+            # logging.debug(f"radius_st: {radSt}")
+            logging.debug(f"stCenterX: {stCenter[0]}  stCenterY: {stCenter[1]}")
 
             logging.debug(f"Center_st: {stCenter}")
             camVec = st_to_sph(stCenter[0], stCenter[1])
@@ -110,13 +101,13 @@ class BodyMeas(unittest.TestCase):
             #     "Body transformations do not match within margin of error!",
             # )
 
-            dot = np.dot(finalT0Det.vector.data, truthVec)
-            truthNorm = np.linalg.norm(truthVec)
-            calcNorm = np.linalg.norm(finalT0Det.vector.data)
-            vAngle = np.arccos(dot / (truthNorm * calcNorm))
+            # dot = np.dot(finalT0Det.vector.data, truthVec)
+            # truthNorm = np.linalg.norm(truthVec)
+            # calcNorm = np.linalg.norm(finalT0Det.vector.data)
+            # vAngle = np.arccos(dot / (truthNorm * calcNorm))
 
-            logging.debug(f"Angle Dist: {vAngle} (rad) = {vAngle * 180 / np.pi} (deg)")
-            logging.debug(f"Radial Dist: {truthNorm - calcNorm}")
+            # logging.debug(f"Angle Dist: {vAngle} (rad) = {vAngle * 180 / np.pi} (deg)")
+            # logging.debug(f"Radial Dist: {truthNorm - calcNorm}")
             logging.debug("\n")
             calc_vecs.append(finalT0Det.vector.data)
             truth_vecs.append(truthVec)
@@ -132,14 +123,10 @@ class BodyMeas(unittest.TestCase):
             FLIGHT_SOFTWARE_PATH,
             "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
         )
-        fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY = self.get_data(
-            path
-        )
-        _, _, _ = self.body_meas(
-            fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY
-        )
+        fileInfo, centerSt, dt, truthT0Vec, _, gyroY = self.get_data(path)
+        _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
         for i in fileInfo:
-            print(i)
+            logging.debug(i)
 
     # def test_traj_trajectory(self):
     # path = os.path.join(

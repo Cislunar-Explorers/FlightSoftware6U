@@ -1,6 +1,6 @@
-from core.observe_functions import get_ephemeris
+# from core.observe_functions import get_ephemeris
 from core.const import (
-    BodyEnum,
+    # BodyEnum,
     CovarianceMatrix,
     EphemerisVector,
     TrajectoryStateVector,
@@ -17,18 +17,24 @@ class trivialTestUKF(unittest.TestCase):
     our expected outputs (using the standard deviations of our covariance matrix).
     """
 
+    """
+    moonEph data file: https://cornell.app.box.com/file/651831179494
+    sunEph data file: https://cornell.app.box.com/file/651825552217
+    trajStateVector data file: https://cornell.app.box.com/file/651842666983
+    """
+
     def test_trivial_ukf(self):
-        moonEph = get_ephemeris(0, BodyEnum.Moon)  # Moon ephemeris data from astro.py
+        # moonEph = get_ephemeris(0, BodyEnum.Moon)  # Moon ephemeris data from astro.py
         moonEph = EphemerisVector(
             1.5363e05, -3.7237e05, 2887.6, 0.90889, 0.34863, -0.088026
         )
-        sunEph = get_ephemeris(0, BodyEnum.Sun)  # Sun ephemeris data from astro.py
+        # sunEph = get_ephemeris(0, BodyEnum.Sun)  # Sun ephemeris data from astro.py
         sunEph = EphemerisVector(
             -3.0672e07, -1.441e08, 6670.4, 29.633, -6.0859, -0.00088015
         )
         trajStateVector = TrajectoryStateVector(
             1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-        )  # tested first row of trajectory.csv from c1_discretized.csv (box file)
+        )
         dt = 1  # seconds
         P = np.diag(
             np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float)

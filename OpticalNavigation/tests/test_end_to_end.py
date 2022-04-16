@@ -109,7 +109,7 @@ class TestEndToEnd(unittest.TestCase):
         # )
 
         re_calc_vecs, re_truth_vecs, re_errors, fileInfo, truth_sizes = self.run_body_meas_sim(
-            obs_path, centers_re
+            obs_path, centers_st
         )
 
         logging.debug("Size comparison")

@@ -267,6 +267,7 @@ def find(
 
                 sAngDiam = get_angular_size(sRho, sR, cam.st_scale)
 
+                logging.debug(f"File: {src}")
                 logging.debug(f"Sun sX: {sX} sY: {sY} sR: {sR}")
                 logging.debug(f"Sun sXst: {sXst} sYst: {sYst}")
                 logging.debug(f"sAngDiam: {sAngDiam}\n")
@@ -302,6 +303,7 @@ def find(
 
                 eAngDiam = get_angular_size(eRho, eR, cam.st_scale)
 
+                logging.debug(f"File: {src}")
                 logging.debug(f"Earth eX: {eX} eY: {eY} eR: {eR}")
                 logging.debug(f"Earth eXst: {eXst} eYst: {eYst}")
                 logging.debug(f"eAngDiam: {eAngDiam}\n")
@@ -335,6 +337,7 @@ def find(
 
                     mAngDiam = get_angular_size(mRho, mR, cam.st_scale)
 
+                    logging.debug(f"File: {src}")
                     logging.debug(f"Moon mX: {mX} mY: {mY} mR: {mR}")
                     logging.debug(f"Moon mXst: {mXst} mYst: {mYst}")
                     logging.debug(f"mAngDiam: {mAngDiam}\n")

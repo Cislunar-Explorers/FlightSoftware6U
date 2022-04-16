@@ -34,7 +34,7 @@ INSTALL_REQUIRES = [
     "scipy",
     "sqlalchemy",
     "tqdm",
-    "uptime",
+    "uptime" "parameterized",
 ]
 
 PI_INSTALL_REQUIRES = [

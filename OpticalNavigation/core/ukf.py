@@ -7,7 +7,6 @@ from core.const import (
     TrajUKFConstants,
     TrajectoryEstimateOutput,
     TrajectoryStateVector,
-    CameraParameters,
 )
 import numpy as np
 import math
@@ -308,7 +307,6 @@ def runTrajUKF(
     initState: TrajectoryStateVector,
     dt: np.float,
     P: CovarianceMatrix,
-    cameraParams: CameraParameters,
     main_thrust_info: MainThrustInfo = None,
     dynamicsOnly: bool = False,
 ) -> TrajectoryEstimateOutput:

@@ -10,6 +10,7 @@ from core.ukf import runTrajUKF
 import unittest
 from parameterized import parameterized
 import logging
+import json
 
 """
 Tests accuracy of our trajectory ukf on a trivial case. Test takes data from various constants and low initial
@@ -100,6 +101,20 @@ class TestSequence(unittest.TestCase):
     )
 
     """###################### end test data ################################"""
+
+    def get_angular_seperations(time):
+        json_object = json.load(open("observations.json"))
+
+        mylst = []
+
+        item = json_object["observations"]
+        for times in item:
+            if times["time"] == time:
+                target = times["observed_bodies"]
+                for obj in target:
+                    mylst.append(obj["direction_body"])
+                break
+        return mylst
 
     @parameterized.expand(
         [

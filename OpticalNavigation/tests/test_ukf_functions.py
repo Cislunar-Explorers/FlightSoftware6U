@@ -19,7 +19,7 @@ note: need to verify whether the camera measurements' units are still
 in pixel separation or not; they should have been changed to angular separation
 
 moonEph = get_ephemeris(0, BodyEnum.Moon)  # Moon ephemeris data from astro.py
-sunEph = get_ephemeris(0, BodyEnum.Sun)  # Sun ephemeris data from astro.py
+sunEph = get_ephemeris(0, BodyEnum.Sun)   # Sun ephemeris data from astro.py
 dt = seconds
 P = Initial covariance matrix
 
@@ -94,6 +94,14 @@ class TestSequence(unittest.TestCase):
         # kalman gain is all 0s -->
         print("out kalman = \n", trajEstimateOutput.K)
         print("\n")
+
+        # validate output
+        deviation = np.matmul(P, np.ones(6).T)  # 6 x 1 col vector
+        upper = np.add(deviation, trajStateVector.data.T)
+        lower = np.subtract(trajStateVector.data.T, deviation)
+
+        assert np.all(np.less_equal(lower, trajEstimateOutput.new_state.data.T))
+        assert np.all(np.less_equal(trajEstimateOutput.new_state.data.T, upper))
 
 
 if __name__ == "__main__":

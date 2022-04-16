@@ -44,7 +44,6 @@ class trivialTestUKF(unittest.TestCase):
         # we're first testing with CameraMeasurement vector = None; this gives us an output
         # that makes more sense
         """
-        cameraParams = None  # Does not get used in code
         trajEstimateOutput = runTrajUKF(
             moonEph,
             sunEph,
@@ -52,7 +51,6 @@ class trivialTestUKF(unittest.TestCase):
             trajStateVector,
             dt,
             CovarianceMatrix(P),
-            cameraParams,
             dynamicsOnly=True,
         )
         """"

@@ -6,7 +6,6 @@ from core.const import (
 )
 import numpy as np
 
-# import json
 from core.ukf import runTrajUKF
 import unittest
 from parameterized import parameterized
@@ -57,7 +56,7 @@ class TestSequence(unittest.TestCase):
     """
 
     """###################### begin test data ################################"""
-
+    # TEST 1: Test with no camera measurements
     moonEph1 = EphemerisVector(
         1.5363e05, -3.7237e05, 2887.6, 0.90889, 0.34863, -0.088026
     )
@@ -67,6 +66,24 @@ class TestSequence(unittest.TestCase):
     trajStateVector1 = TrajectoryStateVector(
         1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
     )
+
+    dt1 = 1
+    P1 = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
+
+    # TEST 2: Test with camera measurements
+    moonEph2 = EphemerisVector(
+        1.5363e05, -3.7237e05, 2887.6, 0.90889, 0.34863, -0.088026
+    )
+    sunEph2 = EphemerisVector(
+        -3.0672e07, -1.441e08, 6670.4, 29.633, -6.0859, -0.00088015
+    )
+    trajStateVector2 = TrajectoryStateVector(
+        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+    )
+
+    dt2 = 1
+    P2 = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
+
     # Data obtained from simulations/sim/data/trajectory_sim/observations.json | time: 10800.0
     earth_vec = np.array(
         [-0.7536623262310652, -0.0018752356256416247, 0.657259143345551]
@@ -82,26 +99,12 @@ class TestSequence(unittest.TestCase):
         0.009151425262957794,
     )
 
-    dt1 = 1
-    P1 = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
-
-    moonEph2 = EphemerisVector(
-        1.5363e05, -3.7237e05, 2887.6, 0.90889, 0.34863, -0.088026
-    )
-    sunEph2 = EphemerisVector(
-        -3.0672e07, -1.441e08, 6670.4, 29.633, -6.0859, -0.00088015
-    )
-    trajStateVector2 = TrajectoryStateVector(
-        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-    )
-
     """###################### end test data ################################"""
 
     @parameterized.expand(
         [
             [moonEph1, sunEph1, trajStateVector1, dt1, P1, None],
-            [moonEph2, sunEph2, trajStateVector2, dt1, P1, None],
-            [moonEph2, sunEph2, trajStateVector2, dt1, P1, cameraMeasurements1],
+            [moonEph2, sunEph2, trajStateVector2, dt2, P2, cameraMeasurements1],
         ]
     )
     def test_sequence(
@@ -123,12 +126,12 @@ class TestSequence(unittest.TestCase):
         )
         pos_array = trajEstimateOutput.new_state.get_position_data()
         vel_array = trajEstimateOutput.new_state.get_velocity_data()
-        logging.debug("x,y,z position = ", pos_array)
-        logging.debug("x,y,z velocity = ", vel_array)
+        logging.debug(f"x,y,z position = {pos_array}")
+        logging.debug(f"x,y,z velocity =  {vel_array}")
         # expected output for covariance matrix
-        logging.debug("out covariance = \n", trajEstimateOutput.new_P)
+        logging.debug(f"out covariance = \n {trajEstimateOutput.new_P}")
         # kalman gain is all 0s -->
-        logging.debug("out kalman = \n", trajEstimateOutput.K)
+        logging.debug(f"out kalman = \n {trajEstimateOutput.K}")
         logging.debug("\n")
 
         # validate output

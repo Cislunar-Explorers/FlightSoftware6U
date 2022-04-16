@@ -305,7 +305,7 @@ def runTrajUKF(
     sunEph: EphemerisVector,
     measurements: CameraMeasurementVector,
     initState: TrajectoryStateVector,
-    dt: np.float,
+    dt: np.float64,
     P: CovarianceMatrix,
     main_thrust_info: MainThrustInfo = None,
     dynamicsOnly: bool = False,

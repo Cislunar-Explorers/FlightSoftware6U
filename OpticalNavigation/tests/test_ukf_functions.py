@@ -38,9 +38,6 @@ one way to test outputs are correct is to separately call functions from ukf.py:
 """
 
 
-# file = open("observations.json")
-
-
 def angular_separation(v1, v2):
     dot_prod = np.dot(v1, v2)
     mag1 = np.linalg.norm(v1)

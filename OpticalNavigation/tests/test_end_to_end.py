@@ -64,16 +64,11 @@ class TestEndToEnd(unittest.TestCase):
             DATA_DIR, "traj-case1c_sim_no_outline/observations.json"
         )
 
-        logging.debug(f"\n\nST\n{st_list}\nST\n\n")
-        logging.debug(f"\n\nRE\n{re_list}\nRE\n\n")
-
         # Second step: run center finding test on sim stereographic images, as well as on
         # reprojected stereographic images.
 
         # Get the centers and diameters of sim stereo images
         cd_dict_st = self.get_center_diam(st_list)
-
-        logging.debug(f"\n\nST_DICT\n{cd_dict_st}\nST_DICT\n\n")
 
         centers_st = []
         ang_diams_st = []
@@ -83,8 +78,8 @@ class TestEndToEnd(unittest.TestCase):
             # logging.debug(key)
             centers_st.append([cd_dict_st[i][key][0], cd_dict_st[i][key][1]])
             ang_diams_st.append(cd_dict_st[i][key][2])
-        logging.debug(f"centers_st:\n{centers_st}")
-        logging.debug(f"ang_diams_st\n{ang_diams_st}")
+        logging.debug(f"centers_st: {centers_st}\n")
+        logging.debug(f"ang_diams_st: {ang_diams_st}\n")
 
         # Get the centers and diamters of reprojected stereo images
         cd_dict_re = self.get_center_diam(re_list)
@@ -99,8 +94,8 @@ class TestEndToEnd(unittest.TestCase):
                 # logging.debug(key)
                 centers_re.append([cd_dict_re[i][key][0], cd_dict_re[i][key][1]])
                 ang_diams_re.append(cd_dict_re[i][key][2])
-        logging.debug(f"centers_re:\n{centers_re}")
-        logging.debug(f"ang_diams_re\n{ang_diams_re}")
+        logging.debug(f"centers_re: {centers_re}\n")
+        logging.debug(f"ang_diams_re: {ang_diams_re}\n")
         logging.debug("\n")
 
         # Third step: run body_meas test on the two image centers to output body detection vectors
@@ -117,6 +112,7 @@ class TestEndToEnd(unittest.TestCase):
             logging.debug(f"({str(f)}, Meas: {a}, Actual: {t})")
             percent_error = (abs(a - t) / t) * 100
             logging.debug(f"Percent Error: {percent_error}")
+
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         # of the three test?
         # Outputs of interest: error in pixel centers from sim and reproj images, error in detection vectors from sim

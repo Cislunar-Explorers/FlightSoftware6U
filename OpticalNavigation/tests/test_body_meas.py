@@ -8,6 +8,7 @@ import logging
 from core.find_algos.tiled_remap import st_to_sph
 from core.const import FileData, DetectionData, Vector3
 from core.observe_functions import cam_to_body, body_to_T0
+from core.opnav import calculate_cam_measurements
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
@@ -66,9 +67,6 @@ class BodyMeas(unittest.TestCase):
             camNum = fileInf.cam_num
             logging.debug(f"CamNum: {camNum}")
 
-            # logging.debug(f"radius_st: {radSt}")
-            logging.debug(f"stCenterX: {stCenter[0]}  stCenterY: {stCenter[1]}")
-
             logging.debug(f"Center_st: {stCenter}")
             camVec = st_to_sph(stCenter[0], stCenter[1])
             logging.debug(f"Cam Vec: {camVec}")
@@ -91,15 +89,18 @@ class BodyMeas(unittest.TestCase):
             logging.debug(f"Actual Vector: {truthVec}")
 
             # We are comparing unit vectors here
+            vectSep = calculate_cam_measurements(finalT0Det.vector.data, truthVec)
+            logging.debug(f"Vector Angular Separation: {vectSep}")
+
             diffVec = finalT0Det.vector.data - truthVec
             logging.debug(f"Difference Vector: {diffVec}")
             vecDist = np.linalg.norm(diffVec)
             logging.debug(f"Vect Dist: {vecDist}")
-            # self.assertLessEqual(
-            #     vecDist,
-            #     0.05,
-            #     "Body transformations do not match within margin of error!",
-            # )
+            self.assertLessEqual(
+                vecDist,
+                0.05,
+                "Body transformations do not match within margin of error!",
+            )
 
             # dot = np.dot(finalT0Det.vector.data, truthVec)
             # truthNorm = np.linalg.norm(truthVec)
@@ -121,7 +122,7 @@ class BodyMeas(unittest.TestCase):
     def test_traj_case1c(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
-            "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
+            "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
         )
         fileInfo, centerSt, dt, truthT0Vec, _, gyroY = self.get_data(path)
         _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)

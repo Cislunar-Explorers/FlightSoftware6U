@@ -208,7 +208,7 @@ def find(
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) == 0:
-        logging.info("[OPNAV]: No contours found")
+        logging.debug("[OPNAV]: No contours found")
         return result, {}
 
     areas = [cv2.contourArea(c) for c in contours]

@@ -29,9 +29,7 @@ class TestEndToEnd(unittest.TestCase):
 
     def get_center_diam(self, img_lst):
         center_find = test_center_finding.CenterDetections()
-
         cd_dict_st = center_find.calc_centers_and_diam(img_lst)
-
         return cd_dict_st
 
     def run_body_meas_sim(self, path, centersReproj):
@@ -54,8 +52,10 @@ class TestEndToEnd(unittest.TestCase):
         # 3. Angular size
         # Then we are comparing the result with the thruth values in the sim logs
 
-        # First step: run reprojection test on gnomonic image, output stereographic image from reprojection as well as
-        # from sim.
+        ##############################################################################################################
+        # First step: Reprojection
+        # Run reprojection test on gnomonic image, output stereographic image from reprojection as well as from sim
+        ##############################################################################################################
 
         imgs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
         gn_list, st_list, re_list = self.reproject_images(imgs_path)
@@ -64,10 +64,13 @@ class TestEndToEnd(unittest.TestCase):
             DATA_DIR, "traj-case1c_sim_no_outline/observations.json"
         )
 
-        # Second step: run center finding test on sim stereographic images, as well as on
-        # reprojected stereographic images.
+        ###############################################################################################################
+        # Second step: Center Finding
+        # Run center finding test on sim stereographic images, as well as on reprojected stereographic images
+        ##############################################################################################################
 
         # Get the centers and diameters of sim stereo images
+        logging.debug("Running find on sim stereo images\n")
         cd_dict_st = self.get_center_diam(st_list)
 
         centers_st = []
@@ -82,6 +85,7 @@ class TestEndToEnd(unittest.TestCase):
         logging.debug(f"ang_diams_st: {ang_diams_st}\n")
 
         # Get the centers and diamters of reprojected stereo images
+        logging.debug("Running find on reprojected images\n")
         cd_dict_re = self.get_center_diam(re_list)
         # logging.debug(cd_dict_re)
         centers_re = []
@@ -98,13 +102,13 @@ class TestEndToEnd(unittest.TestCase):
         logging.debug(f"ang_diams_re: {ang_diams_re}\n")
         logging.debug("\n")
 
-        # Third step: run body_meas test on the two image centers to output body detection vectors
-        # st_calc_vecs, st_ref_vecs, st_errors = self.run_body_meas_sim(
-        #     obs_path, centers_st, radii_st
-        # )
+        ###############################################################################################################
+        # Third step: Body Measurements
+        # Run body_meas test on the two image centers to output body detection vectors
+        ###############################################################################################################
 
         re_calc_vecs, re_truth_vecs, re_errors, fileInfo, truth_sizes = self.run_body_meas_sim(
-            obs_path, centers_st
+            obs_path, centers_re
         )
 
         logging.debug("Size comparison")

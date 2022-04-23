@@ -27,7 +27,7 @@ class TestEndToEnd(unittest.TestCase):
 
         return gn_list, st_list, re_list
 
-    def get_center_diam(self, img_lst):
+    def find_center_diam(self, img_lst):
         center_find = test_center_finding.CenterDetections()
         cd_dict_st = center_find.calc_centers_and_diam(img_lst)
         return cd_dict_st
@@ -69,9 +69,9 @@ class TestEndToEnd(unittest.TestCase):
         # Run center finding test on sim stereographic images, as well as on reprojected stereographic images
         ##############################################################################################################
 
-        # Get the centers and diameters of sim stereo images
+        # Get the centers and diameters of truth sim stereo images
         logging.debug("Running find on sim stereo images\n")
-        cd_dict_st = self.get_center_diam(st_list)
+        cd_dict_st = self.find_center_diam(st_list)
 
         centers_st = []
         ang_diams_st = []
@@ -81,12 +81,13 @@ class TestEndToEnd(unittest.TestCase):
             # logging.debug(key)
             centers_st.append([cd_dict_st[i][key][0], cd_dict_st[i][key][1]])
             ang_diams_st.append(cd_dict_st[i][key][2])
+        logging.debug(f"Truth:\n\ncd_dict_st: {cd_dict_st}\n")
         logging.debug(f"centers_st: {centers_st}\n")
         logging.debug(f"ang_diams_st: {ang_diams_st}\n")
 
         # Get the centers and diamters of reprojected stereo images
         logging.debug("Running find on reprojected images\n")
-        cd_dict_re = self.get_center_diam(re_list)
+        cd_dict_re = self.find_center_diam(re_list)
         # logging.debug(cd_dict_re)
         centers_re = []
         ang_diams_re = []
@@ -98,6 +99,7 @@ class TestEndToEnd(unittest.TestCase):
                 # logging.debug(key)
                 centers_re.append([cd_dict_re[i][key][0], cd_dict_re[i][key][1]])
                 ang_diams_re.append(cd_dict_re[i][key][2])
+        logging.debug(f"Reproj\n\ncd_dict_re: {cd_dict_re}\n")
         logging.debug(f"centers_re: {centers_re}\n")
         logging.debug(f"ang_diams_re: {ang_diams_re}\n")
         logging.debug("\n")

@@ -40,17 +40,6 @@ one way to test outputs are correct is to separately call functions from ukf.py:
 
 """
 
-trajStateVector1 = TrajectoryStateVector(
-    1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-)
-trajStateVector2 = TrajectoryStateVector(
-    1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-)
-sum = trajStateVector1.to_array() + trajStateVector2.to_array()
-print(sum)
-print(type(sum).__name__)
-print(trajStateVector1.get_position_data())
-
 
 def MSE(observedStateVector, expectedStateVector):
     error_squared = 0
@@ -64,9 +53,6 @@ def MSE(observedStateVector, expectedStateVector):
             ** 2
         )
     return math.sqrt(error_squared)
-
-
-print(MSE(trajStateVector1, trajStateVector2))
 
 
 def angular_separation(v1, v2):
@@ -317,6 +303,24 @@ class TestSequence(unittest.TestCase):
         print(f"Position error: {posError}\nVelocity error: {velError}")
         assert posError <= 1000, "Position error is too large"
         assert velError <= 5, "Velocity error is too large"
+
+    MSE_Test_State_vector_1 = TrajectoryStateVector(
+        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+    )
+    MSE_Test_State_vector_2 = TrajectoryStateVector(
+        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+    )
+
+    def MSE_test(self):
+        MSE_Test_State_vector_1 = TrajectoryStateVector(
+            1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+        )
+        MSE_Test_State_vector_2 = TrajectoryStateVector(
+            1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+        )
+        assert (
+            MSE(MSE_Test_State_vector_1, MSE_Test_State_vector_2) == 0
+        ), "Incorrect Mean Squared Error Computation"
 
 
 if __name__ == "__main__":

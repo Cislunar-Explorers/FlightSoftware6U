@@ -227,7 +227,7 @@ def find(
     c1 = contours[max_index]
     c2 = contours[second_index] if second_index is not None else None
     # del contours[max_index]
-    # print(f"{second_index=}")
+    # print(f"Second Index: {second_index}")
 
     x, y, w, h = cv2.boundingRect(c1)
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)

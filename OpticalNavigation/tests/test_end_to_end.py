@@ -40,15 +40,19 @@ class TestEndToEnd(unittest.TestCase):
         as the truth vectors and the corresponding error"""
         bodyTest = test_body_meas.BodyMeas()
         # Get truth data
-        fileInfo, _, dt, truthT0Vec, truthT0Size, gyroY = bodyTest.get_data(path)
+        _, truth_dict, diam_dict, gyroY = bodyTest.load_json(path)
+        bodyTest.sim_transform(centersReproj, truth_dict, gyroY)
+        return diam_dict
+
+        # fileInfo, _, dt, truthT0Vec, truthT0Size, gyroY = bodyTest.get_data(path)
         # logging.debug("fileInfo")
         # for f in fileInfo:
         # logging.debug(str(f))
         # Perform transformations
-        calcVecs, truthVecs, errors = bodyTest.transform(
-            fileInfo, centersReproj, dt, truthT0Vec, gyroY
-        )
-        return calcVecs, truthVecs, errors, fileInfo, truthT0Size
+        # calcVecs, truthVecs, errors = bodyTest.transform(
+        # fileInfo, centersReproj, dt, truthT0Vec, gyroY
+        # )
+        # return calcVecs, truthVecs, errors, fileInfo, truthT0Size
 
     def test_end_to_end(self):
 
@@ -69,7 +73,6 @@ class TestEndToEnd(unittest.TestCase):
         obs_path = os.path.join(
             DATA_DIR, "traj-case1c_sim_no_outline/observations.json"
         )
-        print(obs_path)  # Temp
 
         ###############################################################################################################
         # Second step: Center Finding
@@ -117,6 +120,8 @@ class TestEndToEnd(unittest.TestCase):
         # Run body_meas test on the two image centers to output body detection vectors
         ###############################################################################################################
 
+        self.run_body_meas_sim(obs_path, cd_dict_re)
+
         # re_calc_vecs, re_truth_vecs, re_errors, fileInfo, truth_sizes = self.run_body_meas_sim(
         # obs_path, centers_re
         # )
@@ -141,8 +146,8 @@ class TestEndToEnd(unittest.TestCase):
 
             re_dets = cd_dict_re[re_key]
             st_dets = cd_dict_st[st_key]
-            # logging.debug(f"{re_dets=}")
-            # logging.debug(f"{st_dets=}")
+            # logging.debug(f"Reprojected Detections: {re_dets}")
+            # logging.debug(f"Stereogrpahic Detections: {st_dets}")
 
             for body in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
                 if body in re_dets.keys():
@@ -152,7 +157,7 @@ class TestEndToEnd(unittest.TestCase):
                         re_point = np.array((re_dets[body][0], re_dets[body][1]))
                         st_point = np.array((st_dets[body][0], st_dets[body][1]))
                         error = np.linalg.norm(re_point - st_point)
-                        logging.debug(f"{re_key=} {body=} {error=}")
+                        logging.debug(f"Re key: {re_key} Body: {body} Error: {error}")
                     else:
                         logging.debug(
                             "Reproj detected a body that sim detection did not detect!"

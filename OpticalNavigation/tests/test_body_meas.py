@@ -126,7 +126,7 @@ class BodyMeas(unittest.TestCase):
                     )
                     det_st_dict[body] = det["center_st"]
                 st_dict[imgName] = det_st_dict
-            logging.debug(st_dict)
+            # logging.debug(st_dict)
 
             # Get truth data sizes
             diam_dict = {}
@@ -139,8 +139,8 @@ class BodyMeas(unittest.TestCase):
 
             gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
 
-            logging.debug(f"Truth Vector Dict: {truth_dict}")
-            logging.debug(f"Truth Diam Dict: {diam_dict}")
+            # logging.debug(f"Truth Vector Dict: {truth_dict}")
+            # logging.debug(f"Truth Diam Dict: {diam_dict}")
 
         return st_dict, truth_dict, diam_dict, gyroY
 
@@ -152,30 +152,6 @@ class BodyMeas(unittest.TestCase):
         st_dict, truth_dict, _, gyroY = self.load_json(path)
         self.sim_transform(st_dict, truth_dict, gyroY)
 
-    # def test_traj_case1c(self):
-    #     path = os.path.join(
-    #         FLIGHT_SOFTWARE_PATH,
-    #         "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
-    #     )
-    #     fileInfo, centerSt, dt, truthT0Vec, _, gyroY = self.get_data(path)
-    #     calcVecs = self.transform(fileInfo, centerSt, dt, gyroY)
-
-
-#
-#     # truthVecs = [DetectionData(fileInfo, truthT0Vec, ]
-#     # for i in fileInfo:
-#         # logging.debug(i)
-
-
-# def test_traj_case1c(self):
-# path = os.path.join(
-# FLIGHT_SOFTWARE_PATH,
-# "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
-# )
-# fileInfo, centerSt, dt, truthT0Vec, _, gyroY = self.get_data(path)
-# _, _, _ = self.transform(fileInfo, centerSt, dt, truthT0Vec, gyroY)
-# for i in fileInfo:
-# logging.debug(i)
 
 # def test_traj_trajectory(self):
 # path = os.path.join(

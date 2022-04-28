@@ -96,6 +96,8 @@ class TestEndToEnd(unittest.TestCase):
         # Both values are generated from the find algorithm
         ###############################################################################################################
 
+        # TODO: Maybe change this to compare to sim json?
+        # ... but an equivalent comparison is done in comparing transformed vectors, so might be fine
         logging.debug("Stereographic coordinate comparison")
         for re_key in cd_dict_re.keys():  # Iterate through all detections
             # logging.debug(re_key)
@@ -147,13 +149,6 @@ class TestEndToEnd(unittest.TestCase):
                 # percent_error = (abs(calc_ang_size - truth_ang_size) / truth_ang_size) * 100
                 # logging.debug(f"Percent Error: {percent_error}")
             logging.debug("")
-
-        # TODOs:
-        # Revise body_meas_test inputs/interface so it can transform any input;
-        #   have separate function for doung the assertion (like a check() function
-        # Do body_meas comparison between reproj and json data
-        # Switch to using detectiondata object (needs vector3 so can't be used for stereographic stuff?)
-        # Find out where to place angular size check?
 
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         # of the three test?

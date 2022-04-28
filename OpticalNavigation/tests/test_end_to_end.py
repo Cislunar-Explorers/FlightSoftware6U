@@ -7,7 +7,10 @@ from OpticalNavigation.tests import (
     test_reprojections,
     test_body_meas,
 )
+from core.const import BodyEnum
 from utils.constants import FLIGHT_SOFTWARE_PATH
+import re
+import numpy as np
 
 DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/OpticalNavigation/simulations/sim/data"
 
@@ -128,7 +131,31 @@ class TestEndToEnd(unittest.TestCase):
         # Compare reproj centers and sim stereo results
         ###############################################################################################################
 
-        # for
+        # Might want to switch to using DetectionData object?
+        logging.debug("Stereographic coordinate comparison")
+        for re_key in cd_dict_re.keys():  # Iterate through all detections
+            # logging.debug(re_key)
+            st_key = re.sub("_re", "_st", re_key)
+            # logging.debug(st_key)
+
+            re_dets = cd_dict_re[re_key]
+            st_dets = cd_dict_st[st_key]
+            # logging.debug(f"{re_dets=}")
+            # logging.debug(f"{st_dets=}")
+
+            for body in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
+                if body in re_dets.keys():
+                    # assert(BodyEnum.Earth in st_dets.keys(),
+                    #   "Reproj detected a body that sim detection did not detect!")
+                    if body in st_dets.keys():
+                        re_point = np.array((re_dets[body][0], re_dets[body][1]))
+                        st_point = np.array((st_dets[body][0], st_dets[body][1]))
+                        error = np.linalg.norm(re_point - st_point)
+                        logging.debug(f"{re_key=} {body=} {error=}")
+                    else:
+                        logging.debug(
+                            "Reproj detected a body that sim detection did not detect!"
+                        )
 
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         # of the three test?

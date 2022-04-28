@@ -157,6 +157,13 @@ class TestEndToEnd(unittest.TestCase):
                             "Reproj detected a body that sim detection did not detect!"
                         )
 
+        # TODOs:
+        # Revise body_meas_test inputs/interface so it can transform any input;
+        #   have separate function for doung the assertion (like a check() function
+        # Do body_meas comparison between reproj and json data
+        # Switch to using detectiondata object (needs vector3 so can't be used for stereographic stuff?)
+        # Find out where to place angular size check?
+
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         # of the three test?
         # Outputs of interest: error in pixel centers from sim and reproj images, error in detection vectors from sim

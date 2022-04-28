@@ -42,17 +42,33 @@ one way to test outputs are correct is to separately call functions from ukf.py:
 
 
 def MSE(observedStateVector, expectedStateVector):
-    error_squared = 0
-    for index in range(0, observedStateVector.to_array().size):
-        error_squared = (
-            error_squared
+    assert observedStateVector.to_array().size == expectedStateVector.to_array().size
+    error_squared_velo = 0
+    error_squared_pos = 0
+    for index in range(0, observedStateVector.get_position_data().size):
+        error_squared_pos = (
+            error_squared_pos
             + (
-                observedStateVector.to_array()[index]
-                - expectedStateVector.to_array()[index]
+                observedStateVector.get_position_data()[index]
+                - expectedStateVector.get_position_data()[index]
             )
             ** 2
         )
-    return math.sqrt(error_squared) / observedStateVector.to_array().size
+        error_squared_velo = (
+            error_squared_velo
+            + (
+                observedStateVector.get_velocity_data()[index]
+                - expectedStateVector.get_velocity_data()[index]
+            )
+            ** 2
+        )
+    MSE_pos = (
+        math.sqrt(error_squared_pos) / observedStateVector.get_position_data().size
+    )
+    MSE_velo = (
+        math.sqrt(error_squared_velo) / observedStateVector.get_velocity_data().size
+    )
+    return MSE_pos, MSE_velo
 
 
 def angular_separation(v1, v2):
@@ -114,7 +130,26 @@ class TestSequence(unittest.TestCase):
         0.009151425262957794,
     )
 
+    # Data to test mean_squared_error
+    MSE_Test_State_vector_1 = TrajectoryStateVector(
+        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+    )
+    MSE_Test_State_vector_2 = TrajectoryStateVector(
+        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+    )
+
     """###################### end test data ################################"""
+
+    def MSE_test(self, MSE_Test_State_vector_1, MSE_Test_State_vector_2):
+        # Check that MSE for position is 0
+        assert (
+            MSE(MSE_Test_State_vector_1, MSE_Test_State_vector_2)[0] == 0
+        ), "Incorrect Mean Squared Error Computation for position"
+
+        # Check that MSE for velocity is 0
+        assert (
+            MSE(MSE_Test_State_vector_1, MSE_Test_State_vector_2)[1] == 0
+        ), "Incorrect Mean Squared Error Computation for velocity"
 
     def get_angular_seperations(time):
         json_object = json.load(open("observations.json"))
@@ -303,24 +338,6 @@ class TestSequence(unittest.TestCase):
         print(f"Position error: {posError}\nVelocity error: {velError}")
         assert posError <= 1000, "Position error is too large"
         assert velError <= 5, "Velocity error is too large"
-
-    MSE_Test_State_vector_1 = TrajectoryStateVector(
-        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-    )
-    MSE_Test_State_vector_2 = TrajectoryStateVector(
-        1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-    )
-
-    def MSE_test(self):
-        MSE_Test_State_vector_1 = TrajectoryStateVector(
-            1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-        )
-        MSE_Test_State_vector_2 = TrajectoryStateVector(
-            1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
-        )
-        assert (
-            MSE(MSE_Test_State_vector_1, MSE_Test_State_vector_2) == 0
-        ), "Incorrect Mean Squared Error Computation"
 
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
 from core.const import (
-    BodyEnum,
     CameraMeasurementVector,
     CovarianceMatrix,
     EphemerisVector,
@@ -7,7 +6,6 @@ from core.const import (
     Vector6,
 )
 import numpy as np
-from core.observe_functions import get_ephemeris
 
 from core.ukf import runTrajUKF
 import unittest
@@ -15,7 +13,7 @@ from parameterized import parameterized
 import logging
 import json
 import pandas as pd
-from astropy.time import Time
+import math
 
 """
 Tests accuracy of our trajectory ukf on a trivial case. Test takes data from various constants and low initial
@@ -118,15 +116,20 @@ class TestSequence(unittest.TestCase):
                 break
         return mylst
 
-    tests = []
+    tests_3600_dt = []
 
     P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
 
     df = pd.read_csv("traj2.csv")
-    init_time = ["2020-06-27T21:08:03.0212"]
-    t = Time(init_time, format="isot", scale="tdb")
 
-    for index, row in df.iterrows():
+    # These observed start times will not be used due to differences in truth
+    # data and the generated ephemerides.
+    # init_time = ["2020-06-27T21:08:03.0212"]
+    # t = Time(init_time, format="isot", scale="tdb")
+
+    for index in range(0, df.shape[0]-1):
+        row = df.iloc[[index]]
+        logging.debug(row["x"])
         trajStateVect = TrajectoryStateVector(
             row["x"] / 1000,
             row["y"] / 1000,
@@ -135,36 +138,46 @@ class TestSequence(unittest.TestCase):
             row["vy"] / 1000,
             row["vz"] / 1000,
         )
-        moonVec = get_ephemeris(t.unix + row["t"], BodyEnum.Moon)
-        sunVec = get_ephemeris(t.unix + row["t"], BodyEnum.Moon)
-        tests.append(
+        row_skip = df.iloc[[index + 1]]
+        logging.debug(row_skip["x"])
+        truthStateVector = TrajectoryStateVector(
+            row_skip["x"] / 1000,
+            row_skip["y"] / 1000,
+            row_skip["z"] / 1000,
+            row_skip["vx"] / 1000,
+            row_skip["vy"] / 1000,
+            row_skip["vz"] / 1000,
+        )
+        # ephemeris vectors will be generated from the positions only,
+        # velocities will all be set to 0.
+        tests_3600_dt.append(
             [
                 Vector6(
-                    moonVec[0],
-                    moonVec[1],
-                    moonVec[2],
-                    moonVec[3],
-                    moonVec[4],
-                    moonVec[5],
+                    row["mx"],
+                    row["my"],
+                    row["mz"],
+                    0,
+                    0,
+                    0
                 ),
                 Vector6(
-                    sunVec[0], sunVec[1], sunVec[2], sunVec[3], sunVec[4], sunVec[5]
+                    row["sx"], row["sy"], row["sz"], 0, 0, 0
                 ),
                 trajStateVect,
                 3600,
                 P,
                 None,
+                truthStateVector
             ]
         )
 
-    @parameterized.expand(tests)
-    def test_sequence(
-        self, moonEph, sunEph, trajStateVector, dt, P, cameraMeasurements
+    @parameterized.expand(tests_3600_dt)
+    def test_3600_dt_traj2(
+        self, moonEph, sunEph, trajStateVector, dt, P, cameraMeasurements, truthStateVector
     ):
-        logging.debug("**********************************\n")
 
         main_thrust_info = None
-        dynmaicsOnly = True
+        dynamicsOnly = True
         trajEstimateOutput = runTrajUKF(
             moonEph,
             sunEph,
@@ -173,9 +186,10 @@ class TestSequence(unittest.TestCase):
             dt,
             CovarianceMatrix(P),
             main_thrust_info,
-            dynmaicsOnly,
+            dynamicsOnly,
         )
-
+        trajNew = trajEstimateOutput.new_state.data
+        truthState = truthStateVector.data
         pos_array = trajEstimateOutput.new_state.get_position_data()
         vel_array = trajEstimateOutput.new_state.get_velocity_data()
         logging.debug(f"x,y,z position = {pos_array}")
@@ -191,10 +205,84 @@ class TestSequence(unittest.TestCase):
         # upper = np.add(deviation, trajStateVector.data.T)
         # lower = np.subtract(trajStateVector.data.T, deviation)
 
-        print(trajEstimateOutput.new_state.get_position_data())
+        posError = math.sqrt(
+            (trajNew[0] - truthState[0])**2 +
+            (trajNew[1] - truthState[1])**2 +
+            (trajNew[2] - truthState[2])**2)
+        velError = math.sqrt(
+            (trajNew[3] - truthState[3])**2 +
+            (trajNew[4] - truthState[4])**2 +
+            (trajNew[5] - truthState[5])**2)
+
+        # for some reason the calculations below do not match with the calculations
+        # in lines 208-212
+        # posError = math.sqrt( np.sum((trajNew[:3] - truthState[:3])**2) )
+        # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
+
+        logging.debug(f'Position error: {posError}\nVelocity error: {velError}')
+        assert posError <= 1000, 'Position error is too large'
+        assert velError <= 5, 'Velocity error is too large'
 
         # assert np.all(np.less_equal(lower, trajEstimateOutput.new_state.data.T))
         # assert np.all(np.less_equal(trajEstimateOutput.new_state.data.T, upper))
+
+    def test_208800_dt_traj2(self):
+        trajStateVector = TrajectoryStateVector(
+            -2.7699842997503623E4,
+            -1.4293835289027357E4,
+            1713.3139597599213,
+            -2.8869995362010077,
+            -3.7832739597202594,
+            -.9225267990120935
+        )
+        main_thrust_info = None
+        dynamicsOnly = True
+        moonEph = EphemerisVector(
+            3.688288588957627E5,
+            1.4820784006906873E4,
+            -3.0687755261273645E4,
+            0,
+            0,
+            0)
+        sunEph = EphemerisVector(1.6896327218153402E7, -1.3867258359275745E8, -6.011476692460759E7, 0, 0, 0)
+        cameraMeasurements = None
+        P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
+
+        trajEstimateOutput = runTrajUKF(
+            moonEph,
+            sunEph,
+            cameraMeasurements,
+            trajStateVector,
+            208800,
+            P,
+            main_thrust_info,
+            dynamicsOnly,
+        )
+        trajNew = trajEstimateOutput.new_state.data
+        truthState = (
+            TrajectoryStateVector(
+                [-1.0680802747723334E5,
+                 -2.8316336297967434E5,
+                 -1.0300865709131669E5,
+                 -.00874577544564751,
+                 -.6036563933415423,
+                 -.28878799462247133])).data
+        posError = math.sqrt((trajNew[0] - truthState[0])**2 +
+                             (trajNew[1] - truthState[1])**2 +
+                             (trajNew[2] - truthState[2])**2)
+        velError = math.sqrt((trajNew[3] - truthState[3])**2 +
+                             (trajNew[4] - truthState[4])**2 +
+                             (trajNew[5] - truthState[5])**2)
+        # for some reason the calculations below do not match with the
+        # calculations above:
+        # posError = math.sqrt( np.sum((trajNew[:3] - truthState[:3])**2) )
+        # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
+        logging.debug(f'Output x position: {trajNew[0]}\n')
+        logging.debug(f'Output y position: {trajNew[1]}\n')
+        logging.debug(f'Output z position: {trajNew[2]}\n')
+        print(f'Position error: {posError}\nVelocity error: {velError}')
+        assert posError <= 1000, 'Position error is too large'
+        assert velError <= 5, 'Velocity error is too large'
 
 
 if __name__ == "__main__":

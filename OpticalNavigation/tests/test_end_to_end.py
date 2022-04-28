@@ -99,7 +99,7 @@ class TestEndToEnd(unittest.TestCase):
                 # logging.debug(key)
                 centers_re.append([cd_dict_re[i][key][0], cd_dict_re[i][key][1]])
                 ang_diams_re.append(cd_dict_re[i][key][2])
-        logging.debug(f"Reproj\n\ncd_dict_re: {cd_dict_re}\n")
+        logging.debug(f"Reproj\ncd_dict_re: {cd_dict_re}\n")
         logging.debug(f"centers_re: {centers_re}\n")
         logging.debug(f"ang_diams_re: {ang_diams_re}\n")
         logging.debug("\n")

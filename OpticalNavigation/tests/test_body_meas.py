@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 import unittest
 import os
 import json
@@ -6,10 +6,15 @@ import re
 import logging
 
 from core.find_algos.tiled_remap import st_to_sph
-from core.const import FileData, DetectionData, Vector3
+from core.const import BodyEnum, FileData, DetectionData, Vector3
 from core.observe_functions import cam_to_body, body_to_T0
 from core.opnav import calculate_cam_measurements
 from utils.constants import FLIGHT_SOFTWARE_PATH
+
+
+class jsonData:
+    def __init__(self, filename) -> None:
+        pass
 
 
 class BodyMeas(unittest.TestCase):
@@ -56,17 +61,49 @@ class BodyMeas(unittest.TestCase):
             gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
         return fileInfo, centerSt, dt, truthT0Vec, truthT0Size, gyroY
 
-    def body_meas(self, fileInfo, centerSt, dt, truthT0Vec, gyroY):
-        calc_vecs = []
-        truth_vecs = []
-        errors = []
-        for (fileInf, stCenter, deltaT, truthVec) in zip(
-            fileInfo, centerSt, dt, truthT0Vec
-        ):
+    def check(self, calcVec, truthVec):
+        angSep = calculate_cam_measurements(calcVec, truthVec)
+        return angSep
+
+    # Compares transforming sim truth stereographic coordinates with truth sim vector
+    def sim_transform(self, stVecs, truthVecs, gyroY):
+        for f in stVecs.keys():
+            logging.debug(f"File: {f}")
+            fileInfo = FileData(f)
+            dt = float(re.search(r"[dt](\d*\.?\d+)", f).group(1))
+            for body in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
+                if body in stVecs[f].keys():
+                    camVec = st_to_sph(stVecs[f][body][0], stVecs[f][body][1])
+                    logging.debug(
+                        f"Cam Vec: [{stVecs[f][body][0]}, {stVecs[f][body][1]}]"
+                    )
+                    detection = DetectionData(
+                        filedata=fileInfo,
+                        vector=Vector3(camVec[0], camVec[1], camVec[2]),
+                        ang_diam=None,
+                        detection=None,
+                    )
+                    logging.debug(f"{fileInfo.cam_num=}")
+                    # Camera frame to satellite body frame
+                    bodyDet = cam_to_body(detection)
+                    # logging.debug(f"Satellite Frame Vector: {bodyDet.vector}")
+
+                    # Satellite body frame to T0 frame
+                    finalT0Det = body_to_T0(bodyDet, dt, gyroY)
+                    logging.debug(f"Observe Start Vector: {finalT0Det.vector}")
+                    logging.debug(f"Truth Vector: {truthVecs[f][body]}")
+                    angSep = calculate_cam_measurements(
+                        finalT0Det.vector.data, truthVecs[f][body]
+                    )
+                    logging.debug(f"{angSep=}\n")
+
+        """
+        for (fileInf, stCenter, deltaT) in zip(fileInfo, centerSt, dt):
             logging.debug(f"Filename: {fileInf.filename}")
             camNum = fileInf.cam_num
             logging.debug(f"CamNum: {camNum}")
 
+            # Stereographic coordinate to spherical coordinate
             logging.debug(f"Center_st: {stCenter}")
             camVec = st_to_sph(stCenter[0], stCenter[1])
             logging.debug(f"Cam Vec: {camVec}")
@@ -84,58 +121,100 @@ class BodyMeas(unittest.TestCase):
 
             # Satellite body frame to T0 frame
             finalT0Det = body_to_T0(bodyDet, deltaT, gyroY)
-            logging.debug(f"Observe Start Vector: {finalT0Det.vector}")
+            logging.debug(f"Observe Start Vector: {finalT0Det.vector}\n")
 
-            logging.debug(f"Actual Vector: {truthVec}")
+            calc_vecs.append(detection)
+        # calc_vecs = zip(calc_vecs, fileInfo)
 
-            # We are comparing unit vectors here
-            vectSep = calculate_cam_measurements(finalT0Det.vector.data, truthVec)
-            logging.debug(f"Vector Angular Separation: {vectSep}")
+        return calc_vecs
+        """
 
-            diffVec = finalT0Det.vector.data - truthVec
-            logging.debug(f"Difference Vector: {diffVec}")
-            vecDist = np.linalg.norm(diffVec)
-            logging.debug(f"Vect Dist: {vecDist}")
-            # self.assertLessEqual(
-            #     vecDist,
-            #     0.05,
-            #     "Body transformations do not match within margin of error!",
-            # )
+    def load_json(self, jsonPath):
+        with open(jsonPath, "r") as data:
+            obs = json.load(data)
+            frames = obs["observations"][0]["frames"]
+            st_dict = {}
+            sph_dict = {}
+            gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
+            for frame in sorted(frames, key=lambda f: f["image_stereographic"]):
+                imgName = frame["image_stereographic"]
+                # fileInfo = FileData(imgName)
+                # dtFrame = float(re.search(r"[dt](\d*\.?\d+)", imgName).group(1))
+                # logging.debug(f"{imgName=}")
+                # logging.debug(frame["detections"])
+                det_st_dict = {}
+                det_sph_dict = {}
+                for det in frame["detections"]:
+                    body = det["body"]
+                    body = (
+                        BodyEnum.Earth
+                        if body == "Earth"
+                        else BodyEnum.Moon
+                        if body == "Moon"
+                        else BodyEnum.Sun
+                    )
+                    det_st_dict[body] = det["center_st"]
+                    det_sph_dict[body] = det["direction_cam"]
+                st_dict[imgName] = det_st_dict
+                sph_dict[imgName] = det_sph_dict
+            logging.debug(st_dict)
+            logging.debug(sph_dict)
 
-            # dot = np.dot(finalT0Det.vector.data, truthVec)
-            # truthNorm = np.linalg.norm(truthVec)
-            # calcNorm = np.linalg.norm(finalT0Det.vector.data)
-            # vAngle = np.arccos(dot / (truthNorm * calcNorm))
+            # Get truth sizes
+            diam_dict = {}
+            for b in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
+                ang_diam = obs["observations"][0]["observed_bodies"][b]["angular_size"]
+                diam_dict[b] = ang_diam
 
-            # logging.debug(f"Angle Dist: {vAngle} (rad) = {vAngle * 180 / np.pi} (deg)")
-            # logging.debug(f"Radial Dist: {truthNorm - calcNorm}")
-            logging.debug("\n")
-            calc_vecs.append(finalT0Det.vector.data)
-            truth_vecs.append(truthVec)
-            errors.append(vecDist)
-        calc_vecs = zip(calc_vecs, fileInfo)
-        truth_vecs = zip(truth_vecs, fileInfo)
-        errors = zip(errors, fileInfo)
+            gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
 
-        return calc_vecs, truth_vecs, errors
+            logging.debug(diam_dict)
 
-    def test_traj_case1c(self):
+        return st_dict, sph_dict, diam_dict, gyroY
+
+    def test_case1c(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
             "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
         )
-        fileInfo, centerSt, dt, truthT0Vec, _, gyroY = self.get_data(path)
-        _, _, _ = self.body_meas(fileInfo, centerSt, dt, truthT0Vec, gyroY)
-        for i in fileInfo:
-            logging.debug(i)
+        st_dict, sph_dict, diam_dict, gyroY = self.load_json(path)
+        self.sim_transform(st_dict, sph_dict, gyroY)
 
-    # def test_traj_trajectory(self):
-    # path = os.path.join(
-    # FLIGHT_SOFTWARE_PATH,
-    # "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
-    # )
-    # fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY = self.get_data(path)
-    # _, _, _ = self.body_meas(fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY)
+    # def test_traj_case1c(self):
+    #     path = os.path.join(
+    #         FLIGHT_SOFTWARE_PATH,
+    #         "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
+    #     )
+    #     fileInfo, centerSt, dt, truthT0Vec, _, gyroY = self.get_data(path)
+    #     logging.debug(f"{centerSt=}")
+    #     calcVecs = self.transform(fileInfo, centerSt, dt, gyroY)
+    #     for c in calcVecs:
+    #         logging.debug(f"{str(c)=}")
+
+
+#
+#     # truthVecs = [DetectionData(fileInfo, truthT0Vec, ]
+#     # for i in fileInfo:
+#         # logging.debug(i)
+
+
+# def test_traj_case1c(self):
+# path = os.path.join(
+# FLIGHT_SOFTWARE_PATH,
+# "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
+# )
+# fileInfo, centerSt, dt, truthT0Vec, _, gyroY = self.get_data(path)
+# _, _, _ = self.transform(fileInfo, centerSt, dt, truthT0Vec, gyroY)
+# for i in fileInfo:
+# logging.debug(i)
+
+# def test_traj_trajectory(self):
+# path = os.path.join(
+# FLIGHT_SOFTWARE_PATH,
+# "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
+# )
+# fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY = self.get_data(path)
+# _, _, _ = self.body_meas(fileInfo, centerSt, radiusSt, dt, truthT0Vec, truthT0Size, gyroY)
 
 
 if __name__ == "__main__":

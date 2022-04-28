@@ -52,7 +52,7 @@ def MSE(observedStateVector, expectedStateVector):
             )
             ** 2
         )
-    return math.sqrt(error_squared)
+    return math.sqrt(error_squared) / observedStateVector.to_array().size
 
 
 def angular_separation(v1, v2):

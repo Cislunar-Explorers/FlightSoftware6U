@@ -38,6 +38,9 @@ class TestEndToEnd(unittest.TestCase):
         bodyTest = test_body_meas.BodyMeas()
         # Get truth data
         fileInfo, _, dt, truthT0Vec, truthT0Size, gyroY = bodyTest.get_data(path)
+        # logging.debug("fileInfo")
+        # for f in fileInfo:
+        # logging.debug(str(f))
         # Perform transformations
         calcVecs, truthVecs, errors = bodyTest.body_meas(
             fileInfo, centersReproj, dt, truthT0Vec, gyroY
@@ -82,12 +85,13 @@ class TestEndToEnd(unittest.TestCase):
             centers_st.append([cd_dict_st[i][key][0], cd_dict_st[i][key][1]])
             ang_diams_st.append(cd_dict_st[i][key][2])
         logging.debug(f"Truth:\n\ncd_dict_st: {cd_dict_st}\n")
-        logging.debug(f"centers_st: {centers_st}\n")
-        logging.debug(f"ang_diams_st: {ang_diams_st}\n")
+        # logging.debug(f"centers_st: {centers_st}\n")
+        # logging.debug(f"ang_diams_st: {ang_diams_st}\n")
 
         # Get the centers and diamters of reprojected stereo images
         logging.debug("Running find on reprojected images\n")
         cd_dict_re = self.find_center_diam(re_list)
+
         # logging.debug(cd_dict_re)
         centers_re = []
         ang_diams_re = []
@@ -100,8 +104,8 @@ class TestEndToEnd(unittest.TestCase):
                 centers_re.append([cd_dict_re[i][key][0], cd_dict_re[i][key][1]])
                 ang_diams_re.append(cd_dict_re[i][key][2])
         logging.debug(f"Reproj\ncd_dict_re: {cd_dict_re}\n")
-        logging.debug(f"centers_re: {centers_re}\n")
-        logging.debug(f"ang_diams_re: {ang_diams_re}\n")
+        # logging.debug(f"centers_re: {centers_re}\n")
+        # logging.debug(f"ang_diams_re: {ang_diams_re}\n")
         logging.debug("\n")
 
         ###############################################################################################################
@@ -113,11 +117,18 @@ class TestEndToEnd(unittest.TestCase):
             obs_path, centers_re
         )
 
-        logging.debug("Size comparison")
-        for f, a, t in zip(fileInfo, ang_diams_re, truth_sizes):
-            logging.debug(f"({str(f)}, Meas: {a}, Actual: {t})")
-            percent_error = (abs(a - t) / t) * 100
-            logging.debug(f"Percent Error: {percent_error}")
+        # logging.debug("Size comparison")
+        # for f, a, t in zip(fileInfo, ang_diams_re, truth_sizes):
+        # logging.debug(f"({str(f)}, Meas: {a}, Actual: {t})")
+        # percent_error = (abs(a - t) / t) * 100
+        # logging.debug(f"Percent Error: {percent_error}")
+
+        ###############################################################################################################
+        # Fourth step: Comparisons
+        # Compare reproj centers and sim stereo results
+        ###############################################################################################################
+
+        # for
 
         # Fourth step: compare difference/error between the actual and test results. How does the error build in each
         # of the three test?

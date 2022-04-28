@@ -42,7 +42,7 @@ class CenterDetections(unittest.TestCase):
         for name in img_lst:
             img = name
             _, body_vals = find(img, st=True, pixel=False)
-            cr_dict[img] = body_vals
+            cr_dict[os.path.basename(img)] = body_vals
             # img_det_dict[img] = [
             # img_det.get_earth_detection(),
             # img_det.get_moon_detection(),

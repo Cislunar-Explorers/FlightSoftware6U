@@ -40,6 +40,34 @@ one way to test outputs are correct is to separately call functions from ukf.py:
 
 """
 
+trajStateVector1 = TrajectoryStateVector(
+    1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+)
+trajStateVector2 = TrajectoryStateVector(
+    1.433e05, 5.3541e05, 1.9355e05, -0.93198, -0.077729, 0.049492
+)
+sum = trajStateVector1.to_array() + trajStateVector2.to_array()
+print(sum)
+print(type(sum).__name__)
+print(trajStateVector1.get_position_data())
+
+
+def MSE(observedStateVector, expectedStateVector):
+    error_squared = 0
+    for index in range(0, observedStateVector.to_array().size):
+        error_squared = (
+            error_squared
+            + (
+                observedStateVector.to_array()[index]
+                - expectedStateVector.to_array()[index]
+            )
+            ** 2
+        )
+    return math.sqrt(error_squared)
+
+
+print(MSE(trajStateVector1, trajStateVector2))
+
 
 def angular_separation(v1, v2):
     dot_prod = np.dot(v1, v2)
@@ -127,7 +155,7 @@ class TestSequence(unittest.TestCase):
     # init_time = ["2020-06-27T21:08:03.0212"]
     # t = Time(init_time, format="isot", scale="tdb")
 
-    for index in range(0, df.shape[0]-1):
+    for index in range(0, df.shape[0] - 1):
         row = df.iloc[[index]]
         logging.debug(row["x"])
         trajStateVect = TrajectoryStateVector(
@@ -152,28 +180,26 @@ class TestSequence(unittest.TestCase):
         # velocities will all be set to 0.
         tests_3600_dt.append(
             [
-                Vector6(
-                    row["mx"],
-                    row["my"],
-                    row["mz"],
-                    0,
-                    0,
-                    0
-                ),
-                Vector6(
-                    row["sx"], row["sy"], row["sz"], 0, 0, 0
-                ),
+                Vector6(row["mx"], row["my"], row["mz"], 0, 0, 0),
+                Vector6(row["sx"], row["sy"], row["sz"], 0, 0, 0),
                 trajStateVect,
                 3600,
                 P,
                 None,
-                truthStateVector
+                truthStateVector,
             ]
         )
 
     @parameterized.expand(tests_3600_dt)
     def test_3600_dt_traj2(
-        self, moonEph, sunEph, trajStateVector, dt, P, cameraMeasurements, truthStateVector
+        self,
+        moonEph,
+        sunEph,
+        trajStateVector,
+        dt,
+        P,
+        cameraMeasurements,
+        truthStateVector,
     ):
 
         main_thrust_info = None
@@ -206,45 +232,45 @@ class TestSequence(unittest.TestCase):
         # lower = np.subtract(trajStateVector.data.T, deviation)
 
         posError = math.sqrt(
-            (trajNew[0] - truthState[0])**2 +
-            (trajNew[1] - truthState[1])**2 +
-            (trajNew[2] - truthState[2])**2)
+            (trajNew[0] - truthState[0]) ** 2
+            + (trajNew[1] - truthState[1]) ** 2
+            + (trajNew[2] - truthState[2]) ** 2
+        )
         velError = math.sqrt(
-            (trajNew[3] - truthState[3])**2 +
-            (trajNew[4] - truthState[4])**2 +
-            (trajNew[5] - truthState[5])**2)
+            (trajNew[3] - truthState[3]) ** 2
+            + (trajNew[4] - truthState[4]) ** 2
+            + (trajNew[5] - truthState[5]) ** 2
+        )
 
         # for some reason the calculations below do not match with the calculations
         # in lines 208-212
         # posError = math.sqrt( np.sum((trajNew[:3] - truthState[:3])**2) )
         # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
 
-        logging.debug(f'Position error: {posError}\nVelocity error: {velError}')
-        assert posError <= 1000, 'Position error is too large'
-        assert velError <= 5, 'Velocity error is too large'
+        logging.debug(f"Position error: {posError}\nVelocity error: {velError}")
+        assert posError <= 1000, "Position error is too large"
+        assert velError <= 5, "Velocity error is too large"
 
         # assert np.all(np.less_equal(lower, trajEstimateOutput.new_state.data.T))
         # assert np.all(np.less_equal(trajEstimateOutput.new_state.data.T, upper))
 
     def test_208800_dt_traj2(self):
         trajStateVector = TrajectoryStateVector(
-            -2.7699842997503623E4,
-            -1.4293835289027357E4,
+            -2.7699842997503623e4,
+            -1.4293835289027357e4,
             1713.3139597599213,
             -2.8869995362010077,
             -3.7832739597202594,
-            -.9225267990120935
+            -0.9225267990120935,
         )
         main_thrust_info = None
         dynamicsOnly = True
         moonEph = EphemerisVector(
-            3.688288588957627E5,
-            1.4820784006906873E4,
-            -3.0687755261273645E4,
-            0,
-            0,
-            0)
-        sunEph = EphemerisVector(1.6896327218153402E7, -1.3867258359275745E8, -6.011476692460759E7, 0, 0, 0)
+            3.688288588957627e5, 1.4820784006906873e4, -3.0687755261273645e4, 0, 0, 0
+        )
+        sunEph = EphemerisVector(
+            1.6896327218153402e7, -1.3867258359275745e8, -6.011476692460759e7, 0, 0, 0
+        )
         cameraMeasurements = None
         P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
 
@@ -261,28 +287,36 @@ class TestSequence(unittest.TestCase):
         trajNew = trajEstimateOutput.new_state.data
         truthState = (
             TrajectoryStateVector(
-                [-1.0680802747723334E5,
-                 -2.8316336297967434E5,
-                 -1.0300865709131669E5,
-                 -.00874577544564751,
-                 -.6036563933415423,
-                 -.28878799462247133])).data
-        posError = math.sqrt((trajNew[0] - truthState[0])**2 +
-                             (trajNew[1] - truthState[1])**2 +
-                             (trajNew[2] - truthState[2])**2)
-        velError = math.sqrt((trajNew[3] - truthState[3])**2 +
-                             (trajNew[4] - truthState[4])**2 +
-                             (trajNew[5] - truthState[5])**2)
+                [
+                    -1.0680802747723334e5,
+                    -2.8316336297967434e5,
+                    -1.0300865709131669e5,
+                    -0.00874577544564751,
+                    -0.6036563933415423,
+                    -0.28878799462247133,
+                ]
+            )
+        ).data
+        posError = math.sqrt(
+            (trajNew[0] - truthState[0]) ** 2
+            + (trajNew[1] - truthState[1]) ** 2
+            + (trajNew[2] - truthState[2]) ** 2
+        )
+        velError = math.sqrt(
+            (trajNew[3] - truthState[3]) ** 2
+            + (trajNew[4] - truthState[4]) ** 2
+            + (trajNew[5] - truthState[5]) ** 2
+        )
         # for some reason the calculations below do not match with the
         # calculations above:
         # posError = math.sqrt( np.sum((trajNew[:3] - truthState[:3])**2) )
         # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
-        logging.debug(f'Output x position: {trajNew[0]}\n')
-        logging.debug(f'Output y position: {trajNew[1]}\n')
-        logging.debug(f'Output z position: {trajNew[2]}\n')
-        print(f'Position error: {posError}\nVelocity error: {velError}')
-        assert posError <= 1000, 'Position error is too large'
-        assert velError <= 5, 'Velocity error is too large'
+        logging.debug(f"Output x position: {trajNew[0]}\n")
+        logging.debug(f"Output y position: {trajNew[1]}\n")
+        logging.debug(f"Output z position: {trajNew[2]}\n")
+        print(f"Position error: {posError}\nVelocity error: {velError}")
+        assert posError <= 1000, "Position error is too large"
+        assert velError <= 5, "Velocity error is too large"
 
 
 if __name__ == "__main__":

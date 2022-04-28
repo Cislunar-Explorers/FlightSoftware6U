@@ -507,6 +507,9 @@ class TrajectoryStateVector(Vector6):
             z_vel=state[5],
         )
 
+    def to_array(self):
+        return self.data.reshape(6)[0:6]
+
     def get_position_data(self):
         return self.data.reshape(6)[0:3]
 

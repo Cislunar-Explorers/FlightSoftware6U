@@ -223,8 +223,8 @@ def get_ephemeris(
     vy = (y - init.y.value) / (current_time - observeStart)
     vz = (z - init.z.value) / (current_time - observeStart)
 
-    logging.info("Got 'em all!")
-    logging.info(f"{body.name} pos:  {x}, {y}, {z}")
-    logging.info(f"{body.name} vel: {vx}, {vy}, {vz}")
+    # logging.info("Got 'em all!")
+    # logging.info(f"{body.name} pos:  {x}, {y}, {z}")
+    # logging.info(f"{body.name} vel: {vx}, {vy}, {vz}")
 
     return x, y, z, vx, vy, vz

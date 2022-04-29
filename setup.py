@@ -36,6 +36,7 @@ INSTALL_REQUIRES = [
     "sqlalchemy",
     "tqdm",
     "uptime",
+    "parameterized",
 ]
 
 PI_INSTALL_REQUIRES = [

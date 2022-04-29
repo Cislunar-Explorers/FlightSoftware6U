@@ -178,26 +178,29 @@ class TestSequence(unittest.TestCase):
     # init_time = ["2020-06-27T21:08:03.0212"]
     # t = Time(init_time, format="isot", scale="tdb")
 
+    def divide_1000(original_traj_vec):
+        return original_traj_vec / 1000
+
     for index in range(0, df.shape[0] - 1):
         row = df.iloc[[index]]
         logging.debug(row["x"])
         trajStateVect = TrajectoryStateVector(
-            row["x"] / 1000,
-            row["y"] / 1000,
-            row["z"] / 1000,
-            row["vx"] / 1000,
-            row["vy"] / 1000,
-            row["vz"] / 1000,
+            divide_1000(row["x"]),
+            divide_1000(row["y"]),
+            divide_1000(row["z"]),
+            divide_1000(row["vx"]),
+            divide_1000(row["vy"]),
+            divide_1000(row["vz"]),
         )
         row_skip = df.iloc[[index + 1]]
         logging.debug(row_skip["x"])
         truthStateVector = TrajectoryStateVector(
-            row_skip["x"] / 1000,
-            row_skip["y"] / 1000,
-            row_skip["z"] / 1000,
-            row_skip["vx"] / 1000,
-            row_skip["vy"] / 1000,
-            row_skip["vz"] / 1000,
+            divide_1000(row_skip["x"]),
+            divide_1000(row_skip["y"]),
+            divide_1000(row_skip["z"]),
+            divide_1000(row_skip["vx"]),
+            divide_1000(row_skip["vy"]),
+            divide_1000(row_skip["vz"]),
         )
         # ephemeris vectors will be generated from the positions only,
         # velocities will all be set to 0.

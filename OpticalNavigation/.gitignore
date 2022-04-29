@@ -3,4 +3,5 @@ __pycache__
 tests/*.csv
 tests/*.png
 !tests/truth_detections_case1c.csv
+!tests/traj2.csv
 tests/tests/

@@ -152,7 +152,8 @@ class TestSequence(unittest.TestCase):
         ), "Incorrect Mean Squared Error Computation for velocity"
 
     def get_angular_seperations(time):
-        json_object = json.load(open("observations.json"))
+        with open("observations.json", "r") as data:
+            json_object = json.load(data)
 
         mylst = []
 
@@ -169,7 +170,8 @@ class TestSequence(unittest.TestCase):
 
     P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
 
-    df = pd.read_csv("traj2.csv")
+    with open("traj2.csv", "r") as data:
+        df = pd.read_csv(data)
 
     # These observed start times will not be used due to differences in truth
     # data and the generated ephemerides.
@@ -308,12 +310,12 @@ class TestSequence(unittest.TestCase):
         trajNew = trajEstimateOutput.new_state.data
         truthState = (
             TrajectoryStateVector(
-                    -1.0680802747723334e5,
-                    -2.8316336297967434e5,
-                    -1.0300865709131669e5,
-                    -0.00874577544564751,
-                    -0.6036563933415423,
-                    -0.28878799462247133,
+                -1.0680802747723334e5,
+                -2.8316336297967434e5,
+                -1.0300865709131669e5,
+                -0.00874577544564751,
+                -0.6036563933415423,
+                -0.28878799462247133,
             )
         ).data
         posError = math.sqrt(
@@ -339,33 +341,26 @@ class TestSequence(unittest.TestCase):
 
     def test_iterative_nontruth(self):
         trajStateVector = TrajectoryStateVector(
-            -2.7699842997503623E4,
-            -1.4293835289027357E4,
+            -2.7699842997503623e4,
+            -1.4293835289027357e4,
             1713.3139597599213,
             -2.8869995362010077,
             -3.7832739597202594,
-            -.9225267990120935
+            -0.9225267990120935,
         )
         dynamicsOnly = True
         main_thrust_info = None
         cameraMeasurements = None
-        P = CovarianceMatrix(np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float)))
+        P = CovarianceMatrix(
+            np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
+        )
         df = pd.read_csv("traj2.csv")
 
-        for index in range(0, df.shape[0]-1):
+        for index in range(0, df.shape[0] - 1):
             row = df.iloc[[index]]
             trajEstimateOutput = runTrajUKF(
-                Vector6(
-                        row["mx"],
-                        row["my"],
-                        row["mz"],
-                        0,
-                        0,
-                        0
-                ),
-                Vector6(
-                        row["sx"], row["sy"], row["sz"], 0, 0, 0
-                ),
+                Vector6(row["mx"], row["my"], row["mz"], 0, 0, 0),
+                Vector6(row["sx"], row["sy"], row["sz"], 0, 0, 0),
                 cameraMeasurements,
                 trajStateVector,
                 3600,
@@ -379,23 +374,28 @@ class TestSequence(unittest.TestCase):
         trajNew = trajStateVector.data
         truthState = (
             TrajectoryStateVector(
-                 -1.0680802747723334E5,
-                 -2.8316336297967434E5,
-                 -1.0300865709131669E5,
-                 -.00874577544564751,
-                 -.6036563933415423,
-                 -.28878799462247133)).data
+                -1.0680802747723334e5,
+                -2.8316336297967434e5,
+                -1.0300865709131669e5,
+                -0.00874577544564751,
+                -0.6036563933415423,
+                -0.28878799462247133,
+            )
+        ).data
 
-        posError = math.sqrt((trajNew[0] - truthState[0])**2 +
-                             (trajNew[1] - truthState[1])**2 +
-                             (trajNew[2] - truthState[2])**2)
-        velError = math.sqrt((trajNew[3] - truthState[3])**2 +
-                             (trajNew[4] - truthState[4])**2 +
-                             (trajNew[5] - truthState[5])**2)
-        logging.debug(f'Position error: {posError}\nVelocity error: {velError}\n')
-        assert posError <= 1000, 'Position error is too large'
-        assert velError <= 5, 'Velocity error is too large'
-
+        posError = math.sqrt(
+            (trajNew[0] - truthState[0]) ** 2
+            + (trajNew[1] - truthState[1]) ** 2
+            + (trajNew[2] - truthState[2]) ** 2
+        )
+        velError = math.sqrt(
+            (trajNew[3] - truthState[3]) ** 2
+            + (trajNew[4] - truthState[4]) ** 2
+            + (trajNew[5] - truthState[5]) ** 2
+        )
+        logging.debug(f"Position error: {posError}\nVelocity error: {velError}\n")
+        assert posError <= 1000, "Position error is too large"
+        assert velError <= 5, "Velocity error is too large"
 
 
 if __name__ == "__main__":

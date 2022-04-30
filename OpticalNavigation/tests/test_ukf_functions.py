@@ -79,6 +79,9 @@ def angular_separation(v1, v2):
 
 
 class TestSequence(unittest.TestCase):
+    # Change posError and velError assertion boundary here
+    pos_error_val = 10000
+    vel_error_val = 5
 
     """
     to add more tests:
@@ -277,8 +280,8 @@ class TestSequence(unittest.TestCase):
         # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
 
         logging.debug(f"Position error: {posError}\nVelocity error: {velError}")
-        assert posError <= 1000, "Position error is too large"
-        assert velError <= 5, "Velocity error is too large"
+        assert posError <= TestSequence.pos_error_val, "Position error is too large"
+        assert velError <= TestSequence.vel_error_val, "Velocity error is too large"
 
         # assert np.all(np.less_equal(lower, trajEstimateOutput.new_state.data.T))
         # assert np.all(np.less_equal(trajEstimateOutput.new_state.data.T, upper))
@@ -342,8 +345,8 @@ class TestSequence(unittest.TestCase):
         logging.debug(f"Output y position: {trajNew[1]}\n")
         logging.debug(f"Output z position: {trajNew[2]}\n")
         logging.debug(f"Position error: {posError}\nVelocity error: {velError}")
-        assert posError <= 1000, "Position error is too large"
-        assert velError <= 5, "Velocity error is too large"
+        assert posError <= TestSequence.pos_error_val, "Position error is too large"
+        assert velError <= TestSequence.vel_error_val, "Velocity error is too large"
 
     def test_iterative_nontruth(self):
         trajStateVector = TrajectoryStateVector(
@@ -400,8 +403,8 @@ class TestSequence(unittest.TestCase):
             + (trajNew[5] - truthState[5]) ** 2
         )
         logging.debug(f"Position error: {posError}\nVelocity error: {velError}\n")
-        assert posError <= 1000, "Position error is too large"
-        assert velError <= 5, "Velocity error is too large"
+        assert posError <= TestSequence.pos_error_val, "Position error is too large"
+        assert velError <= TestSequence.vel_error_val, "Velocity error is too large"
 
 
 if __name__ == "__main__":

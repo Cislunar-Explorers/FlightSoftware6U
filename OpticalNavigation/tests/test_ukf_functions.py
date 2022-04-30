@@ -363,7 +363,8 @@ class TestSequence(unittest.TestCase):
         P = CovarianceMatrix(
             np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
         )
-        df = pd.read_csv("traj2.csv")
+        with open("traj2.csv", "r") as data:
+            df = pd.read_csv(data)
 
         for index in range(0, df.shape[0] - 1):
             row = df.iloc[[index]]

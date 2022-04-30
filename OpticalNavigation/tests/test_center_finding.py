@@ -1,6 +1,7 @@
 import json
 import csv
-import logging
+
+# import logging
 import os
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -9,6 +10,7 @@ import math
 import unittest
 import time
 from utils.constants import FLIGHT_SOFTWARE_PATH
+from utils.log import log
 from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
     find,
 )
@@ -255,7 +257,7 @@ class CenterDetections(unittest.TestCase):
             os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
         ]
         cr_dict = self.calc_centers_and_diam(paths)
-        logging.debug(f"cr_dict:\n{cr_dict}\n")
+        log.debug(f"cr_dict:\n{cr_dict}\n")
 
 
 if __name__ == "__main__":

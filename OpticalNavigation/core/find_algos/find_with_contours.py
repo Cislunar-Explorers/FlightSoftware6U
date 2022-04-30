@@ -1,12 +1,11 @@
 from core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
+from utils.log import log
 from dataclasses import dataclass
 import cv2
 import numpy as np
 from math import radians, tan, floor, ceil
 import argparse
 import re
-
-# import logging
 
 
 class Camera:
@@ -365,7 +364,7 @@ def find(src, camera_params: CameraParameters = CisLunarCameraParameters):
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) == 0:
-        # logging.info("[OPNAV]: No countours found")
+        # log.info("[OPNAV]: No countours found")
         return result
 
     areas = [cv2.contourArea(c) for c in contours]
@@ -502,6 +501,7 @@ if __name__ == "__main__":
         " Sun ",
         imageDetectionCircles.get_sun_detection(),
     )
+    log.debug(imageDetectionCircles)
 
 # Notes
 # * Need sanity check on contour size (not too large, not too small)

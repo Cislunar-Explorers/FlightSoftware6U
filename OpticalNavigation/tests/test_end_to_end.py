@@ -1,7 +1,9 @@
 import unittest
 import os
 import glob
-import logging
+
+# import logging
+from utils.log import log
 from OpticalNavigation.tests import (
     test_center_finding,
     test_reprojections,
@@ -27,7 +29,7 @@ class TestEndToEnd(unittest.TestCase):
 
         re_list = sorted(glob.glob(re_path))
         if len(re_list) < len(gn_list):
-            logging.debug("Not enough reprojected images. Running test again.")
+            log.debug("Not enough reprojected images. Running test again.")
             repr.reproj_test(True, False, path)
             re_list = sorted(glob.glob(re_path))
 
@@ -73,15 +75,15 @@ class TestEndToEnd(unittest.TestCase):
         ##############################################################################################################
 
         # Get the centers and diameters of truth sim stereo images
-        logging.debug("Running find on sim stereo images\n")
+        log.debug("Running find on sim stereo images\n")
         cd_dict_st = self.find_center_diam(st_list)
-        logging.debug(f"Truth:\ncd_dict_st: {cd_dict_st}\n")
+        log.debug(f"Truth:\ncd_dict_st: {cd_dict_st}\n")
 
         # Get the centers and diamters of reprojected stereo images
-        logging.debug("Running find on reprojected images\n")
+        log.debug("Running find on reprojected images\n")
         cd_dict_re = self.find_center_diam(re_list)
-        logging.debug(f"Reproj:\ncd_dict_re: {cd_dict_re}\n")
-        logging.debug("\n")
+        log.debug(f"Reproj:\ncd_dict_re: {cd_dict_re}\n")
+        log.debug("\n")
 
         ###############################################################################################################
         # Third step: Stereographic Coordinate Comparison
@@ -91,7 +93,7 @@ class TestEndToEnd(unittest.TestCase):
 
         # TODO: Maybe change this to compare to sim json?
         # ... but an equivalent comparison is done in comparing transformed vectors, so might be fine
-        logging.debug("Stereographic coordinate comparison")
+        log.debug("Stereographic coordinate comparison")
         for re_key in cd_dict_re.keys():  # Iterate through all detections
             st_key = re.sub("_re", "_st", re_key)
 
@@ -106,14 +108,12 @@ class TestEndToEnd(unittest.TestCase):
                         re_point = np.array((re_dets[body][0], re_dets[body][1]))
                         st_point = np.array((st_dets[body][0], st_dets[body][1]))
                         error = np.linalg.norm(re_point - st_point)
-                        logging.debug(
-                            f"Reproj File: {re_key} Body: {body} Error: {error}"
-                        )
+                        log.debug(f"Reproj File: {re_key} Body: {body} Error: {error}")
                     else:
-                        logging.debug(
+                        log.debug(
                             "Reproj detected a body that sim detection did not detect!"
                         )
-        logging.debug("\n")
+        log.debug("\n")
 
         ###############################################################################################################
         # Fourth step: Body Measurements
@@ -125,23 +125,23 @@ class TestEndToEnd(unittest.TestCase):
         diam_dict = self.run_body_meas_sim(obs_path, cd_dict_re)
 
         # Compare angular size of detected bodies
-        logging.debug("Angular Size comparison")
+        log.debug("Angular Size comparison")
         for re_key in cd_dict_re.keys():
-            logging.debug(f"File: {re_key}")
+            log.debug(f"File: {re_key}")
             for body_key in cd_dict_re[re_key].keys():
-                logging.debug(f"Body: {BodyEnum(body_key).name}")
+                log.debug(f"Body: {BodyEnum(body_key).name}")
                 calc_ang_size = cd_dict_re[re_key][body_key][2]
-                logging.debug(f"Calculated Angular size: {calc_ang_size}")
+                log.debug(f"Calculated Angular size: {calc_ang_size}")
                 truth_ang_size = diam_dict[body_key]
-                logging.debug(f"Truth Angular Size: {truth_ang_size}")
+                log.debug(f"Truth Angular Size: {truth_ang_size}")
                 diff = abs(calc_ang_size - truth_ang_size)
-                logging.debug(
+                log.debug(
                     "Angular Size Diff: %2.6f rad, %2.6f deg" % (diff, np.rad2deg(diff))
                 )
 
                 # percent_error = (abs(calc_ang_size - truth_ang_size) / truth_ang_size) * 100
                 # logging.debug(f"Percent Error: {percent_error}")
-            logging.debug("")
+            log.debug("")
 
 
 if __name__ == "__main__":

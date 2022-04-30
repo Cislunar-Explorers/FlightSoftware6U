@@ -28,12 +28,12 @@ from utils.parameters import (
     MOON_PERCENTAGE_THRESH,
 )
 from OpticalNavigation.core.find_algos.tiled_remap import *
+from utils.log import log
+
 import cv2
 import numpy as np
 from math import radians
 import re
-import logging
-
 import argparse
 
 
@@ -213,7 +213,7 @@ def find(
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) == 0:
-        logging.debug("[OPNAV]: No contours found")
+        log.debug("[OPNAV]: No contours found")
         return result, {}
 
     # Get largest two contours
@@ -337,11 +337,6 @@ def find(
 
                     mAngDiam = get_angular_size(mRho, mR, cam.st_scale)
 
-                    # logging.debug(f"File: {src}")
-                    # logging.debug(f"Moon mX: {mX} mY: {mY} mR: {mR}")
-                    # logging.debug(f"Moon mXst: {mXst} mYst: {mYst}")
-                    # logging.debug(f"mAngDiam: {mAngDiam}\n")
-
                     # Andrew
                     if pixel:
                         body_values[BodyEnum.Moon] = [x + mX - 1640, y + mY - 1232, mR]
@@ -393,7 +388,7 @@ if __name__ == "__main__":
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
     result, body_values = find(args["image"])
-    logging.debug(body_values)
+    log.debug(body_values)
 # Notes
 # * Need sanity check on contour size (not too large, not too small)
 # * Need sanity check on omega (too high and out will be too big)

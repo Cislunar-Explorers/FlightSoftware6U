@@ -12,3 +12,4 @@ logging.basicConfig(
 )
 
 log = logging.getLogger("CislunarExplorers")
+logging.getLogger("PIL").setLevel(logging.WARNING)

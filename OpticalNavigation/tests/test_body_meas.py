@@ -4,6 +4,7 @@ import os
 import json
 import re
 import logging
+from utils.log import log
 import numpy as np
 
 from core.find_algos.tiled_remap import st_to_sph
@@ -78,8 +79,8 @@ class BodyMeas(unittest.TestCase):
             dt = float(re.search(r"[dt](\d*\.?\d+)", f).group(1))
             for body in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
                 if body in stVecs[f].keys():
-                    logging.debug(f"Body: {body}")
-                    logging.debug(
+                    log.debug(f"Body: {body}")
+                    log.debug(
                         f"Center_st: [{stVecs[f][body][0]}, {stVecs[f][body][1]}]"
                     )
 
@@ -101,13 +102,13 @@ class BodyMeas(unittest.TestCase):
                     finalT0Det = body_to_T0(bodyDet, dt, gyroY)
 
                     # Comparison
-                    logging.debug(f"Observe Start Vector: {finalT0Det.vector}")
-                    logging.debug(f"Truth Vector: {truthVecs[body]}")
+                    log.debug(f"Observe Start Vector: {finalT0Det.vector}")
+                    log.debug(f"Truth Vector: {truthVecs[body]}")
                     vectorAngSep = calculate_cam_measurements(
                         finalT0Det.vector.data, truthVecs[body]
                     )
                     angSepDeg = np.rad2deg(vectorAngSep)
-                    logging.debug(
+                    log.debug(
                         f"Vector Angular Separation: {vectorAngSep} rad, {angSepDeg} deg\n"
                     )
 

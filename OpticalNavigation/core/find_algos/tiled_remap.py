@@ -238,6 +238,8 @@ default_st_scale = Camera(
 ).st_scale
 
 
+# Implements angular size algorithm defined in Dr.Muhlberger's Opnav Complications report, bottom of page 4
+# https://cornell.app.box.com/file/673061926746
 def get_angular_size(rho, radius, st_scale=default_st_scale):
     radSt = (radius + 0.5) / st_scale
     angDiam = 2 * atan((rho + radSt) / 2) - 2 * atan((rho - radSt) / 2)

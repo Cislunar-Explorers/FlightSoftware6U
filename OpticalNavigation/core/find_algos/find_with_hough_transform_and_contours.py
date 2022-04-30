@@ -216,18 +216,17 @@ def find(
         logging.debug("[OPNAV]: No contours found")
         return result, {}
 
+    # Get largest two contours
     areas = [cv2.contourArea(c) for c in contours]
     areas = np.array(areas)
     largest_indices = (-areas).argsort()[
         :2
     ]  # Gets the largest two indices of areas array
     max_index = largest_indices[0]
+    # TODO: This does not check for overlap, second contour may not be a different body
     second_index = largest_indices[1] if largest_indices.size > 1 else None
-    # max_index = np.argmax(areas)
     c1 = contours[max_index]
     c2 = contours[second_index] if second_index is not None else None
-    # del contours[max_index]
-    # print(f"Second Index: {second_index}")
 
     x, y, w, h = cv2.boundingRect(c1)
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)
@@ -239,18 +238,18 @@ def find(
     else:
         bbst = BoundingBox(x, y, w, h)
         out = img[y : y + h, x : x + w]
-    # TODO make sure we can handle eclipse edge case
-    # Gets the next largest body that doesn't overlap with first body
-    # c2 = None
+
+    # TODO: make sure we can handle eclipse edge case
+
+    # TODO: Need to fix what c2 becomes | Gets the next largest body that doesn't overlap with first body
     x2, y2, w2, h2 = 0, 0, 0, 0
     out2 = None
     bbst2 = BoundingBox(0, 0, 0, 0)
 
     if c2 is not None and cv2.contourArea(c2) >= 100:  # TODO: Placeholder
         x2, y2, w2, h2 = cv2.boundingRect(c2)
-        # Checks for rectangle overlap
+        # TODO: Need to fix what c2 becomes | Checks for rectangle overlap
         if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y:
-            # c2 = con
             x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
             box2 = BoundingBox(x2, y2, w2, h2)
             out2, bbst2 = remap_roi(img, box2, cam, rot)
@@ -277,11 +276,6 @@ def find(
 
                 sAngDiam = get_angular_size(sRho, sR, cam.st_scale)
 
-                # logging.debug(f"File: {src}")
-                # logging.debug(f"Sun sX: {sX} sY: {sY} sR: {sR}")
-                # logging.debug(f"Sun sXst: {sXst} sYst: {sYst}")
-                # logging.debug(f"sAngDiam: {sAngDiam}\n")
-
                 # Andrew
                 if pixel:
                     body_values[BodyEnum.Sun] = [x + sX - 1640, y + sY - 1232, sR]
@@ -291,7 +285,6 @@ def find(
                         cam.normalize_st(x + sX, y + sY)[1],
                         sAngDiam,
                     ]
-
     else:
         earth = None
         index = 0
@@ -314,11 +307,6 @@ def find(
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
 
                 eAngDiam = get_angular_size(eRho, eR, cam.st_scale)
-
-                # logging.debug(f"File: {src}")
-                # logging.debug(f"Earth eX: {eX} eY: {eY} eR: {eR}")
-                # logging.debug(f"Earth eXst: {eXst} eYst: {eYst}")
-                # logging.debug(f"eAngDiam: {eAngDiam}\n")
 
                 # Andrew
                 if pixel:
@@ -406,7 +394,6 @@ if __name__ == "__main__":
     args = vars(ap.parse_args())
     result, body_values = find(args["image"])
     logging.debug(body_values)
-    print(f"Body_Values:\n{body_values}")
 # Notes
 # * Need sanity check on contour size (not too large, not too small)
 # * Need sanity check on omega (too high and out will be too big)

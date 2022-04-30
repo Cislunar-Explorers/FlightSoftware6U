@@ -1,5 +1,6 @@
 import json
 import csv
+import logging
 import os
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -35,21 +36,13 @@ class CenterDetections(unittest.TestCase):
         perf_values[body] = perf
         return perf_values
 
-    # New function
+    # Used for end to end test
     def calc_centers_and_diam(self, img_lst):
         cr_dict = {}
-        # img_det_dict = {}
         for name in img_lst:
             img = name
             _, body_vals = find(img, st=True, pixel=False)
             cr_dict[os.path.basename(img)] = body_vals
-            # img_det_dict[img] = [
-            # img_det.get_earth_detection(),
-            # img_det.get_moon_detection(),
-            # img_det.get_sun_detection(),
-            # ]
-
-        # return cr_dict, img_det_dict
         return cr_dict
 
     # TODO: Allow a different find algorithm to be tested easily
@@ -224,25 +217,25 @@ class CenterDetections(unittest.TestCase):
             "Center find algorithm is not at least 70% accurate!",
         )
 
-    # def test_traj_case_1c(self):
-    # dirname = os.path.dirname(__file__)
-    # filename = os.path.join(dirname, "../simulations/sim/data/traj-case1c_sim")
-    # return self.center_finding_results(
-    # filename,
-    # "center_finding_results_traj_case_1c_sim.csv",
-    # "center_histogram_traj_case1c.png",
-    # "radius_histogram_traj_case1c.png",
-    # )
+    def test_traj_case_1c(self):
+        dirname = os.path.dirname(__file__)
+        filename = os.path.join(dirname, "../simulations/sim/data/traj-case1c_sim")
+        return self.center_finding_results(
+            filename,
+            "center_finding_results_traj_case_1c_sim.csv",
+            "center_histogram_traj_case1c.png",
+            "radius_histogram_traj_case1c.png",
+        )
 
-    # def test_trajectory(self):
-    # dirname = os.path.dirname(__file__)
-    # filename = os.path.join(dirname, "../simulations/sim/data/trajectory_sim")
-    # return self.center_finding_results(
-    # filename,
-    # "center_finding_results_trajectory_sim.csv",
-    # "center_histogram_trajectory.png",
-    # "radius_histogram_trajectory.png",
-    # )
+    def test_trajectory(self):
+        dirname = os.path.dirname(__file__)
+        filename = os.path.join(dirname, "../simulations/sim/data/trajectory_sim")
+        return self.center_finding_results(
+            filename,
+            "center_finding_results_trajectory_sim.csv",
+            "center_histogram_trajectory.png",
+            "radius_histogram_trajectory.png",
+        )
 
     def test_center_radii(self):
         path = os.path.join(
@@ -262,8 +255,7 @@ class CenterDetections(unittest.TestCase):
             os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
         ]
         cr_dict = self.calc_centers_and_diam(paths)
-        print(f"cr_dict:\n{cr_dict}\n")
-        # print(f"img_det_dict:\n{img_det_dict}")
+        logging.debug(f"cr_dict:\n{cr_dict}\n")
 
 
 if __name__ == "__main__":

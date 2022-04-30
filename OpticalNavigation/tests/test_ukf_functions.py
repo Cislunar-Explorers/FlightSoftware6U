@@ -166,55 +166,58 @@ class TestSequence(unittest.TestCase):
                 break
         return mylst
 
-    tests_3600_dt = []
+    def file_to_list(filename):
+        tests_3600_dt_file = []
+        P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
 
-    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
+        with open(filename, "r") as data:
+            df = pd.read_csv(data)
 
-    with open("traj2.csv", "r") as data:
-        df = pd.read_csv(data)
+        # These observed start times will not be used due to differences in truth
+        # data and the generated ephemerides.
+        # init_time = ["2020-06-27T21:08:03.0212"]
+        # t = Time(init_time, format="isot", scale="tdb")
 
-    # These observed start times will not be used due to differences in truth
-    # data and the generated ephemerides.
-    # init_time = ["2020-06-27T21:08:03.0212"]
-    # t = Time(init_time, format="isot", scale="tdb")
+        def divide_1000(original_traj_vec):
+            return original_traj_vec / 1000
 
-    def divide_1000(original_traj_vec):
-        return original_traj_vec / 1000
+        for index in range(0, df.shape[0] - 1):
+            row = df.iloc[[index]]
+            logging.debug(row["x"])
+            trajStateVect = TrajectoryStateVector(
+                divide_1000(row["x"]),
+                divide_1000(row["y"]),
+                divide_1000(row["z"]),
+                divide_1000(row["vx"]),
+                divide_1000(row["vy"]),
+                divide_1000(row["vz"]),
+            )
+            row_skip = df.iloc[[index + 1]]
+            logging.debug(row_skip["x"])
+            truthStateVector = TrajectoryStateVector(
+                divide_1000(row_skip["x"]),
+                divide_1000(row_skip["y"]),
+                divide_1000(row_skip["z"]),
+                divide_1000(row_skip["vx"]),
+                divide_1000(row_skip["vy"]),
+                divide_1000(row_skip["vz"]),
+            )
+            # ephemeris vectors will be generated from the positions only,
+            # velocities will all be set to 0.
+            tests_3600_dt_file.append(
+                [
+                    Vector6(row["mx"], row["my"], row["mz"], 0, 0, 0),
+                    Vector6(row["sx"], row["sy"], row["sz"], 0, 0, 0),
+                    trajStateVect,
+                    3600,
+                    P,
+                    None,
+                    truthStateVector,
+                ]
+            )
+        return tests_3600_dt_file
 
-    for index in range(0, df.shape[0] - 1):
-        row = df.iloc[[index]]
-        logging.debug(row["x"])
-        trajStateVect = TrajectoryStateVector(
-            divide_1000(row["x"]),
-            divide_1000(row["y"]),
-            divide_1000(row["z"]),
-            divide_1000(row["vx"]),
-            divide_1000(row["vy"]),
-            divide_1000(row["vz"]),
-        )
-        row_skip = df.iloc[[index + 1]]
-        logging.debug(row_skip["x"])
-        truthStateVector = TrajectoryStateVector(
-            divide_1000(row_skip["x"]),
-            divide_1000(row_skip["y"]),
-            divide_1000(row_skip["z"]),
-            divide_1000(row_skip["vx"]),
-            divide_1000(row_skip["vy"]),
-            divide_1000(row_skip["vz"]),
-        )
-        # ephemeris vectors will be generated from the positions only,
-        # velocities will all be set to 0.
-        tests_3600_dt.append(
-            [
-                Vector6(row["mx"], row["my"], row["mz"], 0, 0, 0),
-                Vector6(row["sx"], row["sy"], row["sz"], 0, 0, 0),
-                trajStateVect,
-                3600,
-                P,
-                None,
-                truthStateVector,
-            ]
-        )
+    tests_3600_dt = file_to_list("traj2.csv")
 
     @parameterized.expand(tests_3600_dt)
     def test_iterative_truth(

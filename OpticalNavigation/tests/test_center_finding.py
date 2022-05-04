@@ -10,10 +10,13 @@ import math
 import unittest
 import time
 from utils.constants import FLIGHT_SOFTWARE_PATH
-from utils.log import log
+
+# from utils.log import log
 from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
     find,
 )
+from OpticalNavigation.core.const import BodyEnum
+
 
 # import argparse
 
@@ -86,7 +89,15 @@ class CenterDetections(unittest.TestCase):
                     truthX = detection["center_st"][0] * st_scale
                     truthY = detection["center_st"][1] * st_scale
                     truthR = detection["radius_st"] * st_scale
-                    frame_truth_vals[detection["body"]] = [truthX, truthY, truthR]
+                    body_det = detection["body"]
+                    body_det = (
+                        BodyEnum.Earth
+                        if body_det == "Earth"
+                        else BodyEnum.Moon
+                        if body_det == "Moon"
+                        else BodyEnum.Sun
+                    )
+                    frame_truth_vals[body_det] = [truthX, truthY, truthR]
                 image_type = (
                     "image_stereographic" if st_gn == "st" else "image_gnomonic"
                 )
@@ -101,17 +112,17 @@ class CenterDetections(unittest.TestCase):
                 if st_gn == "st"
                 else find(frame, pixel=pixel)
             )
-            sun_vals = body_vals.get("Sun")
+            sun_vals = body_vals.get(BodyEnum.Sun)
             if sun_vals:
-                perf_values = self.__get_difference("Sun", truths, sun_vals)
+                perf_values = self.__get_difference(BodyEnum.Sun, truths, sun_vals)
                 results.append(perf_values)
-            earth_vals = body_vals.get("Earth")
+            earth_vals = body_vals.get(BodyEnum.Earth)
             if earth_vals:
-                perf_values = self.__get_difference("Earth", truths, earth_vals)
+                perf_values = self.__get_difference(BodyEnum.Earth, truths, earth_vals)
                 results.append(perf_values)
-            moon_vals = body_vals.get("Moon")
+            moon_vals = body_vals.get(BodyEnum.Moon)
             if moon_vals:
-                perf_values = self.__get_difference("Moon", truths, moon_vals)
+                perf_values = self.__get_difference(BodyEnum.Moon, truths, moon_vals)
                 results.append(perf_values)
 
         # Writing performance values to csv file
@@ -129,9 +140,9 @@ class CenterDetections(unittest.TestCase):
             )
             writer.writerow(["Body", "Center", "Radius"])
             for result in results:
-                sun = result.get("Sun")
-                earth = result.get("Earth")
-                moon = result.get("Moon")
+                sun = result.get(BodyEnum.Sun)
+                earth = result.get(BodyEnum.Earth)
+                moon = result.get(BodyEnum.Moon)
                 if sun is not None:
                     writer.writerow(["Sun"] + sun)
                 if earth is not None:
@@ -151,9 +162,9 @@ class CenterDetections(unittest.TestCase):
         title = "{} Absolute Difference {} {}".format(center_radius, name, st_gn)
         data = []
         for result in results:
-            sun = result.get("Sun")
-            earth = result.get("Earth")
-            moon = result.get("Moon")
+            sun = result.get(BodyEnum.Sun)
+            earth = result.get(BodyEnum.Earth)
+            moon = result.get(BodyEnum.Moon)
             if sun is not None:
                 data.append(sun[idx])
             if earth is not None:
@@ -256,8 +267,7 @@ class CenterDetections(unittest.TestCase):
             os.path.join(path, "cam3_expHigh_f18_dt11.65010_st.png"),
             os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
         ]
-        cr_dict = self.calc_centers_and_diam(paths)
-        log.debug(f"cr_dict:\n{cr_dict}\n")
+        _ = self.calc_centers_and_diam(paths)
 
 
 if __name__ == "__main__":

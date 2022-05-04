@@ -131,24 +131,6 @@ class Camera:
         self.x_gn = linspace(-xlim_gn, xlim_gn, width, dtype=np.float32)
         self.y_gn = linspace(-ylim_gn, ylim_gn, height, dtype=np.float32)
 
-        # tiled_remap_cam = tiled_remap.Camera(self.fov_h, self.fov_v, self.width, self.height)
-        # gnx, gny = tiled_remap_cam.normalize_gn(self.width, self.height)
-        # s = tiled_remap.gn_to_sph(gnx, gny)
-        # stx, sty = tiled_remap.sph_to_st(s)
-        # pxx, pyy = tiled_remap_cam.st_to_px(stx, sty)
-
-        # print(width, " to ", pxx)
-        # print(height, " to ", pyy)
-
-        # self.stereographic_scale = (
-        #     ((pxx - 1) / 2) / (2 * np.tan(fov_h / 4))
-        #     + ((pyy - 1) / 2) / (2 * np.tan(fov_v / 4))
-        # ) / 2
-        # xlim_st = ((pxx - 1) / 2) / self.stereographic_scale
-        # ylim_st = ((pyy - 1) / 2) / self.stereographic_scale
-        # self.x_st = linspace(-xlim_st, xlim_st, pxx, dtype=np.float32)
-        # self.y_st = linspace(-ylim_st, ylim_st, pyy, dtype=np.float32)
-
         # Stereographic coordinates of pixel columns and rows
         # Average horizontal and vertical scaling to ensure square pixels
         self.stereographic_scale = (
@@ -390,13 +372,12 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr):
                     f,
                     delta_t,
                 )
-                # cv2.imwrite(
-                #     os.path.join(
-                #         SIM_DIR, "data/trajectory_sim_easy/images", filename_gn
-                #     ),
-                #     img,
-                # )
-                cv2.imwrite(os.path.join(SIM_DIR, "src/out", filename_gn), img)
+                cv2.imwrite(
+                    os.path.join(
+                        SIM_DIR, "data/trajectory_sim_easy/images", filename_gn
+                    ),
+                    img,
+                )
 
                 # Render ideal stereographic frame
                 img = render_stereographic(camera, obs_f, colors_bgr, illuminator)
@@ -407,13 +388,12 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr):
                     f,
                     delta_t,
                 )
-                # cv2.imwrite(
-                #     os.path.join(
-                #         SIM_DIR, "data/trajectory_sim_easy/images", filename_st
-                #     ),
-                #     img,
-                # )
-                cv2.imwrite(os.path.join(SIM_DIR, "src/out", filename_st), img)
+                cv2.imwrite(
+                    os.path.join(
+                        SIM_DIR, "data/trajectory_sim_easy/images", filename_st
+                    ),
+                    img,
+                )
 
                 frame_dict = {
                     "time": tf,
@@ -487,14 +467,6 @@ def render_stereographic(camera, obs_bodies, colors_bgr, illuminator):
     xx = np.broadcast_to(camera.x_st, (camera.height, camera.width))
     yy = np.broadcast_to(camera.y_st[..., np.newaxis], (camera.height, camera.width))
     sc = stereographic_inv(xx, yy)
-
-    # print(camera.x_st.shape, "\n\n")
-    # print(camera.y_st.shape, "\n\n")
-
-    # print(xx.shape, "\n\n")
-    # print(yy.shape, "\n\n")
-
-    # sc = stereographic_inv(camera.x_st, camera.y_st)
 
     img = zeros((camera.height, camera.width, 3), dtype=np.ubyte)
     for b in range(len(obs_bodies)):

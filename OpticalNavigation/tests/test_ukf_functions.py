@@ -5,6 +5,7 @@ from core.const import (
     TrajectoryStateVector,
     Vector6,
 )
+from gen_ukf_trajectory import angular_separation
 import numpy as np
 
 from core.ukf import runTrajUKF
@@ -69,13 +70,6 @@ def MSE(observedStateVector, expectedStateVector):
         math.sqrt(error_squared_velo) / observedStateVector.get_velocity_data().size
     )
     return MSE_pos, MSE_velo
-
-
-def angular_separation(v1, v2):
-    dot_prod = np.dot(v1, v2)
-    mag1 = np.linalg.norm(v1)
-    mag2 = np.linalg.norm(v2)
-    return np.arccos(dot_prod / (mag1 * mag2))
 
 
 class TestSequence(unittest.TestCase):
@@ -395,7 +389,6 @@ class TestSequence(unittest.TestCase):
         logging.debug(f'Position error: {posError}\nVelocity error: {velError}\n')
         assert posError <= 1000, 'Position error is too large'
         assert velError <= 5, 'Velocity error is too large'
-
 
 
 if __name__ == "__main__":

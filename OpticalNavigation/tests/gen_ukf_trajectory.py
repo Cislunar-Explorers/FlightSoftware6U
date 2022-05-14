@@ -46,7 +46,6 @@ def prepare_opnav_trajectory(traj_path, dt):
     d_traj['sz'] = d_sunEph['z']
 
     # convert all positionals from km to m for opnav
-    # km_to_m = lambda col: col*(10**3)
     d_traj = d_traj.apply(lambda col: col*(10**3))
 
     # only add time column if user asks with a specific dt
@@ -72,7 +71,7 @@ def process_opnav_obs(path_to_opnav_result, path_pre_opnav_csv):
         data = f.read()
 
     obj = json.loads(data)
-    print("total observations: ", len(obj['observations']))
+    print("Total opnav observations: ", len(obj['observations']))
 
     ang_sep = [[], [], []]  # em, es, ms
     ang_size = [[], [], []]  # e, m, s
@@ -101,12 +100,10 @@ def process_opnav_obs(path_to_opnav_result, path_pre_opnav_csv):
         ang_size[2].append(s['angular_size'])
 
     # write angular data from opnav-sim back into input trajectory
-    # this creates the full traj with all angular data for the UKF
     d_traj = pd.read_csv(path_pre_opnav_csv + ".csv")
 
     # convert traj positionals from m to km for UKF, ignore time col
-    # m_to_km = lambda col: col // (10**3) if col.name != 't' else col
-    d_traj = d_traj.apply(lambda col: col // (10**3) if col.name != 't' else col)
+    d_traj = d_traj.apply(lambda col: col / (10**3) if col.name != 't' else col)
 
     # angular sep in radians
     d_traj['z1'] = ang_sep[0]  # em
@@ -133,14 +130,19 @@ def process_opnav_obs(path_to_opnav_result, path_pre_opnav_csv):
 
 
 def main(traj_path, dt):
+    print("Pre-processing trajectory for opnav-sim...")
     prepare_opnav_trajectory(traj_path, dt)
-    # run opnav sim on new trajectory
+
+    print("Running opnav-sim on pre-processed trajectory...")
     run_opnav_sim(os.path.join(traj_path, 'pre_opnav'), False)
-    path_to_opnav_result = os.path.join(SIM_DIR, "data", "pre_opnav_sim")
+
+    # where observations.json is located inside sim directory
+    path_to_opnav_obs = os.path.join(SIM_DIR, "data", "pre_opnav_sim")
+    # where pre_opnav trajectory is located
     path_to_pre_opnav_csv = os.path.join(traj_path, 'pre_opnav')
 
-    # output trajectory is ready for UKF
-    process_opnav_obs(path_to_opnav_result, path_to_pre_opnav_csv)
+    print("Processing opnav-sim results & creating final trajectory...")
+    process_opnav_obs(path_to_opnav_obs, path_to_pre_opnav_csv)
 
 
 """
@@ -154,7 +156,11 @@ Test for trajectory generation:
 
 def test_traj_generation():
     traj_path = TEST_C1_DISCRETIZED
-    #  load initial trajectory data
+
+    # run generation on c1 file if it doesn't exist
+    # main(TEST_C1_DISCRETIZED, 60)
+
+    # load initial trajectory data
     path_dtraj = os.path.join(traj_path, 'trajectory', 'trajectory.csv')
     path_moonEph = os.path.join(traj_path, 'ephemeris', 'moon_eph.csv')
     path_sunEph = os.path.join(traj_path, 'ephemeris', 'sun_eph.csv')
@@ -163,17 +169,30 @@ def test_traj_generation():
     d_moonEph = pd.read_csv(path_moonEph)
     d_sunEph = pd.read_csv(path_sunEph)
 
-    # run generation and load final ukf ready trajectory
-    # main(TEST_C1_DISCRETIZED, 60)
+    # load final trajectory data
     path_ukf_ready_traj = os.path.join(traj_path, 'pre_opnav_ukf_ready.csv')
     ukf_traj = pd.read_csv(path_ukf_ready_traj)
 
-    # compare columns across both trajectories
+    # compare columns of the initial and final spacecraft trajectories
     assert_frame_equal(ukf_traj, ukf_traj)
     assert_frame_equal(ukf_traj.iloc[:, 1:7], d_traj)
-    assert_frame_equal(ukf_traj.iloc[:, 7:10], d_moonEph)
-    assert_frame_equal(ukf_traj.iloc[:, 10:13], d_sunEph)
-    # ensure time column hasn't changed
+    print("Spacecraft trajectory columns are equal!")
+
+    # same as above, but filter vx..vz and ignore column names
+    moonEphA = ukf_traj.iloc[:, 7:10]
+    moonEphB = d_moonEph.iloc[:, 0:3]
+    np.testing.assert_equal(moonEphA.values, moonEphB.values)
+    print("Moon ephemeris columns are equal!")
+
+    sunEphA = ukf_traj.iloc[:, 10:13]
+    sunEphB = d_sunEph.iloc[:, 0:3]
+    np.testing.assert_equal(sunEphA.values, sunEphB.values)
+    print("Sun ephemeris columns are equal!")
+
+    # lastly ensure time column hasn't changed
+    time_list = np.arange(120)*60
+    np.testing.assert_equal(ukf_traj.iloc[:, 0:1].values, time_list.reshape(120, 1))
+    print("Time columns are equal!")
 
 
 if __name__ == "__main__":

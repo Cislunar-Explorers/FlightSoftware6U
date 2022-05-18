@@ -80,7 +80,7 @@ def angular_separation(v1, v2):
 
 class TestSequence(unittest.TestCase):
     # Change posError and velError assertion boundary here
-    pos_error_val = 10000
+    pos_error_val = 1000
     vel_error_val = 5
 
     """
@@ -222,6 +222,7 @@ class TestSequence(unittest.TestCase):
 
     tests_3600_dt = file_to_list("traj2.csv")
 
+
     @parameterized.expand(tests_3600_dt)
     def test_iterative_truth(
         self,
@@ -233,7 +234,8 @@ class TestSequence(unittest.TestCase):
         cameraMeasurements,
         truthStateVector,
     ):
-
+        """Iterates through every row of trajectory data and compares following
+        row with UKF output."""
         main_thrust_info = None
         dynamicsOnly = True
         trajEstimateOutput = runTrajUKF(
@@ -280,75 +282,20 @@ class TestSequence(unittest.TestCase):
         # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
 
         logging.debug(f"Position error: {posError}\nVelocity error: {velError}")
+        # demo prints
+        if (posError > TestSequence.pos_error_val):
+            print(f"Position error: {posError}\nVelocity error: {velError}\n")
+
         assert posError <= TestSequence.pos_error_val, "Position error is too large"
         assert velError <= TestSequence.vel_error_val, "Velocity error is too large"
 
         # assert np.all(np.less_equal(lower, trajEstimateOutput.new_state.data.T))
         # assert np.all(np.less_equal(trajEstimateOutput.new_state.data.T, upper))
 
-    def test_ignore(self):
-        trajStateVector = TrajectoryStateVector(
-            -2.7699842997503623e4,
-            -1.4293835289027357e4,
-            1713.3139597599213,
-            -2.8869995362010077,
-            -3.7832739597202594,
-            -0.9225267990120935,
-        )
-        main_thrust_info = None
-        dynamicsOnly = True
-        moonEph = EphemerisVector(
-            3.688288588957627e5, 1.4820784006906873e4, -3.0687755261273645e4, 0, 0, 0
-        )
-        sunEph = EphemerisVector(
-            1.6896327218153402e7, -1.3867258359275745e8, -6.011476692460759e7, 0, 0, 0
-        )
-        cameraMeasurements = None
-        P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))
-
-        trajEstimateOutput = runTrajUKF(
-            moonEph,
-            sunEph,
-            cameraMeasurements,
-            trajStateVector,
-            208800,
-            CovarianceMatrix(P),
-            main_thrust_info,
-            dynamicsOnly,
-        )
-        trajNew = trajEstimateOutput.new_state.data
-        truthState = (
-            TrajectoryStateVector(
-                -1.0680802747723334e5,
-                -2.8316336297967434e5,
-                -1.0300865709131669e5,
-                -0.00874577544564751,
-                -0.6036563933415423,
-                -0.28878799462247133,
-            )
-        ).data
-        posError = math.sqrt(
-            (trajNew[0] - truthState[0]) ** 2
-            + (trajNew[1] - truthState[1]) ** 2
-            + (trajNew[2] - truthState[2]) ** 2
-        )
-        velError = math.sqrt(
-            (trajNew[3] - truthState[3]) ** 2
-            + (trajNew[4] - truthState[4]) ** 2
-            + (trajNew[5] - truthState[5]) ** 2
-        )
-        # for some reason the calculations below do not match with the
-        # calculations above:
-        # posError = math.sqrt( np.sum((trajNew[:3] - truthState[:3])**2) )
-        # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
-        logging.debug(f"Output x position: {trajNew[0]}\n")
-        logging.debug(f"Output y position: {trajNew[1]}\n")
-        logging.debug(f"Output z position: {trajNew[2]}\n")
-        logging.debug(f"Position error: {posError}\nVelocity error: {velError}")
-        assert posError <= TestSequence.pos_error_val, "Position error is too large"
-        assert velError <= TestSequence.vel_error_val, "Velocity error is too large"
-
-    def test_iterative_nontruth(self):
+    def test_recursive(self):
+        """Passes in the truth state at t=0 and compares final state at final
+        time to truth data in trajectory data. Calls UKF iteratively and manually
+        passes in UKF output as the next input for the UKF again."""
         trajStateVector = TrajectoryStateVector(
             -2.7699842997503623e4,
             -1.4293835289027357e4,
@@ -393,17 +340,14 @@ class TestSequence(unittest.TestCase):
             )
         ).data
 
-        posError = math.sqrt(
-            (trajNew[0] - truthState[0]) ** 2
-            + (trajNew[1] - truthState[1]) ** 2
-            + (trajNew[2] - truthState[2]) ** 2
-        )
-        velError = math.sqrt(
-            (trajNew[3] - truthState[3]) ** 2
-            + (trajNew[4] - truthState[4]) ** 2
-            + (trajNew[5] - truthState[5]) ** 2
-        )
+        posError = np.linalg.norm(trajNew[0:3] - truthState[0:3])
+        velError = np.linalg.norm(trajNew[3:6] - truthState[3:6])
         logging.debug(f"Position error: {posError}\nVelocity error: {velError}\n")
+
+        # demo prints
+        if (posError > TestSequence.pos_error_val):
+            print(f"Position error: {posError}\nVelocity error: {velError}\n")
+
         assert posError <= TestSequence.pos_error_val, "Position error is too large"
         assert velError <= TestSequence.vel_error_val, "Velocity error is too large"
 

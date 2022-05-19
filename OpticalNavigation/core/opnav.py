@@ -180,7 +180,7 @@ def __closest(session: session.Session, ts, model):
     return gt_event if gt_diff < lt_diff else lt_event
 
 
-def __calculate_cam_measurements(body1: np.ndarray, body2: np.ndarray) -> float:
+def calculate_cam_measurements(body1: np.ndarray, body2: np.ndarray) -> float:
     """
     Calculates angular separation between two bodies.
     Source:
@@ -362,17 +362,17 @@ def __observe(
     logging.info(f"[OPNAV]: Best Sun {best_s.vector}")
 
     # Calculate angular separation
-    ang_em = __calculate_cam_measurements(
+    ang_em = calculate_cam_measurements(
         body1=bestDetectedCircles.get_earth_detection(),
         body2=bestDetectedCircles.get_moon_detection(),
     )
 
-    ang_es = __calculate_cam_measurements(
+    ang_es = calculate_cam_measurements(
         body1=bestDetectedCircles.get_earth_detection(),
         body2=bestDetectedCircles.get_sun_detection(),
     )
 
-    ang_ms = __calculate_cam_measurements(
+    ang_ms = calculate_cam_measurements(
         body1=bestDetectedCircles.get_moon_detection(),
         body2=bestDetectedCircles.get_sun_detection(),
     )

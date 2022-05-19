@@ -8,6 +8,7 @@ from core.const import (
 import numpy as np
 
 from core.ukf import runTrajUKF
+from core.opnav import calculate_cam_measurements
 import unittest
 from parameterized import parameterized
 import logging
@@ -71,11 +72,11 @@ def MSE(observedStateVector, expectedStateVector):
     return MSE_pos, MSE_velo
 
 
-def angular_separation(v1, v2):
-    dot_prod = np.dot(v1, v2)
-    mag1 = np.linalg.norm(v1)
-    mag2 = np.linalg.norm(v2)
-    return np.arccos(dot_prod / (mag1 * mag2))
+# def angular_separation(v1, v2):
+#     dot_prod = np.dot(v1, v2)
+#     mag1 = np.linalg.norm(v1)
+#     mag2 = np.linalg.norm(v2)
+#     return np.arccos(dot_prod / (mag1 * mag2))
 
 
 class TestSequence(unittest.TestCase):
@@ -125,9 +126,9 @@ class TestSequence(unittest.TestCase):
     moon_vec = np.array([-0.5168773177603934, -0.5735381958030377, 0.6355248038745751])
     sun_vec = np.array([0.6715534288821232, -0.7248213943012205, -0.1537853651031126])
     cameraMeasurements1 = CameraMeasurementVector(
-        angular_separation(earth_vec, moon_vec),
-        angular_separation(earth_vec, sun_vec),
-        angular_separation(moon_vec, sun_vec),
+        calculate_cam_measurements(earth_vec, moon_vec),
+        calculate_cam_measurements(earth_vec, sun_vec),
+        calculate_cam_measurements(moon_vec, sun_vec),
         0.18657584471242206,
         0.008208124935221156,
         0.009151425262957794,
@@ -222,7 +223,6 @@ class TestSequence(unittest.TestCase):
 
     tests_3600_dt = file_to_list("traj2.csv")
 
-
     @parameterized.expand(tests_3600_dt)
     def test_iterative_truth(
         self,
@@ -283,7 +283,7 @@ class TestSequence(unittest.TestCase):
 
         logging.debug(f"Position error: {posError}\nVelocity error: {velError}")
         # demo prints
-        if (posError > TestSequence.pos_error_val):
+        if posError > TestSequence.pos_error_val:
             print(f"Position error: {posError}\nVelocity error: {velError}\n")
 
         assert posError <= TestSequence.pos_error_val, "Position error is too large"
@@ -345,7 +345,7 @@ class TestSequence(unittest.TestCase):
         logging.debug(f"Position error: {posError}\nVelocity error: {velError}\n")
 
         # demo prints
-        if (posError > TestSequence.pos_error_val):
+        if posError > TestSequence.pos_error_val:
             print(f"Position error: {posError}\nVelocity error: {velError}\n")
 
         assert posError <= TestSequence.pos_error_val, "Position error is too large"

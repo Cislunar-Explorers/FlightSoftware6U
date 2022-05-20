@@ -82,8 +82,7 @@ class TestEndToEnd(unittest.TestCase):
         # Get the centers and diamters of reprojected stereo images
         log.debug("Running find on reprojected images\n")
         cd_dict_re = self.find_center_diam(re_list)
-        log.debug(f"Reproj:\ncd_dict_re: {cd_dict_re}\n")
-        log.debug("\n")
+        log.debug(f"Reproj:\ncd_dict_re: {cd_dict_re}\n\n")
 
         ###############################################################################################################
         # Third step: Stereographic Coordinate Comparison

@@ -269,36 +269,32 @@ def find(
                 (sX, sY), sR = sun
                 sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
                 sRho2 = sXst ** 2 + sYst ** 2
-                # sRho = np.sqrt(sRho2)
+                sRho = np.sqrt(sRho2)
                 # TODO figure out if below line (and corresponding ones) is diameter in stereographic or spherical
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
                 sSx, sSy, sSz = st_to_sph(sXst, sYst)
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
-                # angle = np.arctan(sYst/sXst)
-                # sRhoShift, sARad = st_circle_inv(sRho, (sR + 0.5)/cam.st_scale)
-                # sAngDiam = get_angular_size(sRhoShift, sR, cam.st_scale)
-                # sXst = np.cos(angle)*sRhoShift
-                # sYst = np.sin(angle)*sRhoShift
-                #
-                # log.debug(f"Sun Pixel coords: ({sX}, {sY}), {sR}")
-                # log.debug(f"Sun Stereo coords: ({sXst}, {sYst})")
-                # log.debug(f"sDia: {sDia}\n")
-                # log.debug(f"{sRhoShift=}, {2*sARad=}")
-                # log.debug(f"Sun Ang Diameter: {sAngDiam}")
-                #
-                # log.debug(f"sSt_new: ({sXst}, {sYst})\n")
+                # sAnsgDia = get_angular_size(sRho, sR, cam.st_scale)
+
+                # Attempt to center shift stereographic center to actual circle center
+                angle = np.arctan(sYst / sXst)
+                sRhoShift, sARad = st_circle_inv(sRho, (sR + 0.5) / cam.st_scale)
+                sXstOrig = sXst
+                sYstOrig = sYst
+                sXst = np.cos(angle) * sRhoShift
+                sYst = np.sin(angle) * sRhoShift
+                # Make sure point is still in same quatrant
+                if np.sign(sXst) != np.sign(sXstOrig):
+                    sXst *= -1
+                if np.sign(sYst) != np.sign(sYstOrig):
+                    sYst *= -1
 
                 # Andrew
                 if pixel:
                     body_values[BodyEnum.Sun] = [x + sX - 1640, y + sY - 1232, sR]
                 else:
-                    # body_values[BodyEnum.Sun] = [
-                    #     cam.normalize_st(x + sX, y + sY)[0],
-                    #     cam.normalize_st(x + sX, y + sY)[1],
-                    #     sDia,
-                    # ]
-                    body_values[BodyEnum.Sun] = [sXst, sYst, sDia]
+                    body_values[BodyEnum.Sun] = [sXst, sYst, sARad * 2]
     else:
         earth = None
         index = 0
@@ -315,33 +311,32 @@ def find(
                 (eX, eY), eR = earth
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
                 eRho2 = eXst ** 2 + eYst ** 2
-                # eRho = np.sqrt(eRho2)
+                eRho = np.sqrt(eRho2)
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
 
-                # angle = np.arctan(eYst/eXst)
-                # eRhoShift, eARad = st_circle_inv(eRho, eDia)
-                # eAngDiam = get_angular_size(eRhoShift, eDia/2, cam.st_scale)
-                # log.debug(f"Earth Pixel coords: ({eX}, {eY}), {eR}")
-                # log.debug(f"Earth Stereo coords: ({eXst}, {eYst})")
-                # log.debug(f"Earth Ang Diameter: {eAngDiam}")
-                # log.debug(f"eDia: {eDia}")
-                #
-                # eXst = np.cos(angle)*eRhoShift
-                # eYst = np.sin(angle)*eRhoShift
-                # log.debug(f"eSt_new: ({eXst}, {eYst})\n")
+                # eAngDia = get_angular_size(eRho, eR, cam.st_scale)
+
+                # Attempt to center shift stereographic center to actual circle center
+                angle = np.arctan(eYst / eXst)
+                eRhoShift, eARad = st_circle_inv(eRho, eDia)
+                eXstOrig = eXst
+                eYstOrig = eYst
+                eXst = np.cos(angle) * eRhoShift
+                eYst = np.sin(angle) * eRhoShift
+                # Make sure point is still in same quatrant
+                if np.sign(eXst) != np.sign(eXstOrig):
+                    eXst *= -1
+                if np.sign(eYst) != np.sign(eYstOrig):
+                    eYst *= -1
 
                 # Andrew
                 if pixel:
                     body_values[BodyEnum.Earth] = [x + eX - 1640, y + eY - 1232, eR]
                 else:
-                    # body_values[BodyEnum.Earth] = [
-                    #     cam.normalize_st(x + eX, y + eY)[0],
-                    #     cam.normalize_st(x + eX, y + eY)[1],
-                    #     eDia,
-                    # ]
-                    body_values[BodyEnum.Earth] = [eXst, eYst, eDia]
+                    body_values[BodyEnum.Earth] = [eXst, eYst, eARad]
+
             elif earth is None:  # TODO: Placeholder
                 moon = measureMoon(f, w, h)
                 if moon is not None:
@@ -355,45 +350,34 @@ def find(
                     else:
                         mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
                     mRho2 = mXst ** 2 + mYst ** 2
-                    # mRho = np.sqrt(mRho2)
+                    mRho = np.sqrt(mRho2)
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
 
-                    # angle = np.arctan(mYst/mXst)
-                    # mRhoShift, mARad = st_circle_inv(mRho, (mR+0.5)/cam.st_scale)
-                    # mAngDiam = get_angular_size(mRhoShift, mR, cam.st_scale)
-                    # log.debug(f"Moon Pixel coords: ({mX}, {mY}), {mR}")
-                    # log.debug(f"Moon Stereo coords: ({mXst}, {mYst})")
-                    # log.debug(f"mDia: {mDia}")
-                    # log.debug(f"Moon Ang Diameter: {mAngDiam}")
-                    # mXstShift = np.cos(angle)*mRhoShift
-                    # mYstShift = np.sin(angle)*mRhoShift
-                    # if np.sign(mXst) != np.sign(mXstShift):
-                    # mXstShift*=-1
-                    # if np.sign(mYst) != np.sign(mYstShift):
-                    # mYstShift*=-1
+                    # mAngDia = get_angular_size(mRho, mR, cam.st_scale)
 
-                    # log.debug(f"mSt_new: ({mXstShift}, {mYstShift})\n")
-                    # log.debug(f"{x2=}, {y2=}\n{bbst2.x0=}, {bbst2.y0=}")
+                    # Attempt to center shift stereographic center to actual circle center
+                    angle = np.arctan(mYst / mXst)
+                    mRhoShift, mARad = st_circle_inv(mRho, (mR + 0.5) / cam.st_scale)
+                    mXstOrig = mXst
+                    mYstOrig = mYst
+                    mXst = np.cos(angle) * mRhoShift
+                    mYst = np.sin(angle) * mRhoShift
+                    # Make sure point is still in same quatrant
+                    if np.sign(mXst) != np.sign(mXstOrig):
+                        mXst *= -1
+                    if np.sign(mYst) != np.sign(mYstOrig):
+                        mYst *= -1
+
                     # Andrew
                     if pixel:
                         body_values[BodyEnum.Moon] = [x + mX - 1640, y + mY - 1232, mR]
                     else:  # Checks whether moon contour is first or second contour
                         if index == 1:
-                            # body_values[BodyEnum.Moon] = [
-                            # cam.normalize_st(x + mX, y + mY)[0],
-                            # cam.normalize_st(x + mX, y + mY)[1],
-                            # mDia,
-                            # ]
-                            body_values[BodyEnum.Moon] = [mXst, mYst, mDia]
+                            body_values[BodyEnum.Moon] = [mXst, mYst, mARad * 2]
                         else:
-                            # body_values[BodyEnum.Moon] = [
-                            # cam.normalize_st(x2 + mX, y2 + mY)[0],
-                            # cam.normalize_st(x2 + mX, y2 + mY)[1],
-                            # mDia,
-                            # ]
-                            body_values[BodyEnum.Moon] = [mXst, mYst, mDia]
+                            body_values[BodyEnum.Moon] = [mXst, mYst, mARad * 2]
 
             index += 1
     return result, body_values

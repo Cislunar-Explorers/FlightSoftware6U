@@ -121,7 +121,7 @@ class TestEndToEnd(unittest.TestCase):
         # Logging is done within test_body_meas.py
         ###############################################################################################################
 
-        # Runs body_meas_test
+        # Runs body_meas_test, also returns diameter data for later tests
         diam_dict = self.run_body_meas_sim(obs_path, cd_dict_re)
 
         # Compare angular size of detected bodies
@@ -136,7 +136,11 @@ class TestEndToEnd(unittest.TestCase):
                 log.debug(f"Truth Angular Size: {truth_ang_size}")
                 diff = abs(calc_ang_size - truth_ang_size)
                 log.debug(
-                    "Angular Size Diff: %2.6f rad, %2.6f deg" % (diff, np.rad2deg(diff))
+                    "Angular Size Diff: %2.8f rad, %2.8f deg" % (diff, np.rad2deg(diff))
+                )
+                log.debug(
+                    "Percent Error: %2.8f"
+                    % (100 * (calc_ang_size - truth_ang_size) / truth_ang_size)
                 )
 
                 # percent_error = (abs(calc_ang_size - truth_ang_size) / truth_ang_size) * 100

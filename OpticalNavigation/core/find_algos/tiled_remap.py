@@ -246,6 +246,30 @@ def get_angular_size(rho, radius, st_scale=default_st_scale):
     return angDiam
 
 
+def st_circle(rho, arad):
+    """
+    rho: Distance from origin to stereographic projection of object center
+    arad: Angular size of object
+    returns: rho_c, r_c
+    """
+    x = rho / 2
+    y = tan(arad / 2)
+    d = 1 - (x ** 2 * y ** 2)
+    return 2 * x * (1 + y ** 2) / d, 2 * y * (1 + x ** 2) / d
+
+
+def st_circle_inv(rho_c, r_c):
+    """
+    rho_c: Distance from origin to center of projected body
+    r_c: Radius of projected body
+    returns: rho, arad
+    """
+    b = 4 - rho_c ** 2 + r_c ** 2
+    x = (-b + np.sqrt(b ** 2 + 16 * rho_c ** 2)) / (4 * rho_c)
+    y = (-4 - rho_c ** 2 + r_c ** 2 + np.sqrt(b ** 2 + 16 * rho_c ** 2)) / (4 * r_c)
+    return 2 * x, 2 * np.arctan(y)
+
+
 #
 # DEMO: Rolling shutter correction and stereographic reprojection for Camera C
 #

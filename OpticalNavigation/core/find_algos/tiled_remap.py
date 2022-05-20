@@ -248,6 +248,8 @@ def get_angular_size(rho, radius, st_scale=default_st_scale):
 
 def st_circle(rho, arad):
     """
+    Used to convert true center into a detected stereographic center
+    Used in opnav sim
     rho: Distance from origin to stereographic projection of object center
     arad: Angular size of object
     returns: rho_c, r_c
@@ -260,6 +262,8 @@ def st_circle(rho, arad):
 
 def st_circle_inv(rho_c, r_c):
     """
+    Used to convert detected stereographic center into a true stereographic center
+    Used in FSW for center shifting and calculating the angular size
     rho_c: Distance from origin to center of projected body
     r_c: Radius of projected body
     returns: rho, arad

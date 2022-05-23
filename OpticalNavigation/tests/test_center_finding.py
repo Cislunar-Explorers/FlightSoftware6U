@@ -230,8 +230,7 @@ class CenterDetections(unittest.TestCase):
             "Center find algorithm is not at least 70% accurate!",
         )
 
-    # def test_traj_case_1c(self):
-    def traj_case_1c(self):
+    def test_traj_case_1c(self):
         dirname = os.path.dirname(__file__)
         filename = os.path.join(dirname, "../simulations/sim/data/traj-case1c_sim")
         return self.center_finding_results(
@@ -241,8 +240,7 @@ class CenterDetections(unittest.TestCase):
             "radius_histogram_traj_case1c.png",
         )
 
-    # def test_trajectory(self):
-    def trajectory(self):
+    def test_trajectory(self):
         dirname = os.path.dirname(__file__)
         filename = os.path.join(dirname, "../simulations/sim/data/trajectory_sim")
         return self.center_finding_results(

@@ -273,7 +273,6 @@ class CenterDetections(unittest.TestCase):
             os.path.join(path, "cam3_expHigh_f17_dt11.58465_st.png"),
             os.path.join(path, "cam3_expHigh_f18_dt11.65010_st.png"),
             os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
-            os.path.join(path, "cam3_expHigh_f9_dt11.06105_st.png"),
         ]
         _ = self.calc_centers_and_diam(paths)
 

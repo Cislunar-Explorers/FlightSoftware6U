@@ -251,11 +251,13 @@ def find(
         x2, y2, w2, h2 = cv2.boundingRect(c2)
         # TODO: Need to fix what c2 becomes | Checks for rectangle overlap
         if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y:
-            x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
-            box2 = BoundingBox(x2, y2, w2, h2)
-            out2, bbst2 = remap_roi(img, box2, cam, rot)
-        else:
-            x2, y2, w2, h2 = 0, 0, 0, 0
+            if not st:
+                x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
+                box2 = BoundingBox(x2, y2, w2, h2)
+                out2, bbst2 = remap_roi(img, box2, cam, rot)
+            else:
+                bbst2 = BoundingBox(x2, y2, w2, h2)
+                out2 = img[y2 : y2 + h2, x2 : x2 + w2]
 
     # Measure body in region-of-interest
     sun = None
@@ -284,7 +286,7 @@ def find(
                 sYstOrig = sYst
                 sXst = np.cos(angle) * sRhoShift
                 sYst = np.sin(angle) * sRhoShift
-                # Make sure point is still in same quatrant
+                # Make sure point is still in same quadrant
                 if np.sign(sXst) != np.sign(sXstOrig):
                     sXst *= -1
                 if np.sign(sYst) != np.sign(sYstOrig):
@@ -303,9 +305,9 @@ def find(
                 break
             # if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f, w, h) is not None:
             #     continue
-            if earth is not None:
-                earth = None
-            elif np.max(areas) > 400 and index == 0:  # TODO: Placeholder
+            earth = None
+            moon = None
+            if np.max(areas) > 400 and index == 0:  # TODO: Placeholder
                 earth = measureEarth(f, w, h)
             if earth is not None:
                 (eX, eY), eR = earth
@@ -333,7 +335,12 @@ def find(
 
                 # Andrew
                 if pixel:
-                    body_values[BodyEnum.Earth] = [x + eX - 1640, y + eY - 1232, eR]
+                    # Need to check if first or second contour here
+                    body_values[BodyEnum.Earth] = (
+                        [x + eX - 1640, y + eY - 1232, eR]
+                        if f is out
+                        else [x2 + eX - 1640, y2 + eY - 1232, eR]
+                    )
                 else:
                     body_values[BodyEnum.Earth] = [eXst, eYst, eARad]
 
@@ -372,7 +379,12 @@ def find(
 
                     # Andrew
                     if pixel:
-                        body_values[BodyEnum.Moon] = [x + mX - 1640, y + mY - 1232, mR]
+                        # Need to check if first or second contour here
+                        body_values[BodyEnum.Moon] = (
+                            [x + mX - 1640, y + mY - 1232, mR]
+                            if f is out
+                            else [x2 + mX - 1640, y2 + mY - 1232, mR]
+                        )
                     else:  # Checks whether moon contour is first or second contour
                         if index == 1:
                             body_values[BodyEnum.Moon] = [mXst, mYst, mARad * 2]

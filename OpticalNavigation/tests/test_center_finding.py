@@ -255,19 +255,19 @@ class CenterDetections(unittest.TestCase):
     def test_center_radii(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
-            "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/out",
-            # "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/images",
+            # "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/out",
+            "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/images",
         )
         paths = [
-            os.path.join(path, "cam2_expLow_f0_dt8.37760_re.png"),
-            # os.path.join(path, "cam2_expLow_f1_dt8.44305_re.png"),
-            # os.path.join(path, "cam2_expLow_f2_dt8.50850_re.png"),
-            # os.path.join(path, "cam2_expLow_f19_dt9.62115_re.png"),
-            # os.path.join(path, "cam3_expHigh_f0_dt10.47200_re.png"),
-            # os.path.join(path, "cam3_expHigh_f1_dt10.53745_re.png"),
-            # os.path.join(path, "cam3_expHigh_f17_dt11.58465_re.png"),
-            # os.path.join(path, "cam3_expHigh_f18_dt11.65010_re.png"),
-            # os.path.join(path, "cam3_expHigh_f19_dt11.71555_re.png"),
+            os.path.join(path, "cam2_expLow_f0_dt8.37760_st.png"),
+            os.path.join(path, "cam2_expLow_f1_dt8.44305_st.png"),
+            os.path.join(path, "cam2_expLow_f2_dt8.50850_st.png"),
+            os.path.join(path, "cam2_expLow_f19_dt9.62115_st.png"),
+            os.path.join(path, "cam3_expHigh_f0_dt10.47200_st.png"),
+            os.path.join(path, "cam3_expHigh_f1_dt10.53745_st.png"),
+            os.path.join(path, "cam3_expHigh_f17_dt11.58465_st.png"),
+            os.path.join(path, "cam3_expHigh_f18_dt11.65010_st.png"),
+            os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
         ]
         _ = self.calc_centers_and_diam(paths)
 

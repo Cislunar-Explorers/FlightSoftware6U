@@ -45,9 +45,8 @@ class CenterDetections(unittest.TestCase):
         cr_dict = {}
         for name in img_lst:
             img = name
-            _, body_vals = find(img, st=True, pixel=True)
+            _, body_vals = find(img, st=True, pixel=False)
             cr_dict[os.path.basename(img)] = body_vals
-            log.debug(f"res: {body_vals}")
         return cr_dict
 
     # TODO: Allow a different find algorithm to be tested easily

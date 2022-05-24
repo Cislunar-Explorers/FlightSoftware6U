@@ -94,7 +94,7 @@ def __houghCircleWithContour(img, w, h, highThresh, showCircle):
         maxRadius=int(maxRadius / 2) + 1,
     )
     if circles is None:
-        log.debug("Using non-Hough detection")
+        # log.debug("Using non-Hough detection")
         return __findMinEnclosingCircle(img, highThresh, showCircle)
     areas = [circleArea(circle) for circle in circles[0]]
     max_idx = np.argmax(areas)

@@ -112,12 +112,12 @@ class BodyMeas(unittest.TestCase):
                         f"Vector Angular Separation: {vectorAngSep} rad, {angSepDeg} deg\n"
                     )
 
-                    # Checks if seapration is less that 1e-3 rad, or ~0.05 deg
-                    # self.assertLessEqual(
-                    # vectorError,
-                    # 1e-3,
-                    # "Body transformations do not match within margin of error!",
-                    # )
+                    # Checks if seapration is less than 3 deg
+                    self.assertLessEqual(
+                        angSepDeg,
+                        3,
+                        "Body transformations do not match within margin of error!",
+                    )
 
     def test_traj_case1c(self):
         path = os.path.join(

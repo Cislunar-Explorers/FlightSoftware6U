@@ -77,12 +77,12 @@ class TestEndToEnd(unittest.TestCase):
         # Get the centers and diameters of truth sim stereo images
         log.debug("Running find on sim stereo images\n")
         cd_dict_st = self.find_center_diam(st_list)
-        log.debug(f"Truth:\ncd_dict_st: {cd_dict_st}\n")
+        # log.debug(f"Truth:\ncd_dict_st: {cd_dict_st}\n")
 
         # Get the centers and diamters of reprojected stereo images
         log.debug("Running find on reprojected images\n")
         cd_dict_re = self.find_center_diam(re_list)
-        log.debug(f"Reproj:\ncd_dict_re: {cd_dict_re}\n\n")
+        # log.debug(f"Reproj:\ncd_dict_re: {cd_dict_re}\n\n")
 
         ###############################################################################################################
         # Third step: Stereographic Coordinate Comparison
@@ -92,7 +92,10 @@ class TestEndToEnd(unittest.TestCase):
 
         # TODO: Maybe change this to compare to sim json?
         # ... but an equivalent comparison is done in comparing transformed vectors, so might be fine
-        log.debug("Stereographic coordinate comparison")
+        log.debug("\n")
+        log.debug(
+            "Stereographic Coordinate Comparison between running find on reprojected and sim stereo images"
+        )
         for re_key in cd_dict_re.keys():  # Iterate through all detections
             st_key = re.sub("_re", "_st", re_key)
 
@@ -101,12 +104,18 @@ class TestEndToEnd(unittest.TestCase):
 
             for body in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
                 if body in re_dets.keys():
-                    # assert(BodyEnum.Earth in st_dets.keys(),
-                    #   "Reproj detected a body that sim detection did not detect!")
                     if body in st_dets.keys():
                         re_point = np.array((re_dets[body][0], re_dets[body][1]))
                         st_point = np.array((st_dets[body][0], st_dets[body][1]))
                         error = np.linalg.norm(re_point - st_point)
+                        self.assertLessEqual(
+                            error,
+                            0.040,
+                            (
+                                "Stereographic centers do not match within margin of error between running find on "
+                                "reprojected and sim stereo images!"
+                            ),
+                        )
                         log.debug(f"Reproj File: {re_key} Body: {body} Error: {error}")
                     else:
                         log.debug(
@@ -119,11 +128,12 @@ class TestEndToEnd(unittest.TestCase):
         # Run body_meas test on the two image centers to output body detection vectors
         # Logging is done within test_body_meas.py
         ###############################################################################################################
-
         # Runs body_meas_test, also returns diameter data for later tests
+        log.debug("Body Transformation Test")
         diam_dict = self.run_body_meas_sim(obs_path, cd_dict_re)
 
         # Compare angular size of detected bodies
+        log.debug("\n")
         log.debug("Angular Size comparison")
         for re_key in cd_dict_re.keys():
             log.debug(f"File: {re_key}")
@@ -137,14 +147,22 @@ class TestEndToEnd(unittest.TestCase):
                 log.debug(
                     "Angular Size Diff: %2.8f rad, %2.8f deg" % (diff, np.rad2deg(diff))
                 )
-                log.debug(
-                    "Percent Error: %2.8f"
-                    % (100 * (calc_ang_size - truth_ang_size) / truth_ang_size)
-                )
-
-                # percent_error = (abs(calc_ang_size - truth_ang_size) / truth_ang_size) * 100
-                # logging.debug(f"Percent Error: {percent_error}")
-            log.debug("")
+                percent_err = 100 * (calc_ang_size - truth_ang_size) / truth_ang_size
+                log.debug("Percent Error: %2.8f\n" % percent_err)
+                # We have a 20% threshold for moon and 5% threshold for earth and sun based on testing.
+                # In the future we will need to reduce these thresholds to what we can reasonably tolerate
+                if BodyEnum(body_key) is BodyEnum.Moon:
+                    self.assertLessEqual(
+                        abs(percent_err),
+                        20,
+                        "Angular size result is not within margin of error for moon!",
+                    )
+                else:
+                    self.assertLessEqual(
+                        abs(percent_err),
+                        5,
+                        "Angular size result is not within margin of error for earth or sun!",
+                    )
 
 
 if __name__ == "__main__":

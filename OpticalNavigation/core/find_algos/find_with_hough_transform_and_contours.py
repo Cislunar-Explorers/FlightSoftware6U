@@ -294,7 +294,11 @@ def find(
 
                 # Andrew
                 if pixel:
-                    body_values[BodyEnum.Sun] = [x + sX - 1640, y + sY - 1232, sR]
+                    body_values[BodyEnum.Sun] = [
+                        x + sX - cam.w / 2,
+                        y + sY - cam.h / 2,
+                        sR,
+                    ]
                 else:
                     body_values[BodyEnum.Sun] = [sXst, sYst, sARad * 2]
     else:
@@ -337,9 +341,9 @@ def find(
                 if pixel:
                     # Need to check if first or second contour here
                     body_values[BodyEnum.Earth] = (
-                        [x + eX - 1640, y + eY - 1232, eR]
+                        [x + eX - cam.w / 2, y + eY - cam.h / 2, eR]
                         if f is out
-                        else [x2 + eX - 1640, y2 + eY - 1232, eR]
+                        else [x2 + eX - cam.w / 2, y2 + eY - cam.h / 2, eR]
                     )
                 else:
                     body_values[BodyEnum.Earth] = [eXst, eYst, eARad]
@@ -381,9 +385,9 @@ def find(
                     if pixel:
                         # Need to check if first or second contour here
                         body_values[BodyEnum.Moon] = (
-                            [x + mX - 1640, y + mY - 1232, mR]
+                            [x + mX - cam.w / 2, y + mY - cam.h / 2, mR]
                             if f is out
-                            else [x2 + mX - 1640, y2 + mY - 1232, mR]
+                            else [x2 + mX - cam.w / 2, y2 + mY - cam.h / 2, mR]
                         )
                     else:  # Checks whether moon contour is first or second contour
                         if index == 1:

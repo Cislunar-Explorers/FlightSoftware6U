@@ -70,7 +70,7 @@ class BodyMeas(unittest.TestCase):
 
         return st_dict, truth_dict, diam_dict, gyroY
 
-    # Compares transforming sim truth stereographic coordinates with truth sim vector
+    # Compares transforming stereographic coordinate with truth sim vector
     def transform(self, stVecs, truthVecs, gyroY):
         for f in stVecs.keys():
             logging.debug(f"File: {f}")

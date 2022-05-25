@@ -120,7 +120,7 @@ class TestEndToEnd(unittest.TestCase):
                     "Angular Size Diff: %2.8f rad, %2.8f deg" % (diff, np.rad2deg(diff))
                 )
                 percent_err = 100 * (calc_ang_size - truth_ang_size) / truth_ang_size
-                log.debug("Percent Error: %2.8f\n" % percent_err)
+                log.debug("Percent Error: %2.8f%%\n" % percent_err)
 
                 # We have a 20% threshold for moon and 5% threshold for earth and sun based on testing.
                 # TODO: In the future we will need to reduce these thresholds to what we can reasonably tolerate

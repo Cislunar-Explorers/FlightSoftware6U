@@ -516,6 +516,9 @@ class TrajectoryStateVector(Vector6):
             z_vel=state[5],
         )
 
+    def to_array(self):
+        return self.data.reshape(6)[0:6]
+
     def get_position_data(self):
         return self.data.reshape(6)[0:3]
 
@@ -560,6 +563,9 @@ class Matrix6x6:
             self.data = self.data.reshape(6, 6)
         else:
             raise Exception("Incorrect input to Matrix6x6")
+
+    def __str__(self) -> str:
+        return str(self.data)
 
     # Keeping below code commented out because above implementation that conforms to pyright has not been tested
 

@@ -289,7 +289,7 @@ class TestSequence(unittest.TestCase):
     def recursive_ukf_call(self):
         """Passes in the truth state at t=0 and compares final state at final
         time to truth data in trajectory data. Calls UKF iteratively and manually
-        passes in UKF output as the next input for the UKF again. 
+        passes in UKF output as the next input for the UKF again.
         Note: not used as a test; runTrajUKF() is not intended to be called
         like it is in this function, so it yields a position error > 200,000.
         """

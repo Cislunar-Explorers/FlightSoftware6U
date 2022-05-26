@@ -7,6 +7,7 @@ from numpy import linspace, radians, zeros
 from pyquaternion import Quaternion
 import cv2
 from argparse import ArgumentParser
+import tqdm
 from OpticalNavigation.simulations.sim.src.libopnav import (
     sin2_vangle,
     gnomonic_inv,
@@ -25,7 +26,7 @@ from utils.constants import FLIGHT_SOFTWARE_PATH
 SIM_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim")
 
 
-def main():
+def main() -> None:
     argparse = ArgumentParser(description="Handles input & image generation args for opnav sim")
 
     argparse.add_argument('input', help='name of csv file in directory of the sim, w/o extension')
@@ -36,7 +37,7 @@ def main():
     return
 
 
-def run_opnav_sim(input_file, gen_img_flag):
+def run_opnav_sim(input_file: str, gen_img_flag: bool) -> None:
     # Camera properties
     width = 3280
     height = 2464
@@ -77,6 +78,7 @@ def run_opnav_sim(input_file, gen_img_flag):
 
     # Absolute time corresponding to t0 (from OreKit simulation that produced traj2.csv)
     # Epoch depends on the specific trajectory, but I've left it here for reference -mm2774
+    # TODO: every trajectory should have an absolute time, so this shouldn't be hardcoded
     epoch = "2020-06-27T21:08:03.0212 TDB"
 
     with open(os.path.join(output_dir, "cameras.json"), "w") as f:
@@ -106,7 +108,8 @@ def run_opnav_sim(input_file, gen_img_flag):
     # Note: This is also not inside the object enclosing 'cameras' when it should be.
     observations = []
     with open(input_file + ".csv") as f:
-        for line in f:
+        # for line in f:
+        for line in enumerate(tqdm(f)):
             if line[0] == "t":
                 continue  # Skip header
             t0, bodies, spacecraft, obs = parse_line(line, q_world2spin, omega_body)

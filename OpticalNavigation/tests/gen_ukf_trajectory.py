@@ -2,30 +2,48 @@ import pandas as pd
 import numpy as np
 import os.path
 import json
+
 from pandas.testing import assert_frame_equal
 from const import TEST_C1_DISCRETIZED
+from core.opnav import calculate_cam_measurements
 from simulations.sim.src.opnav_sim import run_opnav_sim
-from OpticalNavigation.simulations.sim.src.opnav_sim import run_opnav_sim
 from utils.constants import FLIGHT_SOFTWARE_PATH
+
 SIM_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim")
 
 
-# from opnav team
-def angular_separation(v1, v2):
-    dot_prod = np.dot(v1, v2)
-    mag1 = np.linalg.norm(v1)
-    mag2 = np.linalg.norm(v2)
-    return np.arccos(dot_prod / (mag1 * mag2))
+def main(traj_path: str, dt: int) -> None:
+    """
+    - Entry point function
+    - Run the trajectory generation in order of:
+        - prepare opnav trajectory for the sim
+        - run opnav-sim
+        - process opnav-sim outputs
+    - End result is the UKF ready trajectory
+    """
+
+    print("Pre-processing trajectory for opnav-sim...")
+    prepare_opnav_trajectory(traj_path, dt)
+
+    print("Running opnav-sim on pre-processed trajectory...")
+    run_opnav_sim(os.path.join(traj_path, 'pre_opnav'), False)
+
+    # where observations.json is located inside sim directory
+    path_to_opnav_obs = os.path.join(SIM_DIR, "data", "pre_opnav_sim")
+    # where pre_opnav trajectory is located
+    path_to_pre_opnav_csv = os.path.join(traj_path, 'pre_opnav')
+
+    print("Processing opnav-sim results & creating final trajectory...")
+    process_opnav_obs(path_to_opnav_obs, path_to_pre_opnav_csv)
 
 
-"""
-- opnav-sim takes: [t,x,y,z,vx,vy,vz,mx,my,mz,sx,sy,sz]
-- We process partial trajectory files into one input for opnav-sim
-- x,y,z....vz from d_traj, mx..mz from mooneph, sx..sz from suneph
-"""
+def prepare_opnav_trajectory(traj_path: str, dt: int) -> None:
+    """
+    - The opnav-sim takes columns [t,x,y,z,vx,vy,vz,mx,my,mz,sx,sy,sz]
+    - This will process partial trajectory files into one input for opnav-sim
+    - x,y,z....vz from d_traj, mx...mz from mooneph, sx...sz from suneph
+    """
 
-
-def prepare_opnav_trajectory(traj_path, dt):
     # traj files inside path
     path_dtraj = os.path.join(traj_path, 'trajectory', 'trajectory.csv')
     path_moonEph = os.path.join(traj_path, 'ephemeris', 'moon_eph.csv')
@@ -56,18 +74,22 @@ def prepare_opnav_trajectory(traj_path, dt):
         d_traj.insert(0, column='t', value=t_lst)
 
     # new "pre_opnav" trajectory should be what opnav-sim expects
-    d_traj.to_csv(os.path.join(traj_path, 'pre_opnav.csv'), float_format="%e", index=False)
+    d_traj.to_csv(os.path.join(traj_path, 'pre_opnav.csv'),
+                  float_format="%e",
+                  index=False)
 
 
-"""
-- Parse through observations.json from the opnav-sim output
-- Insert angular measuremtns back into trajectory
-- Convert trajectory positionals back to km for UKF
-"""
+def process_opnav_obs(path_to_opnav_result: str,
+                      path_pre_opnav_csv: str) -> None:
 
+    """
+    - Parse through observations.json from the opnav-sim output
+    - Insert angular measuremtns back into trajectory
+    - Convert trajectory positionals back to km for UKF
+    """
 
-def process_opnav_obs(path_to_opnav_result, path_pre_opnav_csv):
-    with open(os.path.join(path_to_opnav_result, "observations.json"), "r") as f:
+    opnav_result_file = os.path.join(path_to_opnav_result, "observations.json")
+    with open(opnav_result_file, "r") as f:
         data = f.read()
 
     obj = json.loads(data)
@@ -87,13 +109,13 @@ def process_opnav_obs(path_to_opnav_result, path_pre_opnav_csv):
         m_dir = m['direction_body']
         s_dir = s['direction_body']
 
-        a1 = angular_separation(e_dir, m_dir)
-        a2 = angular_separation(e_dir, s_dir)
-        a3 = angular_separation(m_dir, s_dir)
+        ang_em = calculate_cam_measurements(e_dir, m_dir)
+        ang_es = calculate_cam_measurements(e_dir, s_dir)
+        ang_ms = calculate_cam_measurements(m_dir, s_dir)
 
-        ang_sep[0].append(a1)
-        ang_sep[1].append(a2)
-        ang_sep[2].append(a3)
+        ang_sep[0].append(ang_em)
+        ang_sep[1].append(ang_es)
+        ang_sep[2].append(ang_ms)
 
         ang_size[0].append(e['angular_size'])
         ang_size[1].append(m['angular_size'])
@@ -115,50 +137,24 @@ def process_opnav_obs(path_to_opnav_result, path_pre_opnav_csv):
     d_traj['z5'] = ang_size[1]  # m (size)
     d_traj['z6'] = ang_size[2]  # s (size)
 
-    # output_file_trimmed = os.path.basename(os.path.normpath(path_pre_opnav_csv))
-    d_traj.to_csv(path_pre_opnav_csv + "_ukf_ready.csv", float_format="%e", index=False)
+    d_traj.to_csv(path_pre_opnav_csv + "_ukf_ready.csv",
+                  float_format="%e",
+                  index=False)
 
 
-"""
-- Entry point function
-- Run the trajectory generation in order of:
-    - prepare opnav trajectory
-    - run opnav sim
-    - process opnav sim outputs
-- End result is the UKF ready trajectory
-"""
+def test_traj_generation() -> None:
+    """
+    Test for trajectory generation:
+    - Run through the full program using the c1_discretized dataset
+    - Compare end results columns with the initial dataset columns
+    - [z1...z6] are tested through sim validation and recreation of
+        previous UKF experiments using the same dataset
+    """
 
-
-def main(traj_path, dt):
-    print("Pre-processing trajectory for opnav-sim...")
-    prepare_opnav_trajectory(traj_path, dt)
-
-    print("Running opnav-sim on pre-processed trajectory...")
-    run_opnav_sim(os.path.join(traj_path, 'pre_opnav'), False)
-
-    # where observations.json is located inside sim directory
-    path_to_opnav_obs = os.path.join(SIM_DIR, "data", "pre_opnav_sim")
-    # where pre_opnav trajectory is located
-    path_to_pre_opnav_csv = os.path.join(traj_path, 'pre_opnav')
-
-    print("Processing opnav-sim results & creating final trajectory...")
-    process_opnav_obs(path_to_opnav_obs, path_to_pre_opnav_csv)
-
-
-"""
-Test for trajectory generation:
-- Run through the full program using the c1_discretized dataset
-- Compare end results columns with the initial dataset columns
-- [z1...z6] are tested through sim validation and recreation of
-    previous UKF experiments using the same dataset
-"""
-
-
-def test_traj_generation():
     traj_path = TEST_C1_DISCRETIZED
 
     # run generation on c1 file if it doesn't exist
-    # main(TEST_C1_DISCRETIZED, 60)
+    main(TEST_C1_DISCRETIZED, 60)
 
     # load initial trajectory data
     path_dtraj = os.path.join(traj_path, 'trajectory', 'trajectory.csv')
@@ -191,7 +187,8 @@ def test_traj_generation():
 
     # lastly ensure time column hasn't changed
     time_list = np.arange(120)*60
-    np.testing.assert_equal(ukf_traj.iloc[:, 0:1].values, time_list.reshape(120, 1))
+    np.testing.assert_equal(ukf_traj.iloc[:, 0:1].values,
+                            time_list.reshape(120, 1))
     print("Time columns are equal!")
 
 

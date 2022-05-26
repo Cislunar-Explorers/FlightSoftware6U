@@ -11,10 +11,8 @@ import time
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 from utils.log import log
-from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
-    find,
-)
-from OpticalNavigation.core.const import BodyEnum
+from core.find_algos.find_with_hough_transform_and_contours import find
+from core.const import BodyEnum
 
 
 # import argparse

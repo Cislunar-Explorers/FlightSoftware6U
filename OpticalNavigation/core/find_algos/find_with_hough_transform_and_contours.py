@@ -277,9 +277,10 @@ def find(
                 sSx, sSy, sSz = st_to_sph(sXst, sYst)
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
+                # Alternative means of getting angular diameter
                 # sAnsgDia = get_angular_size(sRho, sR, cam.st_scale)
 
-                # Attempt to center shift stereographic center to actual circle center
+                # Center shift stereographic center to actual circle center
                 angle = np.arctan(sYst / sXst)
                 sRhoShift, sARad = st_circle_inv(sRho, (sR + 0.5) / cam.st_scale)
                 sXstOrig = sXst
@@ -322,9 +323,10 @@ def find(
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
 
+                # Alternative means of getting angular diameter
                 # eAngDia = get_angular_size(eRho, eR, cam.st_scale)
 
-                # Attempt to center shift stereographic center to actual circle center
+                # Center shift stereographic center to actual circle center
                 angle = np.arctan(eYst / eXst)
                 eRhoShift, eARad = st_circle_inv(eRho, eDia)
                 eXstOrig = eXst
@@ -366,9 +368,10 @@ def find(
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
 
+                    # Alternative means of getting angular diameter
                     # mAngDia = get_angular_size(mRho, mR, cam.st_scale)
 
-                    # Attempt to center shift stereographic center to actual circle center
+                    # Center shift stereographic center to actual circle center
                     angle = np.arctan(mYst / mXst)
                     mRhoShift, mARad = st_circle_inv(mRho, (mR + 0.5) / cam.st_scale)
                     mXstOrig = mXst

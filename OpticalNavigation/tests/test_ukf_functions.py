@@ -71,6 +71,7 @@ def MSE(observedStateVector, expectedStateVector):
     )
     return MSE_pos, MSE_velo
 
+
 class TestSequence(unittest.TestCase):
     # posError and velError increased so that all tests pass
     # originally posError = 1000 to determine what bounds tests would fail at
@@ -183,22 +184,22 @@ class TestSequence(unittest.TestCase):
             row = df.iloc[[index]]
             logging.debug(row["x"])
             trajStateVect = TrajectoryStateVector(
-                (row["x"])/1000,
-                (row["y"])/1000,
-                (row["z"])/1000,
-                (row["vx"])/1000,
-                (row["vy"])/1000,
-                (row["vz"])/1000,
+                (row["x"]) / 1000,
+                (row["y"]) / 1000,
+                (row["z"]) / 1000,
+                (row["vx"]) / 1000,
+                (row["vy"]) / 1000,
+                (row["vz"]) / 1000,
             )
             row_skip = df.iloc[[index + 1]]
             logging.debug(row_skip["x"])
             truthStateVector = TrajectoryStateVector(
-                (row_skip["x"])/1000,
-                (row_skip["y"])/1000,
-                (row_skip["z"])/1000,
-                (row_skip["vx"])/1000,
-                (row_skip["vy"])/1000,
-                (row_skip["vz"])/1000,
+                (row_skip["x"]) / 1000,
+                (row_skip["y"]) / 1000,
+                (row_skip["z"]) / 1000,
+                (row_skip["vx"]) / 1000,
+                (row_skip["vy"]) / 1000,
+                (row_skip["vz"]) / 1000,
             )
             # ephemeris vectors will be generated from the positions only,
             # velocities will all be set to 0.
@@ -252,7 +253,6 @@ class TestSequence(unittest.TestCase):
         logging.debug(f"out covariance = \n {trajEstimateOutput.new_P}")
         # kalman gain is all 0s -->
         logging.debug(f"out kalman = \n {trajEstimateOutput.K}")
-        logging.debug("\n")
 
         # validate output
         # deviation = np.matmul(P, np.ones(6).T)  # 6 x 1 col vector
@@ -275,7 +275,9 @@ class TestSequence(unittest.TestCase):
         # posError = math.sqrt( np.sum((trajNew[:3] - truthState[:3])**2) )
         # velError = math.sqrt( np.sum((trajNew[3:6] - truthState[3:6])**2) )
 
-        logging.debug(f"Position error: {posError}\nVelocity error: {velError}")
+        logging.debug(f"Position error: {posError}")
+        logging.debug(f"Velocity error: {velError}")
+
         # demo prints
         if posError > TestSequence.pos_error_val:
             logging.debug(f"Position error: {posError}\nVelocity error: {velError}\n")
@@ -342,7 +344,8 @@ class TestSequence(unittest.TestCase):
 
         posError = np.linalg.norm(trajNew[0:3] - truthState[0:3])
         velError = np.linalg.norm(trajNew[3:6] - truthState[3:6])
-        print(f"Position error: {posError}\nVelocity error: {velError}\n")
+        print(f"Position error: {posError}")
+        print(f"Velocity error: {velError}\n")
 
         # demo prints
         if posError > TestSequence.pos_error_val:

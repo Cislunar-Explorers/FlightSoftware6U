@@ -1,5 +1,6 @@
 import json
 import math
+
 # import os.path
 import os
 import numpy as np
@@ -7,7 +8,7 @@ from numpy import linspace, radians, zeros
 from pyquaternion import Quaternion
 import cv2
 from argparse import ArgumentParser
-import tqdm
+from tqdm import tqdm
 from OpticalNavigation.simulations.sim.src.libopnav import (
     sin2_vangle,
     gnomonic_inv,
@@ -27,11 +28,17 @@ SIM_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim"
 
 
 def main() -> None:
-    argparse = ArgumentParser(description="Handles input & image generation args for opnav sim")
+    argparse = ArgumentParser(
+        description="Handles input & image generation args for opnav sim"
+    )
 
-    argparse.add_argument('input', help='name of csv file in directory of the sim, w/o extension')
+    argparse.add_argument(
+        "input", help="name of csv file in directory of the sim, w/o extension"
+    )
 
-    argparse.add_argument('-g', action='store_true', help='set -g flag to generate images')
+    argparse.add_argument(
+        "-g", action="store_true", help="set -g flag to generate images"
+    )
     args = argparse.parse_args()
     run_opnav_sim(args.input, args.g)
     return
@@ -109,13 +116,15 @@ def run_opnav_sim(input_file: str, gen_img_flag: bool) -> None:
     observations = []
     with open(input_file + ".csv") as f:
         # for line in f:
-        for line in enumerate(tqdm(f)):
+        for line in tqdm(f):
             if line[0] == "t":
                 continue  # Skip header
             t0, bodies, spacecraft, obs = parse_line(line, q_world2spin, omega_body)
             frames = []
             if gen_img_flag:
-                frames = render_acquisition(t0, cameras, spacecraft, obs, colors_bgr, output_dir)
+                frames = render_acquisition(
+                    t0, cameras, spacecraft, obs, colors_bgr, output_dir
+                )
             observations.append(
                 {
                     "time": t0,
@@ -125,9 +134,7 @@ def run_opnav_sim(input_file: str, gen_img_flag: bool) -> None:
                     "frames": frames,
                 }
             )
-    with open(
-        os.path.join(output_dir, "observations.json"), "w"
-    ) as f:
+    with open(os.path.join(output_dir, "observations.json"), "w") as f:
         json.dump({"observations": observations}, f, indent=4)
 
 
@@ -398,12 +405,7 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr, output_d
                     f,
                     delta_t,
                 )
-                cv2.imwrite(
-                    os.path.join(
-                        output_dir, "images", filename_gn
-                    ),
-                    img,
-                )
+                cv2.imwrite(os.path.join(output_dir, "images", filename_gn), img)
 
                 # Render ideal stereographic frame
                 img = render_stereographic(camera, obs_f, colors_bgr, illuminator)
@@ -414,12 +416,7 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr, output_d
                     f,
                     delta_t,
                 )
-                cv2.imwrite(
-                    os.path.join(
-                        output_dir, "images", filename_st
-                    ),
-                    img,
-                )
+                cv2.imwrite(os.path.join(output_dir, "images", filename_st), img)
 
                 frame_dict = {
                     "time": tf,

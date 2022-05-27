@@ -26,12 +26,12 @@ def main(traj_path: str, dt: int) -> None:
     prepare_opnav_trajectory(traj_path, dt)
 
     print("Running opnav-sim on pre-processed trajectory...")
-    run_opnav_sim(os.path.join(traj_path, 'pre_opnav'), False)
+    run_opnav_sim(os.path.join(traj_path, "pre_opnav"), False)
 
     # where observations.json is located inside sim directory
     path_to_opnav_obs = os.path.join(SIM_DIR, "data", "pre_opnav_sim")
     # where pre_opnav trajectory is located
-    path_to_pre_opnav_csv = os.path.join(traj_path, 'pre_opnav')
+    path_to_pre_opnav_csv = os.path.join(traj_path, "pre_opnav")
 
     print("Processing opnav-sim results & creating final trajectory...")
     process_opnav_obs(path_to_opnav_obs, path_to_pre_opnav_csv)
@@ -45,42 +45,41 @@ def prepare_opnav_trajectory(traj_path: str, dt: int) -> None:
     """
 
     # traj files inside path
-    path_dtraj = os.path.join(traj_path, 'trajectory', 'trajectory.csv')
-    path_moonEph = os.path.join(traj_path, 'ephemeris', 'moon_eph.csv')
-    path_sunEph = os.path.join(traj_path, 'ephemeris', 'sun_eph.csv')
+    path_dtraj = os.path.join(traj_path, "trajectory", "trajectory.csv")
+    path_moonEph = os.path.join(traj_path, "ephemeris", "moon_eph.csv")
+    path_sunEph = os.path.join(traj_path, "ephemeris", "sun_eph.csv")
 
     d_traj = pd.read_csv(path_dtraj)  # x,y,z, vx..vz
     d_moonEph = pd.read_csv(path_moonEph)
     d_sunEph = pd.read_csv(path_sunEph)
 
     # copy moonEph to final traj with opnav column names
-    d_traj['mx'] = d_moonEph['x']
-    d_traj['my'] = d_moonEph['y']
-    d_traj['mz'] = d_moonEph['z']
+    d_traj["mx"] = d_moonEph["x"]
+    d_traj["my"] = d_moonEph["y"]
+    d_traj["mz"] = d_moonEph["z"]
 
     # same for sunEph, as sx..sz
-    d_traj['sx'] = d_sunEph['x']
-    d_traj['sy'] = d_sunEph['y']
-    d_traj['sz'] = d_sunEph['z']
+    d_traj["sx"] = d_sunEph["x"]
+    d_traj["sy"] = d_sunEph["y"]
+    d_traj["sz"] = d_sunEph["z"]
 
     # convert all positionals from km to m for opnav
-    d_traj = d_traj.apply(lambda col: col*(10**3))
+    d_traj = d_traj.apply(lambda col: col * (10 ** 3))
 
     # only add time column if user asks with a specific dt
     if dt != -1:
         # add length(traj) steps with dt
         num_rows = d_traj.shape[0]
-        t_lst = [i*dt for i in range(num_rows)]
-        d_traj.insert(0, column='t', value=t_lst)
+        t_lst = [i * dt for i in range(num_rows)]
+        d_traj.insert(0, column="t", value=t_lst)
 
     # new "pre_opnav" trajectory should be what opnav-sim expects
-    d_traj.to_csv(os.path.join(traj_path, 'pre_opnav.csv'),
-                  float_format="%e",
-                  index=False)
+    d_traj.to_csv(
+        os.path.join(traj_path, "pre_opnav.csv"), float_format="%e", index=False
+    )
 
 
-def process_opnav_obs(path_to_opnav_result: str,
-                      path_pre_opnav_csv: str) -> None:
+def process_opnav_obs(path_to_opnav_result: str, path_pre_opnav_csv: str) -> None:
 
     """
     - Parse through observations.json from the opnav-sim output
@@ -93,21 +92,21 @@ def process_opnav_obs(path_to_opnav_result: str,
         data = f.read()
 
     obj = json.loads(data)
-    print("Total opnav observations: ", len(obj['observations']))
+    print("Total opnav observations: ", len(obj["observations"]))
 
     ang_sep = [[], [], []]  # em, es, ms
     ang_size = [[], [], []]  # e, m, s
 
     # get angular data at time t, append it to ang_sep and ang_size sub-lists
-    for i in range(len(obj['observations'])):
+    for i in range(len(obj["observations"])):
         # print("current obs: ", obj['observations'][i]['time'])
-        e = (obj['observations'][i]['observed_bodies'][0])
-        m = (obj['observations'][i]['observed_bodies'][1])
-        s = (obj['observations'][i]['observed_bodies'][2])
+        e = obj["observations"][i]["observed_bodies"][0]
+        m = obj["observations"][i]["observed_bodies"][1]
+        s = obj["observations"][i]["observed_bodies"][2]
 
-        e_dir = e['direction_body']
-        m_dir = m['direction_body']
-        s_dir = s['direction_body']
+        e_dir = e["direction_body"]
+        m_dir = m["direction_body"]
+        s_dir = s["direction_body"]
 
         ang_em = calculate_cam_measurements(e_dir, m_dir)
         ang_es = calculate_cam_measurements(e_dir, s_dir)
@@ -117,29 +116,27 @@ def process_opnav_obs(path_to_opnav_result: str,
         ang_sep[1].append(ang_es)
         ang_sep[2].append(ang_ms)
 
-        ang_size[0].append(e['angular_size'])
-        ang_size[1].append(m['angular_size'])
-        ang_size[2].append(s['angular_size'])
+        ang_size[0].append(e["angular_size"])
+        ang_size[1].append(m["angular_size"])
+        ang_size[2].append(s["angular_size"])
 
     # write angular data from opnav-sim back into input trajectory
     d_traj = pd.read_csv(path_pre_opnav_csv + ".csv")
 
     # convert traj positionals from m to km for UKF, ignore time col
-    d_traj = d_traj.apply(lambda col: col / (10**3) if col.name != 't' else col)
+    d_traj = d_traj.apply(lambda col: col / (10 ** 3) if col.name != "t" else col)
 
     # angular sep in radians
-    d_traj['z1'] = ang_sep[0]  # em
-    d_traj['z2'] = ang_sep[1]  # es
-    d_traj['z3'] = ang_sep[2]  # ms
+    d_traj["z1"] = ang_sep[0]  # em
+    d_traj["z2"] = ang_sep[1]  # es
+    d_traj["z3"] = ang_sep[2]  # ms
 
     # body sizes in radians
-    d_traj['z4'] = ang_size[0]  # e (size)
-    d_traj['z5'] = ang_size[1]  # m (size)
-    d_traj['z6'] = ang_size[2]  # s (size)
+    d_traj["z4"] = ang_size[0]  # e (size)
+    d_traj["z5"] = ang_size[1]  # m (size)
+    d_traj["z6"] = ang_size[2]  # s (size)
 
-    d_traj.to_csv(path_pre_opnav_csv + "_ukf_ready.csv",
-                  float_format="%e",
-                  index=False)
+    d_traj.to_csv(path_pre_opnav_csv + "_ukf_ready.csv", float_format="%e", index=False)
 
 
 def test_traj_generation() -> None:
@@ -157,16 +154,16 @@ def test_traj_generation() -> None:
     main(TEST_C1_DISCRETIZED, 60)
 
     # load initial trajectory data
-    path_dtraj = os.path.join(traj_path, 'trajectory', 'trajectory.csv')
-    path_moonEph = os.path.join(traj_path, 'ephemeris', 'moon_eph.csv')
-    path_sunEph = os.path.join(traj_path, 'ephemeris', 'sun_eph.csv')
+    path_dtraj = os.path.join(traj_path, "trajectory", "trajectory.csv")
+    path_moonEph = os.path.join(traj_path, "ephemeris", "moon_eph.csv")
+    path_sunEph = os.path.join(traj_path, "ephemeris", "sun_eph.csv")
 
     d_traj = pd.read_csv(path_dtraj)  # x,y,z, vx..vz
     d_moonEph = pd.read_csv(path_moonEph)
     d_sunEph = pd.read_csv(path_sunEph)
 
     # load final trajectory data
-    path_ukf_ready_traj = os.path.join(traj_path, 'pre_opnav_ukf_ready.csv')
+    path_ukf_ready_traj = os.path.join(traj_path, "pre_opnav_ukf_ready.csv")
     ukf_traj = pd.read_csv(path_ukf_ready_traj)
 
     # compare columns of the initial and final spacecraft trajectories
@@ -186,9 +183,8 @@ def test_traj_generation() -> None:
     print("Sun ephemeris columns are equal!")
 
     # lastly ensure time column hasn't changed
-    time_list = np.arange(120)*60
-    np.testing.assert_equal(ukf_traj.iloc[:, 0:1].values,
-                            time_list.reshape(120, 1))
+    time_list = np.arange(120) * 60
+    np.testing.assert_equal(ukf_traj.iloc[:, 0:1].values, time_list.reshape(120, 1))
     print("Time columns are equal!")
 
 

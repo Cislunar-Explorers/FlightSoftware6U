@@ -532,7 +532,7 @@ class Matrix6x6:
     """
 
     def __init__(self, *args) -> None:
-        print(type(args[0]))
+        # print(type(args[0]))
         if len(args) == 1 and type(args[0]) == np.ndarray:
             # if sending in numpy matrix
             matrix = args[0]

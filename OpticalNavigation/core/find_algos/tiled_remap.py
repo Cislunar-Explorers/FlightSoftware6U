@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from core.const import CisLunarCameraParameters
 import cv2
 import numpy as np
-from math import tan, floor, ceil
+from math import tan, floor, ceil, atan, radians
+from core.const import CisLunarCameraParameters
 
 
 class Camera:
@@ -26,11 +28,11 @@ class Camera:
         self.h = h
 
         # Maximum stereographic x coordinate
-        st_scale = (
+        self.st_scale = (
             ((w - 1) / 2) / (2 * tan(hfov / 4)) + ((h - 1) / 2) / (2 * tan(vfov / 4))
         ) / 2
-        self.xmax_st = ((w - 1) / 2) / st_scale
-        self.ymax_st = ((h - 1) / 2) / st_scale
+        self.xmax_st = ((w - 1) / 2) / self.st_scale
+        self.ymax_st = ((h - 1) / 2) / self.st_scale
         # Maximum gnomonic x coordinate
         self.xmax_gn = tan(hfov / 2)
         self.ymax_gn = tan(vfov / 2)
@@ -226,6 +228,50 @@ def bufferedRoi(x, y, w, h, wTot, hTot, b):
     yl = max(y - b, 0)
     yr = min(y + h + b, hTot)
     return (xl, yl, xr - xl, yr - yl)
+
+
+default_st_scale = Camera(
+    radians(CisLunarCameraParameters.hFov),
+    radians(CisLunarCameraParameters.vFov),
+    CisLunarCameraParameters.hPix,
+    CisLunarCameraParameters.vPix,
+).st_scale
+
+
+# Implements angular size algorithm defined in Dr.Muhlberger's Opnav Complications report, bottom of page 4
+# https://cornell.app.box.com/file/673061926746
+def get_angular_size(rho, radius, st_scale=default_st_scale):
+    radSt = (radius + 0.5) / st_scale
+    angDiam = 2 * atan((rho + radSt) / 2) - 2 * atan((rho - radSt) / 2)
+    return angDiam
+
+
+def st_circle(rho, arad):
+    """
+    Used to convert true center into a detected stereographic center
+    Used in opnav sim
+    rho: Distance from origin to stereographic projection of object center
+    arad: Angular size of object
+    returns: rho_c, r_c
+    """
+    x = rho / 2
+    y = tan(arad / 2)
+    d = 1 - (x ** 2 * y ** 2)
+    return 2 * x * (1 + y ** 2) / d, 2 * y * (1 + x ** 2) / d
+
+
+def st_circle_inv(rho_c, r_c):
+    """
+    Used to convert detected stereographic center into a true stereographic center
+    Used in FSW for center shifting and calculating the angular size
+    rho_c: Distance from origin to center of projected body
+    r_c: Radius of projected body
+    returns: rho, arad
+    """
+    b = 4 - rho_c ** 2 + r_c ** 2
+    x = (-b + np.sqrt(b ** 2 + 16 * rho_c ** 2)) / (4 * rho_c)
+    y = (-4 - rho_c ** 2 + r_c ** 2 + np.sqrt(b ** 2 + 16 * rho_c ** 2)) / (4 * r_c)
+    return 2 * x, 2 * np.arctan(y)
 
 
 #

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from numpy import radians
 import glob
+import os
 from OpticalNavigation.core.find_algos import tiled_remap
 import unittest
 from utils.constants import FLIGHT_SOFTWARE_PATH
@@ -15,26 +16,90 @@ class TestReprojections(unittest.TestCase):
     sim, reprojects the former, finds contours, scales them to be the same size, and
     calculates pixel difference."""
 
-    def get_ucam(self, name):
+    def get_ucam(self, name: str) -> np.array:
         """Returns u_cam from filename."""
         cam_dict = {
-            "camA": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
-            "camB": np.array([-5.00000000e-01, 0, -8.66025404e-01], dtype=np.float32),
-            "camC": np.array(
+            "cam1": np.array([5.00000000e-01, 0, 8.66025404e-01], dtype=np.float32),
+            "cam2": np.array([-5.00000000e-01, 0, -8.66025404e-01], dtype=np.float32),
+            "cam3": np.array(
                 [-3.9931775502364646, -3.0090751157602416, 0.0], dtype=np.float32
             )
             / 5,
         }
-        if "camA" in name:
-            return cam_dict["camA"]
-        elif "camB" in name:
-            return cam_dict["camB"]
-        elif "camC" in name:
-            return cam_dict["camC"]
-        else:
-            raise ValueError("Invalid camera name")
+        for key in cam_dict.keys():
+            if key in name:
+                return cam_dict[key]
 
-    def write_composite_image(self, outc, tgtc, cmp, gnName, i, j, diff):
+        raise ValueError("Invalid camera name")
+
+    def reproj(
+        self, src: np.ndarray, gnName: str
+    ) -> tuple([np.ndarray, tiled_remap.BoundingBox, str]):
+        """Reprojects the gnomonic image to stereographic."""
+
+        cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
+
+        # Determine which camera is used based on whether filename contains
+        # "camA", "camB", or "camC"
+        u_cam = self.get_ucam(gnName)
+
+        dt = 18.904e-6
+        omega = 5
+        rot = tiled_remap.CameraRotation(u_cam, -omega * dt)
+
+        bbgn = tiled_remap.BoundingBox(0, 0, cam.w, cam.h)
+
+        out, bbst = tiled_remap.remap_roi(src, bbgn, cam, rot)
+
+        return out, bbst
+
+    def get_images(self, path=None) -> tuple([list, list]):
+        """Returns lists of gnomonic image names and stereographic image names."""
+
+        # Get the file path
+        gn_path = os.path.join(
+            (
+                os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
+                if path is None
+                else path
+            ),
+            "images/*_gn.png",
+        )
+
+        # Glob gnomonic images as filenames ending in "_gn.png"
+        gnomonicList = sorted(glob.glob(gn_path))
+
+        # Get corresponding stereographic images
+        stereographicList = [img.replace("_gn.png", "_st.png") for img in gnomonicList]
+
+        return gnomonicList, stereographicList
+
+    def write_remapped_image(self, gnName, out, path=None):
+        out_path = os.path.join(
+            (
+                os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
+                if path is None
+                else path
+            ),
+            "out/",
+        )
+
+        if not os.path.exists(out_path):
+            os.mkdir(out_path)
+
+        out_img_path = os.path.join(out_path + gnName.replace("_gn.png", "_re.png"))
+        cv2.imwrite(out_img_path, out)
+
+    def write_composite_image(
+        self,
+        outc: np.ndarray,
+        tgtc: np.ndarray,
+        cmp: np.ndarray,
+        gnName: str,
+        i: int,
+        j: int,
+        diff: float,
+    ) -> None:
         """Writes the composite image for visual comparison between the two contours."""
         font = cv2.FONT_HERSHEY_SIMPLEX
         bottomLeftCornerOfText = (0, 12)
@@ -71,47 +136,35 @@ class TestReprojections(unittest.TestCase):
         )
 
         composite = cv2.hconcat([outc, tgtc, cmp])
-        outputString = gnName.replace("_gn.png", "_compare")
+        outputString = gnName.replace("_gn.png", "_compare.png")
 
         cv2.imwrite("comp/%s_%s_%s.png" % (outputString, i, j), composite)
 
-    def reproj(self, write_remapped: bool, write_composite: bool):
+    def reproj_test(
+        self, write_remapped: bool, write_composite: bool, path=None
+    ) -> None:
         """Main reprojection function. Asserts that difference values between
         corresponding contours is less than 0.15."""
 
-        print(DATA_DIR + "traj-case1c_sim_no_outline/images/*_gn.png")
-
-        # Glob gnomonic images as filenames ending in "_gn.png"
-        gnomonicList = sorted(
-            glob.glob(DATA_DIR + "traj-case1c_sim_no_outline/images/*_gn.png")
-        )
+        # Get stareographic and gnomonic images
+        gnomonicList, stereographicList = self.get_images(path)
 
         # For each gnomonic image
-        for gnName in gnomonicList:
+        for idx, gnName in enumerate(gnomonicList):
 
             # Load the images
-            src = cv2.imread(gnName)
-            tgt = cv2.imread(gnName.replace("_gn", "_st"))
+            src = cv2.imread(gnomonicList[idx])
+            tgt = cv2.imread(stereographicList[idx])
 
             gnName = gnName.split("images/")[1]
 
-            cam = tiled_remap.Camera(radians(62.2), radians(48.8), 3280, 2464)
-
-            # Determine which camera is used based on whether filename contains
-            # "camA", "camB", or "camC"
-            u_cam = self.get_ucam(gnName)
-
-            dt = 18.904e-6
-            omega = 5
-            rot = tiled_remap.CameraRotation(u_cam, -omega * dt)
-
-            bbgn = tiled_remap.BoundingBox(0, 0, cam.w, cam.h)
-            out, bbst = tiled_remap.remap_roi(src, bbgn, cam, rot)
+            # Reproject the gnomonic image to stereographic
+            out, bbst = self.reproj(src, gnName)
 
             # Save the remapped image with filename "remapped_" + gnName to folder "out"
             # if write_remapped is True.
             if write_remapped:
-                cv2.imwrite("out/remapped_" + gnName, out)
+                self.write_remapped_image(gnName, out, path)
 
             # Two largest contours from the remapped image
             grayOut = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
@@ -226,8 +279,9 @@ class TestReprojections(unittest.TestCase):
 
     # Test reprojections
     def test_reprojection(self):
-        print("here")
-        self.reproj(False, False)
+        print("\nTesting reprojections:")
+        self.reproj_test(True, True)
+        # self.reproj_test(True, True, os.path.join(DATA_DIR, "traj-case1c_sim_testing_remap"))
 
     # Test reprojectons with image output
     # def test_reprojection_with_image_output(self):

@@ -292,6 +292,9 @@ class BodyEnum(IntEnum):
 
 
 class FileData:
+    def __str__(self):
+        return f"FileData Object: {self.filename}"
+
     def __init__(self, filename: str) -> None:
         self.filename: str = filename
         self.cam_num: int = int(re.search(r"[cam](\d+)", filename).group(1))
@@ -303,6 +306,12 @@ class FileData:
 
 
 class DetectionData:
+    def __str__(self):
+        return (
+            f"{str(self.filedata)} Vector: {str(self.vector)} "
+            f"Angular Diameter: {self.ang_diam} Detection: {self.detection}"
+        )
+
     def __init__(
         self, filedata: FileData, vector: Vector3, ang_diam: float, detection: BodyEnum
     ) -> None:

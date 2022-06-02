@@ -1,9 +1,7 @@
 import json
 import csv
+
 import os
-from OpticalNavigation.core.find_algos.find_with_hough_transform_and_contours import (
-    find,
-)
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -11,6 +9,11 @@ import math
 import unittest
 import time
 from utils.constants import FLIGHT_SOFTWARE_PATH
+
+from utils.log import log
+from core.find_algos.find_with_hough_transform_and_contours import find
+from core.const import BodyEnum
+
 
 # import argparse
 
@@ -34,6 +37,15 @@ class CenterDetections(unittest.TestCase):
         perf += [distance, abs(body_vals[2] - truth_vals[2])]
         perf_values[body] = perf
         return perf_values
+
+    # Used for end to end test
+    def calc_centers_and_diam(self, img_lst):
+        cr_dict = {}
+        for name in img_lst:
+            img = name
+            _, body_vals = find(img, st=True, pixel=False)
+            cr_dict[os.path.basename(img)] = body_vals
+        return cr_dict
 
     # TODO: Allow a different find algorithm to be tested easily
     def get_results(self, dir, results_file, st_gn, pixel=True):
@@ -74,7 +86,15 @@ class CenterDetections(unittest.TestCase):
                     truthX = detection["center_st"][0] * st_scale
                     truthY = detection["center_st"][1] * st_scale
                     truthR = detection["radius_st"] * st_scale
-                    frame_truth_vals[detection["body"]] = [truthX, truthY, truthR]
+                    body_det = detection["body"]
+                    body_det = (
+                        BodyEnum.Earth
+                        if body_det == "Earth"
+                        else BodyEnum.Moon
+                        if body_det == "Moon"
+                        else BodyEnum.Sun
+                    )
+                    frame_truth_vals[body_det] = [truthX, truthY, truthR]
                 image_type = (
                     "image_stereographic" if st_gn == "st" else "image_gnomonic"
                 )
@@ -83,23 +103,26 @@ class CenterDetections(unittest.TestCase):
         # Comparing found values with truth values
         for i in range(len(frames)):
             frame = frames[i]
+            x = frame.split("/")[-1]
             truths = all_truth_vals[frame.split("/")[-1]]
             _, body_vals = (
                 find(frame, st=True, pixel=pixel)
                 if st_gn == "st"
                 else find(frame, pixel=pixel)
             )
-            sun_vals = body_vals.get("Sun")
+            log.debug(f"{x}, {body_vals}")
+            log.debug(f"Truth: {truths}\n")
+            sun_vals = body_vals.get(BodyEnum.Sun)
             if sun_vals:
-                perf_values = self.__get_difference("Sun", truths, sun_vals)
+                perf_values = self.__get_difference(BodyEnum.Sun, truths, sun_vals)
                 results.append(perf_values)
-            earth_vals = body_vals.get("Earth")
+            earth_vals = body_vals.get(BodyEnum.Earth)
             if earth_vals:
-                perf_values = self.__get_difference("Earth", truths, earth_vals)
+                perf_values = self.__get_difference(BodyEnum.Earth, truths, earth_vals)
                 results.append(perf_values)
-            moon_vals = body_vals.get("Moon")
+            moon_vals = body_vals.get(BodyEnum.Moon)
             if moon_vals:
-                perf_values = self.__get_difference("Moon", truths, moon_vals)
+                perf_values = self.__get_difference(BodyEnum.Moon, truths, moon_vals)
                 results.append(perf_values)
 
         # Writing performance values to csv file
@@ -117,9 +140,9 @@ class CenterDetections(unittest.TestCase):
             )
             writer.writerow(["Body", "Center", "Radius"])
             for result in results:
-                sun = result.get("Sun")
-                earth = result.get("Earth")
-                moon = result.get("Moon")
+                sun = result.get(BodyEnum.Sun)
+                earth = result.get(BodyEnum.Earth)
+                moon = result.get(BodyEnum.Moon)
                 if sun is not None:
                     writer.writerow(["Sun"] + sun)
                 if earth is not None:
@@ -139,9 +162,9 @@ class CenterDetections(unittest.TestCase):
         title = "{} Absolute Difference {} {}".format(center_radius, name, st_gn)
         data = []
         for result in results:
-            sun = result.get("Sun")
-            earth = result.get("Earth")
-            moon = result.get("Moon")
+            sun = result.get(BodyEnum.Sun)
+            earth = result.get(BodyEnum.Earth)
+            moon = result.get(BodyEnum.Moon)
             if sun is not None:
                 data.append(sun[idx])
             if earth is not None:
@@ -188,12 +211,15 @@ class CenterDetections(unittest.TestCase):
     ):
         name = dir.split("/")[-1]
         results = self.get_results(dir, results_file, st_gn)
+        log.debug(f"results: {results}")
         center_data = self.center_histogram(
             results, center_histogram_file, name, st_gn=st_gn
         )
+        log.debug(f"center_data: {center_data}")
         radius_data = self.radius_histogram(
             results, radius_histogram_file, name, st_gn=st_gn
         )
+        log.debug(f"radius_data: {radius_data}")
         total_detections = len(center_data)
         correct_detections = 0
         # TODO: make the thresholds below into parameters
@@ -201,6 +227,7 @@ class CenterDetections(unittest.TestCase):
             if center_data[i] <= math.sqrt(8) and radius_data[i] <= 2:
                 correct_detections += 1
         passing_detections = correct_detections / total_detections
+        log.debug(passing_detections)
         self.assertGreaterEqual(
             passing_detections,
             0.70,
@@ -226,6 +253,25 @@ class CenterDetections(unittest.TestCase):
             "center_histogram_trajectory.png",
             "radius_histogram_trajectory.png",
         )
+
+    def test_center_radii(self):
+        path = os.path.join(
+            FLIGHT_SOFTWARE_PATH,
+            # "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/out",
+            "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/images",
+        )
+        paths = [
+            os.path.join(path, "cam2_expLow_f0_dt8.37760_st.png"),
+            os.path.join(path, "cam2_expLow_f1_dt8.44305_st.png"),
+            os.path.join(path, "cam2_expLow_f2_dt8.50850_st.png"),
+            os.path.join(path, "cam2_expLow_f19_dt9.62115_st.png"),
+            os.path.join(path, "cam3_expHigh_f0_dt10.47200_st.png"),
+            os.path.join(path, "cam3_expHigh_f1_dt10.53745_st.png"),
+            os.path.join(path, "cam3_expHigh_f17_dt11.58465_st.png"),
+            os.path.join(path, "cam3_expHigh_f18_dt11.65010_st.png"),
+            os.path.join(path, "cam3_expHigh_f19_dt11.71555_st.png"),
+        ]
+        _ = self.calc_centers_and_diam(paths)
 
 
 if __name__ == "__main__":

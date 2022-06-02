@@ -12,3 +12,5 @@ logging.basicConfig(
 )
 
 log = logging.getLogger("CislunarExplorers")
+# Manually change PIL logging level because still logs useless debug statements
+logging.getLogger("PIL").setLevel(logging.WARNING)

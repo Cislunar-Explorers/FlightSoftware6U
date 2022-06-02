@@ -2,6 +2,7 @@ from core.const import (
     ImageDetectionCircles,
     CameraParameters,
     CisLunarCameraParameters,
+    BodyEnum,
 )
 from utils.parameters import (
     EARTH_B_LOW,
@@ -27,14 +28,13 @@ from utils.parameters import (
     MOON_PERCENTAGE_THRESH,
 )
 from OpticalNavigation.core.find_algos.tiled_remap import *
+from utils.log import log
+
 import cv2
 import numpy as np
 from math import radians
 import re
-import logging
-
 import argparse
-
 
 
 def drawContourCircle(img, xy, r, contours):
@@ -94,6 +94,7 @@ def __houghCircleWithContour(img, w, h, highThresh, showCircle):
         maxRadius=int(maxRadius / 2) + 1,
     )
     if circles is None:
+        # log.debug("Using non-Hough detection")
         return __findMinEnclosingCircle(img, highThresh, showCircle)
     areas = [circleArea(circle) for circle in circles[0]]
     max_idx = np.argmax(areas)
@@ -213,15 +214,22 @@ def find(
     # Hack around API breakage between OpenCV versions
     contours = contours[0] if len(contours) == 2 else contours[1]
     if len(contours) == 0:
-        logging.info("[OPNAV]: No contours found")
+        log.debug("[OPNAV]: No contours found")
         return result, {}
 
+    # Get largest two contours
     areas = [cv2.contourArea(c) for c in contours]
-    max_index = np.argmax(areas)
-    c = contours[max_index]
-    # del contours[max_index]
+    areas = np.array(areas)
+    largest_indices = (-areas).argsort()[
+        :2
+    ]  # Gets the largest two indices of areas array
+    max_index = largest_indices[0]
+    # TODO: This does not check for overlap, second contour may not be a different body
+    second_index = largest_indices[1] if largest_indices.size > 1 else None
+    c1 = contours[max_index]
+    c2 = contours[second_index] if second_index is not None else None
 
-    x, y, w, h = cv2.boundingRect(c)
+    x, y, w, h = cv2.boundingRect(c1)
     x, y, w, h = bufferedRoi(x, y, w, h, cam.w, cam.h, 16)
     if not st:
         box = BoundingBox(x, y, w, h)
@@ -231,26 +239,25 @@ def find(
     else:
         bbst = BoundingBox(x, y, w, h)
         out = img[y : y + h, x : x + w]
-    # TODO make sure we can handle eclipse edge case
-    # Gets the next largest body that doesn't overlap with first body
-    # c2 = None
+
+    # TODO: make sure we can handle eclipse edge case
+
+    # TODO: Need to fix what c2 becomes | Gets the next largest body that doesn't overlap with first body
     x2, y2, w2, h2 = 0, 0, 0, 0
     out2 = None
     bbst2 = BoundingBox(0, 0, 0, 0)
-    area = 0
-    for con in contours:
-        area = cv2.contourArea(con)
-        if area >= 100:  # TODO: Placeholder
-            x2, y2, w2, h2 = cv2.boundingRect(con)
-            # Checks for rectangle overlap
-            if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y:
-                # c2 = con
+
+    if c2 is not None and cv2.contourArea(c2) >= 100:  # TODO: Placeholder
+        x2, y2, w2, h2 = cv2.boundingRect(c2)
+        # TODO: Need to fix what c2 becomes | Checks for rectangle overlap
+        if x + w < x2 or x > x2 + w2 or y < y2 + h2 or y2 + h2 > y:
+            if not st:
                 x2, y2, w2, h2 = bufferedRoi(x2, y2, w2, h2, cam.w, cam.h, 16)
                 box2 = BoundingBox(x2, y2, w2, h2)
                 out2, bbst2 = remap_roi(img, box2, cam, rot)
-                break
             else:
-                x2, y2, w2, h2 = 0, 0, 0, 0
+                bbst2 = BoundingBox(x2, y2, w2, h2)
+                out2 = img[y2 : y2 + h2, x2 : x2 + w2]
 
     # Measure body in region-of-interest
     sun = None
@@ -262,57 +269,91 @@ def find(
             sun = measureSun(f, w, h)
             if sun is not None:
                 (sX, sY), sR = sun
-                if pixel:
-                    body_values["Sun"] = [x + sX - 1640, y + sY - 1232, sR]
-                else:
-                    body_values["Sun"] = [
-                        cam.normalize_st(x + sX, y + sY)[0],
-                        cam.normalize_st(x + sX, y + sY)[1],
-                        sR,
-                    ]
                 sXst, sYst = cam.normalize_st(bbst.x0 + sX, bbst.y0 + sY)
                 sRho2 = sXst ** 2 + sYst ** 2
+                sRho = np.sqrt(sRho2)
+                # TODO figure out if below line (and corresponding ones) is diameter in stereographic or spherical
                 sDia = 4 * 2 * sR * (2 * cam.xmax_st / cam.w) / (4 + sRho2)
                 sSx, sSy, sSz = st_to_sph(sXst, sYst)
                 result.set_sun_detection(sSx, sSy, sSz, sDia)
 
+                # Alternative means of getting angular diameter
+                # sAnsgDia = get_angular_size(sRho, sR, cam.st_scale)
+
+                # Center shift stereographic center to actual circle center
+                angle = np.arctan(sYst / sXst)
+                sRhoShift, sARad = st_circle_inv(sRho, (sR + 0.5) / cam.st_scale)
+                sXstOrig = sXst
+                sYstOrig = sYst
+                sXst = np.cos(angle) * sRhoShift
+                sYst = np.sin(angle) * sRhoShift
+                # Make sure point is still in same quadrant
+                if np.sign(sXst) != np.sign(sXstOrig):
+                    sXst *= -1
+                if np.sign(sYst) != np.sign(sYstOrig):
+                    sYst *= -1
+
+                # Andrew
+                if pixel:
+                    body_values[BodyEnum.Sun] = [
+                        x + sX - cam.w / 2,
+                        y + sY - cam.h / 2,
+                        sR,
+                    ]
+                else:
+                    body_values[BodyEnum.Sun] = [sXst, sYst, sARad * 2]
     else:
         earth = None
         index = 0
-        for f in [out]:
+        for f in [out, out2]:
+            if f is None:
+                break
             # if f is None or cv2.sumElems(f) == (0, 0, 0, 0) or measureSun(f, w, h) is not None:
             #     continue
-            if earth is not None:
-                earth = None
-            elif np.max(areas) > 400 and index == 0:  # TODO: Placeholder
+            earth = None
+            moon = None
+            if np.max(areas) > 400 and index == 0:  # TODO: Placeholder
                 earth = measureEarth(f, w, h)
             if earth is not None:
                 (eX, eY), eR = earth
-                if pixel:
-                    body_values["Earth"] = [x + eX - 1640, y + eY - 1232, eR]
-                else:
-                    body_values["Earth"] = [
-                        cam.normalize_st(x + eX, y + eY)[0],
-                        cam.normalize_st(x + eX, y + eY)[1],
-                        eR,
-                    ]
                 eXst, eYst = cam.normalize_st(bbst.x0 + eX, bbst.y0 + eY)
                 eRho2 = eXst ** 2 + eYst ** 2
+                eRho = np.sqrt(eRho2)
                 eDia = 4 * 2 * eR * (2 * cam.xmax_st / cam.w) / (4 + eRho2)
                 eSx, eSy, eSz = st_to_sph(eXst, eYst)
                 result.set_earth_detection(eSx, eSy, eSz, eDia)
+
+                # Alternative means of getting angular diameter
+                # eAngDia = get_angular_size(eRho, eR, cam.st_scale)
+
+                # Center shift stereographic center to actual circle center
+                angle = np.arctan(eYst / eXst)
+                eRhoShift, eARad = st_circle_inv(eRho, eDia)
+                eXstOrig = eXst
+                eYstOrig = eYst
+                eXst = np.cos(angle) * eRhoShift
+                eYst = np.sin(angle) * eRhoShift
+                # Make sure point is still in same quatrant
+                if np.sign(eXst) != np.sign(eXstOrig):
+                    eXst *= -1
+                if np.sign(eYst) != np.sign(eYstOrig):
+                    eYst *= -1
+
+                # Andrew
+                if pixel:
+                    # Need to check if first or second contour here
+                    body_values[BodyEnum.Earth] = (
+                        [x + eX - cam.w / 2, y + eY - cam.h / 2, eR]
+                        if f is out
+                        else [x2 + eX - cam.w / 2, y2 + eY - cam.h / 2, eR]
+                    )
+                else:
+                    body_values[BodyEnum.Earth] = [eXst, eYst, eARad]
+
             elif earth is None:  # TODO: Placeholder
                 moon = measureMoon(f, w, h)
                 if moon is not None:
                     (mX, mY), mR = moon
-                    if pixel:
-                        body_values["Moon"] = [x + mX - 1640, y + mY - 1232, mR]
-                    else:
-                        body_values["Moon"] = [
-                            cam.normalize_st(x + mX, y + mY)[0],
-                            cam.normalize_st(x + mX, y + mY)[1],
-                            mR,
-                        ]
                     mXst, mYst = None, None
                     # Checks whether moon contour is first or second contour
                     if index == 0:
@@ -322,9 +363,41 @@ def find(
                     else:
                         mXst, mYst = cam.normalize_st(bbst.x0 + mX, bbst.y0 + mY)
                     mRho2 = mXst ** 2 + mYst ** 2
+                    mRho = np.sqrt(mRho2)
                     mDia = 4 * 2 * mR * (2 * cam.xmax_st / cam.w) / (4 + mRho2)
                     mSx, mSy, mSz = st_to_sph(mXst, mYst)
                     result.set_moon_detection(mSx, mSy, mSz, mDia)
+
+                    # Alternative means of getting angular diameter
+                    # mAngDia = get_angular_size(mRho, mR, cam.st_scale)
+
+                    # Center shift stereographic center to actual circle center
+                    angle = np.arctan(mYst / mXst)
+                    mRhoShift, mARad = st_circle_inv(mRho, (mR + 0.5) / cam.st_scale)
+                    mXstOrig = mXst
+                    mYstOrig = mYst
+                    mXst = np.cos(angle) * mRhoShift
+                    mYst = np.sin(angle) * mRhoShift
+                    # Make sure point is still in same quatrant
+                    if np.sign(mXst) != np.sign(mXstOrig):
+                        mXst *= -1
+                    if np.sign(mYst) != np.sign(mYstOrig):
+                        mYst *= -1
+
+                    # Andrew
+                    if pixel:
+                        # Need to check if first or second contour here
+                        body_values[BodyEnum.Moon] = (
+                            [x + mX - cam.w / 2, y + mY - cam.h / 2, mR]
+                            if f is out
+                            else [x2 + mX - cam.w / 2, y2 + mY - cam.h / 2, mR]
+                        )
+                    else:  # Checks whether moon contour is first or second contour
+                        if index == 1:
+                            body_values[BodyEnum.Moon] = [mXst, mYst, mARad * 2]
+                        else:
+                            body_values[BodyEnum.Moon] = [mXst, mYst, mARad * 2]
+
             index += 1
     return result, body_values
 
@@ -358,8 +431,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", help="path to the image")
     args = vars(ap.parse_args())
-    find(args["image"])
-
+    result, body_values = find(args["image"])
+    log.debug(body_values)
 # Notes
 # * Need sanity check on contour size (not too large, not too small)
 # * Need sanity check on omega (too high and out will be too big)

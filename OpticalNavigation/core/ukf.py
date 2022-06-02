@@ -130,7 +130,7 @@ def __dynamics_model(state, dt, moonEph, sunEph, main_thrust_info):
             * acc_mag
         ).reshape(1, 3)
 
-    # Inlined RK4
+    # Inlined RK4__calculate_cam_measurements
     n1 = __G(position, rem, rcm, rcs, res, thrust=net_acceleration_thrust)
     net_acceleration_thrust = np.zeros((1, 3))
     n2 = __G(position + dt * n1 / 2, rem, rcm, rcs, res, thrust=net_acceleration_thrust)

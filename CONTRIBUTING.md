@@ -55,7 +55,7 @@ development.
    source ./venv/bin/activate
    python -m pip install --upgrade pip
    pip install -e ."[rpi, dev]" # or just [dev]
-   pip install -e ./OpticalNavigation
+   pip install -e ./opnav
    pre-commit install
    ```
 

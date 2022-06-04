@@ -4,17 +4,13 @@ import glob
 
 # import logging
 from utils.log import log
-from opnav.tests import (
-    test_center_finding,
-    test_reprojections,
-    test_body_meas,
-)
+from opnav.tests import test_center_finding, test_reprojections, test_body_meas
 from core.const import BodyEnum
 from utils.constants import FLIGHT_SOFTWARE_PATH
 import re
 import numpy as np
 
-DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/OpticalNavigation/simulations/sim/data"
+DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/opnav/simulations/sim/data"
 
 
 class TestEndToEnd(unittest.TestCase):

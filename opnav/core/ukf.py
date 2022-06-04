@@ -352,8 +352,8 @@ def runTrajUKF(
     initState.data = initState.data.reshape(6, 1)
     P.data = P.data.reshape(6, 6)
     if main_thrust_info is not None:
-        main_thrust_info.get_kick_orientation().data = main_thrust_info.get_kick_orientation().data.reshape(
-            4, 1
+        main_thrust_info.get_kick_orientation().data = (
+            main_thrust_info.get_kick_orientation().data.reshape(4, 1)
         )
 
     nx = __length(P.data)

@@ -112,7 +112,7 @@ def test_start(mocker):
 
     # mockers
     def record_gyro_mock(count):
-        """ Passes in a hard-coded gyro rate as opposed to reading from the gyros """
+        """Passes in a hard-coded gyro rate as opposed to reading from the gyros"""
         print("gyro_mock")
         rotation_rate_y = 5  # rad/s
         return np.array([[0, rotation_rate_y, 0]])
@@ -120,8 +120,8 @@ def test_start(mocker):
     mocker.patch("core.opnav.record_gyro", side_effect=record_gyro_mock)
 
     def get_elapsed_time_mock(fileData, timeDeltaAvgs, observeStart):
-        """ Calculates the time from between the start of observation and a specified frame without the use of Picamera
-            hardware """
+        """Calculates the time from between the start of observation and a specified frame without the use of Picamera
+        hardware"""
         print("get_elapsed_time_mock")
         timestamp = fileData.timestamp
         observeStart = datetime.utcfromtimestamp(observeStart * 10 ** -6)

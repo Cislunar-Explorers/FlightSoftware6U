@@ -139,7 +139,9 @@ def measureEarth(img, w, h):
         (EARTH_B_LOW, EARTH_G_LOW, EARTH_R_LOW),
         (EARTH_B_HIGH, EARTH_G_HIGH, EARTH_R_HIGH),
     )
-    return __findBody(img, cv2.inRange(img, EARTH_THRESH[0], EARTH_THRESH[1]), "e", w, h)
+    return __findBody(
+        img, cv2.inRange(img, EARTH_THRESH[0], EARTH_THRESH[1]), "e", w, h
+    )
 
 
 # Measure white pixels
@@ -218,7 +220,9 @@ def find(
     # Get largest two contours
     areas = [cv2.contourArea(c) for c in contours]
     areas = np.array(areas)
-    largest_indices = (-areas).argsort()[:2]  # Gets the largest two indices of areas array
+    largest_indices = (-areas).argsort()[
+        :2
+    ]  # Gets the largest two indices of areas array
     max_index = largest_indices[0]
     # TODO: This does not check for overlap, second contour may not be a different body
     second_index = largest_indices[1] if largest_indices.size > 1 else None

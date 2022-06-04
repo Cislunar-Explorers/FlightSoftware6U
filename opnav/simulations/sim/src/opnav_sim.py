@@ -4,7 +4,7 @@ import os.path
 import numpy as np
 from numpy import linspace, radians, zeros
 
-# from OpticalNavigation.core.find_algos import tiled_remap
+# from opnav.core.find_algos import tiled_remap
 from pyquaternion import Quaternion
 import cv2
 from opnav.simulations.sim.src.libopnav import (
@@ -22,7 +22,7 @@ from utils.constants import FLIGHT_SOFTWARE_PATH
 # * Assumes point illumination (no penumbra)
 # * No motion blur
 
-SIM_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim")
+SIM_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "opnav/simulations/sim")
 
 
 def main():

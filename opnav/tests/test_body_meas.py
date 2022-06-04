@@ -47,13 +47,7 @@ class BodyMeas(unittest.TestCase):
                 det_st_dict = {}
                 for det in frame["detections"]:
                     body = det["body"]
-                    body = (
-                        BodyEnum.Earth
-                        if body == "Earth"
-                        else BodyEnum.Moon
-                        if body == "Moon"
-                        else BodyEnum.Sun
-                    )
+                    body = BodyEnum.Earth if body == "Earth" else BodyEnum.Moon if body == "Moon" else BodyEnum.Sun
                     det_st_dict[body] = det["center_st"]
                 st_dict[imgName] = det_st_dict
 
@@ -62,9 +56,7 @@ class BodyMeas(unittest.TestCase):
             for b in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
                 ang_diam = obs["observations"][0]["observed_bodies"][b]["angular_size"]
                 diam_dict[b] = ang_diam
-                truth_dict[b] = obs["observations"][0]["observed_bodies"][b][
-                    "direction_body"
-                ]
+                truth_dict[b] = obs["observations"][0]["observed_bodies"][b]["direction_body"]
 
             gyroY = obs["observations"][0]["spacecraft"]["omega_body"][1]
 
@@ -80,9 +72,7 @@ class BodyMeas(unittest.TestCase):
             for body in (BodyEnum.Earth, BodyEnum.Moon, BodyEnum.Sun):
                 if body in stVecs[f].keys():
                     log.debug(f"Body: {body}")
-                    log.debug(
-                        f"Center_st: [{stVecs[f][body][0]}, {stVecs[f][body][1]}]"
-                    )
+                    log.debug(f"Center_st: [{stVecs[f][body][0]}, {stVecs[f][body][1]}]")
 
                     # Stereographic coordinate to spherical
                     camVec = st_to_sph(stVecs[f][body][0], stVecs[f][body][1])
@@ -104,13 +94,9 @@ class BodyMeas(unittest.TestCase):
                     # Comparison
                     log.debug(f"Observe Start Vector: {finalT0Det.vector}")
                     log.debug(f"Truth Vector: {truthVecs[body]}")
-                    vectorAngSep = calculate_cam_measurements(
-                        finalT0Det.vector.data, truthVecs[body]
-                    )
+                    vectorAngSep = calculate_cam_measurements(finalT0Det.vector.data, truthVecs[body])
                     angSepDeg = np.rad2deg(vectorAngSep)
-                    log.debug(
-                        f"Vector Angular Separation: {vectorAngSep} rad, {angSepDeg} deg\n"
-                    )
+                    log.debug(f"Vector Angular Separation: {vectorAngSep} rad, {angSepDeg} deg\n")
 
                     # Checks if seapration is less than 3 deg
                     self.assertLessEqual(
@@ -122,7 +108,7 @@ class BodyMeas(unittest.TestCase):
     def test_traj_case1c(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
-            "OpticalNavigation/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
+            "opnav/simulations/sim/data/traj-case1c_sim_no_outline/observations.json",
         )
         st_dict, truth_dict, _, gyroY = self.load_json(path)
         self.transform(st_dict, truth_dict, gyroY)
@@ -130,7 +116,7 @@ class BodyMeas(unittest.TestCase):
     def test_traj_trajectory(self):
         path = os.path.join(
             FLIGHT_SOFTWARE_PATH,
-            "OpticalNavigation/simulations/sim/data/trajectory_sim/observations.json",
+            "opnav/simulations/sim/data/trajectory_sim/observations.json",
         )
         st_dict, truth_dict, _, gyroY = self.load_json(path)
         self.transform(st_dict, truth_dict, gyroY)

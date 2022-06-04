@@ -1,11 +1,11 @@
 {
   "ignore": [
     "drivers/nemo",
-    "OpticalNavigation/tests",
-    "OpticalNavigation/simulations",
-    "OpticalNavigation/experiments",
-    "OpticalNavigation/core/ukf.py",
-    "OpticalNavigation/core/opnav.py",
+    "opnav/tests",
+    "opnav/simulations",
+    "opnav/experiments",
+    "opnav/core/ukf.py",
+    "opnav/core/opnav.py",
     "communications/ax5043_manager",
     "communications/comms_driver.py",
     "HITL-tests/comms_hardware_transmit.py",
@@ -20,15 +20,15 @@
   ],
   "include": [
     ".",
-    "OpticalNavigation/tests/test_body_meas.py",
-    "OpticalNavigation/tests/test_center_finding.py",
-    "OpticalNavigation/tests/test_reprojections.py",
-    "OpticalNavigation/tests/test_detections.py",
-    "OpticalNavigation/tests/test_pipeline.py",
-    "OpticalNavigation/simulations/sim/src/opnav_sim.py",
+    "opnav/tests/test_body_meas.py",
+    "opnav/tests/test_center_finding.py",
+    "opnav/tests/test_reprojections.py",
+    "opnav/tests/test_detections.py",
+    "opnav/tests/test_pipeline.py",
+    "opnav/simulations/sim/src/opnav_sim.py",
   ],
   "extraPaths": [
-    "OpticalNavigation/"
+    "opnav/"
   ],
   "pythonVersion": "3.7",
   "pythonPlatform": "Linux",

@@ -1,6 +1,11 @@
 from tests.const import CesiumTestCameraParameters
-from core.const import CameraMeasurementVector, CovarianceMatrix, EphemerisVector, TrajectoryEstimateOutput, \
-    TrajectoryStateVector
+from core.const import (
+    CameraMeasurementVector,
+    CovarianceMatrix,
+    EphemerisVector,
+    TrajectoryEstimateOutput,
+    TrajectoryStateVector,
+)
 import pytest
 import pandas as pd
 import numpy as np
@@ -76,13 +81,13 @@ from tests.gen_opnav_data import get6HoursBatch
 #             liveTraj.updateEstimatedTraj(fstate[0], fstate[1], fstate[2])
 #             liveTraj.updateTrueTraj(traj[0], traj[1], traj[2])
 #             liveTraj.render(text="Iteration {} - Pos Error {} - Vel Error {}".format(t, round(posError), round(velError)))
-    
+
 #     if liveTraj:
 #         liveTraj.close()
 
 #     t = trajTruthdf.shape[0] - 1
 #     traj = (np.array([trajTruthdf.iloc[t]['x'], trajTruthdf.iloc[t]['y'], trajTruthdf.iloc[t]['z'], trajTruthdf.iloc[t]['vx'], trajTruthdf.iloc[t]['vy'], trajTruthdf.iloc[t]['vz']], dtype=float)).reshape(6,1)
-        
+
 #     traj = traj.flatten()
 #     state = state.flatten()
 #     posError = math.sqrt( np.sum((traj[:3] - state[:3])**2) )
@@ -91,25 +96,46 @@ from tests.gen_opnav_data import get6HoursBatch
 #     assert posError <= POS_ERROR, 'Position error is too large'
 #     assert velError <= VEL_ERROR, 'Velocity error is too large'
 
+
 def test_cislunar_ukf(mocker):
     cislunar1_timestep(False, state_error=LARGE_STARTING_NOISE)
+
 
 def cislunar1_timestep(visual_analysis, state_error, kickTime=None):
     """
     [part_start, part_end): start (inclusive) and end (exclusive) indices of trajectory
     """
-    from tests.const import TEST_CISLUNAR_meas, TEST_CISLUNAR_moonEph, TEST_CISLUNAR_sunEph, \
-        TEST_CISLUNAR_traj
+    from tests.const import (
+        TEST_CISLUNAR_meas,
+        TEST_CISLUNAR_moonEph,
+        TEST_CISLUNAR_sunEph,
+        TEST_CISLUNAR_traj,
+    )
+
     # d_camMeas, d_moonEph, d_sunEph, d_traj, totalIntegrationTime = get6HoursBatch(part_start, part_end, part_start, timestep, np.array([1,1,1,1,1,1]), np.array([1,1,1]), np.array([1,1,1,1]), 1, 1, 1, att_meas=False)
     d_traj = pd.read_csv(TEST_CISLUNAR_traj).to_dict()
     d_moonEph = pd.read_csv(TEST_CISLUNAR_moonEph).to_dict()
     d_sunEph = pd.read_csv(TEST_CISLUNAR_sunEph).to_dict()
     d_camMeas = pd.read_csv(TEST_CISLUNAR_meas).to_dict()
-    iterations = min(len(d_traj['x']), len(d_moonEph['x']), len(d_sunEph['x']), len(d_camMeas['Z1']))
-    P = np.diag(np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float))  # Initial Covariance Estimate of State
+    iterations = min(
+        len(d_traj["x"]), len(d_moonEph["x"]), len(d_sunEph["x"]), len(d_camMeas["Z1"])
+    )
+    P = np.diag(
+        np.array([100, 100, 100, 1e-5, 1e-6, 1e-5], dtype=float)
+    )  # Initial Covariance Estimate of State
     state = (
-        np.array([d_traj['x'][0], d_traj['y'][0], d_traj['z'][0], d_traj['vx'][0], d_traj['vy'][0], d_traj['vz'][0]],
-                 dtype=float)).reshape(6, 1)
+        np.array(
+            [
+                d_traj["x"][0],
+                d_traj["y"][0],
+                d_traj["z"][0],
+                d_traj["vx"][0],
+                d_traj["vy"][0],
+                d_traj["vz"][0],
+            ],
+            dtype=float,
+        )
+    ).reshape(6, 1)
     R = np.diag(np.array(state_error, dtype=float))
     error = np.random.multivariate_normal(np.zeros((6,)), R).reshape(6, 1)
     state = state + error
@@ -119,44 +145,97 @@ def cislunar1_timestep(visual_analysis, state_error, kickTime=None):
         liveTraj = LiveTrajectoryPlot()
 
     # print(int(trajTruthdf.shape[0]*1 - 1))
-    for t in tqdm(range(iterations), desc='Trajectory Completion'):
-        moonEph = EphemerisVector(x_pos=d_moonEph['x'][t], y_pos=d_moonEph['y'][t], z_pos=d_moonEph['z'][t],
-                                  x_vel=d_moonEph['vx'][t], y_vel=d_moonEph['vy'][t], z_vel=d_moonEph['vz'][t])
-        sunEph = EphemerisVector(x_pos=d_sunEph['x'][t], y_pos=d_sunEph['y'][t], z_pos=d_sunEph['z'][t], x_vel=d_sunEph['vx'][t], y_vel=d_sunEph['vy'][t], z_vel=d_sunEph['vz'][t])
-        meas = CameraMeasurementVector(ang_em=d_camMeas['Z1'][t], ang_es=d_camMeas['Z2'][t], ang_ms=d_camMeas['Z3'][t], e_dia=d_camMeas['Z4'][t], m_dia=d_camMeas['Z5'][t], s_dia=d_camMeas['Z6'][t])
+    for t in tqdm(range(iterations), desc="Trajectory Completion"):
+        moonEph = EphemerisVector(
+            x_pos=d_moonEph["x"][t],
+            y_pos=d_moonEph["y"][t],
+            z_pos=d_moonEph["z"][t],
+            x_vel=d_moonEph["vx"][t],
+            y_vel=d_moonEph["vy"][t],
+            z_vel=d_moonEph["vz"][t],
+        )
+        sunEph = EphemerisVector(
+            x_pos=d_sunEph["x"][t],
+            y_pos=d_sunEph["y"][t],
+            z_pos=d_sunEph["z"][t],
+            x_vel=d_sunEph["vx"][t],
+            y_vel=d_sunEph["vy"][t],
+            z_vel=d_sunEph["vz"][t],
+        )
+        meas = CameraMeasurementVector(
+            ang_em=d_camMeas["Z1"][t],
+            ang_es=d_camMeas["Z2"][t],
+            ang_ms=d_camMeas["Z3"][t],
+            e_dia=d_camMeas["Z4"][t],
+            m_dia=d_camMeas["Z5"][t],
+            s_dia=d_camMeas["Z6"][t],
+        )
         orientation = None
         if kickTime is not None and t > kickTime:
             orientation = [0, 0, 0, 1]
-        stateEstimate:TrajectoryEstimateOutput = runTrajUKF(moonEph, sunEph, meas, TrajectoryStateVector.from_numpy_array(state=state), 60, CovarianceMatrix(matrix=P), CesiumTestCameraParameters, dynamicsOnly=False) # used to have this, not sure why it's gone orientation=orientation
+        stateEstimate: TrajectoryEstimateOutput = runTrajUKF(
+            moonEph,
+            sunEph,
+            meas,
+            TrajectoryStateVector.from_numpy_array(state=state),
+            60,
+            CovarianceMatrix(matrix=P),
+            CesiumTestCameraParameters,
+            dynamicsOnly=False,
+        )  # used to have this, not sure why it's gone orientation=orientation
         state = stateEstimate.new_state.data
         P = stateEstimate.new_P.data
         K = stateEstimate.K.data
         # Per iteration error
-        traj = (np.array(
-            [d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]],
-            dtype=float)).reshape(6, 1)
+        traj = (
+            np.array(
+                [
+                    d_traj["x"][t],
+                    d_traj["y"][t],
+                    d_traj["z"][t],
+                    d_traj["vx"][t],
+                    d_traj["vy"][t],
+                    d_traj["vz"][t],
+                ],
+                dtype=float,
+            )
+        ).reshape(6, 1)
         traj = traj.flatten()
         fstate = state.flatten()
-        posError = math.sqrt( np.sum((traj[:3] - fstate[:3])**2) )
-        velError = math.sqrt( np.sum((traj[3:6] - fstate[3:6])**2) )
+        posError = math.sqrt(np.sum((traj[:3] - fstate[:3]) ** 2))
+        velError = math.sqrt(np.sum((traj[3:6] - fstate[3:6]) ** 2))
         # plot
         if liveTraj:
             liveTraj.updateEstimatedTraj(fstate[0], fstate[1], fstate[2])
             liveTraj.updateTrueTraj(traj[0], traj[1], traj[2])
-            liveTraj.renderUKF(text="Iteration {} - Pos Error {} - Vel Error {}".format(t, round(posError), round(velError)))
+            liveTraj.renderUKF(
+                text="Iteration {} - Pos Error {} - Vel Error {}".format(
+                    t, round(posError), round(velError)
+                )
+            )
 
     if liveTraj:
         liveTraj.close()
 
     t = iterations - 1
     traj = (
-        np.array([d_traj['x'][t], d_traj['y'][t], d_traj['z'][t], d_traj['vx'][t], d_traj['vy'][t], d_traj['vz'][t]],
-                 dtype=float)).reshape(6, 1)
-        
+        np.array(
+            [
+                d_traj["x"][t],
+                d_traj["y"][t],
+                d_traj["z"][t],
+                d_traj["vx"][t],
+                d_traj["vy"][t],
+                d_traj["vz"][t],
+            ],
+            dtype=float,
+        )
+    ).reshape(6, 1)
+
     traj = traj.flatten()
     state = state.flatten()
-    posError = math.sqrt( np.sum((traj[:3] - state[:3])**2) )
-    velError = math.sqrt( np.sum((traj[3:6] - state[3:6])**2) )
-    print(f'Position error: {posError}\nVelocity error: {velError}')
-    assert posError <= POS_ERROR, 'Position error is too large'
-    assert velError <= VEL_ERROR, 'Velocity error is too large'
+    posError = math.sqrt(np.sum((traj[:3] - state[:3]) ** 2))
+    velError = math.sqrt(np.sum((traj[3:6] - state[3:6]) ** 2))
+    print(f"Position error: {posError}\nVelocity error: {velError}")
+    assert posError <= POS_ERROR, "Position error is too large"
+    assert velError <= VEL_ERROR, "Velocity error is too large"

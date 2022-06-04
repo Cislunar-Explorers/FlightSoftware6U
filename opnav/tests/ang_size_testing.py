@@ -15,10 +15,7 @@ def stereographic_inv(x, y):
 
     norm = x ** 2 + y ** 2 + 4
     # Integer types not allowed for reciprocal (#10374)
-    return (
-        stack((-4 * x, -4 * y, (8 - norm)), axis=-1)
-        * reciprocal(norm.astype(np.common_type(norm)))[..., newaxis]
-    )
+    return stack((-4 * x, -4 * y, (8 - norm)), axis=-1) * reciprocal(norm.astype(np.common_type(norm)))[..., newaxis]
     # Division works correctly with integers, unlike reciprocal
     # return stack((-4*x, -4*y, (8 - norm)), axis=-1)/norm[...,newaxis]
 
@@ -50,7 +47,7 @@ def st_circle_inv(rho_c, r_c):
 def get_radius_center_st():
     path = os.path.join(
         FLIGHT_SOFTWARE_PATH,
-        "OpticalNavigation/simulations/sim/data/traj-case1c_sim/observations.json",
+        "opnav/simulations/sim/data/traj-case1c_sim/observations.json",
     )
     st_rad_0 = 0
     center_st_0 = []

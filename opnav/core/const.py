@@ -300,9 +300,9 @@ class FileData:
         self.cam_num: int = int(re.search(r"[cam](\d+)", filename).group(1))
         self.exposure: str = str(re.search(r"[exp](High|Low)", filename).group(1))
         self.frame_num: int = int(re.search(r"[f](\d+)", filename).group(1))
-        self.timestamp: int = int(
-            re.search(r"[t](\d+)", filename).group(1)
-        ) * 1000  # 1000 factor only for case1c
+        self.timestamp: int = (
+            int(re.search(r"[t](\d+)", filename).group(1)) * 1000
+        )  # 1000 factor only for case1c
 
 
 class DetectionData:

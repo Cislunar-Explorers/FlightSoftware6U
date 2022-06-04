@@ -122,7 +122,7 @@ def get_detections(frames: "list[str]") -> "list[DetectionData]":
 
 
 def get_best_detection(
-    detections: "list[DetectionData]"
+    detections: "list[DetectionData]",
 ) -> Tuple[Optional[DetectionData], Optional[DetectionData], Optional[DetectionData]]:
     # (distance to center, DetectionData object)
     closest_e = (np.inf, None)

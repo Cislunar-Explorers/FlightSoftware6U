@@ -3,19 +3,22 @@ import math
 
 class NaNError(Exception):
     def __str__(self):
-        return 'NaN entry in dataset'
+        return "NaN entry in dataset"
+
 
 class NullEntry(Exception):
     def __str__(self):
-        return 'If one ground truth component of [c] contains \'-\', then all components must contain it as well'
+        return "If one ground truth component of [c] contains '-', then all components must contain it as well"
+
 
 class FalsePositiveDetection(Exception):
     def __str__(self):
-        return 'False positive detection'
+        return "False positive detection"
+
 
 class TrueNegativeDetection(Exception):
     def __str__(self):
-        return 'True negative detection'
+        return "True negative detection"
 
 
 def checkErrors(cHat, c):
@@ -30,8 +33,8 @@ def checkErrors(cHat, c):
     """
     x, y, r = c[0], c[1], c[2]
     # Check if any circles are detected when they shouldn't be (false positive)
-    if x == '-' or y =='-' or r == '-':
-        if not(x == '-' or y =='-' or r == '-'):
+    if x == "-" or y == "-" or r == "-":
+        if not (x == "-" or y == "-" or r == "-"):
             raise NullEntry()
         elif cHat is not None and len(cHat) >= 1:
             raise FalsePositiveDetection()
@@ -40,7 +43,7 @@ def checkErrors(cHat, c):
     # Check if circles weren't detected when they should have been (true negative)
     elif cHat is None:
         raise TrueNegativeDetection()
-    
+
 
 def calculateErrors(cHat, c):
     """
@@ -49,16 +52,24 @@ def calculateErrors(cHat, c):
     [cHat]: (xHat, yHat, rHat) of detected circles
     [c]: (x, y, r) of ground truth circles
     Throws:
-    Exception if NaN is detected anywhere 
-    Exception if one ground truth component of [c] contain '-', then all components must contain it as well 
+    Exception if NaN is detected anywhere
+    Exception if one ground truth component of [c] contain '-', then all components must contain it as well
     Exception for false positive detections
     Exception for true negative detections
     """
     print(cHat[0], c[0])
-    xHat, yHat, rHat, x, y, r = float(cHat[0]), float(cHat[1]), float(cHat[2]), float(c[0]), float(c[1]), float(c[2])
-    centerDistance = math.sqrt((xHat - x)**2 + (yHat - y)**2)
+    xHat, yHat, rHat, x, y, r = (
+        float(cHat[0]),
+        float(cHat[1]),
+        float(cHat[2]),
+        float(c[0]),
+        float(c[1]),
+        float(c[2]),
+    )
+    centerDistance = math.sqrt((xHat - x) ** 2 + (yHat - y) ** 2)
     radiusDistance = math.fabs(rHat - r)
     return centerDistance, radiusDistance
+
 
 """
 def test_earth():
@@ -70,7 +81,7 @@ def test_earth():
     for extension in types:
         files.extend(glob.glob(extension))
     if len(files) == 0:
-        if not os.path.isdir(loc):  
+        if not os.path.isdir(loc):
             assert False, f'\"{loc}\" is not a valid find dataset directory'
         else:
             # TODO: When one camera doesn't output images
@@ -88,9 +99,9 @@ def test_earth():
             checkErrors(earthCircles, trueEarthData)
         except (NaNError, NullEntry, FalsePositiveDetection, TrueNegativeDetection) as e:
             assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
-            
+
         # No Exceptions were raised
-        if not (earthCircles is None and '-' in trueEarthData):  
+        if not (earthCircles is None and '-' in trueEarthData):
             earthCenterError, earthRadiusError = calculateErrors(earthCircles[0][0], trueEarthData)
             print(f'Earth Result: center error: {earthCenterError}, radius error: {earthRadiusError}')
             assert earthCenterError <= EARTH_CENTER_ERROR, 'Earth error too large'
@@ -105,7 +116,7 @@ def test_sun():
     for extension in types:
         files.extend(glob.glob(extension))
     if len(files) == 0:
-        if not os.path.isdir(loc):  
+        if not os.path.isdir(loc):
             assert False, f'\"{loc}\" is not a valid find dataset directory'
         else:
             # TODO: When one camera doesn't output images
@@ -123,7 +134,7 @@ def test_sun():
             checkErrors(sunCircles, trueSunData)
         except (NaNError, NullEntry, FalsePositiveDetection, TrueNegativeDetection) as e:
             assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
-        
+
         # No Exceptions were raised
         if not (sunCircles is None and '-' in trueSunData):
             sunCenterError, sunRadiusError = calculateErrors(sunCircles[0][0], trueSunData)
@@ -140,7 +151,7 @@ def test_moon():
     for extension in types:
         files.extend(glob.glob(extension))
     if len(files) == 0:
-        if not os.path.isdir(loc):  
+        if not os.path.isdir(loc):
             assert False, f'\"{loc}\" is not a valid find dataset directory'
         else:
             # TODO: When one camera doesn't output images
@@ -158,9 +169,9 @@ def test_moon():
             checkErrors(moonCircles, trueMoonData)
         except (NaNError, NullEntry, FalsePositiveDetection, TrueNegativeDetection) as e:
             assert False, f'Could not calculate difference in center/radius for Earth in file --> {str(e)}'
-        
+
         # No Exceptions were raised
-        if not (moonCircles is None and '-' in moonCircles):      
+        if not (moonCircles is None and '-' in moonCircles):
             moonCenterError, moonRadiusError = calculateErrors(moonCircles[0][0], trueMoonData)
             print(f'Moon Result: center error: {moonCenterError}, radius error: {moonRadiusError}')
             assert moonCenterError < MOON_CENTER_ERROR, 'Moon center too large'

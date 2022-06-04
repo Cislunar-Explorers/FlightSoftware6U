@@ -103,7 +103,9 @@ def record_and_extract():
 
 def unix_timestamp_test():
     observeStart = datetime(2020, 7, 28, 22, 8, 3)  # TEMPORARY TESTING START TIME
-    observeStart = int(observeStart.replace(tzinfo=timezone.utc).timestamp() * 10 ** 6)  # In unix time
+    observeStart = int(
+        observeStart.replace(tzinfo=timezone.utc).timestamp() * 10 ** 6
+    )  # In unix time
 
     recordings = []
     camera_rec_params = CameraRecordingParameters(
@@ -215,21 +217,27 @@ def unix_timestamp_test():
     print("\n")
     # frames = frames0 + frames1 + frames2 + frames3 + frames4 + frames5
 
-    earthDetection = np.array([0.0229743, 0.28930023, 0.95696267, 0.06673563], dtype=float)
+    earthDetection = np.array(
+        [0.0229743, 0.28930023, 0.95696267, 0.06673563], dtype=float
+    )
     bestEarthTuple = (
         OPNAV_MEDIA_DIR + "cam3_expHigh_f17_t11585.jpg",
         0.2902110283408872,
         earthDetection,
     )
 
-    moonDetection = np.array([0.17976721, -0.22221176, 0.95828267, 0.00805734], dtype=float)
+    moonDetection = np.array(
+        [0.17976721, -0.22221176, 0.95828267, 0.00805734], dtype=float
+    )
     bestMoonTuple = (
         OPNAV_MEDIA_DIR + "cam3_expHigh_f17_t11585.jpg",
         0.28582217699623985,
         moonDetection,
     )
 
-    sunDetection = np.array([-0.03859251, -0.74174568, 0.66956998, 0.02205351], dtype=float)
+    sunDetection = np.array(
+        [-0.03859251, -0.74174568, 0.66956998, 0.02205351], dtype=float
+    )
     bestSunTuple = (
         OPNAV_MEDIA_DIR + "cam2_expLow_f0_t2094.jpg",
         0.21252515705861857,

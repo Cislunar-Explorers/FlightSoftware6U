@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from utils.constants import MAX_COMMAND_SIZE, MIN_COMMAND_SIZE, CommandEnum
+from utils.constants import MAX_COMMAND_DATA_SIZE, CommandEnum
 from utils.exceptions import CommandException
 from typing import TYPE_CHECKING, Union, Dict, List, Any, Optional
 from communications.codec import Codec
@@ -44,22 +44,14 @@ class Command(ABC):
 
     def __init__(self) -> None:
         self.uplink_buffer_size = sum([codec.num_bytes for codec in self.uplink_codecs])
-        if self.uplink_buffer_size > MAX_COMMAND_SIZE - MIN_COMMAND_SIZE:
-            logging.error(
-                f"Buffer size too big: {self.uplink_buffer_size} > {MAX_COMMAND_SIZE - MIN_COMMAND_SIZE}"
-            )
-        self.downlink_buffer_size = sum(
-            [codec.num_bytes for codec in self.downlink_codecs]
-        )
+        if self.uplink_buffer_size > MAX_COMMAND_DATA_SIZE:
+            logging.error(f"Buffer size too big: {self.uplink_buffer_size} > {MAX_COMMAND_DATA_SIZE}")
+        self.downlink_buffer_size = sum([codec.num_bytes for codec in self.downlink_codecs])
         self.uplink_codecs_dict = {codec.name: codec for codec in self.uplink_codecs}
-        self.downlink_codecs_dict = {
-            codec.name: codec for codec in self.downlink_codecs
-        }
+        self.downlink_codecs_dict = {codec.name: codec for codec in self.downlink_codecs}
 
     @abstractmethod
-    def _method(
-        self, main: Optional[MainSatelliteThread] = None, **kwargs
-    ) -> Optional[Dict[str, Union[float, int]]]:
+    def _method(self, main: Optional[MainSatelliteThread] = None, **kwargs) -> Optional[Dict[str, Union[float, int]]]:
         ...
 
     @staticmethod
@@ -74,9 +66,7 @@ class Command(ABC):
         return kwargs
 
     @staticmethod
-    def _pack(
-        kwargs: Dict[str, Any], codecs_dict: Dict[str, Codec], buffer_size: int
-    ) -> bytes:
+    def _pack(kwargs: Dict[str, Any], codecs_dict: Dict[str, Codec], buffer_size: int) -> bytes:
         buffer = bytearray(buffer_size)
         offset = 0
 
@@ -97,9 +87,7 @@ class Command(ABC):
         return self._unpack(arg_data, self.downlink_codecs_dict)
 
     def pack_telem(self, telem_dict) -> bytes:
-        return self._pack(
-            telem_dict, self.downlink_codecs_dict, self.downlink_buffer_size
-        )
+        return self._pack(telem_dict, self.downlink_codecs_dict, self.downlink_buffer_size)
 
     def packing_check(self, telem: Optional[Dict], codec_list: List[Codec]):
         error = False

@@ -47,7 +47,10 @@ COUNTER_SIZE = 3
 DATA_LEN_SIZE = 1
 MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + ID_SIZE + DATA_LEN_SIZE
 
-MAX_COMMAND_SIZE = 200  # Maximum command size based on the radio board's buffer size.
+AX5043_BUFFER_SIZE = 256
+
+MAX_COMMAND_DATA_SIZE = AX5043_BUFFER_SIZE - MIN_COMMAND_SIZE
+# Maximum command size based on the radio board's buffer size.
 # TODO: figure out what this number _actually_ is
 
 # Serializations Offsets

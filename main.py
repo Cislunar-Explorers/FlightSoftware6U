@@ -22,7 +22,7 @@ from udp_client.client import Client
 from communications.comms_driver import CommunicationsSystem
 from drivers.devices import DeviceContainer
 from drivers.nemo.nemo_manager import NemoManager
-import core.camera as camera
+import opnav.core.camera as camera
 from utils.parameter_utils import init_parameters
 from utils.db import create_sensor_tables_from_path
 

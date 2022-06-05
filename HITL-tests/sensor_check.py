@@ -3,8 +3,8 @@ from drivers.rtc import RTC
 from drivers.imu import Gyro, MagnetAccelerometer
 from drivers.adc import ADC
 from communications.satellite_radio import Radio
-from core.camera import PiCam
-from core.camera import CameraMux
+from opnav.core.camera import PiCam
+from opnav.core.camera import CameraMux
 from drivers.nemo.nemo import Nemo
 import logging
 from time import time

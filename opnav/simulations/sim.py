@@ -27,15 +27,15 @@ import numpy as np
 import math
 import os
 from tqdm import tqdm
-from simulations.animations import LiveMultipleTrajectoryPlot
 import argparse
-from simulations.getManeuvers import (
+from datetime import datetime
+from opnav.simulations.animations import LiveMultipleTrajectoryPlot
+from opnav.simulations.getManeuvers import (
     extractCheckpoints,
     getMissionTimeline,
     createDiscreteAttitudeManeuvers,
 )
-from datetime import datetime
-from core.ukf import __attitudeMatrix
+from opnav.core.ukf import __attitudeMatrix
 
 
 def isOrthogonal(a, b):

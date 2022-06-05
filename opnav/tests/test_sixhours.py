@@ -11,19 +11,19 @@ from time import sleep
 
 # from sqlalchemy.orm import session
 
-from core.ukf import runTrajUKF
-from tests.const import POS_ERROR_6HOURS, VEL_ERROR_6HOURS
-from tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
-from tests.const import MatlabTestCameraParameters
-from simulations.animations import LiveTrajectoryPlot
-from tests.gen_opnav_data import get6HoursBatch
-from tests.const import (
+from opnav.core.ukf import runTrajUKF
+from opnav.tests.const import POS_ERROR_6HOURS, VEL_ERROR_6HOURS
+from opnav.tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
+from opnav.tests.const import MatlabTestCameraParameters
+from opnav.simulations.animations import LiveTrajectoryPlot
+from opnav.tests.gen_opnav_data import get6HoursBatch
+from opnav.tests.const import (
     TEST_6HOURS_meas,
     TEST_6HOURS_moonEph,
     TEST_6HOURS_sunEph,
     TEST_6HOURS_traj,
 )
-from core.const import (
+from opnav.core.const import (
     AttitudeEstimateOutput,
     AttitudeStateVector,
     CameraMeasurementVector,
@@ -47,7 +47,7 @@ from FlightSoftware.utils.db import (
     OpNavTrajectoryStateModel,
     OpNavAttitudeStateModel,
 )
-import core.opnav as opnav
+import opnav.core.opnav as opnav
 
 SQL_PREFIX = "sqlite:///"
 sql_path = SQL_PREFIX + os.path.join("D:", "OpNav", "db", "satellite-db.sqlite")

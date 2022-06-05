@@ -1,5 +1,5 @@
 from typing import List
-from core.const import (
+from opnav.core.const import (
     AttitudeEstimateOutput,
     AttitudeStateVector,
     CovarianceMatrix,
@@ -9,10 +9,11 @@ from core.const import (
 )
 import pytest
 
-from core.attitude import runAttitudeUKF
-from simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
-from simulations.sim import isOrthogonal
-from core.ukf import __attitudeMatrix
+from opnav.core.attitude import runAttitudeUKF
+from opnav.simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
+from opnav.simulations.sim import isOrthogonal
+from opnav.core.ukf import __attitudeMatrix
+import opnav.tests.gen_opnav_data as generator
 
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
@@ -23,7 +24,6 @@ from copy import deepcopy
 from scipy.interpolate import InterpolatedUnivariateSpline
 from tqdm import tqdm
 
-import tests.gen_opnav_data as generator
 
 
 def test_attitude_6_hours():

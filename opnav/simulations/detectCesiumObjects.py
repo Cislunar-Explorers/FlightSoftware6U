@@ -10,8 +10,8 @@ import pandas as pd
 from tqdm import tqdm
 import threading
 
-from core.find_algos.find import round_up_to_odd
-from core.preprocess import rectilinearToStereographicProjection
+from opnav.core.find_algos.find import round_up_to_odd
+from opnav.core.preprocess import rectilinearToStereographicProjection
 
 """
 Extracts circles from iteration images generated in Cesium for true measurements (red moon texture, no directional lighting)

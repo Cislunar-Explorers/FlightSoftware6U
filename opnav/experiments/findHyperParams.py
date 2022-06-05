@@ -1,5 +1,5 @@
-from core.find_algos.find import find, round_up_to_odd, create_circular_mask
-from tests.test_find import calculateErrors
+from opnav.core.find_algos.find import find, round_up_to_odd, create_circular_mask
+from opnav.tests.test_find import calculateErrors
 import cv2
 import os
 import glob

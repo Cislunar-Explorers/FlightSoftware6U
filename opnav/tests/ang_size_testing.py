@@ -1,10 +1,10 @@
-# from core.find_algos.tiled_remap import get_angular_size
+# from opnav.core.find_algos.tiled_remap import get_angular_size
 from numpy import arctan, asarray, cos, newaxis, reciprocal, sin, sqrt, stack, tan
 import numpy as np
 import json
 import os
 
-# from core.find_algos.tiled_remap import
+# from opnav.core.find_algos.tiled_remap import
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 
@@ -15,7 +15,10 @@ def stereographic_inv(x, y):
 
     norm = x ** 2 + y ** 2 + 4
     # Integer types not allowed for reciprocal (#10374)
-    return stack((-4 * x, -4 * y, (8 - norm)), axis=-1) * reciprocal(norm.astype(np.common_type(norm)))[..., newaxis]
+    return (
+        stack((-4 * x, -4 * y, (8 - norm)), axis=-1)
+        * reciprocal(norm.astype(np.common_type(norm)))[..., newaxis]
+    )
     # Division works correctly with integers, unlike reciprocal
     # return stack((-4*x, -4*y, (8 - norm)), axis=-1)/norm[...,newaxis]
 

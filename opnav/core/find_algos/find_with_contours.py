@@ -1,4 +1,8 @@
-from core.const import ImageDetectionCircles, CameraParameters, CisLunarCameraParameters
+from opnav.core.const import (
+    ImageDetectionCircles,
+    CameraParameters,
+    CisLunarCameraParameters,
+)
 from utils.log import log
 from dataclasses import dataclass
 import cv2

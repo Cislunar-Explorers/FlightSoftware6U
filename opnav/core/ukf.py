@@ -1,4 +1,4 @@
-from core.const import (
+from opnav.core.const import (
     CameraMeasurementVector,
     CovarianceMatrix,
     EphemerisVector,
@@ -10,7 +10,7 @@ from core.const import (
 )
 import numpy as np
 import math
-from core.const import TrajUKFConstants as Const
+from opnav.core.const import TrajUKFConstants as Const
 
 
 def __length(M):
@@ -352,8 +352,8 @@ def runTrajUKF(
     initState.data = initState.data.reshape(6, 1)
     P.data = P.data.reshape(6, 6)
     if main_thrust_info is not None:
-        main_thrust_info.get_kick_orientation().data = (
-            main_thrust_info.get_kick_orientation().data.reshape(4, 1)
+        main_thrust_info.get_kick_orientation().data = main_thrust_info.get_kick_orientation().data.reshape(
+            4, 1
         )
 
     nx = __length(P.data)

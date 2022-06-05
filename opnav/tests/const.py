@@ -1,7 +1,6 @@
-from core.const import CameraParameters
+from opnav.core.const import CameraParameters
 import os
 import numpy as np
-import pytest
 
 # class MatlabTestCameraParameters:
 #     # Camera constants
@@ -29,7 +28,8 @@ TEST_ECLIPSEANDCRESCENTIMAGES = os.path.join(TEST_DATA_DIR, "EclipseAndCrescentI
 TEST_FIND_DATASET_IMAGE_DIR = "images"
 TEST_FIND_DATASET_CIRCLES_DIR = os.path.join("circles", "circles.csv")
 
-# TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec = os.path.join(TEST_DATA_DIR,'EM1_3DOF_Trajectory_June_27_2020_3600sec')
+# TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec =
+#   os.path.join(TEST_DATA_DIR,'EM1_3DOF_Trajectory_June_27_2020_3600sec')
 # TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_iterations = 'iterations'
 # TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_trajectory = os.path.join('trajectory','trajectory.csv')
 # TEST_EM1_3DOF_Trajectory_June_27_2020_3600sec_moonEph = os.path.join('ephemeris','moon_eph.csv')

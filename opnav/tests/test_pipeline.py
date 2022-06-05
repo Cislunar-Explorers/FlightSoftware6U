@@ -3,9 +3,9 @@ import numpy as np
 # import re
 from datetime import datetime, timedelta
 
-import core.opnav as opnav
+import opnav.core.opnav as opnav
 
-import core.const as opnav_constants
+import opnav.core.const as opnav_constants
 from tests.const import CesiumTestCameraParameters
 
 from utils.db import (
@@ -24,7 +24,7 @@ from utils.constants import DB_FILE
 
 # import utils.parameters as params
 
-# from core.ukf import runTrajUKF
+# from opnav.core.ukf import runTrajUKF
 # from tests.const import POS_ERROR, VEL_ERROR
 # from tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
 # from tests.const import MatlabTestCameraParameters

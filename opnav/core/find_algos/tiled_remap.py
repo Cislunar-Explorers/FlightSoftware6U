@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from core.const import CisLunarCameraParameters
+from opnav.core.const import CisLunarCameraParameters
 import cv2
 import numpy as np
 from math import tan, floor, ceil, atan, radians
-from core.const import CisLunarCameraParameters
+from opnav.core.const import CisLunarCameraParameters
 
 
 class Camera:

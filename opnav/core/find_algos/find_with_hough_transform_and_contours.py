@@ -1,4 +1,4 @@
-from core.const import (
+from opnav.core.const import (
     ImageDetectionCircles,
     CameraParameters,
     CisLunarCameraParameters,

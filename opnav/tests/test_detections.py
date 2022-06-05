@@ -1,11 +1,13 @@
-from core.find_algos.find_with_contours import find
+from opnav.core.find_algos.find_with_contours import find
 from utils.constants import FLIGHT_SOFTWARE_PATH, SURRENDER_LOCAL_DIR
 import numpy as np
 import unittest
 import glob
 import os
 
-truthValueFile = os.path.join(FLIGHT_SOFTWARE_PATH, "opnav/tests/truth_detections_case1c.csv")
+truthValueFile = os.path.join(
+    FLIGHT_SOFTWARE_PATH, "opnav/tests/truth_detections_case1c.csv"
+)
 surrenderPath = os.path.join(SURRENDER_LOCAL_DIR, "cislunar_case1c/*.jpg")
 
 
@@ -49,9 +51,15 @@ class Detections(unittest.TestCase):
 
         # Binarizes detections and pairs them this their corresponding filename
         # dict{key:filename, value:0/1}
-        earthDetect = dict(list(zip(filenames[1:], [0 if i == "" else 1 for i in earthDetect[1:]])))
-        moonDetect = dict(list(zip(filenames[1:], [0 if i == "" else 1 for i in moonDetect[1:]])))
-        sunDetect = dict(list(zip(filenames[1:], [0 if i == "" else 1 for i in sunDetect[1:]])))
+        earthDetect = dict(
+            list(zip(filenames[1:], [0 if i == "" else 1 for i in earthDetect[1:]]))
+        )
+        moonDetect = dict(
+            list(zip(filenames[1:], [0 if i == "" else 1 for i in moonDetect[1:]]))
+        )
+        sunDetect = dict(
+            list(zip(filenames[1:], [0 if i == "" else 1 for i in sunDetect[1:]]))
+        )
 
         frames = sorted(glob.glob(surrenderPath))
 
@@ -136,7 +144,9 @@ class Detections(unittest.TestCase):
             total_accuracy,
         )
 
-        self.assertGreaterEqual(total_accuracy, 0.90, "Find algorithm is < 90% accurate!")
+        self.assertGreaterEqual(
+            total_accuracy, 0.90, "Find algorithm is < 90% accurate!"
+        )
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from core.const import (
+from opnav.core.const import (
     AttitudeStateVector,
     CameraMeasurementVector,
     CameraParameters,
@@ -12,17 +12,17 @@ from core.const import (
     # TrajUKFConstants,
     TrajectoryStateVector,
 )
-from core.preprocess import extract_frames
-import core.ukf as traj_ukf
-import core.attitude as attitude
+from opnav.core.preprocess import extract_frames
+import opnav.core.ukf as traj_ukf
+import opnav.core.attitude as attitude
 
-# from core.sense import select_camera, record_video
-from core.sense import record_gyro
+# from opnav.core.sense import select_camera, record_video
+from opnav.core.sense import record_gyro
 
-# from core.preprocess import extract_frames
-# from core.find_algos.find_with_contours import find
-from core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters  # , BodyEnum
-from core.observe_functions import *
+# from opnav.core.preprocess import extract_frames
+# from opnav.core.find_algos.find_with_contours import find
+from opnav.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters  # , BodyEnum
+from opnav.core.observe_functions import *
 
 from utils.db import (
     create_sensor_tables_from_path,

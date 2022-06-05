@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 
 # import copy
-from core.find_algos.find_with_kmeans import getkmeans
+from opnav.core.find_algos.find_with_kmeans import getkmeans
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

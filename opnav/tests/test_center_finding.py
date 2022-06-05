@@ -11,8 +11,8 @@ import time
 from utils.constants import FLIGHT_SOFTWARE_PATH
 
 from utils.log import log
-from core.find_algos.find_with_hough_transform_and_contours import find
-from core.const import BodyEnum
+from opnav.core.find_algos.find_with_hough_transform_and_contours import find
+from opnav.core.const import BodyEnum
 
 
 # import argparse
@@ -31,7 +31,9 @@ class CenterDetections(unittest.TestCase):
         perf_values = {}
         truth_vals = truths[body]
         perf = []
-        distance = ((body_vals[0] - truth_vals[0]) ** 2 + (body_vals[1] - truth_vals[1]) ** 2) ** 0.5
+        distance = (
+            (body_vals[0] - truth_vals[0]) ** 2 + (body_vals[1] - truth_vals[1]) ** 2
+        ) ** 0.5
         perf += [distance, abs(body_vals[2] - truth_vals[2])]
         perf_values[body] = perf
         return perf_values
@@ -86,10 +88,16 @@ class CenterDetections(unittest.TestCase):
                     truthR = detection["radius_st"] * st_scale
                     body_det = detection["body"]
                     body_det = (
-                        BodyEnum.Earth if body_det == "Earth" else BodyEnum.Moon if body_det == "Moon" else BodyEnum.Sun
+                        BodyEnum.Earth
+                        if body_det == "Earth"
+                        else BodyEnum.Moon
+                        if body_det == "Moon"
+                        else BodyEnum.Sun
                     )
                     frame_truth_vals[body_det] = [truthX, truthY, truthR]
-                image_type = "image_stereographic" if st_gn == "st" else "image_gnomonic"
+                image_type = (
+                    "image_stereographic" if st_gn == "st" else "image_gnomonic"
+                )
                 all_truth_vals[frame[image_type]] = frame_truth_vals
         results = []
         # Comparing found values with truth values
@@ -97,7 +105,11 @@ class CenterDetections(unittest.TestCase):
             frame = frames[i]
             x = frame.split("/")[-1]
             truths = all_truth_vals[frame.split("/")[-1]]
-            _, body_vals = find(frame, st=True, pixel=pixel) if st_gn == "st" else find(frame, pixel=pixel)
+            _, body_vals = (
+                find(frame, st=True, pixel=pixel)
+                if st_gn == "st"
+                else find(frame, pixel=pixel)
+            )
             log.debug(f"{x}, {body_vals}")
             log.debug(f"Truth: {truths}\n")
             sun_vals = body_vals.get(BodyEnum.Sun)
@@ -123,7 +135,9 @@ class CenterDetections(unittest.TestCase):
             "w",
             newline="",
         ) as csvfile:
-            writer = csv.writer(csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer = csv.writer(
+                csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+            )
             writer.writerow(["Body", "Center", "Radius"])
             for result in results:
                 sun = result.get(BodyEnum.Sun)
@@ -168,7 +182,9 @@ class CenterDetections(unittest.TestCase):
         ax.title.set_text(title)
         plt.xlabel("Pixel Distance (px)")
         plt.ylabel("Number of Results")
-        fig.savefig(f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}/{filename}")
+        fig.savefig(
+            f"{self.cwd}/tests/tests/center_find_test_run_{str(self.now)}/{filename}"
+        )
         if show:
             plt.show()
         return data
@@ -196,9 +212,13 @@ class CenterDetections(unittest.TestCase):
         name = dir.split("/")[-1]
         results = self.get_results(dir, results_file, st_gn)
         log.debug(f"results: {results}")
-        center_data = self.center_histogram(results, center_histogram_file, name, st_gn=st_gn)
+        center_data = self.center_histogram(
+            results, center_histogram_file, name, st_gn=st_gn
+        )
         log.debug(f"center_data: {center_data}")
-        radius_data = self.radius_histogram(results, radius_histogram_file, name, st_gn=st_gn)
+        radius_data = self.radius_histogram(
+            results, radius_histogram_file, name, st_gn=st_gn
+        )
         log.debug(f"radius_data: {radius_data}")
         total_detections = len(center_data)
         correct_detections = 0

@@ -1,4 +1,4 @@
-from core.const import (
+from opnav.core.const import (
     BodyEnum,
     CisLunarCameraParameters,
     FileData,
@@ -7,8 +7,8 @@ from core.const import (
     CameraParameters,
     CameraRecordingParameters,
 )
-from core.find_algos.find_with_contours import find
-from core.sense import select_camera, record_video
+from opnav.core.find_algos.find_with_contours import find
+from opnav.core.sense import select_camera, record_video
 
 from adafruit_blinka.agnostic import board_id
 

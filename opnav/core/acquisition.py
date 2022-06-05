@@ -1,7 +1,7 @@
 import numpy as np
 import time
 
-from core.const import (
+from opnav.core.const import (
     ACQUISITION_ANGLE_INCREMENT,
     ACQUISITION_COMPENSATION_ROTATION,
     ACQUISITION_START_ANGLE,

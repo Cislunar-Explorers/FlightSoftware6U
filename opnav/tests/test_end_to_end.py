@@ -5,7 +5,7 @@ import glob
 # import logging
 from utils.log import log
 from opnav.tests import test_center_finding, test_reprojections, test_body_meas
-from core.const import BodyEnum
+from opnav.core.const import BodyEnum
 from utils.constants import FLIGHT_SOFTWARE_PATH
 import re
 import numpy as np
@@ -50,7 +50,9 @@ class TestEndToEnd(unittest.TestCase):
         log.debug("\n")
         log.debug("Stereographic Coordinate Comparison")
         for re_key in cd_dict_re.keys():  # Iterate through all files
-            st_key = re.sub("_re", "_st", re_key)  # Replace "_re" with "_st" to get stereographic filename
+            st_key = re.sub(
+                "_re", "_st", re_key
+            )  # Replace "_re" with "_st" to get stereographic filename
 
             re_dets = cd_dict_re[re_key]
             st_dets = cd_dict_st[st_key]
@@ -76,7 +78,9 @@ class TestEndToEnd(unittest.TestCase):
                         )
                         log.debug(f"Reproj File: {re_key} Body: {body} Error: {error}")
                     else:
-                        log.debug("Reproj detected a body that sim detection did not detect!")
+                        log.debug(
+                            "Reproj detected a body that sim detection did not detect!"
+                        )
         log.debug("\n")
 
     def run_body_meas_sim(self, path, centersReproj):
@@ -108,7 +112,9 @@ class TestEndToEnd(unittest.TestCase):
                 log.debug(f"Truth Angular Size: {truth_ang_size}")
 
                 diff = abs(calc_ang_size - truth_ang_size)
-                log.debug("Angular Size Diff: %2.8f rad, %2.8f deg" % (diff, np.rad2deg(diff)))
+                log.debug(
+                    "Angular Size Diff: %2.8f rad, %2.8f deg" % (diff, np.rad2deg(diff))
+                )
                 percent_err = 100 * (calc_ang_size - truth_ang_size) / truth_ang_size
                 log.debug("Percent Error: %2.8f%%\n" % percent_err)
 
@@ -136,7 +142,9 @@ class TestEndToEnd(unittest.TestCase):
         imgs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline")
         gn_list, st_list, re_list = self.reproject_images(imgs_path)
 
-        obs_path = os.path.join(DATA_DIR, "traj-case1c_sim_no_outline/observations.json")
+        obs_path = os.path.join(
+            DATA_DIR, "traj-case1c_sim_no_outline/observations.json"
+        )
 
         ###############################################################################################################
         # Second step: Center Finding

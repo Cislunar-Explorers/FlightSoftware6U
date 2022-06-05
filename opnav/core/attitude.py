@@ -1,5 +1,5 @@
 from typing import List
-from core.const import (
+from opnav.core.const import (
     AttitudeEstimateOutput,
     AttitudeStateVector,
     CovarianceMatrix,
@@ -7,7 +7,7 @@ from core.const import (
     GyroVars,
     QuaternionVector,
 )
-from core.const import AttitudeUKFConstants
+from opnav.core.const import AttitudeUKFConstants
 import numpy as np
 
 # from numpy.linalg import inv

@@ -5,6 +5,7 @@ from core.const import (
     TrajectoryStateVector,
     Vector6,
 )
+from gen_ukf_trajectory import angular_separation
 import numpy as np
 
 from core.ukf import runTrajUKF
@@ -353,7 +354,6 @@ class TestSequence(unittest.TestCase):
 
         assert posError <= TestSequence.pos_error_val, "Position error is too large"
         assert velError <= TestSequence.vel_error_val, "Velocity error is too large"
-
 
 if __name__ == "__main__":
     unittest.main()

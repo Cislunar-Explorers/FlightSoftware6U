@@ -1,12 +1,16 @@
 import json
 import math
-import os.path
+
+# import os.path
+import os
 import numpy as np
 from numpy import linspace, radians, zeros
 
 # from OpticalNavigation.core.find_algos import tiled_remap
 from pyquaternion import Quaternion
 import cv2
+from argparse import ArgumentParser
+from tqdm import tqdm
 from OpticalNavigation.simulations.sim.src.libopnav import (
     sin2_vangle,
     gnomonic_inv,
@@ -25,7 +29,24 @@ from utils.constants import FLIGHT_SOFTWARE_PATH
 SIM_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/simulations/sim")
 
 
-def main():
+def main() -> None:
+    argparse = ArgumentParser(
+        description="Handles input & image generation args for opnav sim"
+    )
+
+    argparse.add_argument(
+        "input", help="name of csv file in directory of the sim, w/o extension"
+    )
+
+    argparse.add_argument(
+        "-g", action="store_true", help="set -g flag to generate images"
+    )
+    args = argparse.parse_args()
+    run_opnav_sim(args.input, args.g)
+    return
+
+
+def run_opnav_sim(input_file: str, gen_img_flag: bool) -> None:
     # Camera properties
     width = 3280
     height = 2464
@@ -55,10 +76,21 @@ def main():
         ),
     }
 
+    # when input_file is outside out this directory, remove all leading folders
+    input_file_trimmed = os.path.basename(os.path.normpath(input_file))
+
+    output_dir = os.path.join(SIM_DIR, "data", input_file_trimmed + "_sim")
+    os.mkdir(output_dir)
+    if gen_img_flag:
+        # print("generating images directory")
+        os.mkdir(output_dir + "/images")
+
     # Absolute time corresponding to t0 (from OreKit simulation that produced traj2.csv)
+    # Epoch depends on the specific trajectory, but I've left it here for reference -mm2774
+    # TODO: every trajectory should have an absolute time, so this shouldn't be hardcoded
     epoch = "2020-06-27T21:08:03.0212 TDB"
 
-    with open(os.path.join(SIM_DIR, "data/trajectory_sim_easy/cameras.json"), "w") as f:
+    with open(os.path.join(output_dir, "cameras.json"), "w") as f:
         json.dump(
             {"epoch": epoch, "cameras": [c.as_dict() for c in cameras.values()]},
             f,
@@ -84,12 +116,18 @@ def main():
     # exhausted.  Note: this will leave a trailing comma, which is not allowed by JSON.
     # Note: This is also not inside the object enclosing 'cameras' when it should be.
     observations = []
-    with open(os.path.join(SIM_DIR, "src/trajectory.csv")) as f:
-        for line in f:
+    num_lines = sum(1 for line in open(input_file + ".csv"))
+    with open(input_file + ".csv") as f:
+        # for line in f:
+        for line in tqdm(f, total=num_lines):
             if line[0] == "t":
                 continue  # Skip header
             t0, bodies, spacecraft, obs = parse_line(line, q_world2spin, omega_body)
-            frames = render_acquisition(t0, cameras, spacecraft, obs, colors_bgr)
+            frames = []
+            if gen_img_flag:
+                frames = render_acquisition(
+                    t0, cameras, spacecraft, obs, colors_bgr, output_dir
+                )
             observations.append(
                 {
                     "time": t0,
@@ -99,9 +137,7 @@ def main():
                     "frames": frames,
                 }
             )
-    with open(
-        os.path.join(SIM_DIR, "data/trajectory_sim_easy/observations.json"), "w"
-    ) as f:
+    with open(os.path.join(output_dir, "observations.json"), "w") as f:
         json.dump({"observations": observations}, f, indent=4)
 
 
@@ -312,7 +348,7 @@ def parse_line(line, q_world2spin, omega_body):
     return t0, bodies, spacecraft, [ObservedBody(b, spacecraft) for b in bodies]
 
 
-def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr):
+def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr, output_dir):
     """
     t0: Time at start of acquisition [s]
     """
@@ -372,12 +408,7 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr):
                     f,
                     delta_t,
                 )
-                cv2.imwrite(
-                    os.path.join(
-                        SIM_DIR, "data/trajectory_sim_easy/images", filename_gn
-                    ),
-                    img,
-                )
+                cv2.imwrite(os.path.join(output_dir, "images", filename_gn), img)
 
                 # Render ideal stereographic frame
                 img = render_stereographic(camera, obs_f, colors_bgr, illuminator)
@@ -388,12 +419,7 @@ def render_acquisition(t0, cameras, spacecraft, obs_bodies, colors_bgr):
                     f,
                     delta_t,
                 )
-                cv2.imwrite(
-                    os.path.join(
-                        SIM_DIR, "data/trajectory_sim_easy/images", filename_st
-                    ),
-                    img,
-                )
+                cv2.imwrite(os.path.join(output_dir, "images", filename_st), img)
 
                 frame_dict = {
                     "time": tf,

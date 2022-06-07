@@ -144,14 +144,18 @@ def test_traj_generation() -> None:
     Test for trajectory generation:
     - Run through the full program using the c1_discretized dataset
     - Compare end results columns with the initial dataset columns
-    - [z1...z6] are tested through sim validation and recreation of
+    - [z1...z6] are tested with recreation of
         previous UKF experiments using the same dataset
+    - Can replace this with any trajectory for sanity check
     """
 
+    # set testing parameters
     traj_path = TEST_C1_DISCRETIZED
+    traj_dt = 60
+    traj_length = 120
 
-    # run generation on c1 file if it doesn't exist
-    main(TEST_C1_DISCRETIZED, 60)
+    # run generation on file if it doesn't exist
+    # main(TEST_C1_DISCRETIZED, 60)  # set trajectory name and dt
 
     # load initial trajectory data
     path_dtraj = os.path.join(traj_path, "trajectory", "trajectory.csv")
@@ -183,11 +187,11 @@ def test_traj_generation() -> None:
     print("Sun ephemeris columns are equal!")
 
     # lastly ensure time column hasn't changed
-    time_list = np.arange(120) * 60
-    np.testing.assert_equal(ukf_traj.iloc[:, 0:1].values, time_list.reshape(120, 1))
+    time_list = np.arange(traj_length) * traj_dt
+    np.testing.assert_equal(ukf_traj.iloc[:, 0:1].values, time_list.reshape(traj_length, 1))
     print("Time columns are equal!")
 
 
 if __name__ == "__main__":
-    # main(TEST_C1_DISCRETIZED, 60)
+    main(TEST_C1_DISCRETIZED, 60)  # set trajectory name and dt
     test_traj_generation()

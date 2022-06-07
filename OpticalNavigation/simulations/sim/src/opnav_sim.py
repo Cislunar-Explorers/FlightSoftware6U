@@ -114,9 +114,10 @@ def run_opnav_sim(input_file: str, gen_img_flag: bool) -> None:
     # exhausted.  Note: this will leave a trailing comma, which is not allowed by JSON.
     # Note: This is also not inside the object enclosing 'cameras' when it should be.
     observations = []
+    num_lines = sum(1 for line in open(input_file + ".csv"))
     with open(input_file + ".csv") as f:
         # for line in f:
-        for line in tqdm(f):
+        for line in tqdm(f, total=num_lines):
             if line[0] == "t":
                 continue  # Skip header
             t0, bodies, spacecraft, obs = parse_line(line, q_world2spin, omega_body)

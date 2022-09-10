@@ -70,14 +70,10 @@ class FlightMode:
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
                     return consts.FMEnum.Maneuver.value
             else:
-                logging.info(
-                    f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped"
-                )
+                logging.info(f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped")
 
         # go to reorientation mode if there is something in the reorientation queue
-        if (
-            not self._main.reorientation_queue.empty()
-        ) or self._main.reorientation_list:
+        if (not self._main.reorientation_queue.empty()) or self._main.reorientation_list:
             return consts.FMEnum.AttitudeAdjustment.value
 
         # go to comms mode if there is something in the comms queue to downlink
@@ -87,9 +83,7 @@ class FlightMode:
 
         # if battery is low, go to low battery mode
         batt_voltage = self._main.telemetry.gom.hk.vbatt
-        if (
-            batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD
-        ) and not params.IGNORE_LOW_BATTERY:
+        if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) and not params.IGNORE_LOW_BATTERY:
             return consts.FMEnum.LowBatterySafety.value
 
         # if there is no current coming into the batteries, go to low battery mode
@@ -176,16 +170,14 @@ class FlightMode:
     def __exit__(self, exc_type, exc_value, tb):
         logging.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
-            logging.error(
-                f"Flight Mode failed with error type {exc_type} and value {exc_value}"
-            )
+            logging.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
             logging.error(f"Failed with traceback:\n {''.join(format_tb(tb))}")
 
 
 class PauseBackgroundMode(FlightMode):
     """Model for FlightModes that require precise timing
-        Pause garbage collection and anything else that could
-        interrupt critical thread"""
+    Pause garbage collection and anything else that could
+    interrupt critical thread"""
 
     def run_mode(self):
         super().run_mode()
@@ -273,9 +265,7 @@ class CommsMode(FlightMode):
 
         # Resume electrolysis if we paused it to transmit
         if self.electrolyzing:
-            self._main.devices.gom.electrolyzers.set(
-                True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
-            )
+            self._main.devices.gom.electrolyzers.set(True, delay=params.DEFAULT_ELECTROLYSIS_DELAY)
 
     def execute_downlinks(self):
         while not self._main.downlink_queue.empty():
@@ -315,9 +305,7 @@ class OpNavMode(FlightMode):
             logging.info("[OPNAV]: Able to run next opnav")
             self._main.last_opnav_run = time()
             logging.info("[OPNAV]: Starting opnav subprocess")
-            self._main.opnav_process = Process(
-                target=self.opnav_subprocess, args=(self._main.opnav_proc_queue,)
-            )
+            self._main.opnav_process = Process(target=self.opnav_subprocess, args=(self._main.opnav_proc_queue,))
             self._main.opnav_process.start()
         self.completed_task()
 
@@ -333,8 +321,8 @@ class OpNavMode(FlightMode):
     def opnav_subprocess(self, q):
         # TODO put in try...except
         # TODO change from pytest to actual opnav
-        # os.system("pytest OpticalNavigation/tests/test_pipeline.py::test_start")
-        # subprocess.run('pytest OpticalNavigation/tests/test_pipeline.py::test_start', shell=True)
+        # os.system("pytest opnav/tests/test_pipeline.py::test_start")
+        # subprocess.run('pytest opnav/tests/test_pipeline.py::test_start', shell=True)
         subprocess.run(
             "echo [OPNAV]: Subprocess Start; sleep 1m; echo [OPNAV]: Subprocess end",
             shell=True,
@@ -354,9 +342,7 @@ class SensorMode(FlightMode):
         super().__init__(main)
 
     def update_state(self) -> int:
-        return (
-            consts.NO_FM_CHANGE
-        )  # intentional: we don't want to update FM when testing sensors
+        return consts.NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
 
     def run_mode(self):
         raise NotImplementedError
@@ -395,13 +381,9 @@ class NormalMode(FlightMode):
         if not self._main.FMQueue.empty():
             return self._main.FMQueue.get()
 
-        time_for_opnav: bool = (
-            time() - self._main.last_opnav_run
-        ) // 60 > params.OPNAV_INTERVAL
+        time_for_opnav: bool = (time() - self._main.last_opnav_run) // 60 > params.OPNAV_INTERVAL
 
-        time_for_telem: bool = (
-            time() - self._main.devices.radio.last_transmit_time
-        ) // 60 > params.TELEM_INTERVAL
+        time_for_telem: bool = (time() - self._main.devices.radio.last_transmit_time) // 60 > params.TELEM_INTERVAL
 
         need_to_electrolyze: bool = self._main.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
 
@@ -440,9 +422,7 @@ class NormalMode(FlightMode):
         if time_for_telem:
             # Add a standard packet to the downlink queue for our period telemetry beacon
             telem = self._main.telemetry.standard_packet_dict()
-            downlink = self._main.command_handler.pack_telemetry(
-                consts.CommandEnum.BasicTelem, telem
-            )
+            downlink = self._main.command_handler.pack_telemetry(consts.CommandEnum.BasicTelem, telem)
             self._main.downlink_queue.put(downlink)
             logging.info("Added a standard telemetry packet to the downlink queue")
 

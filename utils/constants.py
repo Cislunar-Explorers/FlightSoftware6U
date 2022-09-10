@@ -60,7 +60,7 @@ DATA_OFFSET = DATA_LEN_SIZE + DATA_LEN_OFFSET
 # Important paths
 # FLIGHT_SOFTWARE_PATH = '/home/pi/FlightSoftware/'
 PARAMETERS_JSON_PATH = os.path.join(FLIGHT_SOFTWARE_PATH, "utils/parameters.json")
-OPNAV_MEDIA_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "OpticalNavigation/opnav_media/")
+OPNAV_MEDIA_DIR = os.path.join(FLIGHT_SOFTWARE_PATH, "opnav/opnav_media/")
 
 
 class StringEnum(str, Enum):

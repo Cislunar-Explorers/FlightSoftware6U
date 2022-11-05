@@ -193,6 +193,7 @@ class MainSatelliteThread(Thread):
             and fm_to_update_to != self.flight_mode.flight_mode_id
         ):
             self.replace_flight_mode_by_id(fm_to_update_to)
+        return self.flight_mode
 
     def clear_command_queue(self):
         while not self.command_queue.empty():
@@ -237,7 +238,7 @@ class MainSatelliteThread(Thread):
                 sleep(2)  # TODO remove when flight modes execute real tasks
 
                 self.poll_inputs()
-                self.update_state()
+                _ = self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

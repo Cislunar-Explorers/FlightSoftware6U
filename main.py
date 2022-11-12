@@ -25,12 +25,13 @@ from drivers.nemo.nemo_manager import NemoManager
 import opnav.core.camera as camera
 from utils.parameter_utils import init_parameters
 from utils.db import create_sensor_tables_from_path
+from sim.sim_data import SimData
 
 
 class MainSatelliteThread(Thread):
     flight_mode: FlightMode
 
-    def __init__(self):
+    def __init__(self, is_sim_run=False):
         super().__init__()
         logging.info("Initializing...")
         init_parameters()
@@ -82,6 +83,12 @@ class MainSatelliteThread(Thread):
 
         logging.info("opening UDP client socket")
         self.client = Client("192.168.0.200", 3333)
+
+        self.is_sim_run = is_sim_run
+
+        if self.is_sim_run:
+            logging.info("initializing sim data object")
+            self.sim_data = SimData()
 
         logging.info("Done intializing")
 
@@ -163,9 +170,9 @@ class MainSatelliteThread(Thread):
     def attach_sigint_handler(self):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
-    def poll_inputs(self):
+    def poll_inputs(self, sim_observed_state=None):
 
-        self.flight_mode.poll_inputs()
+        self.flight_mode.poll_inputs(sim_observed_state)
         # TODO: move this following if block to the telemetry module
         if self.devices.radio.connected:
             # Listening for new commands
@@ -224,10 +231,31 @@ class MainSatelliteThread(Thread):
             # delete file
             os.remove(filename)
 
+    def read_command_queue_from_sim(self, sim_input):
+        # TODO: Add sim_input commands to self.comamnd_queue
+        pass
+
     # Run the current flight mode
     def run_mode(self):
         with self.flight_mode:
             self.flight_mode.run_mode()
+
+    # Step through one time step
+    def step(self, sim_input):
+        self.poll_inputs(sim_input)
+
+        # Write updated state per time step to output
+        updated_state = self.update_state()
+        self.sim_data.write_multi_entries(updated_state.__dict__)
+
+        # Read from sim input command queue
+        self.read_command_queue_from_sim(sim_input)
+        self.execute_commands()  # Set goal or execute command immediately
+        self.run_mode()
+
+        # write data to sim data object
+        self.sim_data.write_multi_entries(self.telemetry.detailed_packet_dict())
+        return self.sim_data.to_dict()
 
     # Wrap in try finally block to ensure it stays live
     def run(self):
@@ -238,7 +266,7 @@ class MainSatelliteThread(Thread):
                 sleep(2)  # TODO remove when flight modes execute real tasks
 
                 self.poll_inputs()
-                _ = self.update_state()
+                self.update_state()
                 self.read_command_queue_from_file()
                 self.execute_commands()  # Set goal or execute command immediately
                 self.run_mode()

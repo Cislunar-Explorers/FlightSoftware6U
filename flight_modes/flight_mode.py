@@ -248,47 +248,85 @@ class CommsMode(FlightMode):
         self.electrolyzing = False
 
     def enter_transmit_safe_mode(self):
+        # Check if hardware is available or if we should write to sim output instead
+        if self._main.sim_output is None:
+            # Stop electrolyzing
+            if self._main.devices.gom.is_electrolyzing():
+                self.electrolyzing = True
+                self._main.devices.gom.electrolyzers.set(False)
 
-        # Stop electrolyzing
-        if self._main.devices.gom.is_electrolyzing():
-            self.electrolyzing = True
-            self._main.devices.gom.electrolyzers.set(False)
+            # Set RF receiving side to low
+            self._main.devices.gom.rf_rx.set(False)
 
-        # Set RF receiving side to low
-        self._main.devices.gom.rf_rx.set(False)
+            # Turn off LNA
+            self._main.devices.gom.lna.set(False)
 
-        # Turn off LNA
-        self._main.devices.gom.lna.set(False)
+            # Set RF transmitting side to high
+            self._main.devices.gom.rf_tx.set(True)
 
-        # Set RF transmitting side to high
-        self._main.devices.gom.rf_tx.set(True)
+            # Turn on power amplifier
+            self._main.devices.gom.pa.set(True)
+        else:
+            # Writing hardware calls to sim instead
 
-        # Turn on power amplifier
-        self._main.devices.gom.pa.set(True)
+            # TODO: Sim out the check to devices.gom.is_electrolyzing()
+
+            # Set RF receiving side to low
+            self._main.sim_output.write_single_entry("gom.rf_rx", False)
+
+            # Turn off LNA
+            self._main.sim_output.write_single_entry("gom.lna", False)
+
+            # Set RF transmitting side to high
+            self._main.sim_output.write_single_entry("gom.rf_tx", True)
+
+            # Turn on power amplifier
+            self._main.sim_output.write_single_entry("gom.pa", True)
 
     def exit_transmit_safe_mode(self):
+        # Check if hardware is available or if we should write to sim output instead
+        if self._main.sim_output is None:
+            # Turn off power amplifier
+            self._main.devices.gom.pa.set(False)
 
-        # Turn off power amplifier
-        self._main.devices.gom.pa.set(False)
+            # Set RF transmitting side to low
+            self._main.devices.gom.rf_tx.set(False)
 
-        # Set RF transmitting side to low
-        self._main.devices.gom.rf_tx.set(False)
+            # Turn on LNA
+            self._main.devices.gom.lna.set(True)
 
-        # Turn on LNA
-        self._main.devices.gom.lna.set(True)
+            # Set RF receiving side to high
+            self._main.devices.gom.rf_rx.set(True)
 
-        # Set RF receiving side to high
-        self._main.devices.gom.rf_rx.set(True)
+            # Resume electrolysis if we paused it to transmit
+            if self.electrolyzing:
+                self._main.devices.gom.electrolyzers.set(
+                    True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
+                )
+        else:
+            # Turn off power amplifier
+            self._main.sim_output.write_single_entry("pa", False)
 
-        # Resume electrolysis if we paused it to transmit
-        if self.electrolyzing:
-            self._main.devices.gom.electrolyzers.set(
-                True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
-            )
+            # Set RF transmitting side to low
+            self._main.sim_output.write_single_entry("rf_tx", False)
+
+            # Turn on LNA
+            self._main.sim_output.write_single_entry("lna", True)
+
+            # Set RF receiving side to high
+            self._main.sim_output.write_single_entry("rf_rx", True)
+
+            # Resume electrolysis if we paused it to transmit
+            # TODO: Mock check to self.electrolyzing
 
     def execute_downlinks(self):
         while not self._main.downlink_queue.empty():
-            self._main.devices.radio.transmit(self._main.downlink_queue.get())
+            if self._main.sim_output is None:
+                self._main.devices.radio.transmit(self._main.downlink_queue.get())
+            else:
+                self._main.sim_output.write_single_entry(
+                    "radio.transmit", self._main.downlink_queue.get()
+                )
             self._main.downlink_counter += 1
             # TODO: revisit and see if we actually need this
             sleep(params.DOWNLINK_BUFFER_TIME)
@@ -404,17 +442,28 @@ class NormalMode(FlightMode):
         if not self._main.FMQueue.empty():
             return self._main.FMQueue.get()
 
-        time_for_opnav: bool = (
-            time() - self._main.last_opnav_run
-        ) // 60 > params.OPNAV_INTERVAL
+        if self._main.sim_input is None:
+            time_for_opnav: bool = (
+                time() - self._main.last_opnav_run
+            ) // 60 > params.OPNAV_INTERVAL
+            time_for_telem: bool = (
+                time() - self._main.devices.radio.last_transmit_time
+            ) // 60 > params.TELEM_INTERVAL
+        else:
+            # TODO: Sim out opnav
+            time_for_opnav: bool = False
 
-        time_for_telem: bool = (
-            time() - self._main.devices.radio.last_transmit_time
-        ) // 60 > params.TELEM_INTERVAL
+            # TODO: Read from sim input/output radio.last_transmit_time
+            # TODO: Sim out radio
+            time_for_telem: bool = False
 
         need_to_electrolyze: bool = self._main.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
 
-        currently_electrolyzing = self._main.devices.gom.is_electrolyzing()
+        if self._main.sim_input is None:
+            currently_electrolyzing = self._main.devices.gom.is_electrolyzing()
+        else:
+            # TODO: Sim out gom.is_electrolyzing
+            currently_electrolyzing = False
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
@@ -425,7 +474,10 @@ class NormalMode(FlightMode):
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
             logging.info("No need to electrolyze, turning OFF electrolyzers")
-            self._main.devices.gom.electrolyzers.set(False)
+            if self._main.sim_output is None:
+                self._main.devices.gom.electrolyzers.set(False)
+            else:
+                self._main.sim_output.write_single_entry("gom.electrolyzers", False)
 
         if currently_electrolyzing and need_to_electrolyze:
             logging.debug("Already electrolyzing")
@@ -434,7 +486,10 @@ class NormalMode(FlightMode):
         # if below pressure and not electrolyzing, start electrolyzing
         if not currently_electrolyzing and need_to_electrolyze:
             logging.info("Not electrolyzing, turning ON electrolyzers")
-            self._main.devices.gom.electrolyzers.set(True)
+            if self._main.sim_output is None:
+                self._main.devices.gom.electrolyzers.set(True)
+            else:
+                self._main.sim_output.write_single_entry("gom.electrolyzers", True)
 
         if not currently_electrolyzing and not need_to_electrolyze:
             logging.debug("Electrolyzers already OFF")

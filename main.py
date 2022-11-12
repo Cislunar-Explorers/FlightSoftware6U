@@ -89,6 +89,7 @@ class MainSatelliteThread(Thread):
         if self.is_sim_run:
             logging.info("initializing sim data object")
             self.sim_output = SimData()
+            self.sim_input = None
 
         logging.info("Done intializing")
 
@@ -171,16 +172,19 @@ class MainSatelliteThread(Thread):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def poll_inputs(self, sim_input=None):
-
         self.flight_mode.poll_inputs(sim_input)
-        # TODO: move this following if block to the telemetry module
-        if self.devices.radio.connected:
-            # Listening for new commands
-            newCommand = self.devices.radio.receiveSignal()
-            if newCommand is not None:
-                self.command_queue.put(bytes(newCommand))
-            else:
-                logging.debug("Not Received")
+        if sim_input is None:
+            # TODO: move this following if block to the telemetry module
+            if self.devices.radio.connected:
+                # Listening for new commands
+                newCommand = self.devices.radio.receiveSignal()
+                if newCommand is not None:
+                    self.command_queue.put(bytes(newCommand))
+                else:
+                    logging.debug("Not Received")
+        else:
+            # TODO: Sim out radio
+            pass
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -242,6 +246,7 @@ class MainSatelliteThread(Thread):
 
     # Step through one time step
     def step(self, sim_input):
+        self.sim_input = sim_input
         self.poll_inputs(sim_input)
 
         # Write updated state per time step to output
@@ -286,11 +291,15 @@ class MainSatelliteThread(Thread):
                 self.shutdown()
 
     def shutdown(self):
-        if self.devices.gom.connected:
-            self.devices.gom.all_off()
-        if self.nemo_manager is not None:
-            self.nemo_manager.close()
-        logging.critical("Shutting down flight software")
+        if self.sim_input is None:
+            if self.devices.gom.connected:
+                self.devices.gom.all_off()
+            if self.nemo_manager is not None:
+                self.nemo_manager.close()
+        if self.sim_output is None:
+            logging.critical("Shutting down flight software")
+        else:
+            self.sim_output.write_single_entry("Shutting down flight software", "")
 
 
 if __name__ == "__main__":

@@ -40,21 +40,23 @@ class FlightMode:
         self._main = main
         self.task_completed = False
 
-    def update_state(self) -> int:
+    def update_state(self, sim_data=None) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but
         this serves as a basis for which most other flight modes can build off of."""
 
-        # I am not sure this will properly work, but shuld have little impact for software demo
-        if self._main.opnav_process.is_alive():
-            try:
-                self._main.opnav_process.join(timeout=1)
-                result = self._main.opnav_proc_queue.get(timeout=1)
-                logging.info("[OPNAV]: ", result)
-            except Empty:
-                if not self._main.opnav_process.is_alive():
-                    self._main.opnav_process.terminate()
-                    logging.info("[OPNAV]: Process Terminated")
+        # If this is a sim run, there's currently no support for simulating Opnav.
+        if sim_data is None:
+            # I am not sure this will properly work, but shuld have little impact for software demo
+            if self._main.opnav_process.is_alive():
+                try:
+                    self._main.opnav_process.join(timeout=1)
+                    result = self._main.opnav_proc_queue.get(timeout=1)
+                    logging.info("[OPNAV]: ", result)
+                except Empty:
+                    if not self._main.opnav_process.is_alive():
+                        self._main.opnav_process.terminate()
+                        logging.info("[OPNAV]: Process Terminated")
 
         flight_mode_id = self.flight_mode_id
 
@@ -85,21 +87,24 @@ class FlightMode:
         if not self._main.downlink_queue.empty():
             return consts.FMEnum.CommsMode.value
 
-        # if battery is low, go to low battery mode
-        batt_voltage = self._main.telemetry.gom.hk.vbatt
-        if (
-            batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD
-        ) and not params.IGNORE_LOW_BATTERY:
-            return consts.FMEnum.LowBatterySafety.value
-
-        # if there is no current coming into the batteries, go to low battery mode
-        if (
-            sum(self._main.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT
-            and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD
-            and not params.IGNORE_LOW_BATTERY
-        ):
-            return consts.FMEnum.LowBatterySafety.value
-
+        if sim_data is None:
+            # if battery is low, go to low battery mode
+            batt_voltage = self._main.telemetry.gom.hk.vbatt
+            if (
+                batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD
+            ) and not params.IGNORE_LOW_BATTERY:
+                return consts.FMEnum.LowBatterySafety.value
+            # if there is no current coming into the batteries, go to low battery mode
+            if (
+                sum(self._main.telemetry.gom.hk.curin)
+                < params.ENTER_ECLIPSE_MODE_CURRENT
+                and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD
+                and not params.IGNORE_LOW_BATTERY
+            ):
+                return consts.FMEnum.LowBatterySafety.value
+        else:
+            # TODO: Implement sim mocking of battery level
+            batt_voltage = 0
         if self.task_completed:
             if self._main.FMQueue.empty():
                 return consts.FMEnum.Normal.value

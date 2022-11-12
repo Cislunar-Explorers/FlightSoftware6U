@@ -190,7 +190,7 @@ class MainSatelliteThread(Thread):
         logging.info(f"Changed to FM#{self.flight_mode.flight_mode_id}")
 
     def update_state(self):
-        fm_to_update_to = self.flight_mode.update_state()
+        fm_to_update_to = self.flight_mode.update_state(self.sim_data)
 
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
         if fm_to_update_to is None:

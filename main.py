@@ -88,7 +88,7 @@ class MainSatelliteThread(Thread):
 
         if self.is_sim_run:
             logging.info("initializing sim data object")
-            self.sim_data = SimData()
+            self.sim_output = SimData()
 
         logging.info("Done intializing")
 
@@ -170,9 +170,9 @@ class MainSatelliteThread(Thread):
     def attach_sigint_handler(self):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
-    def poll_inputs(self, sim_observed_state=None):
+    def poll_inputs(self, sim_input=None):
 
-        self.flight_mode.poll_inputs(sim_observed_state)
+        self.flight_mode.poll_inputs(sim_input)
         # TODO: move this following if block to the telemetry module
         if self.devices.radio.connected:
             # Listening for new commands
@@ -190,7 +190,7 @@ class MainSatelliteThread(Thread):
         logging.info(f"Changed to FM#{self.flight_mode.flight_mode_id}")
 
     def update_state(self):
-        fm_to_update_to = self.flight_mode.update_state(self.sim_data)
+        fm_to_update_to = self.flight_mode.update_state(self.sim_output)
 
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
         if fm_to_update_to is None:
@@ -246,7 +246,7 @@ class MainSatelliteThread(Thread):
 
         # Write updated state per time step to output
         updated_state = self.update_state()
-        self.sim_data.write_multi_entries(updated_state.__dict__)
+        self.sim_output.write_multi_entries(updated_state.__dict__)
 
         # Read from sim input command queue
         self.read_command_queue_from_sim(sim_input)
@@ -254,8 +254,8 @@ class MainSatelliteThread(Thread):
         self.run_mode()
 
         # write data to sim data object
-        self.sim_data.write_multi_entries(self.telemetry.detailed_packet_dict())
-        return self.sim_data.to_dict()
+        self.sim_output.write_multi_entries(self.telemetry.detailed_packet_dict())
+        return self.sim_output.to_dict()
 
     # Wrap in try finally block to ensure it stays live
     def run(self):

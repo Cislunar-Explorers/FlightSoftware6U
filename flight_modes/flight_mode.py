@@ -40,13 +40,13 @@ class FlightMode:
         self._main = main
         self.task_completed = False
 
-    def update_state(self, sim_data=None) -> int:
+    def update_state(self, sim_input=None) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but
         this serves as a basis for which most other flight modes can build off of."""
 
         # If this is a sim run, there's currently no support for simulating Opnav.
-        if sim_data is None:
+        if sim_input is None:
             # I am not sure this will properly work, but shuld have little impact for software demo
             if self._main.opnav_process.is_alive():
                 try:
@@ -87,7 +87,7 @@ class FlightMode:
         if not self._main.downlink_queue.empty():
             return consts.FMEnum.CommsMode.value
 
-        if sim_data is None:
+        if sim_input is None:
             # if battery is low, go to low battery mode
             batt_voltage = self._main.telemetry.gom.hk.vbatt
             if (
@@ -140,8 +140,8 @@ class FlightMode:
             for finished_command in finished_commands:
                 self._main.commands_to_execute.remove(finished_command)
 
-    def poll_inputs(self, sim_sensory_data=None):
-        if sim_sensory_data is None:
+    def poll_inputs(self, sim_input=None):
+        if sim_input is None:
             # TODO: Comment on what polling inputs means and how they differ across flight modes
             self._main.devices.gom.tick_wdt()  # FIXME; we don't want this for flight
             # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug

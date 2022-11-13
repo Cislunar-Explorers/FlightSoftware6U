@@ -89,7 +89,6 @@ class MainSatelliteThread(Thread):
         if self.is_sim_run:
             logging.info("initializing sim data object")
             self.sim_output = SimData()
-            self.sim_input = None
 
         logging.info("Done intializing")
 

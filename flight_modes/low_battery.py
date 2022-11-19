@@ -37,6 +37,16 @@ class LowBatterySafetyMode(FlightMode):
                 self._main.devices.gom.glowplug_1.set(False)
                 self._main.devices.gom.glowplug_2.set(False)
                 self._main.devices.gom.solenoid.set(False)
+            elif self._main.sim_output is not None:
+                self._main.sim_output.write_single_entry("pa", False)
+                self._main.sim_output.write_single_entry("rf_tx", False)
+                self._main.sim_output.write_single_entry("rf_rx", True)
+
+                self._main.sim_output.write_single_entry("electrolyzers", False)
+                self._main.sim_output.write_single_entry("burnwire", False)
+                self._main.sim_output.write_single_entry("glowplug_1", False)
+                self._main.sim_output.write_single_entry("glowplug_2", False)
+                self._main.sim_output.write_single_entry("solenoid", False)
 
             self.completed_task()
 
@@ -53,13 +63,20 @@ class LowBatterySafetyMode(FlightMode):
         if self._main.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
-        time_for_opnav = (
-            time() - self._main.last_opnav_run
-        ) // 60 < params.LB_OPNAV_INTERVAL
+        if self._main.sim_input is None:
+            time_for_opnav = (
+                time() - self._main.last_opnav_run
+            ) // 60 < params.LB_OPNAV_INTERVAL
+            time_for_telem = (
+                time() - self._main.devices.radio.last_transmit_time
+            ) // 60 < params.LB_TLM_INTERVAL
+        else:
+            # TODO: Sim out opnav
+            time_for_opnav: bool = False
 
-        time_for_telem = (
-            time() - self._main.devices.radio.last_transmit_time
-        ) // 60 < params.LB_TLM_INTERVAL
+            # TODO: Read from sim input/output radio.last_transmit_time
+            # TODO: Sim out radio
+            time_for_telem: bool = False
 
         if time_for_opnav:  # TODO: and FMEnum.OpNav.value not in self._main.FMQueue:
             self._main.FMQueue.put(FMEnum.OpNav.value)

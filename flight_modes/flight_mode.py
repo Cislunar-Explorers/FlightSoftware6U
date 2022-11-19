@@ -40,21 +40,23 @@ class FlightMode:
         self._main = main
         self.task_completed = False
 
-    def update_state(self) -> int:
+    def update_state(self, sim_input=None) -> int:
         """update_state returns the id of the flight mode that we want to change to, which is then used in main.py's
         update_state to update our flight mode. All flight modes have their own implementation of update_state, but
         this serves as a basis for which most other flight modes can build off of."""
 
-        # I am not sure this will properly work, but shuld have little impact for software demo
-        if self._main.opnav_process.is_alive():
-            try:
-                self._main.opnav_process.join(timeout=1)
-                result = self._main.opnav_proc_queue.get(timeout=1)
-                logging.info("[OPNAV]: ", result)
-            except Empty:
-                if not self._main.opnav_process.is_alive():
-                    self._main.opnav_process.terminate()
-                    logging.info("[OPNAV]: Process Terminated")
+        # If this is a sim run, there's currently no support for simulating Opnav.
+        if sim_input is None:
+            # I am not sure this will properly work, but shuld have little impact for software demo
+            if self._main.opnav_process.is_alive():
+                try:
+                    self._main.opnav_process.join(timeout=1)
+                    result = self._main.opnav_proc_queue.get(timeout=1)
+                    logging.info("[OPNAV]: ", result)
+                except Empty:
+                    if not self._main.opnav_process.is_alive():
+                        self._main.opnav_process.terminate()
+                        logging.info("[OPNAV]: Process Terminated")
 
         flight_mode_id = self.flight_mode_id
 
@@ -70,10 +72,14 @@ class FlightMode:
                 if params.SCHEDULED_BURN_TIME - time() < (60.0 * consts.BURN_WAIT_TIME):
                     return consts.FMEnum.Maneuver.value
             else:
-                logging.info(f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped")
+                logging.info(
+                    f"Scheduled burn time at {params.SCHEDULED_BURN_TIME} has passed and will be skipped"
+                )
 
         # go to reorientation mode if there is something in the reorientation queue
-        if (not self._main.reorientation_queue.empty()) or self._main.reorientation_list:
+        if (
+            not self._main.reorientation_queue.empty()
+        ) or self._main.reorientation_list:
             return consts.FMEnum.AttitudeAdjustment.value
 
         # go to comms mode if there is something in the comms queue to downlink
@@ -81,19 +87,24 @@ class FlightMode:
         if not self._main.downlink_queue.empty():
             return consts.FMEnum.CommsMode.value
 
-        # if battery is low, go to low battery mode
-        batt_voltage = self._main.telemetry.gom.hk.vbatt
-        if (batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD) and not params.IGNORE_LOW_BATTERY:
-            return consts.FMEnum.LowBatterySafety.value
-
-        # if there is no current coming into the batteries, go to low battery mode
-        if (
-            sum(self._main.telemetry.gom.hk.curin) < params.ENTER_ECLIPSE_MODE_CURRENT
-            and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD
-            and not params.IGNORE_LOW_BATTERY
-        ):
-            return consts.FMEnum.LowBatterySafety.value
-
+        if sim_input is None:
+            # if battery is low, go to low battery mode
+            batt_voltage = self._main.telemetry.gom.hk.vbatt
+            if (
+                batt_voltage < params.ENTER_LOW_BATTERY_MODE_THRESHOLD
+            ) and not params.IGNORE_LOW_BATTERY:
+                return consts.FMEnum.LowBatterySafety.value
+            # if there is no current coming into the batteries, go to low battery mode
+            if (
+                sum(self._main.telemetry.gom.hk.curin)
+                < params.ENTER_ECLIPSE_MODE_CURRENT
+                and batt_voltage < params.ENTER_ECLIPSE_MODE_THRESHOLD
+                and not params.IGNORE_LOW_BATTERY
+            ):
+                return consts.FMEnum.LowBatterySafety.value
+        else:
+            # TODO: Implement sim mocking of battery level
+            batt_voltage = 0
         if self.task_completed:
             if self._main.FMQueue.empty():
                 return consts.FMEnum.Normal.value
@@ -129,12 +140,16 @@ class FlightMode:
             for finished_command in finished_commands:
                 self._main.commands_to_execute.remove(finished_command)
 
-    def poll_inputs(self):
-        # TODO: Comment on what polling inputs means and how they differ across flight modes
-        self._main.devices.gom.tick_wdt()  # FIXME; we don't want this for flight
-        # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
-        # An idea is to only pet the watchdog every time we recieve a command from the ground
-        self._main.telemetry.poll()
+    def poll_inputs(self, sim_input=None):
+        if sim_input is None:
+            # TODO: Comment on what polling inputs means and how they differ across flight modes
+            self._main.devices.gom.tick_wdt()  # FIXME; we don't want this for flight
+            # The above line "pets" the dedicated watchdog timer on the GOMSpace P31u. This is an operational bug
+            # An idea is to only pet the watchdog every time we recieve a command from the ground
+            self._main.telemetry.poll()
+        else:
+            # TODO: process sim_sensory_data
+            pass
 
     def completed_task(self):
         self.task_completed = True
@@ -170,7 +185,9 @@ class FlightMode:
     def __exit__(self, exc_type, exc_value, tb):
         logging.debug(f"Finishing flight mode {self.flight_mode_id}")
         if exc_type is not None:
-            logging.error(f"Flight Mode failed with error type {exc_type} and value {exc_value}")
+            logging.error(
+                f"Flight Mode failed with error type {exc_type} and value {exc_value}"
+            )
             logging.error(f"Failed with traceback:\n {''.join(format_tb(tb))}")
 
 
@@ -231,45 +248,85 @@ class CommsMode(FlightMode):
         self.electrolyzing = False
 
     def enter_transmit_safe_mode(self):
+        # Check if hardware is available or if we should write to sim output instead
+        if self._main.sim_output is None:
+            # Stop electrolyzing
+            if self._main.devices.gom.is_electrolyzing():
+                self.electrolyzing = True
+                self._main.devices.gom.electrolyzers.set(False)
 
-        # Stop electrolyzing
-        if self._main.devices.gom.is_electrolyzing():
-            self.electrolyzing = True
-            self._main.devices.gom.electrolyzers.set(False)
+            # Set RF receiving side to low
+            self._main.devices.gom.rf_rx.set(False)
 
-        # Set RF receiving side to low
-        self._main.devices.gom.rf_rx.set(False)
+            # Turn off LNA
+            self._main.devices.gom.lna.set(False)
 
-        # Turn off LNA
-        self._main.devices.gom.lna.set(False)
+            # Set RF transmitting side to high
+            self._main.devices.gom.rf_tx.set(True)
 
-        # Set RF transmitting side to high
-        self._main.devices.gom.rf_tx.set(True)
+            # Turn on power amplifier
+            self._main.devices.gom.pa.set(True)
+        else:
+            # Writing hardware calls to sim instead
 
-        # Turn on power amplifier
-        self._main.devices.gom.pa.set(True)
+            # TODO: Sim out the check to devices.gom.is_electrolyzing()
+
+            # Set RF receiving side to low
+            self._main.sim_output.write_single_entry("gom.rf_rx", False)
+
+            # Turn off LNA
+            self._main.sim_output.write_single_entry("gom.lna", False)
+
+            # Set RF transmitting side to high
+            self._main.sim_output.write_single_entry("gom.rf_tx", True)
+
+            # Turn on power amplifier
+            self._main.sim_output.write_single_entry("gom.pa", True)
 
     def exit_transmit_safe_mode(self):
+        # Check if hardware is available or if we should write to sim output instead
+        if self._main.sim_output is None:
+            # Turn off power amplifier
+            self._main.devices.gom.pa.set(False)
 
-        # Turn off power amplifier
-        self._main.devices.gom.pa.set(False)
+            # Set RF transmitting side to low
+            self._main.devices.gom.rf_tx.set(False)
 
-        # Set RF transmitting side to low
-        self._main.devices.gom.rf_tx.set(False)
+            # Turn on LNA
+            self._main.devices.gom.lna.set(True)
 
-        # Turn on LNA
-        self._main.devices.gom.lna.set(True)
+            # Set RF receiving side to high
+            self._main.devices.gom.rf_rx.set(True)
 
-        # Set RF receiving side to high
-        self._main.devices.gom.rf_rx.set(True)
+            # Resume electrolysis if we paused it to transmit
+            if self.electrolyzing:
+                self._main.devices.gom.electrolyzers.set(
+                    True, delay=params.DEFAULT_ELECTROLYSIS_DELAY
+                )
+        else:
+            # Turn off power amplifier
+            self._main.sim_output.write_single_entry("pa", False)
 
-        # Resume electrolysis if we paused it to transmit
-        if self.electrolyzing:
-            self._main.devices.gom.electrolyzers.set(True, delay=params.DEFAULT_ELECTROLYSIS_DELAY)
+            # Set RF transmitting side to low
+            self._main.sim_output.write_single_entry("rf_tx", False)
+
+            # Turn on LNA
+            self._main.sim_output.write_single_entry("lna", True)
+
+            # Set RF receiving side to high
+            self._main.sim_output.write_single_entry("rf_rx", True)
+
+            # Resume electrolysis if we paused it to transmit
+            # TODO: Mock check to self.electrolyzing
 
     def execute_downlinks(self):
         while not self._main.downlink_queue.empty():
-            self._main.devices.radio.transmit(self._main.downlink_queue.get())
+            if self._main.sim_output is None:
+                self._main.devices.radio.transmit(self._main.downlink_queue.get())
+            else:
+                self._main.sim_output.write_single_entry(
+                    "radio.transmit", self._main.downlink_queue.get()
+                )
             self._main.downlink_counter += 1
             # TODO: revisit and see if we actually need this
             sleep(params.DOWNLINK_BUFFER_TIME)
@@ -305,7 +362,9 @@ class OpNavMode(FlightMode):
             logging.info("[OPNAV]: Able to run next opnav")
             self._main.last_opnav_run = time()
             logging.info("[OPNAV]: Starting opnav subprocess")
-            self._main.opnav_process = Process(target=self.opnav_subprocess, args=(self._main.opnav_proc_queue,))
+            self._main.opnav_process = Process(
+                target=self.opnav_subprocess, args=(self._main.opnav_proc_queue,)
+            )
             self._main.opnav_process.start()
         self.completed_task()
 
@@ -342,7 +401,9 @@ class SensorMode(FlightMode):
         super().__init__(main)
 
     def update_state(self) -> int:
-        return consts.NO_FM_CHANGE  # intentional: we don't want to update FM when testing sensors
+        return (
+            consts.NO_FM_CHANGE
+        )  # intentional: we don't want to update FM when testing sensors
 
     def run_mode(self):
         raise NotImplementedError
@@ -381,13 +442,28 @@ class NormalMode(FlightMode):
         if not self._main.FMQueue.empty():
             return self._main.FMQueue.get()
 
-        time_for_opnav: bool = (time() - self._main.last_opnav_run) // 60 > params.OPNAV_INTERVAL
+        if self._main.sim_input is None:
+            time_for_opnav: bool = (
+                time() - self._main.last_opnav_run
+            ) // 60 > params.OPNAV_INTERVAL
+            time_for_telem: bool = (
+                time() - self._main.devices.radio.last_transmit_time
+            ) // 60 > params.TELEM_INTERVAL
+        else:
+            # TODO: Sim out opnav
+            time_for_opnav: bool = False
 
-        time_for_telem: bool = (time() - self._main.devices.radio.last_transmit_time) // 60 > params.TELEM_INTERVAL
+            # TODO: Read from sim input/output radio.last_transmit_time
+            # TODO: Sim out radio
+            time_for_telem: bool = False
 
         need_to_electrolyze: bool = self._main.telemetry.prs.pressure < params.IDEAL_CRACKING_PRESSURE
 
-        currently_electrolyzing = self._main.devices.gom.is_electrolyzing()
+        if self._main.sim_input is None:
+            currently_electrolyzing = self._main.devices.gom.is_electrolyzing()
+        else:
+            # TODO: Sim out gom.is_electrolyzing
+            currently_electrolyzing = False
 
         # if we don't want to electrolyze (per GS command), set need_to_electrolyze to false
         need_to_electrolyze = need_to_electrolyze and params.WANT_TO_ELECTROLYZE
@@ -398,7 +474,10 @@ class NormalMode(FlightMode):
         # if currently electrolyzing and over pressure, stop electrolyzing
         if currently_electrolyzing and not need_to_electrolyze:
             logging.info("No need to electrolyze, turning OFF electrolyzers")
-            self._main.devices.gom.electrolyzers.set(False)
+            if self._main.sim_output is None:
+                self._main.devices.gom.electrolyzers.set(False)
+            else:
+                self._main.sim_output.write_single_entry("gom.electrolyzers", False)
 
         if currently_electrolyzing and need_to_electrolyze:
             logging.debug("Already electrolyzing")
@@ -407,7 +486,10 @@ class NormalMode(FlightMode):
         # if below pressure and not electrolyzing, start electrolyzing
         if not currently_electrolyzing and need_to_electrolyze:
             logging.info("Not electrolyzing, turning ON electrolyzers")
-            self._main.devices.gom.electrolyzers.set(True)
+            if self._main.sim_output is None:
+                self._main.devices.gom.electrolyzers.set(True)
+            else:
+                self._main.sim_output.write_single_entry("gom.electrolyzers", True)
 
         if not currently_electrolyzing and not need_to_electrolyze:
             logging.debug("Electrolyzers already OFF")
@@ -422,7 +504,9 @@ class NormalMode(FlightMode):
         if time_for_telem:
             # Add a standard packet to the downlink queue for our period telemetry beacon
             telem = self._main.telemetry.standard_packet_dict()
-            downlink = self._main.command_handler.pack_telemetry(consts.CommandEnum.BasicTelem, telem)
+            downlink = self._main.command_handler.pack_telemetry(
+                consts.CommandEnum.BasicTelem, telem
+            )
             self._main.downlink_queue.put(downlink)
             logging.info("Added a standard telemetry packet to the downlink queue")
 

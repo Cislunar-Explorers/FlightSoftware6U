@@ -25,12 +25,13 @@ from drivers.nemo.nemo_manager import NemoManager
 import opnav.core.camera as camera
 from utils.parameter_utils import init_parameters
 from utils.db import create_sensor_tables_from_path
+from sim.sim_data import SimData
 
 
 class MainSatelliteThread(Thread):
     flight_mode: FlightMode
 
-    def __init__(self):
+    def __init__(self, is_sim_run=False):
         super().__init__()
         logging.info("Initializing...")
         init_parameters()
@@ -82,6 +83,12 @@ class MainSatelliteThread(Thread):
 
         logging.info("opening UDP client socket")
         self.client = Client("192.168.0.200", 3333)
+
+        self.is_sim_run = is_sim_run
+
+        if self.is_sim_run:
+            logging.info("initializing sim data object")
+            self.sim_output = SimData()
 
         logging.info("Done intializing")
 
@@ -163,17 +170,20 @@ class MainSatelliteThread(Thread):
     def attach_sigint_handler(self):
         signal.signal(signal.SIGINT, self.handle_sigint)
 
-    def poll_inputs(self):
-
-        self.flight_mode.poll_inputs()
-        # TODO: move this following if block to the telemetry module
-        if self.devices.radio.connected:
-            # Listening for new commands
-            newCommand = self.devices.radio.receiveSignal()
-            if newCommand is not None:
-                self.command_queue.put(bytes(newCommand))
-            else:
-                logging.debug("Not Received")
+    def poll_inputs(self, sim_input=None):
+        self.flight_mode.poll_inputs(sim_input)
+        if sim_input is None:
+            # TODO: move this following if block to the telemetry module
+            if self.devices.radio.connected:
+                # Listening for new commands
+                newCommand = self.devices.radio.receiveSignal()
+                if newCommand is not None:
+                    self.command_queue.put(bytes(newCommand))
+                else:
+                    logging.debug("Not Received")
+        else:
+            # TODO: Sim out radio
+            pass
 
     def replace_flight_mode_by_id(self, new_flight_mode_id):
         self.replace_flight_mode(build_flight_mode(self, new_flight_mode_id))
@@ -183,7 +193,7 @@ class MainSatelliteThread(Thread):
         logging.info(f"Changed to FM#{self.flight_mode.flight_mode_id}")
 
     def update_state(self):
-        fm_to_update_to = self.flight_mode.update_state()
+        fm_to_update_to = self.flight_mode.update_state(self.sim_output)
 
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
         if fm_to_update_to is None:
@@ -193,6 +203,7 @@ class MainSatelliteThread(Thread):
             and fm_to_update_to != self.flight_mode.flight_mode_id
         ):
             self.replace_flight_mode_by_id(fm_to_update_to)
+        return self.flight_mode
 
     def clear_command_queue(self):
         while not self.command_queue.empty():
@@ -223,10 +234,32 @@ class MainSatelliteThread(Thread):
             # delete file
             os.remove(filename)
 
+    def read_command_queue_from_sim(self, sim_input):
+        # TODO: Add sim_input commands to self.comamnd_queue
+        pass
+
     # Run the current flight mode
     def run_mode(self):
         with self.flight_mode:
             self.flight_mode.run_mode()
+
+    # Step through one time step
+    def step(self, sim_input):
+        self.sim_input = sim_input
+        self.poll_inputs(sim_input)
+
+        # Write updated state per time step to output
+        updated_state = self.update_state()
+        self.sim_output.write_multi_entries(updated_state.__dict__)
+
+        # Read from sim input command queue
+        self.read_command_queue_from_sim(sim_input)
+        self.execute_commands()  # Set goal or execute command immediately
+        self.run_mode()
+
+        # write data to sim data object
+        self.sim_output.write_multi_entries(self.telemetry.detailed_packet_dict())
+        return self.sim_output.to_dict()
 
     # Wrap in try finally block to ensure it stays live
     def run(self):
@@ -257,11 +290,15 @@ class MainSatelliteThread(Thread):
                 self.shutdown()
 
     def shutdown(self):
-        if self.devices.gom.connected:
-            self.devices.gom.all_off()
-        if self.nemo_manager is not None:
-            self.nemo_manager.close()
-        logging.critical("Shutting down flight software")
+        if self.sim_input is None:
+            if self.devices.gom.connected:
+                self.devices.gom.all_off()
+            if self.nemo_manager is not None:
+                self.nemo_manager.close()
+        if self.sim_output is None:
+            logging.critical("Shutting down flight software")
+        else:
+            self.sim_output.write_single_entry("Shutting down flight software", "")
 
 
 if __name__ == "__main__":

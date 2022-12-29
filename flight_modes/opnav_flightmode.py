@@ -4,8 +4,8 @@ import sqlite3
 from sqlalchemy.exc import SQLAlchemyError
 from multiprocessing import Process
 
-from utils.constants import FMEnum
-from utils.db import OpNavCoordinatesModel
+from fsw_utils.constants import FMEnum
+from fsw_utils.db import OpNavCoordinatesModel
 import logging
 from .flight_mode import PauseBackgroundMode
 

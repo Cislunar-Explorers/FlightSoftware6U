@@ -8,19 +8,19 @@ import opnav.core.opnav as opnav
 import opnav.core.const as opnav_constants
 from tests.const import CesiumTestCameraParameters
 
-from utils.db import (
+from fsw_utils.db import (
     create_sensor_tables_from_path,
     OpNavTrajectoryStateModel,
     OpNavAttitudeStateModel,
 )
-from utils.db import (
+from fsw_utils.db import (
     OpNavEphemerisModel,
     OpNavCameraMeasurementModel,
     OpNavPropulsionModel,
     OpNavGyroMeasurementModel,
     RebootsModel,
 )
-from utils.constants import DB_FILE
+from fsw_utils.constants import DB_FILE
 
 # import utils.parameters as params
 

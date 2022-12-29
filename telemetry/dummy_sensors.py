@@ -1,4 +1,4 @@
-from utils.parameters import HIGH_CRACKING_PRESSURE
+from fsw_utils.parameters import HIGH_CRACKING_PRESSURE
 from telemetry.sensor import SynchronousSensor
 
 

@@ -2,10 +2,10 @@ import time
 from queue import PriorityQueue
 
 import pytest
-import utils.constants as consts
-import utils.parameters as params
+import fsw_utils.constants as consts
+import fsw_utils.parameters as params
 from flight_modes.maneuver_flightmode import ManeuverMode
-from main import MainSatelliteThread
+from main.main import MainSatelliteThread
 from drivers.gom import Gomspace
 from drivers.power.loadswitch import mockGPIOLoadSwitch, mockP31uLoadSwitch
 import logging

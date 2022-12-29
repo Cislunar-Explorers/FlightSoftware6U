@@ -9,7 +9,7 @@ from bitstring import BitArray
 
 from communications.satellite_radio import Radio
 
-from utils.constants import ZERO_WORD, ONE_WORD
+from fsw_utils.constants import ZERO_WORD, ONE_WORD
 
 
 class Groundstation:

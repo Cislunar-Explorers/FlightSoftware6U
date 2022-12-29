@@ -13,8 +13,8 @@ from flight_modes.low_battery import LowBatterySafetyMode
 from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.maneuver_flightmode import ManeuverMode
 from flight_modes.attitude_adjustment import AAMode
-from utils.constants import FMEnum
-from utils.exceptions import UnknownFlightModeException
+from fsw_utils.constants import FMEnum
+from fsw_utils.exceptions import UnknownFlightModeException
 
 FLIGHT_MODE_DICT = {
     FMEnum.Boot.value: BootUpMode,

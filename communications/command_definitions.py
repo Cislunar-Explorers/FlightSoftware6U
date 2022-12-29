@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 from communications.codec import Codec
 from communications.commands import Command
 from communications import codecs
-from utils import parameter_utils
+from fsw_utils import parameter_utils
 
-from utils import gom_util
+from fsw_utils import gom_util
 
 if TYPE_CHECKING:
-    from main import MainSatelliteThread
+    from main.main import MainSatelliteThread
 # for an explanation of the above 4 lines of code, see
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 # It lets your IDE know what type(main) is, without causing any circular imports at runtime.
@@ -18,20 +18,20 @@ if TYPE_CHECKING:
 import drivers.power.power_structs as ps
 import time
 import hashlib
-from utils.constants import (
+from fsw_utils.constants import (
     FMEnum,
     CommandEnum,
     CommandKwargs as ck,
     DownlinkKwargs as dk,
     GomConfKwargs,
 )
-import utils.constants as consts
-from utils.exceptions import CommandArgException
+import fsw_utils.constants as consts
+from fsw_utils.exceptions import CommandArgException
 import subprocess
 
 
 import os
-import utils.parameters as params
+import fsw_utils.parameters as params
 
 
 class FM_Switch(Command):

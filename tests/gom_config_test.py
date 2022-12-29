@@ -1,9 +1,9 @@
 from random import randint
 import drivers.power.power_structs as ps
-from main import MainSatelliteThread
-from utils.constants import CommandEnum
+from main.main import MainSatelliteThread
+from fsw_utils.constants import CommandEnum
 from communications.command_handler import CommandHandler
-from utils.gom_util import (
+from fsw_utils.gom_util import (
     dict_from_eps_config,
     eps_config_from_dict,
     dict_from_eps_config2,

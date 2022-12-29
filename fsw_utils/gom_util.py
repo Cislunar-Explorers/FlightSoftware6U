@@ -1,5 +1,5 @@
 import drivers.power.power_structs as ps
-from utils.constants import GomConfKwargs
+from fsw_utils.constants import GomConfKwargs
 from typing import Dict, List, cast
 
 

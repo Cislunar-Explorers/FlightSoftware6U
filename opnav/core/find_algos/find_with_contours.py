@@ -3,7 +3,7 @@ from opnav.core.const import (
     CameraParameters,
     CisLunarCameraParameters,
 )
-from utils.log import log
+from fsw_utils.log import log
 from dataclasses import dataclass
 import cv2
 import numpy as np

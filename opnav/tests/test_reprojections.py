@@ -5,7 +5,7 @@ import glob
 import os
 from opnav.core.find_algos import tiled_remap
 import unittest
-from utils.constants import FLIGHT_SOFTWARE_PATH
+from fsw_utils.constants import FLIGHT_SOFTWARE_PATH
 
 DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/opnav/simulations/sim/data/"
 

@@ -57,7 +57,7 @@ class AAMode(PauseBackgroundMode):
         # self.latest_opnav_quat: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
         # self.latest_opnav_time = float()
 
-    def update_state(self) -> int:
+    def update_state(self, sim_input=None) -> int:
         return super().update_state()
 
     # check if exit condition has completed

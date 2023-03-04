@@ -29,7 +29,7 @@ class ManeuverMode(PauseBackgroundMode):
             and current_pressure - prior_pressure <= params.PRESSURE_DELTA
         )
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         if self.task_completed is True:
             logging.info("Maneuver complete. Exiting maneuver mode...")
             return consts.FMEnum.Normal.value

@@ -227,7 +227,7 @@ class TestMode(PauseBackgroundMode):
     def __init__(self, main):
         super().__init__(main)
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         # this is intentional - we don't want the FM to update if we are testing something
         return consts.NO_FM_CHANGE
 
@@ -331,7 +331,7 @@ class CommsMode(FlightMode):
             # TODO: revisit and see if we actually need this
             sleep(params.DOWNLINK_BUFFER_TIME)
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         super_fm = super().update_state()
         if super_fm != consts.NO_FM_CHANGE:
             return super_fm
@@ -368,7 +368,7 @@ class OpNavMode(FlightMode):
             self._main.opnav_process.start()
         self.completed_task()
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         super_fm = super().update_state()
         if super_fm != consts.NO_FM_CHANGE:
             return super_fm
@@ -400,7 +400,7 @@ class SensorMode(FlightMode):
     def __init__(self, main):
         super().__init__(main)
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         return (
             consts.NO_FM_CHANGE
         )  # intentional: we don't want to update FM when testing sensors
@@ -433,7 +433,7 @@ class NormalMode(FlightMode):
     def poll_inputs(self):
         super().poll_inputs()
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         super_fm = super().update_state()
         if super_fm != consts.NO_FM_CHANGE:
             return super_fm
@@ -524,7 +524,7 @@ class CommandMode(PauseBackgroundMode):
     def __init__(self, main):
         super().__init__(main)
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         # DO NOT TICK THE WDT
         super_fm = super().update_state()
         if super_fm != consts.NO_FM_CHANGE:

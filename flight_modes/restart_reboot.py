@@ -48,7 +48,7 @@ class BootUpMode(FlightMode):
         self.session.add(new_bootup)
         self.session.commit()
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         return NO_FM_CHANGE
 
 

@@ -69,7 +69,7 @@ class OpNavMode(PauseBackgroundMode):
         self.run_opnav()
         self.task_completed()
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         super_fm = super().update_state()
 
         if super_fm != 0:

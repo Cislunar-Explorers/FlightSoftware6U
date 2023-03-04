@@ -1,8 +1,8 @@
 import logging
 from typing import Dict
-from drivers import adc, gom, imu, rtc
-from communications.satellite_radio import Radio
-from drivers.device import Device, DeviceEnum
+from fsw.drivers import adc, gom, imu, rtc
+from fsw.communications.satellite_radio import Radio
+from fsw.drivers.device import Device, DeviceEnum
 
 
 class DeviceContainer:

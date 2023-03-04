@@ -1,4 +1,4 @@
-from opnav.core.const import (
+from fsw.opnav.core.const import (
     CameraMeasurementVector,
     CovarianceMatrix,
     EphemerisVector,
@@ -10,7 +10,7 @@ from opnav.core.const import (
 )
 import numpy as np
 import math
-from opnav.core.const import TrajUKFConstants as Const
+from fsw.opnav.core.const import TrajUKFConstants as Const
 
 
 def __length(M):

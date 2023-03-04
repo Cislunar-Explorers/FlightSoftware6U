@@ -1,4 +1,4 @@
-from opnav.core.camera import PiCam, CameraMux
+from fsw.opnav.core.camera import PiCam, CameraMux
 
 
 def select_camera(id):

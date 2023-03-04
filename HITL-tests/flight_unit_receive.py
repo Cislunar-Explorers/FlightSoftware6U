@@ -1,23 +1,23 @@
-from communications.satellite_radio import Radio
-from drivers.gom import Gomspace
+from fsw.communications.satellite_radio import Radio
+from fsw.drivers.gom import Gomspace
 
 radio = Radio()
 gom = Gomspace()
 transmissionCounter = 0
 
-#Turn off power amplifier
+# Turn off power amplifier
 gom.set_pa(on=False)
 print('Power amplifier turned off')
 
-#Set RF transmitting side to low
+# Set RF transmitting side to low
 gom.rf_transmitting_switch(receive=True)
 print('RF transmitting set to low')
 
-#Turn on LNA
+# Turn on LNA
 gom.lna(True)
 print('LNA turned on')
 
-#Set RF receiving side to high
+# Set RF receiving side to high
 gom.rf_receiving_switch(receive=True)
 print('RF receiving set to high')
 

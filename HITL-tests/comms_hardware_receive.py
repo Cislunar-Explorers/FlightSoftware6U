@@ -1,6 +1,6 @@
-from communications.satellite_radio import Radio
+from fsw.communications.satellite_radio import Radio
 
-#Initialize variables, nothing to modify on this end
+# Initialize variables, nothing to modify on this end
 transmissionCounter = 0
 radio = Radio()
 

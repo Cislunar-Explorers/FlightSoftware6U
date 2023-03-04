@@ -1,4 +1,4 @@
-from opnav.core.const import (
+from fsw.opnav.core.const import (
     AttitudeStateVector,
     CameraMeasurementVector,
     CameraParameters,
@@ -12,32 +12,32 @@ from opnav.core.const import (
     # TrajUKFConstants,
     TrajectoryStateVector,
 )
-from opnav.core.preprocess import extract_frames
-import opnav.core.ukf as traj_ukf
-import opnav.core.attitude as attitude
+from fsw.opnav.core.preprocess import extract_frames
+import fsw.opnav.core.ukf as traj_ukf
+import fsw.opnav.core.attitude as attitude
 
 # from opnav.core.sense import select_camera, record_video
-from opnav.core.sense import record_gyro
+from fsw.opnav.core.sense import record_gyro
 
 # from opnav.core.preprocess import extract_frames
 # from opnav.core.find_algos.find_with_contours import find
-from opnav.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters  # , BodyEnum
-from opnav.core.observe_functions import *
+from fsw.opnav.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters  # , BodyEnum
+from fsw.opnav.core.observe_functions import *
 
-from utils.db import (
+from fsw.utils.db import (
     create_sensor_tables_from_path,
     OpNavTrajectoryStateModel,
     OpNavAttitudeStateModel,
 )
-from utils.db import (
+from fsw.utils.db import (
     OpNavEphemerisModel,
     OpNavCameraMeasurementModel,
     OpNavPropulsionModel,
     OpNavGyroMeasurementModel,
 )
-from utils.constants import SURRENDER_LOCAL_DIR, DB_FILE, OPNAV_MEDIA_DIR
-from utils.log import *
-import utils.parameters as params
+from fsw.utils.constants import SURRENDER_LOCAL_DIR, DB_FILE, OPNAV_MEDIA_DIR
+from fsw.utils.log import *
+import fsw.utils.parameters as params
 
 import numpy as np
 from datetime import datetime, timezone

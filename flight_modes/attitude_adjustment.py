@@ -2,9 +2,9 @@
 # import numpy as np
 # from typing import Tuple
 from time import sleep, time
-from utils.constants import FMEnum, GOM_TIMING_FUDGE_FACTOR
-import utils.parameters as params
-from flight_modes.flight_mode import PauseBackgroundMode
+from fsw.utils.constants import FMEnum, GOM_TIMING_FUDGE_FACTOR
+import fsw.utils.parameters as params
+from fsw.flight_modes.flight_mode import PauseBackgroundMode
 import logging
 
 # from math import sin, cos

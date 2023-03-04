@@ -1,5 +1,5 @@
-from utils.constants import CommandEnum
-from communications.command_definitions import COMMAND_LIST
+from fsw.utils.constants import CommandEnum
+from fsw.communications.command_definitions import COMMAND_LIST
 import unittest
 
 

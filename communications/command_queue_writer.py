@@ -2,7 +2,7 @@
 commands to the EDU/HITL through the radio board, use this to write commands to a txt file, which is then read by
 main.py's read_command_queue_from_file method """
 
-from communications.command_handler import CommandHandler
+from fsw.communications.command_handler import CommandHandler
 import logging
 
 

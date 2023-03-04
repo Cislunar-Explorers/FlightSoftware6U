@@ -1,4 +1,4 @@
-import utils.constants as consts
+import fsw.utils.constants as consts
 
 
 def test_env():

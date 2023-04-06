@@ -1,5 +1,5 @@
 import unittest
-from communications.codec import Codec
+from fsw.communications.codec import Codec
 from math import tan
 
 

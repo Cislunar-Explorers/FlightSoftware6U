@@ -1,20 +1,20 @@
 from typing import Dict
 
-from utils.db import TelemetryModel, CommandModel, RebootsModel
-from utils.db import (
+from fsw.utils.db import TelemetryModel, CommandModel, RebootsModel
+from fsw.utils.db import (
     OpNavTrajectoryStateModel,
     OpNavAttitudeStateModel,
     OpNavPropulsionModel,
 )
-from utils.db import (
+from fsw.utils.db import (
     OpNavEphemerisModel,
     OpNavCameraMeasurementModel,
     OpNavGyroMeasurementModel,
 )
-from utils.db import SQLAlchemyTableBase
+from fsw.utils.db import SQLAlchemyTableBase
 
 # from utils.db import create_sensor_tables_from_path
-from utils.constants import DB_ENTRY_LIMIT
+from fsw.utils.constants import DB_ENTRY_LIMIT
 import logging
 
 # TODO change MEMORY_DB_PATH back to DB_FILE

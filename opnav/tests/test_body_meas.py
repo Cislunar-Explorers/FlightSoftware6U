@@ -4,14 +4,14 @@ import os
 import json
 import re
 import logging
-from utils.log import log
+from fsw.utils.log import log
 import numpy as np
 
-from opnav.core.find_algos.tiled_remap import st_to_sph
-from opnav.core.const import BodyEnum, FileData, DetectionData, Vector3
-from opnav.core.observe_functions import cam_to_body, body_to_T0
-from opnav.core.opnav import calculate_cam_measurements
-from utils.constants import FLIGHT_SOFTWARE_PATH
+from fsw.opnav.core.find_algos.tiled_remap import st_to_sph
+from fsw.opnav.core.const import BodyEnum, FileData, DetectionData, Vector3
+from fsw.opnav.core.observe_functions import cam_to_body, body_to_T0
+from fsw.opnav.core.opnav import calculate_cam_measurements
+from fsw.utils.constants import FLIGHT_SOFTWARE_PATH
 
 
 class BodyMeas(unittest.TestCase):

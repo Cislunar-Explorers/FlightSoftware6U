@@ -1,7 +1,7 @@
 import logging
 import queue
 import time
-from communications.ax5043_manager.ax5043_driver import (
+from fsw.communications.ax5043_manager.ax5043_driver import (
     Reg,
     Pwrmode,
     Bits,

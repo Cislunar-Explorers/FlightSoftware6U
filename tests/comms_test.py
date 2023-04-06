@@ -1,7 +1,7 @@
 from time import sleep
 
 from queue import Queue
-from communications.comms_driver import CommunicationsSystem
+from fsw.communications.comms_driver import CommunicationsSystem
 
 
 class TestIPCommunicationsSystem:

@@ -1,5 +1,5 @@
-from opnav.core.find_algos.find import find, round_up_to_odd, create_circular_mask
-from opnav.tests.test_find import calculateErrors
+from fsw.opnav.core.find_algos.find import find, round_up_to_odd, create_circular_mask
+from fsw.opnav.tests.test_find import calculateErrors
 import cv2
 import os
 import glob
@@ -67,6 +67,8 @@ ENTER_KEY = 13
 SPACE_KEY = 32
 
 # Parse dataset
+
+
 def parse():
     """
     Render all images in a sequence to obtain the Earth's, Sun's and Moon's
@@ -168,8 +170,8 @@ def cropImage(name, x, y, s):
     if SUN_TEMPLATES_SUBFOLDER in name:
         selectionSize = int(min(c - x, x, r - y, y))
         selection = original[
-            y - selectionSize : y + selectionSize,
-            x - selectionSize : x + selectionSize,
+            y - selectionSize: y + selectionSize,
+            x - selectionSize: x + selectionSize,
             :,
         ]
         img = selection
@@ -815,7 +817,8 @@ if __name__ == "__main__":
         generateSingleImages(args["body"])
     elif str(args["conf"]) == "three":
         three(
-            earthPath=os.path.join("D:\\OpNav\\data\\DetectorDatasetGenerator\\Earth\\Crescent\\crescentearthmoon.jpg"),
+            earthPath=os.path.join(
+                "D:\\OpNav\\data\\DetectorDatasetGenerator\\Earth\\Crescent\\crescentearthmoon.jpg"),
             moonPath=os.path.join(
                 "D:\\OpNav\\data\\DetectorDatasetGenerator\\Moon\\Crescent\\steve-donna-o-meara-waxing-crescent-moon-showing-mare-crisium-large-dark-sea-on-the-right_a-G-6110078-4990703.jpg"
             ),

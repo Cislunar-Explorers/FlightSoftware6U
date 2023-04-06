@@ -1,11 +1,11 @@
-import communications.satellite_radio as sr
-from communications.serialization import DataHandler
+import fsw.communications.satellite_radio as sr
+from fsw.communications.serialization import DataHandler
 import board
 import busio
 import time
 from adafruit_bus_device.spi_device import SPIDevice
-from communications.ax5043_manager.ax5043_driver import Ax5043
-from communications.ax5043_manager.ax5043_manager import Manager
+from fsw.communications.ax5043_manager.ax5043_driver import Ax5043
+from fsw.communications.ax5043_manager.ax5043_manager import Manager
 
 # Radio setup
 driver = Ax5043(SPIDevice(busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)))

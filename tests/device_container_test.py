@@ -1,5 +1,5 @@
 import unittest
-from drivers.devices import DeviceContainer
+from fsw.drivers.devices import DeviceContainer
 
 
 class MainThreadInitTestCase(unittest.TestCase):

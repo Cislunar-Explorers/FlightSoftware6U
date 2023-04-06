@@ -13,10 +13,10 @@
 from typing import List, cast
 
 import pigpio
-import drivers.power.power_structs as ps
-from utils.constants import GomOutputs
-import utils.parameters as params
-from utils.exceptions import PowerInputError, PowerReadError  # , PowerException
+import fsw.drivers.power.power_structs as ps
+from fsw.utils.constants import GomOutputs
+import fsw.utils.parameters as params
+from fsw.utils.exceptions import PowerInputError, PowerReadError  # , PowerException
 from time import sleep
 import logging
 

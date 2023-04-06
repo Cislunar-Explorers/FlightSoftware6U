@@ -1,7 +1,7 @@
-from communications.groundstation import Groundstation
-from communications.commands import CommandHandler
-from communications.downlink import DownlinkHandler
-from flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
+from fsw.communications.groundstation import Groundstation
+from fsw.communications.commands import CommandHandler
+from fsw.communications.downlink import DownlinkHandler
+from fsw.flight_modes.flight_mode_factory import FLIGHT_MODE_DICT
 import time
 import logging
 
@@ -29,7 +29,7 @@ while True:
 
             signIndex = argsList[i].index("=")
             argName = argsList[i][:signIndex]
-            argValue = argsList[i][signIndex + 1 :]
+            argValue = argsList[i][signIndex + 1:]
 
             arg_type = FLIGHT_MODE_DICT[mode_id].command_arg_types[argName]
             if arg_type == "int" or arg_type == "short":

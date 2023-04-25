@@ -9,22 +9,22 @@ from flight_modes.flight_mode import FlightMode, TestMode
 import logging
 from time import sleep
 import sys
-import utils.constants as consts
+import fsw_utils.constants as consts
 
 # from drivers.dummy_sensors import PressureSensor
 from flight_modes.restart_reboot import RestartMode, BootUpMode
 from flight_modes.flight_mode_factory import build_flight_mode
 from communications.command_handler import CommandHandler
 from telemetry.telemetry import Telemetry
-from utils.boot_cause import hard_boot
+from fsw_utils.boot_cause import hard_boot
 from udp_client.client import Client
 
 from communications.comms_driver import CommunicationsSystem
 from drivers.devices import DeviceContainer
 from drivers.nemo.nemo_manager import NemoManager
 import opnav.core.camera as camera
-from utils.parameter_utils import init_parameters
-from utils.db import create_sensor_tables_from_path
+from fsw_utils.parameter_utils import init_parameters
+from fsw_utils.db import create_sensor_tables_from_path
 from sim.sim_data import SimData
 
 

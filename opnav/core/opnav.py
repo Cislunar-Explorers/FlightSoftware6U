@@ -24,20 +24,20 @@ from opnav.core.sense import record_gyro
 from opnav.core.const import OPNAV_EXIT_STATUS, CisLunarCameraParameters  # , BodyEnum
 from opnav.core.observe_functions import *
 
-from utils.db import (
+from fsw_utils.db import (
     create_sensor_tables_from_path,
     OpNavTrajectoryStateModel,
     OpNavAttitudeStateModel,
 )
-from utils.db import (
+from fsw_utils.db import (
     OpNavEphemerisModel,
     OpNavCameraMeasurementModel,
     OpNavPropulsionModel,
     OpNavGyroMeasurementModel,
 )
-from utils.constants import SURRENDER_LOCAL_DIR, DB_FILE, OPNAV_MEDIA_DIR
-from utils.log import *
-import utils.parameters as params
+from fsw_utils.constants import SURRENDER_LOCAL_DIR, DB_FILE, OPNAV_MEDIA_DIR
+from fsw_utils.log import *
+import fsw_utils.parameters as params
 
 import numpy as np
 from datetime import datetime, timezone

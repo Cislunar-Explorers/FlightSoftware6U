@@ -1,4 +1,4 @@
-from utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum, FLIGHT_SOFTWARE_PATH
+from fsw_utils.constants import MIN_COMMAND_SIZE, FMEnum, CommandCommandEnum, FLIGHT_SOFTWARE_PATH
 from communications.satellite_radio import Radio
 from communications.commands import CommandHandler
 from communications.downlink import DownlinkHandler

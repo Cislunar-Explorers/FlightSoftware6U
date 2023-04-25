@@ -16,7 +16,7 @@ from adafruit_bus_device.i2c_device import I2CDevice
 import time
 from fractions import Fraction
 
-from utils.log import *
+from fsw_utils.log import *
 
 
 class CameraMux:

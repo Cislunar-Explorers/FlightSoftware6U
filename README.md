@@ -1,3 +1,6 @@
+# Warning
+This repository is no longer used or maintained. However, many lessons have been learned that are worth sharing and distributing. If you are interested in picking up some lessons and wild stories, reach out to apz24@cornell.edu 
+
 # Cislunar Explorers Flight Software
 
 ![Mission Patch](mission_patch.png)

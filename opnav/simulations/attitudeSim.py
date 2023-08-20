@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 import math
 import os
-from opnav.simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
-from opnav.simulations.sim import isOrthogonal
-from opnav.tests.gen_opnav_data import generateSyntheticData
-from opnav.core.ukf import __attitudeMatrix
+from fsw.opnav.simulations.animations import LiveMultipleAttitudePlot, Live2DPlot
+from fsw.opnav.simulations.sim import isOrthogonal
+from fsw.opnav.tests.gen_opnav_data import generateSyntheticData
+from fsw.opnav.core.ukf import __attitudeMatrix
 import argparse
 
 ### FOR CAMERA ORIENTATION ###

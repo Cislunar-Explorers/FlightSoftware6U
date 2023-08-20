@@ -11,19 +11,19 @@ from time import sleep
 
 # from sqlalchemy.orm import session
 
-from opnav.core.ukf import runTrajUKF
-from opnav.tests.const import POS_ERROR_6HOURS, VEL_ERROR_6HOURS
-from opnav.tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
-from opnav.tests.const import MatlabTestCameraParameters
-from opnav.simulations.animations import LiveTrajectoryPlot
-from opnav.tests.gen_opnav_data import get6HoursBatch
-from opnav.tests.const import (
+from fsw.opnav.core.ukf import runTrajUKF
+from fsw.opnav.tests.const import POS_ERROR_6HOURS, VEL_ERROR_6HOURS
+from fsw.opnav.tests.const import ZERO_STARTING_NOISE, SMALL_STARTING_NOISE, LARGE_STARTING_NOISE
+from fsw.opnav.tests.const import MatlabTestCameraParameters
+from fsw.opnav.simulations.animations import LiveTrajectoryPlot
+from fsw.opnav.tests.gen_opnav_data import get6HoursBatch
+from fsw.opnav.tests.const import (
     TEST_6HOURS_meas,
     TEST_6HOURS_moonEph,
     TEST_6HOURS_sunEph,
     TEST_6HOURS_traj,
 )
-from opnav.core.const import (
+from fsw.opnav.core.const import (
     AttitudeEstimateOutput,
     AttitudeStateVector,
     CameraMeasurementVector,
@@ -36,18 +36,18 @@ from opnav.core.const import (
     TrajectoryEstimateOutput,
     TrajectoryStateVector,
 )
-from FlightSoftware.utils.db import (
+from fsw.utils.db import (
     OpNavEphemerisModel,
     OpNavCameraMeasurementModel,
     OpNavPropulsionModel,
     OpNavGyroMeasurementModel,
 )
-from FlightSoftware.utils.db import (
+from fsw.utils.db import (
     create_sensor_tables_from_path,
     OpNavTrajectoryStateModel,
     OpNavAttitudeStateModel,
 )
-import opnav.core.opnav as opnav
+import fsw.opnav.core.opnav as opnav
 
 SQL_PREFIX = "sqlite:///"
 sql_path = SQL_PREFIX + os.path.join("D:", "OpNav", "db", "satellite-db.sqlite")
@@ -62,7 +62,7 @@ def calculate_velocity_error(true_state, est_state):
 
 
 ################################################################
-###################6 HOURS TRAJECTORY###########################
+################### 6 HOURS TRAJECTORY###########################
 ################################################################
 # Testing Traj UKF on propagation data
 # NOTE: trajectory is split into 6hr intervals due to impulses

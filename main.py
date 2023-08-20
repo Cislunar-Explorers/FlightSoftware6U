@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../")
 from multiprocessing import Process
 from queue import Queue, PriorityQueue
 from threading import Thread
@@ -5,27 +7,28 @@ from time import sleep, time
 from typing import Optional, List
 import os
 import signal
-from flight_modes.flight_mode import FlightMode, TestMode
+from fsw.flight_modes.flight_mode import FlightMode, TestMode
 import logging
 from time import sleep
-import sys
-import utils.constants as consts
+import fsw.utils.constants as consts
+from fsw.flight_modes.restart_reboot import RestartMode, BootUpMode
+from fsw.flight_modes.flight_mode_factory import build_flight_mode
+from fsw.communications.command_handler import CommandHandler
+from fsw.telemetry.telemetry import Telemetry
+from fsw.utils.boot_cause import hard_boot
+from fsw.udp_client.client import Client
+from fsw.communications.comms_driver import CommunicationsSystem
+from fsw.drivers.devices import DeviceContainer
+from fsw.drivers.nemo.nemo_manager import NemoManager
+import fsw.opnav.core.camera as camera
+from fsw.utils.parameter_utils import init_parameters
+from fsw.utils.db import create_sensor_tables_from_path
+from fsw.sim.sim_data import SimData
+
+sys.path.append(r'./')
+
 
 # from drivers.dummy_sensors import PressureSensor
-from flight_modes.restart_reboot import RestartMode, BootUpMode
-from flight_modes.flight_mode_factory import build_flight_mode
-from communications.command_handler import CommandHandler
-from telemetry.telemetry import Telemetry
-from utils.boot_cause import hard_boot
-from udp_client.client import Client
-
-from communications.comms_driver import CommunicationsSystem
-from drivers.devices import DeviceContainer
-from drivers.nemo.nemo_manager import NemoManager
-import opnav.core.camera as camera
-from utils.parameter_utils import init_parameters
-from utils.db import create_sensor_tables_from_path
-from sim.sim_data import SimData
 
 
 class MainSatelliteThread(Thread):
@@ -192,8 +195,8 @@ class MainSatelliteThread(Thread):
         self.flight_mode = new_flight_mode
         logging.info(f"Changed to FM#{self.flight_mode.flight_mode_id}")
 
-    def update_state(self):
-        fm_to_update_to = self.flight_mode.update_state(self.sim_output)
+    def update_state(self, sim_input=None):
+        fm_to_update_to = self.flight_mode.update_state(sim_input=self.sim_output)
 
         # only replace the current flight mode if it needs to change (i.e. dont fix it if it aint broken!)
         if fm_to_update_to is None:

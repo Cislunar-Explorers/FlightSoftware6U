@@ -2,12 +2,12 @@ import time
 from queue import PriorityQueue
 
 import pytest
-import utils.constants as consts
-import utils.parameters as params
-from flight_modes.maneuver_flightmode import ManeuverMode
-from main import MainSatelliteThread
-from drivers.gom import Gomspace
-from drivers.power.loadswitch import mockGPIOLoadSwitch, mockP31uLoadSwitch
+import fsw.utils.constants as consts
+import fsw.utils.parameters as params
+from fsw.flight_modes.maneuver_flightmode import ManeuverMode
+from fsw.main import MainSatelliteThread
+from fsw.drivers.gom import Gomspace
+from fsw.drivers.power.loadswitch import mockGPIOLoadSwitch, mockP31uLoadSwitch
 import logging
 
 # to speed testing

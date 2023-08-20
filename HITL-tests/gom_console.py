@@ -3,8 +3,8 @@
 # Be careful though when hardware is connected - the ipython notebook
 # does NOT have the same precautionary measures in place that are defined in this file.
 
-from drivers.gom import Gomspace
-import drivers.power.power_structs as ps
+from fsw.drivers.gom import Gomspace
+import fsw.drivers.power.power_structs as ps
 from time import sleep
 import logging
 

@@ -1,5 +1,5 @@
-from opnav.core.find_algos.find_with_contours import find
-from utils.constants import FLIGHT_SOFTWARE_PATH, SURRENDER_LOCAL_DIR
+from fsw.opnav.core.find_algos.find_with_contours import find
+from fsw.utils.constants import FLIGHT_SOFTWARE_PATH, SURRENDER_LOCAL_DIR
 import numpy as np
 import unittest
 import glob

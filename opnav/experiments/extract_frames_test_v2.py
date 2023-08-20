@@ -1,8 +1,8 @@
-from opnav.core.preprocess import extract_frames
-from opnav.core.sense import select_camera, record_video
-from utils.constants import OPNAV_MEDIA_DIR
-from opnav.core.const import CameraRecordingParameters
-import utils.parameters as params
+from fsw.opnav.core.preprocess import extract_frames
+from fsw.opnav.core.sense import select_camera, record_video
+from fsw.utils.constants import OPNAV_MEDIA_DIR
+from fsw.opnav.core.const import CameraRecordingParameters
+import fsw.utils.parameters as params
 
 # from picamera import PiCamera
 import argparse

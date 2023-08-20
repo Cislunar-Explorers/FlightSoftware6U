@@ -1,9 +1,9 @@
 import logging
 from time import sleep, time
 
-from flight_modes.flight_mode import FlightMode
-from utils import parameters as params
-from utils.constants import *
+from fsw.flight_modes.flight_mode import FlightMode
+from fsw.utils import parameters as params
+from fsw.utils.constants import *
 
 
 class LowBatterySafetyMode(FlightMode):
@@ -53,7 +53,7 @@ class LowBatterySafetyMode(FlightMode):
     def poll_inputs(self):
         super().poll_inputs()
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         # if there are maneuvers, reorientations, opnav, to be done, then switch
         super_fm = super().update_state()
         if super_fm != NO_FM_CHANGE:
@@ -63,7 +63,7 @@ class LowBatterySafetyMode(FlightMode):
         if self._main.telemetry.gom.hk.vbatt > params.EXIT_LOW_BATTERY_MODE_THRESHOLD:
             return FMEnum.Normal.value
 
-        if self._main.sim_input is None:
+        if sim_input is None:
             time_for_opnav = (
                 time() - self._main.last_opnav_run
             ) // 60 < params.LB_OPNAV_INTERVAL

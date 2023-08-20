@@ -1,5 +1,5 @@
-from communications.satellite_radio import Radio
-from communications.command_handler import CommandHandler
+from fsw.communications.satellite_radio import Radio
+from fsw.communications.command_handler import CommandHandler
 import time
 
 # Setup

@@ -1,8 +1,8 @@
 import unittest
 import logging
-from communications.ax5043_manager.ax5043_manager import Manager
-from communications.ax5043_manager.mock_ax5043_driver import MockAx5043
-from communications.ax5043_manager.ax5043_driver import Reg, Bits
+from fsw.communications.ax5043_manager.ax5043_manager import Manager
+from fsw.communications.ax5043_manager.mock_ax5043_driver import MockAx5043
+from fsw.communications.ax5043_manager.ax5043_driver import Reg, Bits
 
 
 class TestManager(unittest.TestCase):

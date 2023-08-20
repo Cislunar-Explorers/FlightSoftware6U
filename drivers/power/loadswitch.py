@@ -1,11 +1,11 @@
 import logging
 from typing import Union
-from drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
+from fsw.drivers.power.power_controller import PA_EN, RF_RX_EN, RF_TX_EN, Power
 from abc import ABC, abstractmethod
 import time
 from dataclasses import dataclass
 
-from utils.constants import GomOutputs
+from fsw.utils.constants import GomOutputs
 import random
 
 

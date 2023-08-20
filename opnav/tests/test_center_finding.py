@@ -8,11 +8,11 @@ import numpy as np
 import math
 import unittest
 import time
-from utils.constants import FLIGHT_SOFTWARE_PATH
+from fsw.utils.constants import FLIGHT_SOFTWARE_PATH
 
-from utils.log import log
-from opnav.core.find_algos.find_with_hough_transform_and_contours import find
-from opnav.core.const import BodyEnum
+from fsw.utils.log import log
+from fsw.opnav.core.find_algos.find_with_hough_transform_and_contours import find
+from fsw.opnav.core.const import BodyEnum
 
 
 # import argparse

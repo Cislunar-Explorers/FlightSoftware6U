@@ -3,9 +3,9 @@ import numpy as np
 from numpy import radians
 import glob
 import os
-from opnav.core.find_algos import tiled_remap
+from fsw.opnav.core.find_algos import tiled_remap
 import unittest
-from utils.constants import FLIGHT_SOFTWARE_PATH
+from fsw.utils.constants import FLIGHT_SOFTWARE_PATH
 
 DATA_DIR = str(FLIGHT_SOFTWARE_PATH) + "/opnav/simulations/sim/data/"
 
@@ -174,10 +174,10 @@ class TestReprojections(unittest.TestCase):
                 for j, c2 in enumerate(contoursTgt):
 
                     x, y, w, h = cv2.boundingRect(c)
-                    outc = out[y : y + h, x : x + w]
+                    outc = out[y: y + h, x: x + w]
 
                     x2, y2, w2, h2 = cv2.boundingRect(c2)
-                    tgtc = tgt[y2 : y2 + h2, x2 : x2 + w2]
+                    tgtc = tgt[y2: y2 + h2, x2: x2 + w2]
 
                     # Skip if either contour is more than 2 times the size of the other.
                     # They should be close to the same size; if they aren't, they are

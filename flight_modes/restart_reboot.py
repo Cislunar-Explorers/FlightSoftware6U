@@ -1,12 +1,12 @@
 import time
 from datetime import datetime
-from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
-from flight_modes.flight_mode import FlightMode
+from fsw.utils.db import create_sensor_tables_from_path, RebootsModel
+from fsw.utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
+from fsw.flight_modes.flight_mode import FlightMode
 import os
 import logging
 import psutil
-import utils.parameters as params
+import fsw.utils.parameters as params
 
 
 class BootUpMode(FlightMode):
@@ -48,7 +48,7 @@ class BootUpMode(FlightMode):
         self.session.add(new_bootup)
         self.session.commit()
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         return NO_FM_CHANGE
 
 

@@ -1,10 +1,10 @@
 from time import sleep, time
 
-from .flight_mode import PauseBackgroundMode
+from fsw.flight_modes.flight_mode import PauseBackgroundMode
 import logging
-from utils.parameter_utils import set_parameter
-import utils.constants as consts
-import utils.parameters as params
+from fsw.utils.parameter_utils import set_parameter
+import fsw.utils.constants as consts
+import fsw.utils.parameters as params
 
 
 NO_ARGS = ([], 0)
@@ -29,7 +29,7 @@ class ManeuverMode(PauseBackgroundMode):
             and current_pressure - prior_pressure <= params.PRESSURE_DELTA
         )
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         if self.task_completed is True:
             logging.info("Maneuver complete. Exiting maneuver mode...")
             return consts.FMEnum.Normal.value

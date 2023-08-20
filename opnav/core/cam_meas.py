@@ -3,8 +3,8 @@ import glob
 import cv2
 import copy
 import os
-from opnav.core.find_algos.find import findEarth, findMoon, findSun
-from opnav.core.const import (
+from fsw.opnav.core.find_algos.find import findEarth, findMoon, findSun
+from fsw.opnav.core.const import (
     NoImagesInCameraAcquisitionDirectory,
     InvalidBodyNameForLoadProperties,
 )

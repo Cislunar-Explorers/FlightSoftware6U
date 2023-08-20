@@ -2,7 +2,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-from tests.gen_opnav_data import generateSyntheticData
+from fsw.opnav.tests.gen_opnav_data import generateSyntheticData
 import argparse
 import os
 

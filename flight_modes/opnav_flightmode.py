@@ -4,10 +4,10 @@ import sqlite3
 from sqlalchemy.exc import SQLAlchemyError
 from multiprocessing import Process
 
-from utils.constants import FMEnum
-from utils.db import OpNavCoordinatesModel
+from fsw.utils.constants import FMEnum
+from fsw.utils.db import OpNavCoordinatesModel
 import logging
-from .flight_mode import PauseBackgroundMode
+from fsw.flight_modes.flight_mode import PauseBackgroundMode
 
 
 class OpNavMode(PauseBackgroundMode):
@@ -69,7 +69,7 @@ class OpNavMode(PauseBackgroundMode):
         self.run_opnav()
         self.task_completed()
 
-    def update_state(self) -> int:
+    def update_state(self,sim_input=None) -> int:
         super_fm = super().update_state()
 
         if super_fm != 0:

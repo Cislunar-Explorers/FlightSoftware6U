@@ -24,12 +24,15 @@ TEST = config.get("TEST", "0") == "1"
 
 # SQL Stuff
 DB_ENTRY_LIMIT = 1000  # TODO update # maximum number of entries in any of the databases
+# TODO: change to parameter
+
 DB_FILE = "sqlite:///" + os.path.join(CISLUNAR_BASE_DIR, "satellite-db.sqlite")
 LOG_DIR = os.path.join(CISLUNAR_BASE_DIR, "logs")
 NEMO_DIR = os.path.join(CISLUNAR_BASE_DIR, "nemo")
 
 # Delay to wait on BootUp
 # TODO change back to 30.0
+# TODO: change to parameter
 BOOTUP_SEPARATION_DELAY = 5.0  # seconds
 
 # Verification Key Parameters
@@ -47,7 +50,10 @@ COUNTER_SIZE = 3
 DATA_LEN_SIZE = 1
 MIN_COMMAND_SIZE = MAC_LENGTH + COUNTER_SIZE + ID_SIZE + DATA_LEN_SIZE
 
-MAX_COMMAND_SIZE = 200  # Maximum command size based on the radio board's buffer size.
+AX5043_BUFFER_SIZE = 256
+
+MAX_COMMAND_DATA_SIZE = AX5043_BUFFER_SIZE - MIN_COMMAND_SIZE
+# Maximum command size based on the radio board's buffer size.
 # TODO: figure out what this number _actually_ is
 
 # Serializations Offsets

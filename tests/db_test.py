@@ -1,7 +1,7 @@
 from time import time
 
-from utils.db import create_sensor_tables_from_path, TelemetryModel
-from utils import db_functions
+from fsw_utils.db import create_sensor_tables_from_path, TelemetryModel
+from fsw_utils import db_functions
 
 MEMORY_DB_PATH = "sqlite://"
 

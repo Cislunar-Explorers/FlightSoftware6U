@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Union
-from utils import parameter_utils
+from fsw_utils import parameter_utils
 
 if TYPE_CHECKING:
-    from main import MainSatelliteThread
+    from fsw_main.main import MainSatelliteThread
 
-from utils.constants import (
+from fsw_utils.constants import (
     DATA_OFFSET,
     MAC_LENGTH,
     COUNTER_OFFSET,
@@ -22,11 +22,11 @@ from typing import Optional, Tuple, Dict
 import hashlib
 from communications.commands import Command
 from communications.command_definitions import COMMAND_DICT
-from utils.exceptions import CommandUnpackingException
+from fsw_utils.exceptions import CommandUnpackingException
 from communications.downlink import bit_inflation
 from communications.groundstation import bit_deflation
 import logging
-import utils.parameters as params
+import fsw_utils.parameters as params
 
 
 def compute_mac(data: bytes) -> bytes:

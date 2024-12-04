@@ -5,7 +5,7 @@ What is the purpose of this test?
 """
 import unittest
 from drivers.devices import DeviceContainer
-from main import MainSatelliteThread
+from main.main import MainSatelliteThread
 from queue import Queue
 
 from communications.command_handler import CommandHandler

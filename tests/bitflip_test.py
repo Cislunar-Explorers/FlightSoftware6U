@@ -1,7 +1,7 @@
-from main import MainSatelliteThread
-from utils.exceptions import DeserializationException
+from main.main import MainSatelliteThread
+from fsw_utils.exceptions import DeserializationException
 import unittest
-from utils import constants
+from fsw_utils import constants
 from typing import List
 import logging
 

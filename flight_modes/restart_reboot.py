@@ -1,12 +1,12 @@
 import time
 from datetime import datetime
-from utils.db import create_sensor_tables_from_path, RebootsModel
-from utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
+from fsw_utils.db import create_sensor_tables_from_path, RebootsModel
+from fsw_utils.constants import DB_FILE, BOOTUP_SEPARATION_DELAY, NO_FM_CHANGE, FMEnum
 from flight_modes.flight_mode import FlightMode
 import os
 import logging
 import psutil
-import utils.parameters as params
+import fsw_utils.parameters as params
 
 
 class BootUpMode(FlightMode):

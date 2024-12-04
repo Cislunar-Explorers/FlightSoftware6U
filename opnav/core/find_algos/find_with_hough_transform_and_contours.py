@@ -4,7 +4,7 @@ from opnav.core.const import (
     CisLunarCameraParameters,
     BodyEnum,
 )
-from utils.parameters import (
+from fsw_utils.parameters import (
     EARTH_B_LOW,
     EARTH_G_LOW,
     EARTH_R_LOW,
@@ -28,7 +28,7 @@ from utils.parameters import (
     MOON_PERCENTAGE_THRESH,
 )
 from opnav.core.find_algos.tiled_remap import *
-from utils.log import log
+from fsw_utils.log import log
 
 import cv2
 import numpy as np

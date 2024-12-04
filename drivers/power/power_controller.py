@@ -14,9 +14,9 @@ from typing import List, cast
 
 import pigpio
 import drivers.power.power_structs as ps
-from utils.constants import GomOutputs
-import utils.parameters as params
-from utils.exceptions import PowerInputError, PowerReadError  # , PowerException
+from fsw_utils.constants import GomOutputs
+import fsw_utils.parameters as params
+from fsw_utils.exceptions import PowerInputError, PowerReadError  # , PowerException
 from time import sleep
 import logging
 

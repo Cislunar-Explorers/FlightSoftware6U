@@ -3,10 +3,10 @@ import os
 import glob
 
 # import logging
-from utils.log import log
+from fsw_utils.log import log
 from opnav.tests import test_center_finding, test_reprojections, test_body_meas
 from opnav.core.const import BodyEnum
-from utils.constants import FLIGHT_SOFTWARE_PATH
+from fsw_utils.constants import FLIGHT_SOFTWARE_PATH
 import re
 import numpy as np
 

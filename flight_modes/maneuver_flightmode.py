@@ -2,9 +2,9 @@ from time import sleep, time
 
 from .flight_mode import PauseBackgroundMode
 import logging
-from utils.parameter_utils import set_parameter
-import utils.constants as consts
-import utils.parameters as params
+from fsw_utils.parameter_utils import set_parameter
+import fsw_utils.constants as consts
+import fsw_utils.parameters as params
 
 
 NO_ARGS = ([], 0)

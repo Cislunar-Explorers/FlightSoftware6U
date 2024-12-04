@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from utils.constants import MAX_COMMAND_SIZE, MIN_COMMAND_SIZE, CommandEnum
-from utils.exceptions import CommandException
+from fsw_utils.constants import MAX_COMMAND_SIZE, MIN_COMMAND_SIZE, CommandEnum
+from fsw_utils.exceptions import CommandException
 from typing import TYPE_CHECKING, Union, Dict, List, Any, Optional
 from communications.codec import Codec
 import logging
 
 
 if TYPE_CHECKING:
-    from main import MainSatelliteThread
+    from main.main import MainSatelliteThread
 
 
 class Command(ABC):

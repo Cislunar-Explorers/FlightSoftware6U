@@ -3,7 +3,7 @@ from typing import Any
 
 from adafruit_blinka.agnostic import board_id
 
-from utils.constants import ZERO_WORD, ONE_WORD
+from fsw_utils.constants import ZERO_WORD, ONE_WORD
 
 from drivers.device import Device, DeviceEnum
 

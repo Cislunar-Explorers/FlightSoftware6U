@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import MainSatelliteThread
+    from main.main import MainSatelliteThread
 
     # for an explanation of the above 4 lines of code, see
     # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -17,10 +17,10 @@ from queue import Empty
 from traceback import format_tb
 import logging
 
-import utils.constants as consts
-import utils.parameters as params
+import fsw_utils.constants as consts
+import fsw_utils.parameters as params
 
-from utils.exceptions import UnknownFlightModeException
+from fsw_utils.exceptions import UnknownFlightModeException
 
 no_transition_modes = [
     consts.FMEnum.SensorMode.value,

@@ -15,7 +15,7 @@ from opnav.simulations.sim.src.libopnav import (
     st_circle,
     is_illuminated,
 )
-from utils.constants import FLIGHT_SOFTWARE_PATH
+from fsw_utils.constants import FLIGHT_SOFTWARE_PATH
 
 # Limitations:
 # * No BRDF, PSF

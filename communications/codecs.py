@@ -1,5 +1,5 @@
 from communications.codec import Codec
-from utils.constants import DownlinkKwargs as dk
+from fsw_utils.constants import DownlinkKwargs as dk
 
 
 TIME_codec = Codec(dk.RTC_TIME, "double")

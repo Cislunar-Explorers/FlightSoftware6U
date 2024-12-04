@@ -15,7 +15,7 @@ from adafruit_blinka.agnostic import board_id
 if board_id and board_id != "GENERIC_LINUX_PC":
     from picamera import PiCamera
 
-from utils.constants import OPNAV_MEDIA_DIR
+from fsw_utils.constants import OPNAV_MEDIA_DIR
 
 import numpy as np
 import math

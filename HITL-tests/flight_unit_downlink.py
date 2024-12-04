@@ -1,6 +1,6 @@
 from communications.satellite_radio import Radio
 from drivers.gom import Gomspace
-import utils.parameters as params
+import fsw_utils.parameters as params
 from time import sleep
 
 radio = Radio()

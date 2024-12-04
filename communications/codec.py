@@ -1,4 +1,4 @@
-from utils.struct import packer_dict
+from fsw_utils.struct import packer_dict
 from typing import Dict, Any
 
 

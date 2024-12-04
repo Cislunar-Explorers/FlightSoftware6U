@@ -28,10 +28,10 @@ Happy testing!
 
 import logging
 import unittest
-from utils.constants import CommandEnum, FMEnum, CommandKwargs as ck
-from main import MainSatelliteThread
+from fsw_utils.constants import CommandEnum, FMEnum, CommandKwargs as ck
+from main.main import MainSatelliteThread
 from communications.command_handler import CommandHandler
-import utils.parameters as params
+import fsw_utils.parameters as params
 
 
 class CommandTest(unittest.TestCase):
@@ -119,7 +119,7 @@ class CommandTest(unittest.TestCase):
 
     def test_get_param_command(self):
         """Tests whether we can 'get' the value of every parameter thru the command structure."""
-        from utils.parameter_utils import get_parameter_list, get_parameter_from_name
+        from fsw_utils.parameter_utils import get_parameter_list, get_parameter_from_name
 
         param_list = get_parameter_list()
         # loop thru all parameters and get their value

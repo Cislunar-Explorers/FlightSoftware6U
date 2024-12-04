@@ -10,11 +10,11 @@ from uptime import uptime
 
 from drivers.power.power_structs import eps_hk_t
 from telemetry.sensor import SynchronousSensor
-from utils.constants import DB_FILE, MAX_GYRO_RATE, DownlinkKwargs as dk
+from fsw_utils.constants import DB_FILE, MAX_GYRO_RATE, DownlinkKwargs as dk
 
 # from utils.db import GyroModel
-from utils.db import TelemetryModel, create_sensor_tables_from_path
-from utils.exceptions import (
+from fsw_utils.db import TelemetryModel, create_sensor_tables_from_path
+from fsw_utils.exceptions import (
     PiSensorError,
     PressureError,
     GomSensorError,

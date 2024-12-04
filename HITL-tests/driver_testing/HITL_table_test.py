@@ -4,7 +4,7 @@ import drivers.power.power_controller as pc
 import logging
 import time
 
-from utils.constants import GomOutputs
+from fsw_utils.constants import GomOutputs
 
 HITL_test = pc.Power()
 

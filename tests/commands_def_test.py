@@ -1,4 +1,4 @@
-from utils.constants import CommandEnum
+from fsw_utils.constants import CommandEnum
 from communications.command_definitions import COMMAND_LIST
 import unittest
 

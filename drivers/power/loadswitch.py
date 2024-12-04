@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import time
 from dataclasses import dataclass
 
-from utils.constants import GomOutputs
+from fsw_utils.constants import GomOutputs
 import random
 
 

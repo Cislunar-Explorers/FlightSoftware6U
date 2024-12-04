@@ -16,17 +16,17 @@ from numpy.linalg import pinv
 
 # import matplotlib.pyplot as plt
 
-from opnav.simulations.animations import LiveTrajectoryPlot
+from fsw.opnav.simulations.animations import LiveTrajectoryPlot
 
-from opnav.core.attitude import crs, meas_model, quaternionComposition, quaternionInv
+from fsw.opnav.core.attitude import crs, meas_model, quaternionComposition, quaternionInv
 
-from opnav.tests.const import (
+from fsw.opnav.tests.const import (
     TEST_6HOURS_meas,
     TEST_6HOURS_moonEph,
     TEST_6HOURS_sunEph,
     TEST_6HOURS_traj,
 )
-from opnav.tests.const import (
+from fsw.opnav.tests.const import (
     TEST_C1_DISCRETIZED_meas,
     TEST_C1_DISCRETIZED_moonEph,
     TEST_C1_DISCRETIZED_sunEph,
@@ -34,7 +34,7 @@ from opnav.tests.const import (
     TEST_C1_DISCRETIZED_matlab,
 )
 
-from opnav.tests.const import (
+from fsw.opnav.tests.const import (
     SPACECRAFT_I_B,
     DAMPER_C,
     DAMPER_I_D,
@@ -42,7 +42,7 @@ from opnav.tests.const import (
     TORQUE_THRUSTER,
 )
 
-from opnav.core.const import AttitudeEstimateOutput, AttitudeUKFConstants
+from fsw.opnav.core.const import AttitudeEstimateOutput, AttitudeUKFConstants
 
 _a = AttitudeUKFConstants._a
 _f = AttitudeUKFConstants._f

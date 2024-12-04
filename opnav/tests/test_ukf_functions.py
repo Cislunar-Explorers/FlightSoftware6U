@@ -1,4 +1,4 @@
-from opnav.core.const import (
+from fsw.opnav.core.const import (
     CameraMeasurementVector,
     CovarianceMatrix,
     EphemerisVector,
@@ -7,8 +7,8 @@ from opnav.core.const import (
 )
 import numpy as np
 
-from opnav.core.ukf import runTrajUKF
-from opnav.core.opnav import calculate_cam_measurements
+from fsw.opnav.core.ukf import runTrajUKF
+from fsw.opnav.core.opnav import calculate_cam_measurements
 import unittest
 from parameterized import parameterized
 import logging

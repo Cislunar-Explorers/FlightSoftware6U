@@ -5,7 +5,7 @@ import json
 import os
 
 # from opnav.core.find_algos.tiled_remap import
-from utils.constants import FLIGHT_SOFTWARE_PATH
+from fsw.utils.constants import FLIGHT_SOFTWARE_PATH
 
 
 def stereographic_inv(x, y):

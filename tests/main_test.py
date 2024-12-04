@@ -4,13 +4,13 @@ What is the purpose of this test?
 - To run a quick sanity check that the attributes of the thread object are what we expect them to be
 """
 import unittest
-from drivers.devices import DeviceContainer
-from main import MainSatelliteThread
+from fsw.drivers.devices import DeviceContainer
+from fsw.main import MainSatelliteThread
 from queue import Queue
 
-from communications.command_handler import CommandHandler
-from telemetry.telemetry import Telemetry
-from flight_modes.flight_mode import FlightMode
+from fsw.communications.command_handler import CommandHandler
+from fsw.telemetry.telemetry import Telemetry
+from fsw.flight_modes.flight_mode import FlightMode
 
 EMPTY_LIST = []
 

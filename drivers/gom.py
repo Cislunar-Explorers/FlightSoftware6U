@@ -1,12 +1,12 @@
 from enum import Enum
 from typing import Optional
-from drivers.device import Device, DeviceEnum
-import drivers.power.loadswitch as ls
+from fsw.drivers.device import Device, DeviceEnum
+import fsw.drivers.power.loadswitch as ls
 
-import drivers.power.power_controller as power_controller
+import fsw.drivers.power.power_controller as power_controller
 import logging
 
-from drivers.power.power_structs import eps_hk_t
+from fsw.drivers.power.power_structs import eps_hk_t
 
 
 class Hk(Enum):

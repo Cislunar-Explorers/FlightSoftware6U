@@ -1,5 +1,5 @@
 import argparse
-import opnav.core.camera as camera
+import fsw.opnav.core.camera as camera
 
 # Run restart and then manually restart with sudo reboot
 # To record, specify the name of file you wish to create

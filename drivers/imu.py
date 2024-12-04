@@ -5,9 +5,9 @@ if board_id and board_id != "GENERIC_LINUX_PC":
     import busio
 import adafruit_fxos8700
 import adafruit_fxas21002c
-from utils.constants import GYRO_RANGE
-import utils.parameters as params
-from drivers.device import Device, DeviceEnum
+from fsw.utils.constants import GYRO_RANGE
+import fsw.utils.parameters as params
+from fsw.drivers.device import Device, DeviceEnum
 
 gyro_biases = (params.GYRO_BIAS_X, params.GYRO_BIAS_Y, params.GYRO_BIAS_Z)
 gyro_biases_temperature_dependence = (

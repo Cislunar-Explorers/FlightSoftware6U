@@ -17,10 +17,10 @@ from queue import Empty
 from traceback import format_tb
 import logging
 
-import utils.constants as consts
-import utils.parameters as params
+from fsw.utils import constants as consts
+from fsw.utils import parameters as params
 
-from utils.exceptions import UnknownFlightModeException
+from fsw.utils.exceptions import UnknownFlightModeException
 
 no_transition_modes = [
     consts.FMEnum.SensorMode.value,

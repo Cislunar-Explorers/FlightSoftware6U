@@ -28,10 +28,10 @@ Happy testing!
 
 import logging
 import unittest
-from utils.constants import CommandEnum, FMEnum, CommandKwargs as ck
-from main import MainSatelliteThread
-from communications.command_handler import CommandHandler
-import utils.parameters as params
+from fsw.utils.constants import CommandEnum, FMEnum, CommandKwargs as ck
+from fsw.main import MainSatelliteThread
+from fsw.communications.command_handler import CommandHandler
+import fsw.utils.parameters as params
 
 
 class CommandTest(unittest.TestCase):

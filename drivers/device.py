@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import logging
 from typing import Any
-from utils.constants import StringEnum
+from fsw.utils.constants import StringEnum
 
 
 class DeviceEnum(StringEnum):

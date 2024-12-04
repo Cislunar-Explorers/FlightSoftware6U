@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Union
-from utils import parameter_utils
+from fsw.utils import parameter_utils
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
 
-from utils.constants import (
+from fsw.utils.constants import (
     DATA_OFFSET,
     MAC_LENGTH,
     COUNTER_OFFSET,
@@ -20,13 +20,13 @@ from utils.constants import (
 
 from typing import Optional, Tuple, Dict
 import hashlib
-from communications.commands import Command
-from communications.command_definitions import COMMAND_DICT
-from utils.exceptions import CommandUnpackingException
-from communications.downlink import bit_inflation
-from communications.groundstation import bit_deflation
+from fsw.communications.commands import Command
+from fsw.communications.command_definitions import COMMAND_DICT
+from fsw.utils.exceptions import CommandUnpackingException
+from fsw.communications.downlink import bit_inflation
+from fsw.communications.groundstation import bit_deflation
 import logging
-import utils.parameters as params
+import fsw.utils.parameters as params
 
 
 def compute_mac(data: bytes) -> bytes:
@@ -87,7 +87,7 @@ class CommandHandler:
         if verify_mac(data):
             # TODO deal with counter
             counter = int.from_bytes(
-                data[COUNTER_OFFSET : COUNTER_OFFSET + COUNTER_SIZE], "big"
+                data[COUNTER_OFFSET: COUNTER_OFFSET + COUNTER_SIZE], "big"
             )
 
             mac = data[:MAC_LENGTH]
@@ -146,7 +146,7 @@ class CommandHandler:
         data_buffer[:COUNTER_SIZE] = counter.to_bytes(COUNTER_SIZE, "big")
         data_buffer[ID_OFFSET - MAC_LENGTH] = command_id
         data_buffer[DATA_LEN_OFFSET - MAC_LENGTH] = len(link_data)
-        data_buffer[DATA_OFFSET - MAC_LENGTH :] = link_data
+        data_buffer[DATA_OFFSET - MAC_LENGTH:] = link_data
 
         mac = compute_mac(bytes(data_buffer))
         packet = mac + bytes(data_buffer)

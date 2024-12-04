@@ -2,12 +2,12 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 
-from communications.codec import Codec
-from communications.commands import Command
-from communications import codecs
-from utils import parameter_utils
+from fsw.communications.codec import Codec
+from fsw.communications.commands import Command
+from fsw.communications import codecs
+from fsw.utils import parameter_utils
 
-from utils import gom_util
+from fsw.utils import gom_util
 
 if TYPE_CHECKING:
     from main import MainSatelliteThread
@@ -15,23 +15,23 @@ if TYPE_CHECKING:
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 # It lets your IDE know what type(main) is, without causing any circular imports at runtime.
 
-import drivers.power.power_structs as ps
+import fsw.drivers.power.power_structs as ps
 import time
 import hashlib
-from utils.constants import (
+from fsw.utils.constants import (
     FMEnum,
     CommandEnum,
     CommandKwargs as ck,
     DownlinkKwargs as dk,
     GomConfKwargs,
 )
-import utils.constants as consts
-from utils.exceptions import CommandArgException
+import fsw.utils.constants as consts
+from fsw.utils.exceptions import CommandArgException
 import subprocess
 
 
 import os
-import utils.parameters as params
+import fsw.utils.parameters as params
 
 
 class FM_Switch(Command):

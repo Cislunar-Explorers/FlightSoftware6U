@@ -1,9 +1,9 @@
 import logging
 from time import sleep, time
 
-from flight_modes.flight_mode import FlightMode
-from utils import parameters as params
-from utils.constants import *
+from fsw.flight_modes.flight_mode import FlightMode
+from fsw.utils import parameters as params
+from fsw.utils.constants import *
 
 
 class LowBatterySafetyMode(FlightMode):

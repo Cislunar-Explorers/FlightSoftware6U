@@ -4,8 +4,8 @@ import numpy as np
 import json
 from tqdm import tqdm
 
-from sim import isOrthogonal, attitudeMatrix
-from attitudeSim import getCameraVectors, rotateVector
+from fsw.opnav.simulations.sim import isOrthogonal, attitudeMatrix
+from fsw.opnav.simulations.attitudeSim import getCameraVectors, rotateVector
 
 
 def output_CZML(

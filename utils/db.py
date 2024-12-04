@@ -7,7 +7,7 @@ from sqlalchemy.types import Float, DateTime, Boolean
 
 # from sqlalchemy.dialects import postgresql
 
-from opnav.core.const import CameraMeasurementVector
+from fsw.opnav.core.const import CameraMeasurementVector
 
 # from drivers.power.power_structs import eps_hk_t
 

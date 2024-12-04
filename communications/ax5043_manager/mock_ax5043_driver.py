@@ -1,8 +1,10 @@
-from communications.ax5043_manager.ax5043_driver import Ax5043
+from fsw.communications.ax5043_manager.ax5043_driver import Ax5043
 
 # Ideas:
 # * Writes replace read_defaults
 # * FIFO utilities
+
+
 class MockAx5043(Ax5043):
     def __init__(self):
         super().__init__(None)
@@ -20,6 +22,7 @@ class MockAx5043(Ax5043):
     def read_16(self, addr): return 0x0000
     def read_fifo(self, count): return bytearray(count)
     def write_fifo(self, values): pass
+
 
 # TODO: Document importance of rst_values
 rst_values = {

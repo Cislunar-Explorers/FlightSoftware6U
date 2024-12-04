@@ -7,9 +7,9 @@ from datetime import datetime
 
 from bitstring import BitArray
 
-from communications.satellite_radio import Radio
+from fsw.communications.satellite_radio import Radio
 
-from utils.constants import ZERO_WORD, ONE_WORD
+from fsw.utils.constants import ZERO_WORD, ONE_WORD
 
 
 class Groundstation:

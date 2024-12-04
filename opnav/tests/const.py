@@ -1,4 +1,4 @@
-from opnav.core.const import CameraParameters
+from fsw.opnav.core.const import CameraParameters
 import os
 import numpy as np
 

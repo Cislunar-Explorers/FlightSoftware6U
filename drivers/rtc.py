@@ -1,4 +1,4 @@
-from drivers.device import Device, DeviceEnum
+from fsw.drivers.device import Device, DeviceEnum
 from adafruit_blinka.agnostic import board_id
 
 if board_id and board_id != "GENERIC_LINUX_PC":

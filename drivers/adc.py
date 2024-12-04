@@ -12,8 +12,8 @@
 # look at the accompanying End of Semester Report found here:
 # https://cornell.app.box.com/file/664230352636
 
-from drivers.device import Device, DeviceEnum
-from drivers.imu import Gyro
+from fsw.drivers.device import Device, DeviceEnum
+from fsw.drivers.imu import Gyro
 
 import ADS1115
 

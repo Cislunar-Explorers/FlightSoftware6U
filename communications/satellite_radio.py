@@ -3,17 +3,17 @@ from typing import Any
 
 from adafruit_blinka.agnostic import board_id
 
-from utils.constants import ZERO_WORD, ONE_WORD
+from fsw.utils.constants import ZERO_WORD, ONE_WORD
 
-from drivers.device import Device, DeviceEnum
+from fsw.drivers.device import Device, DeviceEnum
 
 if board_id and board_id != "GENERIC_LINUX_PC":
     import board
     import busio
     from adafruit_bus_device.spi_device import SPIDevice
 
-from communications.ax5043_manager.ax5043_driver import Ax5043
-from communications.ax5043_manager.ax5043_manager import Manager
+from fsw.communications.ax5043_manager.ax5043_driver import Ax5043
+from fsw.communications.ax5043_manager.ax5043_manager import Manager
 from bitstring import BitArray
 
 from time import time, sleep

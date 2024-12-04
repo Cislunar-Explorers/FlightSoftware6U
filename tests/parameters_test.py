@@ -1,5 +1,5 @@
 import os
-from utils import parameter_utils, parameters
+from fsw.utils import parameter_utils, parameters
 import json
 import unittest
 

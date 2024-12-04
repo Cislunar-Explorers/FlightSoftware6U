@@ -1,5 +1,5 @@
-from utils.parameters import HIGH_CRACKING_PRESSURE
-from telemetry.sensor import SynchronousSensor
+from fsw.utils.parameters import HIGH_CRACKING_PRESSURE
+from fsw.telemetry.sensor import SynchronousSensor
 
 
 class DummySynchronousSensor(SynchronousSensor):

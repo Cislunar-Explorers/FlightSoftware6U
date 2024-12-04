@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from utils.constants import MAX_COMMAND_SIZE, MIN_COMMAND_SIZE, CommandEnum
-from utils.exceptions import CommandException
+from fsw.utils.constants import MAX_COMMAND_SIZE, MIN_COMMAND_SIZE, CommandEnum
+from fsw.utils.exceptions import CommandException
 from typing import TYPE_CHECKING, Union, Dict, List, Any, Optional
-from communications.codec import Codec
+from fsw.communications.codec import Codec
 import logging
 
 
@@ -67,7 +67,7 @@ class Command(ABC):
         offset = 0
         kwargs = {}
         for codec in codec_dict.values():
-            kwarg = codec.unpack(data[offset : offset + codec.num_bytes])
+            kwarg = codec.unpack(data[offset: offset + codec.num_bytes])
             kwargs.update(kwarg)
             offset += codec.num_bytes
 
@@ -82,7 +82,7 @@ class Command(ABC):
 
         for name, value in kwargs.items():
             codec = codecs_dict[name]
-            buffer[offset : offset + codec.num_bytes] = codec.pack(value)
+            buffer[offset: offset + codec.num_bytes] = codec.pack(value)
             offset += codec.num_bytes
 
         return bytes(buffer)

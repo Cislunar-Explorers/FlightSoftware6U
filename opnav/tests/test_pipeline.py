@@ -3,24 +3,24 @@ import numpy as np
 # import re
 from datetime import datetime, timedelta
 
-import opnav.core.opnav as opnav
+import fsw.opnav.core.opnav as opnav
 
-import opnav.core.const as opnav_constants
-from tests.const import CesiumTestCameraParameters
+import fsw.opnav.core.const as opnav_constants
+from fsw.opnav.tests.const import CesiumTestCameraParameters
 
-from utils.db import (
+from fsw.utils.db import (
     create_sensor_tables_from_path,
     OpNavTrajectoryStateModel,
     OpNavAttitudeStateModel,
 )
-from utils.db import (
+from fsw.utils.db import (
     OpNavEphemerisModel,
     OpNavCameraMeasurementModel,
     OpNavPropulsionModel,
     OpNavGyroMeasurementModel,
     RebootsModel,
 )
-from utils.constants import DB_FILE
+from fsw.utils.constants import DB_FILE
 
 # import utils.parameters as params
 

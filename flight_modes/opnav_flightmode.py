@@ -59,6 +59,7 @@ class OpNavMode(PauseBackgroundMode):
                 session.close()
                 raise Exception("Error while reading most recent OpNav result")
 
+    # checks if OPNAV process is running; otherwise, start a new subprocess
     def run_mode(self):
         if not self.opnav_process.is_alive():
             logging.info("[OPNAV]: Able to run next opnav")

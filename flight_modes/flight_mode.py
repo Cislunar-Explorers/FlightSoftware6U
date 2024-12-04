@@ -443,6 +443,7 @@ class NormalMode(FlightMode):
             return self._main.FMQueue.get()
 
         if self._main.sim_input is None:
+            # if too much time has passed since the last opnav run, set time_for_opnav to true
             time_for_opnav: bool = (
                 time() - self._main.last_opnav_run
             ) // 60 > params.OPNAV_INTERVAL

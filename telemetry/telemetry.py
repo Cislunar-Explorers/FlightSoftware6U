@@ -192,7 +192,7 @@ class OpNavSensor(SynchronousSensor):
     def __init__(self, main):
         super().__init__(main)
         self.quat = tuple() * 4
-        self.pos = tuple() * 3
+        self.pos = tuple() * 3  # position?
         self.acq_time = float()
 
     def poll(self):
@@ -372,7 +372,7 @@ class Telemetry(SynchronousSensor):
             dk.HK_TEMP_4: self.gom.hk.temp[3],
             dk.GOM_PPT_MODE: self.gom.hk.pptmode,
             dk.RESERVED2: self.gom.hk.reserved2,
-            dk.RTC_TIME: self.rtc.rtc_time,
+            dk.RTC_TIME: self.rtc.rtc_time,  # real time clock
             dk.RPI_CPU: self.rpi.cpu,
             dk.RPI_RAM: self.rpi.ram,
             dk.RPI_DSK: self.rpi.disk,
